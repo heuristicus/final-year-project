@@ -1,0 +1,47 @@
+\documentclass{article}
+\usepackage{fullpage}
+\usepackage[citestyle=numeric]{biblatex}
+\usepackage{pgfgantt}
+\bibliography{proposal_refs}
+
+\title{Final Year Project Proposal\\ \vspace{0.2cm} \large{A machine learning approach to estimating signal delay caused by gravitational lensing}}
+\author{Michal Staniaszek \\\\ 1028907}
+
+\topmargin -0.5in
+\headheight 0in
+\headsep 0in
+\textheight 10.2in
+
+\begin{document}
+
+\maketitle
+
+\subsubsection*{Project details}
+
+ 
+
+\subsubsection*{Approach}
+
+The project will build on the approach taken in the \cite{t09} \cite{t06}
+
+\subsubsection*{Timetable}
+
+\begin{ganttchart}{12}
+\gantttitle{2011}{12} \\
+\gantttitlelist{1,...,12}{1} \\
+\ganttgroup{Group 1}{1}{7} \\
+\ganttbar{Task 1}{1}{2} \\
+\ganttlinkedbar{Task 2}{3}{7} \ganttnewline
+\ganttmilestone{Milestone}{7} \ganttnewline
+\ganttbar{Final Task}{8}{12}
+\ganttlink{elem2}{elem3}
+\ganttlink{elem3}{elem4}
+\end{ganttchart}
+
+\subsubsection*{Hardware \& software}
+
+It is intended that the C programming language be used as the main language for the project, but this is yet to be decided. Other languages in consideration include Haskell, C++ and Python. If the need arises, Matlab may also be used, but it would be preferential to complete the project without its use. There will likely be no hardware requirements for this project other than a system which can run the finished code.
+
+\printbibliography
+
+\end{document}
