@@ -4,9 +4,10 @@
 \usepackage{hyperref}
 \usepackage{nameref}
 \usepackage{gantt}
+\usepackage{amsmath}
 \bibliography{proposal_refs}
 
-\title{Final Year Project Proposal\\ \vspace{0.2cm} \large{A machine learning approach to estimating signal delay caused by gravitational lensing}}
+\title{Final Year Project Proposal\\ \vspace{0.2cm} \large{Analysing gravitational lensing phenomena through machine learning techniques}}
 \author{Michal Staniaszek \\\\ 1028907}
 
 \topmargin -0.5in
@@ -18,13 +19,11 @@
 
 \maketitle
 
-\subsubsection*{Project details}
+\subsubsection*{Project description}
 
-The successful completion of the project will require in-depth knowledge of various techniques that can be used to make estimates given a certain data set. It will also require understanding of the gravitational lensing phenomenon, and some of the physics and mathematics behind its workings.
+Gravitational lensing is one of the many corollaries of Einstein's general theory of relativity, and he is often associated with it. Indeed, Einstein quantified the phenomenon in 1936, but its first mention is by Russian physicist Orest Khvolson in a 1924 paper. Confirmation of its existence came in 1979 when the gravitationally lensed quasar SBS 0957+561 was accidentally discovered by British astronomer Dennis Walsh his colleagues. Since then, many lensed objects have been discovered, but the field is still relatively young.\par So, what exactly is gravitational lensing? It is a phenomenon which causes multiple images of the same object to be visible at the same time. The projection of these multiple images is caused by the bending of light due to a massive object, such as a cluster of galaxies or a black hole in between the object and the observer. This massive object is referred to as the gravitational lens. According to general relativity, any object with mass warps space-time. Since light propagates through space-time, the light rays travel across the warped space, and are bent. As a consequence, rays of light coming from various different directions can reach the same point in space, leading to the object appearing multiple times, rather than just once, as is normal for an object whose light is not bent.\par Each image seen by the observer is in fact the object at a different time. It is common knowledge that the light from astronomical objects is not, for want of a better word, 'new'. The light must travel millions, often billions of light years to reach the observer. With an unlensed light ray, this is not so much of a problem---it just means that we see the object as it was however many billion years it has taken the light to reach our measuring instrument. However, when light is gravitationally lensed, the light from each image has a different travel time to the others. In the case of SBS 0957+561, where there are two images, the delay between one image and the other has been estimated to be 417$\pm$3 days.
 
 \subsubsection*{Approach}
-
-The project will build on the kernel method approach taken in \cite{t09} and \cite{t06}. As is usual with this type of analysis, it will be necessary to consider observational noise, and also situations where lack of observations leads to gaps in the data. 
 
 \subsubsection*{Timetable}
 
