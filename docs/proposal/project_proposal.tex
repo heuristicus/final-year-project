@@ -1,6 +1,8 @@
 \documentclass{article}
 \usepackage{fullpage}
-\usepackage[citestyle=numeric]{biblatex}
+\usepackage{biblatex}
+\usepackage{hyperref}
+\usepackage{nameref}
 \usepackage{gantt}
 \bibliography{proposal_refs}
 
@@ -18,15 +20,15 @@
 
 \subsubsection*{Project details}
 
- 
+The successful completion of the project will require in-depth knowledge of various techniques that can be used to make estimates given a certain data set. It will also require understanding of the gravitational lensing phenomenon, and some of the physics and mathematics behind its workings.
 
 \subsubsection*{Approach}
 
-The project will build on the approach taken in the \cite{t09} \cite{t06}
+The project will build on the kernel method approach taken in \cite{t09} and \cite{t06}. As is usual with this type of analysis, it will be necessary to consider observational noise, and also situations where lack of observations leads to gaps in the data. 
 
 \subsubsection*{Timetable}
 
-\begin{gantt}{5}{9}
+\begin{gantt}{15}{9}
   \begin{ganttitle}
   \titleelement{2012}{5}
   \titleelement{2013}{4}
@@ -43,8 +45,18 @@ The project will build on the approach taken in the \cite{t09} \cite{t06}
     \titleelement{Apr}{1}
   \end{ganttitle}
   \ganttbar{Preparation}{0.5}{1.5}
+  \ganttbar{Mathematics refresh}{0.5}{2.5}
+  \ganttbar{Background reading}{2}{1}
+  \ganttbar{Planning}{2}{1}
+  \ganttbar{Prototype coding}{2.5}{1.5}
+  \ganttbar{Inspection preparation}{3.8}{0.4}
   \ganttmilestone{Inspection Week}{4.2}
+  \ganttbar{Coding}{4}{2.5}
+  \ganttbar{Experiments}{6}{1}
+  \ganttbar{Presentation preparation}{7}{0.66}
   \ganttmilestone{Presentation Week}{7.66}
+  \ganttbar{Write dissertation}{6.5}{2}
+  \ganttmilestone{Dissertation hand-in}{8.5}
 \end{gantt}
 
 \subsubsection*{Hardware \& software}
