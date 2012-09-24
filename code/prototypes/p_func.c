@@ -6,10 +6,30 @@ void init_rand(void)
     srand48(time(NULL));
 }
 
-/* knuth method */
-double generate_event_time(double lambda)
+/* knuth method. Generates time to next even in a homogenous poisson process. */
+double homogenous_time(double lambda)
 {
     return -log(drand48()) / lambda;
+}
+
+/* generates an event time for a non-homogenous poisson process. This will require solving lambda(t) and passing its result as a parameter. Not sure how to do this or if there is a better way. */
+double non_homogenous_time(double eqsolution)
+{
+    
+}
+
+/* generates time for events in a homogenous poisson process until time is exceeded. */
+double* generate_event_times_homogenous(double lambda, double time, int max_events)
+{
+    init_rand();
+        
+    double e_times[max_events] = {0};
+    double run_time = 0, i = 0;
+        
+    while ((run_time += homogenous_time(lambda)) < time){
+	e_times[i] = run_time;
+	++i;
+    }
 }
 
 /* calculates the probabilty of there being k events between time t_start and t_end. (for homogenous processes)*/
