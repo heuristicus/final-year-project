@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-Wall -g
-SOURCES=output_data.c math_functions.c p_func.c
+SOURCES=math_functions.c p_func.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=poisson
 
