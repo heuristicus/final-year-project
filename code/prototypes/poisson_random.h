@@ -3,12 +3,15 @@
 #include <time.h>
 #include <stdlib.h>
 
+#include <muParserDLL.h>
+
 // pfunc.c
 double homogenous_time(double lambda);
 double prob_num_events_in_time_span(double t_start, double t_end, double lambda, int k);
 void init_rand(void);
 double non_homogenous_time(double eqsolution);
-double* generate_event_times_homogenous(double lambda, double time, int max_events);
+void generate_event_times_homogenous(double lambda, double time, int max_events, double* event_times);
+void generate_event_times_non_homogenous(muParserHandle_t hparser, double lambda, double time, int max_events, double* event_times, double* lambda_vals);
 
 // math_functions.c
 long double fact(int i);
