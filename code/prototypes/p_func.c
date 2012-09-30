@@ -6,23 +6,28 @@ int main(int argc, char *argv[])
 {
 
     int i;
-    int max = 200;
+    int max = 100;
     
-    double event_times[max];
-    double lambda_vals[max];
+    double* event_times = malloc(max * sizeof(double));
+    double* lambda_vals = malloc(max * sizeof(double));
 
     muParserHandle_t hparser = mupCreate(0);
 
-    char* eqn = "log(t)";
+    char* eqn = "a-sin(alpha*t)";
     
     mupSetExpr(hparser, eqn);
-        
-    generate_event_times_non_homogenous(hparser, 1000, 20000, max, event_times, lambda_vals);
+    double a = 2, b = 5.0, alpha = 0.1;
     
-    for (i = 0; i < max && event_times[i] > 0; ++i){
-	printf("%lf %lf\n", event_times[i], lambda_vals[i]);
-    }
+    mupDefineVar(hparser, "a", &a);
+    mupDefineVar(hparser, "b", &b);
+    mupDefineVar(hparser, "alpha", &alpha);
+
+    //generate_event_times_non_homogenous(hparser, 10, 10, max, event_times, lambda_vals);
+    run_to_time_non_homogenous(hparser, 10.0, 100.0, event_times, lambda_vals, max);
+    //run_to_event_limit_non_homogenous(hparser, 10.0, max, event_times, lambda_vals);
     
+    
+   
     return 0;
 }
 
@@ -63,20 +68,95 @@ void generate_event_times_homogenous(double lambda, double time, int max_events,
     
 }
 
+void run_to_time_non_homogenous(muParserHandle_t hparser, double lambda, double max_time, double* event_times, double* lambda_vals, int arr_len)
+{
+    init_rand();
+    
+    double run_time = 0.0, rand, non_hom_lambda, arr_max = arr_len;
+    int i = 0;
+    
+    mupDefineVar(hparser, "t", &run_time);
+    
+    while ((run_time += homogenous_time(lambda)) < max_time){
+	non_hom_lambda = mupEval(hparser);
+	printf("%lf %lf\n", run_time, non_hom_lambda);//more granularity on lambda values
+	if ((rand = drand48()) <= non_hom_lambda / lambda){
+	    // Number of events may exceed the number of array locations initally assigned
+	    // so may need to reallocate memory to store more.
+	    if (i >= arr_max){
+		//printf("array length %d exceeds initial max %d\n", i, arr_len);
+		void *_tmp = realloc(event_times, i * 2 * sizeof(double)); // twice the original size.
+		void *_tmp2 = realloc(lambda_vals, i * 2 * sizeof(double)); // twice the original size.
+		if (!_tmp || !_tmp2){// exit if allocation failed.
+		    printf("Memory reallocation for arrays failed. Exiting.\n");
+		    exit(1);
+		}
+		arr_max = i * 2;
+		event_times = (double*) _tmp;
+		lambda_vals = (double*) _tmp2;
+	    }
+	    event_times[i] = run_time;
+	    lambda_vals[i] = non_hom_lambda;
+	    ++i;
+	} 
+    }
+    printf("\n\n");//for gnuplot index separation
+    for (i = 0; i < max && event_times[i] > 0; ++i){
+	printf("%lf %lf\n", event_times[i], lambda_vals[i]);
+    }
+
+    free(event_times);
+    free(lambda_vals);
+          
+}
+
+void run_to_event_limit_non_homogenous(muParserHandle_t hparser, double lambda, int max_events, double* event_times, double* lambda_vals)
+{
+    init_rand();
+    
+    double run_time = 0.0, rand, non_hom_lambda;
+    int i = 0;
+    
+    mupDefineVar(hparser, "t", &run_time);
+    
+    while (i < max_events){
+	run_time += homogenous_time(lambda);
+	non_hom_lambda = mupEval(hparser);
+	printf("%lf %lf\n", run_time, non_hom_lambda);//more granularity on lambda values
+	if ((rand = drand48()) <= non_hom_lambda / lambda){
+	    event_times[i] = run_time;
+	    lambda_vals[i] = non_hom_lambda;
+	    ++i;
+	}
+    }
+    printf("\n\n");//for gnuplot separation of indices
+    for (i = 0; i < max && event_times[i] > 0; ++i){
+	printf("%lf %lf\n", event_times[i], lambda_vals[i]);
+    }
+
+    free(event_times);
+    free(lambda_vals);
+}
+
 /* THIS IS TEMPORARY homogenous lambda must be greater than the value of the non-homogenous function lambda(t) for all t <= time*/
 void generate_event_times_non_homogenous(muParserHandle_t hparser, double lambda, double time, int max_events, double* event_times, double* lambda_vals)
 {
     init_rand();
         
-    double run_time = 0.0, rand, nht, lm;
+    double run_time = 0.0, rand, non_h_lam, prob;
     int i = 0;
     mupDefineVar(hparser, "t", &run_time);
     
     while ((run_time += homogenous_time(lambda)) < time && i < max_events){
-	nht = mupEval(hparser);
-	lm = nht / lambda;
+	//printf("time: %lf\n", run_time);
+	//printf("runtime (%lf) > time (%lf): %d", run_time, time, run_time > time);
 	
-	if ((rand = drand48()) <= (lambda_vals[i] = lm)){
+	non_h_lam = mupEval(hparser);
+	prob = non_h_lam / lambda;
+
+	lambda_vals[i] = non_h_lam;
+		
+	if ((rand = drand48()) <= prob){
 	    event_times[i] = run_time;
 	    ++i;
 	}
