@@ -5,7 +5,6 @@
 int main(int argc, char *argv[])
 {
 
-    int i;
     int max = 100;
     
     double* event_times = malloc(max * sizeof(double));
@@ -25,9 +24,7 @@ int main(int argc, char *argv[])
     //generate_event_times_non_homogenous(hparser, 10, 10, max, event_times, lambda_vals);
     run_to_time_non_homogenous(hparser, 10.0, 100.0, event_times, lambda_vals, max);
     //run_to_event_limit_non_homogenous(hparser, 10.0, max, event_times, lambda_vals);
-    
-    
-   
+       
     return 0;
 }
 
@@ -101,8 +98,10 @@ void run_to_time_non_homogenous(muParserHandle_t hparser, double lambda, double 
 	} 
     }
     printf("\n\n");//for gnuplot index separation
-    for (i = 0; i < max && event_times[i] > 0; ++i){
-	printf("%lf %lf\n", event_times[i], lambda_vals[i]);
+    int j;
+    
+    for (j = 0; j < i && event_times[j] > 0; ++j){
+	printf("%lf %lf\n", event_times[j], lambda_vals[j]);
     }
 
     free(event_times);
@@ -130,45 +129,12 @@ void run_to_event_limit_non_homogenous(muParserHandle_t hparser, double lambda, 
 	}
     }
     printf("\n\n");//for gnuplot separation of indices
-    for (i = 0; i < max && event_times[i] > 0; ++i){
-	printf("%lf %lf\n", event_times[i], lambda_vals[i]);
+    int j;
+    
+    for (j = 0; j < i && event_times[j] > 0; ++j){
+	printf("%lf %lf\n", event_times[j], lambda_vals[j]);
     }
-
+    
     free(event_times);
     free(lambda_vals);
-}
-
-/* THIS IS TEMPORARY homogenous lambda must be greater than the value of the non-homogenous function lambda(t) for all t <= time*/
-void generate_event_times_non_homogenous(muParserHandle_t hparser, double lambda, double time, int max_events, double* event_times, double* lambda_vals)
-{
-    init_rand();
-        
-    double run_time = 0.0, rand, non_h_lam, prob;
-    int i = 0;
-    mupDefineVar(hparser, "t", &run_time);
-    
-    while ((run_time += homogenous_time(lambda)) < time && i < max_events){
-	//printf("time: %lf\n", run_time);
-	//printf("runtime (%lf) > time (%lf): %d", run_time, time, run_time > time);
-	
-	non_h_lam = mupEval(hparser);
-	prob = non_h_lam / lambda;
-
-	lambda_vals[i] = non_h_lam;
-		
-	if ((rand = drand48()) <= prob){
-	    event_times[i] = run_time;
-	    ++i;
-	}
-    }
-
-    if (i < max_events)
-	event_times[i] = -1.0;
-}
-
-/* calculates the probabilty of there being k events between time t_start and t_end. (for homogenous processes)*/
-double prob_num_events_in_time_span(double t_start, double t_end, double lambda, int k)
-{
-    double tau = t_end - t_start;
-    return (pow(M_E, -lambda * tau) * pow(lambda * tau, k)) / fact(k);
 }

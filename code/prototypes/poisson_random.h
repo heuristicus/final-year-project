@@ -5,22 +5,14 @@
 
 #include <muParserDLL.h>
 
-// pfunc.c
+// poisson_generator.c
 double homogenous_time(double lambda);
-double prob_num_events_in_time_span(double t_start, double t_end, double lambda, int k);
 void init_rand(void);
 double non_homogenous_time(double eqsolution);
 void generate_event_times_homogenous(double lambda, double time, int max_events, double* event_times);
-void generate_event_times_non_homogenous(muParserHandle_t hparser, double lambda, double time, int max_events, double* event_times, double* lambda_vals);
 void run_to_event_limit_non_homogenous(muParserHandle_t hparser, double lambda, int max_events, double* event_times, double* lambda_vals);
 void run_to_time_non_homogenous(muParserHandle_t hparser, double lambda, double max_time, double* event_times, double* lambda_vals, int arr_len);
 
 // math_functions.c
 long double fact(int i);
-
-// output_data.c
-void run_trials(int times_to_run, double lambda, double time_span);
-void print_num_events_in_second(int events_each_sec[], double time_run);
-void print_detailed(int events_each_sec[], double event_times[], double time_run, double lambda);
-int initialise(double lambda, double time_to_run);
-void print_event_times(double event_times[], int events, double lambda);
+double prob_num_events_in_time_span(double t_start, double t_end, double lambda, int k);
