@@ -36,7 +36,8 @@ int main(int argc, char *argv[])
 
     free(*eptr);
     free(*lptr);
-        
+    mupRelease(hparser);
+    
     return 0;
 }
 
