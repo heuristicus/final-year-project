@@ -7,9 +7,12 @@ int main(int argc, char *argv[])
 
     int max = 100;
     
-    double* event_times = malloc(max * sizeof(double));
-    double* lambda_vals = malloc(max * sizeof(double));
-
+    double *et = malloc(max * sizeof(double));
+    double *lv = malloc(max * sizeof(double));
+    
+    double** eptr = &et;
+    double** lptr = &lv;
+    
     muParserHandle_t hparser = mupCreate(0);
 
     char* eqn = "a-sin(alpha*t)";
@@ -22,9 +25,18 @@ int main(int argc, char *argv[])
     mupDefineVar(hparser, "alpha", &alpha);
 
     //generate_event_times_non_homogenous(hparser, 10, 10, max, event_times, lambda_vals);
-    run_to_time_non_homogenous(hparser, 100.0, 100.0, event_times, lambda_vals, max);
+    //run_to_time_non_homogenous(hparser, 100.0, 100.0, event_times, lambda_vals, max);
+    int size = run_to_time_non_homogenous(hparser, 100.0, 100.0, eptr, lptr, max);
     //run_to_event_limit_non_homogenous(hparser, 10.0, max, event_times, lambda_vals);
-       
+    int i;
+    
+    for (i = 0; i < size; ++i){
+	printf("%lf, %lf\n", eptr[0][i], lptr[0][i]);
+    }
+
+    free(*eptr);
+    free(*lptr);
+        
     return 0;
 }
 
@@ -64,8 +76,9 @@ void generate_event_times_homogenous(double lambda, double time, int max_events,
 /* runs a non-homogenous poisson process until the specified time has elapsed. 
    The event_times and lambda_vals array will be populated with the time of an event 
    and the result of evaluating lambda(t) at that time. Will attempt to reallocate 
-   memory for arrays if the number of events exceeds the size of arrays passed.*/
-void run_to_time_non_homogenous(muParserHandle_t hparser, double lambda, double max_time, double* event_times, double* lambda_vals, int arr_len)
+   memory for arrays if the number of events exceeds the size of arrays passed. 
+   returns the final array location in which there is something stored.*/
+int run_to_time_non_homogenous(muParserHandle_t hparser, double lambda, double max_time, double** event_times, double** lambda_vals, int arr_len)
 {
     init_rand();
     
@@ -76,14 +89,14 @@ void run_to_time_non_homogenous(muParserHandle_t hparser, double lambda, double 
     
     while ((run_time += homogenous_time(lambda)) < max_time){
 	non_hom_lambda = mupEval(hparser);
-	printf("%lf %lf\n", run_time, non_hom_lambda);//more granularity on lambda values
+	//printf("%lf %lf\n", run_time, non_hom_lambda);//more granularity on lambda values
 	if ((rand = drand48()) <= non_hom_lambda / lambda){
 	    // Number of events may exceed the number of array locations initally assigned
 	    // so may need to reallocate memory to store more.
 	    if (i >= arr_max){
 		//printf("array length %d exceeds initial max %d\n", i, arr_len);
-		event_times = realloc(event_times, i * 2 * sizeof(double)); // twice the original size.
-		lambda_vals = realloc(lambda_vals, i * 2 * sizeof(double)); // twice the original size.
+		*event_times = realloc(*event_times, i * 2 * sizeof(double)); // twice the original size.
+		*lambda_vals = realloc(*lambda_vals, i * 2 * sizeof(double)); // twice the original size.
 		if (!lambda_vals || !event_times){// exit if allocation failed.
 		    printf("Memory reallocation for arrays failed. Exiting.\n");
 		    exit(1);
@@ -91,23 +104,19 @@ void run_to_time_non_homogenous(muParserHandle_t hparser, double lambda, double 
 		arr_max = i * 2;
 
 	    }
-	    event_times[i] = run_time;
-	    lambda_vals[i] = non_hom_lambda;
+	    //printf("putting in arrays\n");
+	    event_times[0][i] = run_time;
+	    lambda_vals[0][i] = non_hom_lambda;
 	    ++i;
 	} 
     }
     printf("\n\n");//for gnuplot index separation
-    int j;
     
-    for (j = 0; j < i && event_times[j] > 0; ++j){
-	printf("%lf %lf\n", event_times[j], lambda_vals[j]);
-    }
+    return i;
     
-    /* this should be removed - need to have the arrays intact after operation */
-    free(event_times);
-    free(lambda_vals);
-          
 }
+
+
 
 /* runs a non-homogenous poisson process until the number of events specified have occurred. 
    The event_times and lambda_vals array will be populated with the time of an event 
