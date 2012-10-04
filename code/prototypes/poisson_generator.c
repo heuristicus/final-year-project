@@ -34,6 +34,13 @@ int main(int argc, char *argv[])
 	printf("%lf, %lf\n", eptr[0][i], lptr[0][i]);
     }
 
+    int *rolling = malloc(size * sizeof(int));
+    int roll_size = rolling_window(*eptr, size, 1.0, rolling);
+    
+    for (i = 0; i < roll_size; ++i){
+	//printf("%d\n", rolling[i]);
+    }
+
     free(*eptr);
     free(*lptr);
     mupRelease(hparser);
@@ -144,9 +151,8 @@ void run_to_event_limit_non_homogenous(muParserHandle_t hparser, double lambda, 
     printf("\n\n");//for gnuplot separation of indices
     int j;
     
-    for (j = 0; j < i && event_times[j] > 0; ++j){
+    for (j = 0; j < i && event_times[j] > 0; ++j)
 	printf("%lf %lf\n", event_times[j], lambda_vals[j]);
-    }
     
     /* this should be removed - need to have the arrays intact after operation */
     free(event_times);
