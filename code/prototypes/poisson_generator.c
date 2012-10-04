@@ -31,16 +31,22 @@ int main(int argc, char *argv[])
     int i;
     
     for (i = 0; i < size; ++i){
-	printf("%lf, %lf\n", eptr[0][i], lptr[0][i]);
+	//printf("%lf, %lf\n", eptr[0][i], lptr[0][i]);
     }
 
-    int *rolling = malloc(size * sizeof(int));
-    int roll_size = rolling_window(*eptr, size, 1.0, rolling);
+    double window_size = 2.0;
+    
+    int *rolling = malloc((size / window_size) * sizeof(int));
+    
+    int roll_size = rolling_window(*eptr, size, window_size, rolling);
+    printf("rsize %d\n", roll_size);
     
     for (i = 0; i < roll_size; ++i){
-	//printf("%d\n", rolling[i]);
+	printf("i am %d\n", i);
+	printf("%d\n", rolling[i]);
     }
-
+    
+    free(rolling);
     free(*eptr);
     free(*lptr);
     mupRelease(hparser);
