@@ -4,7 +4,7 @@ SOURCES=math_functions.c poisson_generator.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=poisson
 
-all: poisson
+all: poisson $(EXECUTABLE)
 
 poisson: $(OBJECTS)
 	$(CC) $(CFLAGS) $(SOURCES) -lm -lmuparser

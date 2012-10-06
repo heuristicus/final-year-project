@@ -1,4 +1,4 @@
-#include "poisson_random.h"
+#include "poisson.h"
 
 long double fact(int i)
 {

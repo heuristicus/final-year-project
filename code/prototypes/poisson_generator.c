@@ -1,4 +1,4 @@
-#include "poisson_random.h"
+#include "poisson.h"
 
 #define MAX_EQN_LEN 30 // equation length max 30 chars
 
@@ -15,10 +15,11 @@ int main(int argc, char *argv[])
     
     muParserHandle_t hparser = mupCreate(0);
 
-    char* eqn = "a-sin(alpha*t)";
+    char* eqn = "a-(b*sin(alpha*t)";
     
     mupSetExpr(hparser, eqn);
-    double a = 2, b = 5.0, alpha = 0.1;
+    
+    double a = 10.0, b = 5.0, alpha = 0.1;
     
     mupDefineVar(hparser, "a", &a);
     mupDefineVar(hparser, "b", &b);
@@ -26,24 +27,22 @@ int main(int argc, char *argv[])
 
     //generate_event_times_non_homogenous(hparser, 10, 10, max, event_times, lambda_vals);
     //run_to_time_non_homogenous(hparser, 100.0, 100.0, event_times, lambda_vals, max);
-    int size = run_to_time_non_homogenous(hparser, 100.0, 100.0, eptr, lptr, max);
+    int size = run_to_time_non_homogenous(hparser, 100.0, 1000.0, eptr, lptr, max);
     //run_to_event_limit_non_homogenous(hparser, 10.0, max, event_times, lambda_vals);
     int i;
     
     for (i = 0; i < size; ++i){
-	//printf("%lf, %lf\n", eptr[0][i], lptr[0][i]);
+	printf("%lf, %lf\n", eptr[0][i], lptr[0][i]);
     }
 
-    double window_size = 2.0;
+    printf("\n\n");
+    double window_size = 1.0;
     
-    int *rolling = malloc((size / window_size) * sizeof(int));
+    int *rolling = calloc((size / window_size), sizeof(int));
     
     int roll_size = rolling_window(*eptr, size, window_size, rolling);
-    printf("rsize %d\n", roll_size);
-    
     for (i = 0; i < roll_size; ++i){
-	printf("i am %d\n", i);
-	printf("%d\n", rolling[i]);
+	printf("%lf %d\n", window_size * i, rolling[i]);
     }
     
     free(rolling);
