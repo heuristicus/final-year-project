@@ -67,7 +67,7 @@ void run_events_nonhom(muParserHandle_t hparser, double lambda, int events, char
     double *lv = malloc(events * sizeof(double));
 
     run_to_event_limit_non_homogenous(hparser, 10.0, events, et, lv);
-    double_to_file(outfile, et, lv, events);
+    double_to_file(outfile, "w", et, lv, events);
 
 }
 

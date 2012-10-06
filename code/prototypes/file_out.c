@@ -13,7 +13,9 @@
 
 void double_to_file(char* filename, char* mode, double* arr1, double* arr2, int len)
 {
-    
+
+    FILE *fp;
+        
     if ((fp = fopen(filename, mode)) == NULL){
 	perror("Could not open file.");
 	exit(1);
