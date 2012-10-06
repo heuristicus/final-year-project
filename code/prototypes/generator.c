@@ -5,16 +5,24 @@
     
 int main(int argc, char *argv[])
 {
-
-    char* outfile = "test.dat";
+    char* outfile;
+    int freeflag = 0; // do we need to free outfile or not
+    
+    if (argc == 1){
+	outfile = generate_outfile();
+	printf("Using default output file %s\n", outfile);
+	freeflag = 1; // outfile is a pointer, so need to free it once we're done.
+    } else {
+	outfile = argv[1];
+    }
         
     muParserHandle_t hparser = mupCreate(0);
 
-    char* eqn = "a-(b*sin(alpha*t))";
+    char* eqn = "a-(b*sin(alpha*t))"; // check syntax is correct. Nothing to check if eqn is wrong.
     
     mupSetExpr(hparser, eqn);
     
-    double a = 10.0, b = 5.0, alpha = 0.1;
+    double a = 10.0, b = 5.0, alpha = 0.05;
     
     mupDefineVar(hparser, "a", &a);
     mupDefineVar(hparser, "b", &b);
@@ -23,10 +31,15 @@ int main(int argc, char *argv[])
     run_time_nonhom(hparser, 100.0, 100.0, outfile);
         
     mupRelease(hparser);
+    if (freeflag)
+	free(outfile);
     
     return 0;
 }
 
+/* Helper method to run a nonhomogenous process for a specific length of time. Allocates required memory
+   and prints output data to a file.
+*/
 void run_time_nonhom(muParserHandle_t hparser, double lambda, double runtime, char* outfile)
 {
     double *et = malloc(DEFAULT_ARR_SIZE * sizeof(double));
@@ -35,7 +48,7 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double runtime, ch
     double** eptr = &et;
     double** lptr = &lv;
     
-    int size = run_to_time_non_homogenous(hparser, 100.0, 1000.0, eptr, lptr, DEFAULT_ARR_SIZE);
+    int size = run_to_time_non_homogenous(hparser, 100.0, 500.0, eptr, lptr, DEFAULT_ARR_SIZE);
 
     int i;
     
@@ -61,6 +74,9 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double runtime, ch
 
 }
 
+/* Helper method to run a nonhomogenous process until a specific number of events have occurred. Allocates required memory
+   and prints output data to a file.
+*/
 void run_events_nonhom(muParserHandle_t hparser, double lambda, int events, char* outfile)
 {
     double *et = malloc(events * sizeof(double));
@@ -119,7 +135,7 @@ int run_to_time_non_homogenous(muParserHandle_t hparser, double lambda, double m
     
     while ((run_time += homogenous_time(lambda)) < max_time){
 	non_hom_lambda = mupEval(hparser);
-	//printf("%lf %lf\n", run_time, non_hom_lambda);//more granularity on lambda values
+	//printf("%lf %lf\n", run_time, non_hom_lambda);//more granularity on lambda values // get this into output file
 	if ((rand = drand48()) <= non_hom_lambda / lambda){
 	    // Number of events may exceed the number of array locations initally assigned
 	    // so may need to reallocate memory to store more.
@@ -161,7 +177,7 @@ void run_to_event_limit_non_homogenous(muParserHandle_t hparser, double lambda, 
     while (i < max_events){
 	run_time += homogenous_time(lambda);
 	non_hom_lambda = mupEval(hparser);
-	printf("%lf %lf\n", run_time, non_hom_lambda);//more granularity on lambda values
+	//printf("%lf %lf\n", run_time, non_hom_lambda);//more granularity on lambda values // get into the output file
 	if ((rand = drand48()) <= non_hom_lambda / lambda){
 	    event_times[i] = run_time;
 	    lambda_vals[i] = non_hom_lambda;

@@ -1,4 +1,7 @@
 #include "poisson.h"
+#include <time.h>
+
+#define MAX_DATE_LENGTH 26
 
 /* int main(int argc, char *argv[]) */
 /* { */
@@ -10,6 +13,23 @@
     
 /*     return 0; */
 /* } */
+
+
+char* generate_outfile()
+{
+    char* prefix = "poisson_output";
+    char* datetime = malloc(MAX_DATE_LENGTH * sizeof(char));
+    char* fname = malloc((MAX_DATE_LENGTH + strlen(prefix)) * sizeof(char));
+    time_t timer = time(NULL);
+    
+    strftime(datetime, MAX_DATE_LENGTH, "%d-%m-%Y_%H:%M:%S", localtime(&timer));
+    sprintf(fname, "%s_%s.dat", prefix, datetime);
+
+    free(datetime);
+    
+    return fname;
+        
+}
 
 void double_to_file(char* filename, char* mode, double* arr1, double* arr2, int len)
 {

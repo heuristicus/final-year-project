@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-Wall -g -I/usr/include/muParser
-SOURCES=math_functions.c poisson_generator.c file_out.c
+SOURCES=math_functions.c generator.c file_util.c
 LIBS=-lm -lmuparser
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=poisson
