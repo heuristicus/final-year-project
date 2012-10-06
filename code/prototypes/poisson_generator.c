@@ -1,21 +1,16 @@
 #include "poisson.h"
 
-#define MAX_EQN_LEN 30 // equation length max 30 chars
-
+#define DEFAULT_ARR_SIZE 50
+#define DEFAULT_WINDOW_SIZE 1.0
+    
 int main(int argc, char *argv[])
 {
 
-    int max = 100;
-    
-    double *et = malloc(max * sizeof(double));
-    double *lv = malloc(max * sizeof(double));
-    
-    double** eptr = &et;
-    double** lptr = &lv;
-    
+    char* outfile = "test.dat";
+        
     muParserHandle_t hparser = mupCreate(0);
 
-    char* eqn = "a-(b*sin(alpha*t)";
+    char* eqn = "a-(b*sin(alpha*t))";
     
     mupSetExpr(hparser, eqn);
     
@@ -24,35 +19,57 @@ int main(int argc, char *argv[])
     mupDefineVar(hparser, "a", &a);
     mupDefineVar(hparser, "b", &b);
     mupDefineVar(hparser, "alpha", &alpha);
-
-    //generate_event_times_non_homogenous(hparser, 10, 10, max, event_times, lambda_vals);
-    //run_to_time_non_homogenous(hparser, 100.0, 100.0, event_times, lambda_vals, max);
-    int size = run_to_time_non_homogenous(hparser, 100.0, 1000.0, eptr, lptr, max);
-    //run_to_event_limit_non_homogenous(hparser, 10.0, max, event_times, lambda_vals);
-    int i;
     
-    for (i = 0; i < size; ++i){
-	printf("%lf, %lf\n", eptr[0][i], lptr[0][i]);
-    }
-
-    printf("\n\n");
-    double window_size = 1.0;
-    
-    int *rolling = calloc((size / window_size), sizeof(int));
-    
-    int roll_size = rolling_window(*eptr, size, window_size, rolling);
-    for (i = 0; i < roll_size; ++i){
-	printf("%lf %d\n", window_size * i, rolling[i]);
-    }
-    
-    free(rolling);
-    free(*eptr);
-    free(*lptr);
+    run_time_nonhom(hparser, 100.0, 100.0, outfile);
+        
     mupRelease(hparser);
     
     return 0;
 }
 
+void run_time_nonhom(muParserHandle_t hparser, double lambda, double runtime, char* outfile)
+{
+    double *et = malloc(DEFAULT_ARR_SIZE * sizeof(double));
+    double *lv = malloc(DEFAULT_ARR_SIZE * sizeof(double));
+    
+    double** eptr = &et;
+    double** lptr = &lv;
+    
+    int size = run_to_time_non_homogenous(hparser, 100.0, 1000.0, eptr, lptr, DEFAULT_ARR_SIZE);
+
+    int i;
+    
+    double_to_file(outfile, "w", *eptr, *lptr, size);
+    
+    int nsize = size / DEFAULT_WINDOW_SIZE;
+            
+    int *rolling = calloc(nsize, sizeof(int));
+    int *ts = calloc(nsize, sizeof(int));
+    int roll_size = rolling_window(*eptr, size, DEFAULT_WINDOW_SIZE, rolling);
+    
+    for (i = 0; i < roll_size; ++i){
+    	ts[i] = DEFAULT_WINDOW_SIZE * i;
+    }
+    
+    int_to_file(outfile, "a", ts, rolling, roll_size);
+    
+    
+    free(ts);
+    free(rolling);
+    free(*eptr);
+    free(*lptr);
+
+}
+
+void run_events_nonhom(muParserHandle_t hparser, double lambda, int events, char* outfile)
+{
+    double *et = malloc(events * sizeof(double));
+    double *lv = malloc(events * sizeof(double));
+
+    run_to_event_limit_non_homogenous(hparser, 10.0, events, et, lv);
+    double_to_file(outfile, et, lv, events);
+
+}
 
 /* seeds the random variable to be used. Should only be called once per run (?). */
 void init_rand(void)
@@ -123,8 +140,6 @@ int run_to_time_non_homogenous(muParserHandle_t hparser, double lambda, double m
 	    ++i;
 	} 
     }
-    printf("\n\n");//for gnuplot index separation
-    
     return i;
     
 }

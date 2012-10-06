@@ -27,8 +27,8 @@ int rolling_window(double *event_times, int num_events, double timespan, int *ou
     for (i = 0, time = event_times[i]; i < num_events; ++i, time = event_times[i]){
 	while (time > timespan * (spanmult + 1))
 	    spanmult++;
-	printf("span %d, val %lf\n", spanmult, event_times[i]);
-	printf("output arr %d\n", output_array[spanmult]);
+	//printf("span %d, val %lf\n", spanmult, event_times[i]);
+	//printf("output arr %d\n", output_array[spanmult]);
 	output_array[spanmult]++;
 	
     }
