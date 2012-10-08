@@ -4,8 +4,6 @@
    initialises the list and returns a pointer to the start of the list */
 paramlist* init_list(char *param, char *val)
 {
-
-    printf("%s %s\n", param, val);
     paramlist *head = malloc(sizeof(paramlist));
     char *p = malloc(strlen(param) + 1);
     char *v = malloc(strlen(val) + 1);
@@ -28,9 +26,7 @@ paramlist* add(paramlist *head, char *param, char *value)
 
     strcpy(pname, param);
     strcpy(pval, value);
-                
-    printf("orginal: %s %s, copied: %s %s\n", param, value, pname, pval);
-
+    
     new->par = pname;
     new->val = pval;
     new->next = head;
@@ -63,6 +59,7 @@ void free_list(paramlist *head)
 	free(prev->val);
 	free(prev);
     }
+
 }
 
 /* Returns the length of the list.  */

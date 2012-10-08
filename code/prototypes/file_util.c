@@ -40,6 +40,7 @@ void get_parameters(char* filename)
     FILE *fp = fopen(filename, "r");
     
     char *line = malloc(MAX_PARAM_STRING_LENGTH * sizeof(char));
+    char *lp = line; // strtok messes around with pointers so keep reference to line.
     char *param;
     char *value;
 
@@ -54,13 +55,14 @@ void get_parameters(char* filename)
 	    plist = init_list(param, value);
 	else
 	    plist = add(plist, param, value);
-	
+
     }
         
     print_list(plist);
-    free(line);
     free_list(plist);
-    	
+    free(lp);
+    fclose(fp);
+            
 }
 
 void double_to_file(char* filename, char* mode, double* arr1, double* arr2, int len)
