@@ -3,6 +3,7 @@
 
 #define MAX_DATE_LENGTH 26
 #define MAX_PARAM_STRING_LENGTH 100
+#define PARAM_SEPARATOR ' '
 
 int main(int argc, char *argv[])
 {
@@ -35,65 +36,31 @@ char* generate_outfile()
  */
 void get_parameters(char* filename)
 {
-    char *line = malloc(MAX_PARAM_STRING_LENGTH * sizeof(char));
-    FILE *fp = fopen(filename, "r");
-    int pnamelen, pvallen, i, arrsize;
-
-    line = fgets(line, 10, fp);
-    arrsize = atoi(line);
-
-    if (arrsize == 0){
-	printf("Number of parameters in parameter file not provided. The first line of the file should be a single integer representing the number of parameters in the file.");
-	exit(1);
-    }
     
-    char **params = malloc(arrsize * sizeof(char*));
-    char **values = malloc(arrsize * sizeof(char*));
+    FILE *fp = fopen(filename, "r");
+    
+    char *line = malloc(MAX_PARAM_STRING_LENGTH * sizeof(char));
+    char *param;
+    char *value;
+
+    paramlist *plist = NULL; 
         
-    for (i = 0; (line = fgets(line, MAX_PARAM_STRING_LENGTH, fp)) != NULL; ++i){
-	// Attempt at dynamic allocation of parameter lists. Try again later?
-	/* if (i >= arrsize){ */
-	/*     char** tmp = malloc(arrsize * sizeof(char)); */
-	/*     char** tmp2 = malloc(arrsize * sizeof(char)); */
-	    	    
-	/*     for (j = 0; j < arrsize; ++j){ */
-	/* 	tmp[j] = malloc(strlen(params[j])); */
-	/* 	//tmp2[j] = malloc(strlen(values[j])); */
-
-	/* 	tmp[j] = params[j]; */
-	/* 	//tmp2[j] = values[j]; */
-	/*     } */
-	    
-	/*     params = realloc(params, arrsize * 2); */
-	/*     values = realloc(values, arrsize * 2); */
+    while ((line = fgets(line, MAX_PARAM_STRING_LENGTH, fp)) != NULL){
+	// WARNING: Do not use strtok on literals!
+	param = strtok(line, " ");
+	value = strtok(NULL, "\n");
 	
-	/*     for (j = 0; j < arrsize; ++j){ */
-	/* 	params[j] = tmp[j]; */
-	/* 	//values[j] = tmp2[j]; */
-	/*     } */
-	/*     arrsize *= 2; */
-	/*     params = tmp; */
-	/*     values = tmp2; */
-	    
-	/*     free(tmp); */
-	/*     free(tmp2); */
-	/* } */
-	pnamelen = strchr(line, ' ') - line;
-	params[i] = malloc(pnamelen * sizeof(char));
-	pvallen = strchr(line, '\0') - strchr(line, ' ');
-	values[i] = malloc(pvallen * sizeof(char));
+	if (plist == NULL)
+	    plist = init_list(param, value);
+	else
+	    plist = add(plist, param, value);
 	
-	strncpy(params[i], line, pnamelen);
-	strncpy(values[i], line + pnamelen + 1, pvallen);
-	
-	printf("%s\n", params[i]);
-	printf("%s\n", values[i]);
     }
-
-    free(params);
-    free(values);
+        
+    print_list(plist);
     free(line);
-        	
+    free_list(plist);
+    	
 }
 
 void double_to_file(char* filename, char* mode, double* arr1, double* arr2, int len)
