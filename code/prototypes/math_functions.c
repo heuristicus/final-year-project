@@ -19,14 +19,17 @@ double prob_num_events_in_time_span(double t_start, double t_end, double lambda,
    be wiped. Returns the last array location that contains a value. The array provided will be initialised
    with zeroes.
 */
-int rolling_window(double *event_times, int num_events, double timespan, int *output_array)
+int rolling_window(double *event_times, int num_events, double start_time, double timespan, int *output_array)
 {
     int i, spanmult = 0;
     double time;
 
     for (i = 0, time = event_times[i]; i < num_events; ++i, time = event_times[i]){
-	while (time > timespan * (spanmult + 1))
+	while (time > timespan * (spanmult + 1)){
+	    printf("time %lf---timespan %lf----spanmult %d\n", time, timespan, spanmult);
 	    spanmult++;
+	}
+	
 	//printf("span %d, val %lf\n", spanmult, event_times[i]);
 	//printf("output arr %d\n", output_array[spanmult]);
 	output_array[spanmult]++;

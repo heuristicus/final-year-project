@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     mupDefineVar(hparser, "alpha", &alpha);
     
     //run_time_nonhom(hparser, 100.0, 0.0, 100.0, outfile);
-    double time_delta[2] = {25.0, 50.0};
+    double time_delta[2] = {0.0, 15.0};
     run_time_nstreams(hparser, 100.0, 100.0, time_delta, 2, outfile);
     
     mupRelease(hparser);
@@ -53,23 +53,23 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time,
     int size = run_to_time_non_homogenous(hparser, lambda, start_time, runtime, eptr, lptr, DEFAULT_ARR_SIZE);
 
     int i;
-    
+    printf("exited\n");
     double_to_file(outfile, "a", *eptr, *lptr, size);
-    
+    printf("output to file\n");
     int nsize = size / DEFAULT_WINDOW_SIZE;
             
     int *rolling = calloc(nsize, sizeof(int));
-    int *ts = calloc(nsize, sizeof(int));
-    int roll_size = rolling_window(*eptr, size, DEFAULT_WINDOW_SIZE, rolling);
-    
+    int *time_steps = calloc(nsize, sizeof(int));
+    int roll_size = rolling_window(*eptr, size, start_time, DEFAULT_WINDOW_SIZE, rolling);
+    printf("calculated roll\n");
     for (i = 0; i < roll_size; ++i){
-    	ts[i] = DEFAULT_WINDOW_SIZE * i;
+    	time_steps[i] = DEFAULT_WINDOW_SIZE * i;
     }
     
-    int_to_file(outfile, "a", ts, rolling, roll_size);
+    int_to_file(outfile, "a", time_steps, rolling, roll_size);
     
     
-    free(ts);
+    free(time_steps);
     free(rolling);
     free(*eptr);
     free(*lptr);
@@ -79,17 +79,17 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time,
 /* 
  * Generates a series of streams, with a time delay between them. 
  * The time_delta array should contain the difference in time between 
- * each consecutive stream. For example, a time_delta of [25.0, 50.0] 
- * will start the first stream at time 25.0, and start the second 
- * stream at time 25.0 + runtime + 50.0. nstreams should contain the 
- * number of streams to generate, and doubles as the size of the
- * time_delta array.
+ * each consecutive stream. The values affect the result of evaluating
+ * the lambda function at each timestep. e.g. for a time_delta [10.0, 25.0]
+ * the value passed to the first stream's lambda function will be t + 10.0,
+ * and the second will be t + 25.0.
  */
 void run_time_nstreams(muParserHandle_t hparser, double lambda, double runtime, double *time_delta, int nstreams, char *outfile)
 {
     int i;
             
     for (i = 0; i < nstreams; ++i){
+	printf("%d\n", i);
 	run_time_nonhom(hparser, lambda, time_delta[i], runtime, outfile);
     }
 
@@ -157,16 +157,20 @@ void generate_event_times_homogenous(double lambda, double time, int max_events,
  * Returns the final array location in which there is something 
  * stored.
  */
-int run_to_time_non_homogenous(muParserHandle_t hparser, double lambda, double start_time, double time_to_run, double **event_times, double **lambda_vals, int arr_len)
+int run_to_time_non_homogenous(muParserHandle_t hparser, double lambda, double t_delta, double time_to_run, double **event_times, double **lambda_vals, int arr_len)
 {
     init_rand();
     
-    double run_time = start_time, end_time = time_to_run + start_time, rand, non_hom_lambda, arr_max = arr_len;
+    double run_time = 0,  end_time = time_to_run, arr_max = arr_len, func_in = run_time + t_delta;
+    double rand, non_hom_lambda, hom_out;
     int i = 0;
     
-    mupDefineVar(hparser, "t", &run_time);
+    mupDefineVar(hparser, "t", &func_in);
 
-    while ((run_time += homogenous_time(lambda)) < end_time){
+    while (run_time < end_time){
+	hom_out = homogenous_time(lambda);
+	run_time += hom_out;
+	func_in += hom_out;
 	non_hom_lambda = mupEval(hparser);
 	//printf("%lf %lf\n", run_time, non_hom_lambda);//more granularity on lambda values // get this into output file
 	if ((rand = drand48()) <= non_hom_lambda / lambda){
@@ -187,8 +191,10 @@ int run_to_time_non_homogenous(muParserHandle_t hparser, double lambda, double s
 	    event_times[0][i] = run_time;
 	    lambda_vals[0][i] = non_hom_lambda;
 	    ++i;
-	} 
+	}
+	
     }
+
     return i;
     
 }
@@ -201,17 +207,20 @@ int run_to_time_non_homogenous(muParserHandle_t hparser, double lambda, double s
  * will be populated with the time of an event and the result of 
  * evaluating lambda(t) at that time.
  */
-void run_to_event_limit_non_homogenous(muParserHandle_t hparser, double lambda, double start_time, int max_events, double *event_times, double *lambda_vals)
+void run_to_event_limit_non_homogenous(muParserHandle_t hparser, double lambda, double t_delta, int max_events, double *event_times, double *lambda_vals)
 {
     init_rand();
     
-    double run_time = start_time, rand, non_hom_lambda;
+    double run_time = 0, func_in = t_delta + run_time;
+    double rand, non_hom_lambda, hom_out;
     int i = 0;
     
-    mupDefineVar(hparser, "t", &run_time);
+    mupDefineVar(hparser, "t", &func_in);
     
     while (i < max_events){
-	run_time += homogenous_time(lambda);
+	hom_out = homogenous_time(lambda);
+	run_time += hom_out;
+	func_in += hom_out;
 	non_hom_lambda = mupEval(hparser);
 	//printf("%lf %lf\n", run_time, non_hom_lambda);//more granularity on lambda values // get into the output file
 	if ((rand = drand48()) <= non_hom_lambda / lambda){

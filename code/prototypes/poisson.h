@@ -19,7 +19,7 @@ void run_time_nstreams(muParserHandle_t hparser, double lambda, double runtime, 
 // math_functions.c
 long double fact(int i);
 double prob_num_events_in_time_span(double t_start, double t_end, double lambda, int k);
-int rolling_window(double *event_times, int num_events, double timespan, int *output_array);
+int rolling_window(double *event_times, int num_events, double start_time, double timespan, int *output_array);
 
 // file_out.c
 void standard_out(char filename, void *arr1, void *arr2, int len, char *arrtype);
