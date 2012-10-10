@@ -5,13 +5,13 @@
 #define MAX_PARAM_STRING_LENGTH 100
 #define PARAM_SEPARATOR ' '
 
-int main(int argc, char *argv[])
-{
+/* int main(int argc, char *argv[]) */
+/* { */
 
-    get_parameters("params.txt");
+/*     get_parameters("params.txt"); */
         
-    return 0;
-}
+/*     return 0; */
+/* } */
 
 
 char* generate_outfile()
