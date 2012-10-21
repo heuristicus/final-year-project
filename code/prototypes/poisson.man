@@ -1,0 +1,28 @@
+.TH poisson 1 LOCAL
+
+.SH NAME
+
+poisson - Generate times using a poisson process.
+
+.SH SYNOPSIS
+
+.B ./poisson [options]
+
+.SH DESCRIPTION
+
+Generates photon events.
+
+.SH OPTIONS
+.TP 5
+-o
+Specify the file to output to. Will create the file if it does not exist.
+.TP
+-p
+Specify a parameter file to read from. This should be a file where each line is of the format [varname] [varvalue].
+.TP
+-n
+Number of event streams to generate.
+
+.SH AUTHOR
+
+Michal Staniaszek
