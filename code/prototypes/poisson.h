@@ -24,7 +24,7 @@ char** parse_args(int argc, char *argv[]);
 int valid(char *sw);
 void handle_arg(char *sw, char **args, char *arg);
 
-// poisson_generator.c
+// generator.c
 double homogenous_time(double lambda);
 void init_rand(void);
 void generate_event_times_homogenous(double lambda, double time, int max_events, double *event_times);
@@ -33,6 +33,7 @@ int run_to_time_non_homogenous(muParserHandle_t hparser, double lambda, double s
 void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time, double runtime, char *outfile);
 void run_events_nonhom(muParserHandle_t hparser, double lambda, double start_time, int events, char *outfile);
 void run_time_nstreams(muParserHandle_t hparser, double lambda, double runtime, double *time_delta, int nstreams, char *outfile);
+void initialise_generator(char **args);
 
 // math_functions.c
 long double fact(int i);

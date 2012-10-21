@@ -9,6 +9,8 @@ int main(int argc, char *argv[])
 
     char **args = parse_args(argc, argv);
     
+    initialise_generator(args);
+    
     free(args);
     
     return 0;
@@ -17,8 +19,14 @@ int main(int argc, char *argv[])
 char** parse_args(int argc, char *argv[])
 {
     int i;
-    char **switches = malloc(argc/2 * sizeof(char*));
-    char **args = malloc(argc/2 * sizeof(char*));
+    char **switches = malloc((argc/2) * sizeof(char*));
+    // always need the same size of array so that we can check which args we have.
+    char **args = calloc(sizeof(valid_switches), sizeof(char*));
+
+    if (argc < 2){
+	printf("You must at least provide a parameter file.\nTry `%s --help' for more information.\n", argv[0]);
+	exit(1);
+    }
         
     if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0){
 	printf("usage: %s [-o output_file] [-p param_file] [-n number_of_streams]\n", argv[0]);

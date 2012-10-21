@@ -3,40 +3,72 @@
 #define DEFAULT_ARR_SIZE 50
 #define DEFAULT_WINDOW_SIZE 1.0
     
-int main(int argc, char *argv[])
-{
-    char *outfile;
-    int freeflag = 0; // do we need to free outfile or not
+/* int main(int argc, char *argv[]) */
+/* { */
+/*     char *outfile; */
+/*     int freeflag = 0; // do we need to free outfile or not */
     
-    if (argc == 1){
-	outfile = generate_outfile();
-	printf("Using default output file %s\n", outfile);
-	freeflag = 1; // outfile is a pointer, so need to free it once we're done.
-    } else {
-	outfile = argv[1];
-    }
+/*     if (argc == 1){ */
+/* 	outfile = generate_outfile(); */
+/* 	printf("Using default output file %s\n", outfile); */
+/* 	freeflag = 1; // outfile is a pointer, so need to free it once we're done. */
+/*     } else { */
+/* 	outfile = argv[1]; */
+/*     } */
         
-    muParserHandle_t hparser = mupCreate(0);
+/*     muParserHandle_t hparser = mupCreate(0); */
 
-    char *eqn = "a-(b*sin(alpha*t))"; // check syntax is correct. Nothing to check if eqn is wrong.
+/*     char *eqn = "a-(b*sin(alpha*t))"; // check syntax is correct. Nothing to check if eqn is wrong. */
     
-    mupSetExpr(hparser, eqn);
+/*     mupSetExpr(hparser, eqn); */
     
-    double a = 10.0, b = 5.0, alpha = 0.05;
+/*     double a = 10.0, b = 5.0, alpha = 0.05; */
     
-    mupDefineVar(hparser, "a", &a);
-    mupDefineVar(hparser, "b", &b);
-    mupDefineVar(hparser, "alpha", &alpha);
+/*     mupDefineVar(hparser, "a", &a); */
+/*     mupDefineVar(hparser, "b", &b); */
+/*     mupDefineVar(hparser, "alpha", &alpha); */
     
-    //run_time_nonhom(hparser, 100.0, 0.0, 100.0, outfile);
-    double time_delta[2] = {0.0, 15.0};
-    run_time_nstreams(hparser, 100.0, 100.0, time_delta, 2, outfile);
+/*     //run_time_nonhom(hparser, 100.0, 0.0, 100.0, outfile); */
+/*     double time_delta[2] = {0.0, 15.0}; */
+/*     run_time_nstreams(hparser, 100.0, 100.0, time_delta, 2, outfile); */
     
-    mupRelease(hparser);
-    if (freeflag)
-	free(outfile);
+/*     mupRelease(hparser); */
+/*     if (freeflag) */
+/* 	free(outfile); */
     
-    return 0;
+/*     return 0; */
+/* } */
+
+/*
+ * Initialises the generator with some values specified by the arguments passed to the program,
+ * and those that are contained in the parameter file, if there is one (there should be).
+ * The order in which the arguments are is defined inside start.c
+ */
+void initialise_generator(char **args)
+{
+    int i;
+    char *outfile = NULL;
+    char *paramfile = NULL;
+    paramlist *params = NULL;
+    
+    int nruns;
+        
+    for (i = 0; i <= sizeof(args)/sizeof(char*); ++i){
+	if (args[i] == NULL)
+	    continue;
+	
+	if (i == 0)
+	    outfile = args[i];
+	if (i == 1)
+	    paramfile = args[i];
+	if (i == 2)
+	    nruns = args[i];
+    }
+    
+    if (paramfile != NULL){
+	paramlist = get_parameters(paramfile);
+    }
+
 }
 
 /* Helper method to run a nonhomogenous process for a specific length
