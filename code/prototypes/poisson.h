@@ -18,6 +18,7 @@ paramlist *add(paramlist *head, char *pname, char *pval);
 void print_list(paramlist *head);
 void free_list(paramlist *head);
 int length(paramlist *head);
+paramlist* get_param(paramlist *head, char *param_name);
 
 // start.c
 char** parse_args(int argc, char *argv[]);
@@ -40,11 +41,11 @@ long double fact(int i);
 double prob_num_events_in_time_span(double t_start, double t_end, double lambda, int k);
 int rolling_window(double *event_times, int num_events, double start_time, double timespan, int *output_array);
 
-// file_out.c
+// file_util.c
 void standard_out(char filename, void *arr1, void *arr2, int len, char *arrtype);
 void double_to_file(char *filename, char *mode, double *arr1, double *arr2, int len);
 void int_to_file(char *filename, char *mode, int *arr1, int *arr2, int len);
 char *generate_outfile();
 paramlist *get_parameters(char *filename);
-
+int valid_param(char *pname);
 

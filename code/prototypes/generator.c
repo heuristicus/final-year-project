@@ -46,13 +46,11 @@
  */
 void initialise_generator(char **args)
 {
-    int i;
+    int i, nruns;
     char *outfile = NULL;
     char *paramfile = NULL;
     paramlist *params = NULL;
     
-    int nruns;
-        
     for (i = 0; i <= sizeof(args)/sizeof(char*); ++i){
 	if (args[i] == NULL)
 	    continue;
@@ -62,13 +60,36 @@ void initialise_generator(char **args)
 	if (i == 1)
 	    paramfile = args[i];
 	if (i == 2)
-	    nruns = args[i];
+	    nruns = atoi(args[i]);
     }
     
     if (paramfile != NULL){
-	paramlist = get_parameters(paramfile);
+	params = get_parameters(paramfile);
     }
 
+    paramlist *pl = get_param(params, "outfile");
+    if (pl == NULL && outfile == NULL){
+	printf("No parameter for the output file found in the parameters file or command line arguments. Exiting.\n");
+	free_list(params);
+	return;
+    } else if (pl != NULL && outfile != NULL){
+	printf("Output file found in both parameter file and command line arguments.\n");
+	int u = -1;
+	while (u < 0 || u > 1){
+	    printf("To use the file %s, enter 1. To use the file %s, enter 0.\n", pl->val, outfile);
+	    scanf("%d", &u);
+	}
+	
+	if (u == 1){
+	    outfile = pl->val;
+	}
+    } else if (outfile == NULL){
+	outfile = pl->val;
+    }
+    
+    printf("Will output to %s\n", outfile);
+        
+    free_list(params);
 }
 
 /* Helper method to run a nonhomogenous process for a specific length

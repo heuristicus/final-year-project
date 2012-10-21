@@ -55,6 +55,11 @@ paramlist* get_parameters(char* filename)
 
     while ((line = fgets(line, MAX_PARAM_STRING_LENGTH, fp)) != NULL){
 	// WARNING: Do not use strtok on literals!
+	if (!valid_param(line)){
+	    printf("Invalid parameter: %s\n", line);
+	    continue;
+	}
+
 	param = strtok(line, " ");
 	value = strtok(NULL, "\n");
 	
@@ -70,6 +75,30 @@ paramlist* get_parameters(char* filename)
 
     return plist;
                 
+}
+
+int valid_param(char *pname)
+{
+    int spacecount;
+    
+    for (spacecount = 0; *pname != '\0'; ++pname){
+	// 10 is the backspace character - seems to come up from time to time
+	if ((32 < *pname && 126 > *pname) || *pname == 10)
+	    continue;
+	else if (*pname == 32)
+	    spacecount++;
+	else
+	    printf("invalid char %d\n", *pname);
+	
+	if (spacecount > 1)
+	    return 0;
+    }
+    
+    if (spacecount != 1)
+	return 0;
+    
+    return 1;
+    
 }
 
 void double_to_file(char* filename, char* mode, double* arr1, double* arr2, int len)

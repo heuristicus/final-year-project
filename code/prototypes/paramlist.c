@@ -45,6 +45,19 @@ void print_list(paramlist *head)
     }
 }
 
+paramlist* get_param(paramlist *head, char *param_name)
+{
+    paramlist *cur = head;
+    
+    while(cur != NULL){
+	if (strcmp(cur->par, param_name) == 0)
+	    return cur;
+	cur = cur->next;
+    }
+    
+    return NULL;
+}
+
 /* Goes through the list, freeing all allocated memory. */
 void free_list(paramlist *head)
 {
@@ -54,7 +67,6 @@ void free_list(paramlist *head)
     while (cur != NULL){
 	prev = cur;
 	cur = cur->next;
-	printf("freeing %s, %s\n", prev->par, prev->val);
 	free(prev->par);
 	free(prev->val);
 	free(prev);
@@ -69,6 +81,5 @@ int length(paramlist* head)
 
     for (len = 0; head != NULL; ++len, head = head->next);
     
-
     return len;
 }
