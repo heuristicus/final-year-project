@@ -46,7 +46,7 @@
  */
 void initialise_generator(char **args)
 {
-    int i, nruns;
+    int i, nruns = 1;
     char *outfile = NULL;
     char *paramfile = NULL;
     paramlist *params = NULL;
@@ -67,29 +67,49 @@ void initialise_generator(char **args)
 	params = get_parameters(paramfile);
     }
 
-    paramlist *pl = get_param(params, "outfile");
-    if (pl == NULL && outfile == NULL){
-	printf("No parameter for the output file found in the parameters file or command line arguments. Exiting.\n");
-	free_list(params);
+    if ((outfile = select_output_file(outfile, get_param(params, "outfile"))) == NULL){
+	free(params);
 	return;
-    } else if (pl != NULL && outfile != NULL){
+    }
+    
+        
+    free_list(params);
+}
+
+/*
+ * Selects an output file. Will prompt user if there is a file specified in both the command line
+ * and in the parameter file.
+ */
+char* select_output_file(char* cur_out, paramlist *param)
+{
+    char* outfile;
+    
+    if (param == NULL && cur_out == NULL){
+	printf("No parameter for the output file found in the parameters file or command line arguments. Exiting.\n");
+	return NULL;
+    } else if (param != NULL && cur_out != NULL){
 	printf("Output file found in both parameter file and command line arguments.\n");
 	int u = -1;
 	while (u < 0 || u > 1){
-	    printf("To use the file %s, enter 1. To use the file %s, enter 0.\n", pl->val, outfile);
+	    printf("To use the file %s, enter 1. To use the file %s, enter 0.\n", param->val, cur_out);
 	    scanf("%d", &u);
 	}
-	
+
 	if (u == 1){
-	    outfile = pl->val;
+	    outfile = param->val;
+	} else {
+	    outfile = cur_out;
 	}
-    } else if (outfile == NULL){
-	outfile = pl->val;
+    } else if (cur_out == NULL){
+	outfile = param->val;
+    } else {
+	outfile = cur_out;
     }
     
     printf("Will output to %s\n", outfile);
+
+    return outfile;
         
-    free_list(params);
 }
 
 /* Helper method to run a nonhomogenous process for a specific length

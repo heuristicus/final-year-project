@@ -77,6 +77,9 @@ paramlist* get_parameters(char* filename)
                 
 }
 
+/*
+ * Checks whether a line received from the parameter file is valid.
+ */
 int valid_param(char *pname)
 {
     int spacecount;
@@ -101,6 +104,9 @@ int valid_param(char *pname)
     
 }
 
+/*
+ * Writes two arrays of doubles to the specified file.
+ */
 void double_to_file(char* filename, char* mode, double* arr1, double* arr2, int len)
 {
 
@@ -123,6 +129,9 @@ void double_to_file(char* filename, char* mode, double* arr1, double* arr2, int 
     
 }
 
+/*
+ * Writes two arrays of integers to the specified file.
+ */
 void int_to_file(char* filename, char* mode, int* arr1, int* arr2, int len)
 {
     FILE *fp;

@@ -48,4 +48,5 @@ void int_to_file(char *filename, char *mode, int *arr1, int *arr2, int len);
 char *generate_outfile();
 paramlist *get_parameters(char *filename);
 int valid_param(char *pname);
+char* select_output_file(char* cur_out, paramlist *param);
 

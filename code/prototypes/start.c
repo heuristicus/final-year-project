@@ -25,6 +25,8 @@ char** parse_args(int argc, char *argv[])
 
     if (argc < 2){
 	printf("You must at least provide a parameter file.\nTry `%s --help' for more information.\n", argv[0]);
+	free(switches);
+	free(args);
 	exit(1);
     }
         
@@ -38,6 +40,8 @@ char** parse_args(int argc, char *argv[])
 	} else { // check switches
 	    if (!valid(argv[i])){
 		printf("%s: invalid option %s.\nTry `%s --help' for more information.\n", argv[0], argv[i], argv[0]);
+		free(switches);
+		free(args);
 		exit(1);
 	    }
 	    switches[i / 2] = argv[i]; // switches are every second argument
