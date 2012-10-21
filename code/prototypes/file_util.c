@@ -7,13 +7,20 @@
 
 /* int main(int argc, char *argv[]) */
 /* { */
-
-/*     get_parameters("params.txt"); */
+/*     paramlist *p; */
+    
+/*     p = get_parameters("params.txt"); */
         
+/*     print_list(p); */
+/*     free_list(p); */
+    
 /*     return 0; */
 /* } */
 
 
+/* 
+ * Creates a filename to use for data output.
+ */
 char* generate_outfile()
 {
     char* prefix = "poisson_output";
@@ -30,13 +37,13 @@ char* generate_outfile()
         
 }
 
+
 /* 
  * Gets parameters from a file. The first line of the parameter file should be an
  * integer representing the number of parameters to be read in.
  */
-void get_parameters(char* filename)
+paramlist* get_parameters(char* filename)
 {
-    
     FILE *fp = fopen(filename, "r");
     
     char *line = malloc(MAX_PARAM_STRING_LENGTH * sizeof(char));
@@ -44,8 +51,8 @@ void get_parameters(char* filename)
     char *param;
     char *value;
 
-    paramlist *plist = NULL; 
-        
+    paramlist *plist = NULL;
+
     while ((line = fgets(line, MAX_PARAM_STRING_LENGTH, fp)) != NULL){
 	// WARNING: Do not use strtok on literals!
 	param = strtok(line, " ");
@@ -58,11 +65,11 @@ void get_parameters(char* filename)
 
     }
         
-    print_list(plist);
-    free_list(plist);
     free(lp);
     fclose(fp);
-            
+
+    return plist;
+                
 }
 
 void double_to_file(char* filename, char* mode, double* arr1, double* arr2, int len)

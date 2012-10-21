@@ -16,9 +16,8 @@ double prob_num_events_in_time_span(double t_start, double t_end, double lambda,
 }
 
 /* Outputs the sum of events in a specific time period to the array provided. The contents of the array will
-   be wiped. Returns the last array location that contains a value. The array provided will be initialised
-   with zeroes.
-*/
+ * be wiped. Returns the last array location that contains a value.
+ */
 int rolling_window(double *event_times, int num_events, double start_time, double timespan, int *output_array)
 {
     int i, spanmult = 0;
@@ -26,7 +25,6 @@ int rolling_window(double *event_times, int num_events, double start_time, doubl
 
     for (i = 0, time = event_times[i]; i < num_events; ++i, time = event_times[i]){
 	while (time > timespan * (spanmult + 1)){
-	    printf("time %lf---timespan %lf----spanmult %d\n", time, timespan, spanmult);
 	    spanmult++;
 	}
 	

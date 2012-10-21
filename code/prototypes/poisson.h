@@ -3,8 +3,26 @@
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <muParserDLL.h>
+
+// paramlist.c
+struct paramlist 
+{
+    char *par;
+    char *val;
+    struct paramlist *next;
+};
+typedef struct paramlist paramlist;
+paramlist *init_list(char *param, char *val);
+paramlist *add(paramlist *head, char *pname, char *pval);
+void print_list(paramlist *head);
+void free_list(paramlist *head);
+int length(paramlist *head);
+
+// start.c
+char** parse_args(int argc, char *argv[]);
+int valid(char *sw);
+void handle_arg(char *sw, char **args, char *arg);
 
 // poisson_generator.c
 double homogenous_time(double lambda);
@@ -26,18 +44,6 @@ void standard_out(char filename, void *arr1, void *arr2, int len, char *arrtype)
 void double_to_file(char *filename, char *mode, double *arr1, double *arr2, int len);
 void int_to_file(char *filename, char *mode, int *arr1, int *arr2, int len);
 char *generate_outfile();
-void get_parameters(char *filename);
+paramlist *get_parameters(char *filename);
 
-// paramlist.c
-struct paramlist 
-{
-    char *par;
-    char *val;
-    struct paramlist *next;
-};
-typedef struct paramlist paramlist;
-paramlist *init_list(char *param, char *val);
-paramlist *add(paramlist *head, char *pname, char *pval);
-void print_list(paramlist *head);
-void free_list(paramlist *head);
-int length(paramlist *head);
+
