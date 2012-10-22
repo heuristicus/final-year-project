@@ -9,4 +9,8 @@ int rolling_window(double *event_times, int num_events, double start_time, doubl
 // estimatorIWLS.c
 double** get_subintervals(double time, int subintervals);
 void free_pointer_arr(void **arr, int length);
+double get_interval_midpoint(int interval_number, double time, int subintervals);
+
+// util.c
+void free_pointer_arr(void **arr, int length);
 
