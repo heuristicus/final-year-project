@@ -1,4 +1,5 @@
 #include "poisson.h"
+#include "estimator.h"
 
 long double fact(int i)
 {
