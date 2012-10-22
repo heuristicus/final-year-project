@@ -1,19 +1,31 @@
 CC=gcc
+GEN_EXEC=generator
+EST_EXEC=estimator
 CFLAGS=-Wall -g -I/usr/include/muParser
-P_SOURCES=math_functions.c generator.c file_util.c paramlist.c start.c
-E_SOURCES=estimatorIWLS.c util.c math_functions.c
+SRCDIR=./src/
+BUILDDIR=./build/
+LIBDIR=./lib/
 LIBS=-lm -lmuparser
-P_OBJECTS=$(P_SOURCES:.c=.o)
-E_OBJECTS=$(E_SOURCES:.c=.o)
-GENERATOR=generator
-ESTIMATOR=estimator
+
+GEN_SRC=math_functions.c generator.c file_util.c paramlist.c start.c
+EST_SRC=estimatorIWLS.c util.c math_functions.c
+
+GEN_OBJECTS=$(PSRC:.c=.o)
+EST_OBJECTS=$(ESRC:.c=.o)
+
+# Append the directory to the filenames
+C_GEN_SRC=$(addprefix $(SRCDIR),$(GEN_SRC))
+C_EST_SRC=$(addprefix $(SRCDIR),$(EST_SRC))
+C_GEN_OBJECTS=$(addprefix $(BUILDDIR),$(GEN_OBJECTS))
+C_EST_OBJECTS=$(addprefix $(BUILDDIR),$(EST_OBJECTS))
 
 all: generator estimator
 
-generator: $(P_OBJECTS)
-	$(CC) $(CFLAGS) $(P_SOURCES) $(LIBS) -o $(GENERATOR)
+generator: $(GEN_OBJECTS)
+	$(CC) $(CFLAGS) $(C_GEN_SRC) $(LIBS) -o $(GEN_EXEC) -I$(LIBDIR)
 
-estimator: $(E_OBJECTS)
-	$(CC) $(CFLAGS) $(E_SOURCES) $(LIBS) -o $(ESTIMATOR)
+estimator: $(EST_OBJECTS)
+	$(CC) $(CFLAGS) $(C_EST_SRC) $(LIBS) -o $(EST_EXEC) -I$(LIBDIR)
+
 clean:
-	rm -rf $(E_OBJECTS) $(P_OBJECTS) $(GENERATOR) $(ESTIMATOR)
+	rm -rf $(C_EST_OBJECTS) $(C_GEN_OBJECTS) $(GEN_EXEC) $(EST_EXEC)
