@@ -2,42 +2,6 @@
 
 #define DEFAULT_ARR_SIZE 50
 #define DEFAULT_WINDOW_SIZE 1.0
-    
-/* int main(int argc, char *argv[]) */
-/* { */
-/*     char *outfile; */
-/*     int freeflag = 0; // do we need to free outfile or not */
-    
-/*     if (argc == 1){ */
-/* 	outfile = generate_outfile(); */
-/* 	printf("Using default output file %s\n", outfile); */
-/* 	freeflag = 1; // outfile is a pointer, so need to free it once we're done. */
-/*     } else { */
-/* 	outfile = argv[1]; */
-/*     } */
-        
-/*     muParserHandle_t hparser = mupCreate(0); */
-
-/*     char *eqn = "a-(b*sin(alpha*t))"; // check syntax is correct. Nothing to check if eqn is wrong. */
-    
-/*     mupSetExpr(hparser, eqn); */
-    
-/*     double a = 10.0, b = 5.0, alpha = 0.05; */
-    
-/*     mupDefineVar(hparser, "a", &a); */
-/*     mupDefineVar(hparser, "b", &b); */
-/*     mupDefineVar(hparser, "alpha", &alpha); */
-    
-/*     //run_time_nonhom(hparser, 100.0, 0.0, 100.0, outfile); */
-/*     double time_delta[2] = {0.0, 15.0}; */
-/*     run_time_nstreams(hparser, 100.0, 100.0, time_delta, 2, outfile); */
-    
-/*     mupRelease(hparser); */
-/*     if (freeflag) */
-/* 	free(outfile); */
-    
-/*     return 0; */
-/* } */
 
 /*
  * Initialises the generator with some values specified by the arguments passed to the program,
@@ -78,7 +42,25 @@ void initialise_generator(char **args)
 	nruns = atoi(tmp);
         
     printf("number of runs: %d\n", nruns);
-        
+
+    muParserHandle_t hparser = mupCreate(0);
+
+    char *eqn = "a-(b*sin(alpha*t))"; // check syntax is correct. Nothing to check if eqn is wrong.
+    
+    mupSetExpr(hparser, eqn);
+    
+    double a = 10.0, b = 5.0, alpha = 0.05;
+    
+    mupDefineVar(hparser, "a", &a);
+    mupDefineVar(hparser, "b", &b);
+    mupDefineVar(hparser, "alpha", &alpha);
+    
+    //run_time_nonhom(hparser, 100.0, 0.0, 100.0, outfile);
+    double time_delta[2] = {0.0, 15.0};
+    run_time_nstreams(hparser, 100.0, 100.0, time_delta, 2, outfile);
+    
+    mupRelease(hparser);
+    
     free_list(params);
 }
 
@@ -91,8 +73,8 @@ char* select_output_file(char* cur_out, char* param_out)
     char* outfile;
     
     if (param_out == NULL && cur_out == NULL){
-	printf("No parameter for the output file found in the parameters file or command line arguments. Exiting.\n");
-	return NULL;
+	printf("No parameter for the output file found in the parameters file or command line arguments. Auto-generating...\n");
+	outfile = generate_outfile();
     } else if (param_out != NULL && cur_out != NULL){
 	printf("Output file found in both parameter file and command line arguments.\n");
 	int u = -1;
@@ -167,7 +149,7 @@ void run_time_nstreams(muParserHandle_t hparser, double lambda, double runtime, 
 {
     int i;
             
-    for (i = 0; i < nstreams; ++i){
+    for (i = 1; i < nstreams; ++i){
 	printf("%d\n", i);
 	run_time_nonhom(hparser, lambda, time_delta[i], runtime, outfile);
     }

@@ -23,7 +23,7 @@
  */
 char* generate_outfile()
 {
-    char* prefix = "poisson_output";
+    char* prefix = "output_poisson";
     char* datetime = malloc(MAX_DATE_LENGTH * sizeof(char));
     char* fname = malloc((MAX_DATE_LENGTH + strlen(prefix)) * sizeof(char));
     time_t timer = time(NULL);

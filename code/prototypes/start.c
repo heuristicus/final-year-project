@@ -23,13 +23,19 @@ char** parse_args(int argc, char *argv[])
     // always need the same size of array so that we can check which args we have.
     char **args = calloc(sizeof(valid_switches), sizeof(char*));
 
-    if (argc < 2){
-	printf("You must at least provide a parameter file.\nTry `%s --help' for more information.\n", argv[0]);
+    /* if (argc < 2){ */
+    /* 	printf("You must at least provide a parameter file.\nTry `%s --help' for more information.\n", argv[0]); */
+    /* 	free(switches); */
+    /* 	free(args); */
+    /* 	exit(1); */
+    /* } */
+
+    if (argc == 1){
 	free(switches);
-	free(args);
-	exit(1);
+	return args;
     }
-        
+    
+            
     if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0){
 	printf("usage: %s [-o output_file] [-p param_file] [-n number_of_streams]\n", argv[0]);
     }
