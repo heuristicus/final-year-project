@@ -50,7 +50,8 @@ void initialise_generator(char **args)
     char *outfile = NULL;
     char *paramfile = NULL;
     paramlist *params = NULL;
-    
+    char *tmp;
+        
     for (i = 0; i <= sizeof(args)/sizeof(char*); ++i){
 	if (args[i] == NULL)
 	    continue;
@@ -67,11 +68,16 @@ void initialise_generator(char **args)
 	params = get_parameters(paramfile);
     }
 
-    if ((outfile = select_output_file(outfile, get_param(params, "outfile"))) == NULL){
+    if ((outfile = select_output_file(outfile, get_param_val(params, "outfile"))) == NULL){
 	free(params);
 	return;
     }
     
+
+    if ((tmp = get_param_val(params, "nruns")) != NULL)
+	nruns = atoi(tmp);
+        
+    printf("number of runs: %d\n", nruns);
         
     free_list(params);
 }
@@ -80,28 +86,28 @@ void initialise_generator(char **args)
  * Selects an output file. Will prompt user if there is a file specified in both the command line
  * and in the parameter file.
  */
-char* select_output_file(char* cur_out, paramlist *param)
+char* select_output_file(char* cur_out, char* param_out)
 {
     char* outfile;
     
-    if (param == NULL && cur_out == NULL){
+    if (param_out == NULL && cur_out == NULL){
 	printf("No parameter for the output file found in the parameters file or command line arguments. Exiting.\n");
 	return NULL;
-    } else if (param != NULL && cur_out != NULL){
+    } else if (param_out != NULL && cur_out != NULL){
 	printf("Output file found in both parameter file and command line arguments.\n");
 	int u = -1;
 	while (u < 0 || u > 1){
-	    printf("To use the file %s, enter 1. To use the file %s, enter 0.\n", param->val, cur_out);
+	    printf("To use the file %s, enter 1. To use the file %s, enter 0.\n", param_out, cur_out);
 	    scanf("%d", &u);
 	}
 
 	if (u == 1){
-	    outfile = param->val;
+	    outfile = param_out;
 	} else {
 	    outfile = cur_out;
 	}
     } else if (cur_out == NULL){
-	outfile = param->val;
+	outfile = param_out;
     } else {
 	outfile = cur_out;
     }

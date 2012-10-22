@@ -45,6 +45,16 @@ void print_list(paramlist *head)
     }
 }
 
+char* get_param_val(paramlist *head, char *param_name)
+{
+    paramlist *ret;
+    
+    if ((ret = get_param(head, param_name)) == NULL)
+	return NULL;
+    
+    return ret->val;
+}
+
 /*
  * Gets the pointer to the struct whose name is the given string.
  * Returns null if there is no such struct.
