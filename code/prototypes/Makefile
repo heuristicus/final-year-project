@@ -1,21 +1,19 @@
 CC=gcc
 CFLAGS=-Wall -g -I/usr/include/muParser
-SOURCES=math_functions.c generator.c file_util.c paramlist.c start.c
+P_SOURCES=math_functions.c generator.c file_util.c paramlist.c start.c
+E_SOURCES=estimatorIWLS.c util.c math_functions.c
 LIBS=-lm -lmuparser
-OBJECTS=$(SOURCES:.c=.o)
-EXECUTABLE=poisson
+P_OBJECTS=$(P_SOURCES:.c=.o)
+E_OBJECTS=$(E_SOURCES:.c=.o)
+GENERATOR=generator
+ESTIMATOR=estimator
 
-all: poisson $(EXECUTABLE)
+all: generator estimator
 
-poisson: $(OBJECTS)
-	$(CC) $(CFLAGS) $(SOURCES) $(LIBS) -o $@
+generator: $(P_OBJECTS)
+	$(CC) $(CFLAGS) $(P_SOURCES) $(LIBS) -o $(GENERATOR)
 
-math: math_functions.o
-	$(CC) $(CFLAGS) math_functions.c
-
-
-pfunc: p_func.o
-	$(CC) $(CFLAGS) poisson_generator.c
-
+estimator: $(E_OBJECTS)
+	$(CC) $(CFLAGS) $(E_SOURCES) $(LIBS) -o $(ESTIMATOR)
 clean:
-	rm -rf $(OBJECTS) $(EXECUTABLE)
+	rm -rf $(E_OBJECTS) $(P_OBJECTS) $(GENERATOR) $(ESTIMATOR)
