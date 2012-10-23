@@ -1,19 +1,57 @@
-CC=gcc
-CFLAGS=-Wall -g -I/usr/include/muParser
-P_SOURCES=math_functions.c generator.c file_util.c paramlist.c start.c
-E_SOURCES=estimatorIWLS.c util.c math_functions.c
+INCLUDE_DIR=/usr/include/muParser
+LIBDIR=libs/
+CFLAGS=-Wall -g -I$(INCLUDE_DIR)
+CC=gcc $(CFLAGS)
+GEN_SOURCES=generator.c start.c
+EST_SOURCES=estimatorIWLS.c
+UTIL_SOURCES=file_util.c paramlist.c util.c math_util.c
 LIBS=-lm -lmuparser
-P_OBJECTS=$(P_SOURCES:.c=.o)
-E_OBJECTS=$(E_SOURCES:.c=.o)
-GENERATOR=generator
-ESTIMATOR=estimator
+UTIL_OBJECTS=$(UTIL:.c=.o)
+GEN_OBJECTS=$(GEN_SOURCES:.c=.o)
+EST_OBJECTS=$(EST_SOURCES:.c=.o)
 
 all: generator estimator
 
-generator: $(P_OBJECTS)
-	$(CC) $(CFLAGS) $(P_SOURCES) $(LIBS) -o $(GENERATOR)
+generator: generator.o start.o libs
+	$(CC) generator.o start.o -L. -lfile_util -lparamlist -lmath_util $(LIBS) -o $@
 
-estimator: $(E_OBJECTS)
-	$(CC) $(CFLAGS) $(E_SOURCES) $(LIBS) -o $(ESTIMATOR)
+generator.o: generator.c generator.h
+	$(CC) -c $< -o $@
+
+start.o: start.c generator.h
+	$(CC) -c $< -o $@
+
+estimator: estimatorIWLS.o libs
+	$(CC) estimatorIWLS.o -L. -lfile_util -lparamlist -lmath_util -lgeneral_util $(LIBS) -o $@
+
+estimatorIWLS.o: estimatorIWLS.c estimator.h
+	$(CC) -c $< -o $@
+
+libs: libfile_util.so libparamlist.so libmath_util.so libgeneral_util.so
+
+libfile_util.so: file_util.o
+	$(CC) -shared -o $@ $<
+
+libparamlist.so: paramlist.o
+	$(CC) -shared -o $@ $<
+
+libmath_util.so: math_util.o
+	$(CC) -shared -o $@ $<
+
+libgeneral_util.so: general_util.o
+	$(CC) -shared -o $@ $<
+
+file_util.o: file_util.c file_util.h
+	$(CC) -c $< -o $@
+
+paramlist.o: paramlist.c paramlist.h
+	$(CC) -c $< -o $@
+
+math_util.o: math_util.c math_util.h
+	$(CC) -c $< -o $@
+
+general_util.o: general_util.c general_util.h
+	$(CC) -c $< -o $@
+
 clean:
-	rm -f $(E_OBJECTS) $(P_OBJECTS) $(GENERATOR) $(ESTIMATOR)
+	rm -f $(EST_OBJECTS) $(GEN_OBJECTS) $(UTIL_OBJECTS) *.so generator estimator
