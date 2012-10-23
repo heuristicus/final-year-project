@@ -1,4 +1,4 @@
-#include "poisson.h"
+#include "paramlist.h"
 
 /* THIS FUNCTION SHOULD ONLY BE CALLED FROM FUNCTIONS IN THIS FILE.
    initialises the list and returns a pointer to the start of the list */

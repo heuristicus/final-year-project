@@ -1,4 +1,4 @@
-#include "poisson.h"
+#include "generator.h"
 
 char *valid_switches[3] = {"-o", "-p", "-n"};
 

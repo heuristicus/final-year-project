@@ -16,4 +16,4 @@ generator: $(P_OBJECTS)
 estimator: $(E_OBJECTS)
 	$(CC) $(CFLAGS) $(E_SOURCES) $(LIBS) -o $(ESTIMATOR)
 clean:
-	rm -rf $(E_OBJECTS) $(P_OBJECTS) $(GENERATOR) $(ESTIMATOR)
+	rm -f $(E_OBJECTS) $(P_OBJECTS) $(GENERATOR) $(ESTIMATOR)

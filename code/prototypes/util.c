@@ -1,4 +1,4 @@
-#include "poisson.h"
+#include "generator.h"
 #include "estimator.h"
 
 void free_pointer_arr(void **arr, int length)

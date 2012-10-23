@@ -1,4 +1,6 @@
-#include "poisson.h"
+#include "generator.h"
+#include "paramlist.h"
+#include "file_util.h"
 
 #define DEFAULT_ARR_SIZE 50
 #define DEFAULT_WINDOW_SIZE 1.0

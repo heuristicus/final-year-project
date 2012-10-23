@@ -1,4 +1,4 @@
-#include "poisson.h"
+#include "generator.h"
 #include "estimator.h"
 
 long double fact(int i)
