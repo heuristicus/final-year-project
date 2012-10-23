@@ -12,6 +12,12 @@ EST_OBJECTS=$(EST_SOURCES:.c=.o)
 
 all: generator estimator
 
+rungen: generator
+	LD_LIBRARY_PATH=. ./generator
+
+runest: estimator
+	LD_LIBRARY_PATH=. ./estimator
+
 generator: generator.o start.o libs
 	$(CC) generator.o start.o -L. -lfile_util -lparamlist -lmath_util $(LIBS) -o $@
 
