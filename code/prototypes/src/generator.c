@@ -57,7 +57,7 @@ void initialise_generator(char **args)
     
     //run_time_nonhom(hparser, 100.0, 0.0, 100.0, outfile);
     double time_delta[2] = {0.0, 15.0};
-    run_time_nstreams(hparser, 100.0, 100.0, time_delta, 2, outfile);
+    run_time_nstreams(hparser, 100.0, 100.0, time_delta, 2, outfile, 1);
     
     mupRelease(hparser);
     
@@ -102,8 +102,10 @@ char* select_output_file(char* cur_out, char* param_out)
 
 /* Helper method to run a nonhomogenous process for a specific length
  * of time. Allocates required memory and prints output data to a file.
+ * The outswitch parameter determines whether
+ * all data will be output to the file, or just the event times.
  */
-void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time, double runtime, char *outfile)
+void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time, double runtime, char *outfile, int outswitch)
 {
     double *et = malloc(DEFAULT_ARR_SIZE * sizeof(double));
     double *lv = malloc(DEFAULT_ARR_SIZE * sizeof(double));
@@ -115,7 +117,11 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time,
 
     int i;
     printf("exited\n");
-    double_to_file(outfile, "a", *eptr, *lptr, size);
+    if (outswitch == 0)
+	mult_double_to_file(outfile, "a", *eptr, *lptr, size);
+    else 
+	double_to_file(outfile, "a", *eptr, size);
+        
     printf("output to file\n");
     int nsize = size / DEFAULT_WINDOW_SIZE;
             
@@ -127,8 +133,7 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time,
     	time_steps[i] = DEFAULT_WINDOW_SIZE * i;
     }
     
-    int_to_file(outfile, "a", time_steps, rolling, roll_size);
-    
+    mult_int_to_file(outfile, "a", time_steps, rolling, roll_size);
     
     free(time_steps);
     free(rolling);
@@ -143,15 +148,16 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time,
  * each consecutive stream. The values affect the result of evaluating
  * the lambda function at each timestep. e.g. for a time_delta [10.0, 25.0]
  * the value passed to the first stream's lambda function will be t + 10.0,
- * and the second will be t + 25.0.
+ * and the second will be t + 25.0. The outswitch parameter determines whether
+ * all data will be output to the file, or just the event times.
  */
-void run_time_nstreams(muParserHandle_t hparser, double lambda, double runtime, double *time_delta, int nstreams, char *outfile)
+void run_time_nstreams(muParserHandle_t hparser, double lambda, double runtime, double *time_delta, int nstreams, char *outfile, int outswitch)
 {
     int i;
             
     for (i = 1; i < nstreams; ++i){
 	printf("%d\n", i);
-	run_time_nonhom(hparser, lambda, time_delta[i], runtime, outfile);
+	run_time_nonhom(hparser, lambda, time_delta[i], runtime, outfile, outswitch);
     }
 
 }
@@ -159,15 +165,16 @@ void run_time_nstreams(muParserHandle_t hparser, double lambda, double runtime, 
 /* 
  * Helper method to run a nonhomogenous process until a specific 
  * number of events have occurred. Allocates required memory
- * and prints output data to a file.
+ * and prints output data to a file. The outswitch parameter determines whether
+ * all data will be output to the file, or just the event times.
  */
-void run_events_nonhom(muParserHandle_t hparser, double lambda, double start_time, int events, char *outfile)
+void run_events_nonhom(muParserHandle_t hparser, double lambda, double start_time, int events, char *outfile, int outswitch)
 {
     double *et = malloc(events * sizeof(double));
     double *lv = malloc(events * sizeof(double));
 
     run_to_event_limit_non_homogenous(hparser, lambda, start_time, events, et, lv);
-    double_to_file(outfile, "a", et, lv, events);
+    mult_double_to_file(outfile, "a", et, lv, events);
 }
 
 /* 

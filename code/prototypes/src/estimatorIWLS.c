@@ -3,10 +3,11 @@
 int main(int argc, char *argv[])
 {
     double time = 10.0;
-    int subintervals = 2;
+    int subintervals = 5;
         
     double **intervals = get_subintervals(time, subintervals);
-    
+    double *weights = initialise_weights(subintervals);
+
     int i;
     
     for (i = 0; i < subintervals; ++i){
@@ -14,6 +15,7 @@ int main(int argc, char *argv[])
     }
 
     free_pointer_arr((void **) intervals, subintervals);
+    free(weights);
     
     return 0;
 }
@@ -41,3 +43,18 @@ double get_interval_midpoint(int interval_number, double time, int subintervals)
 {
     return (interval_number - 1.0/2.0) * (time / subintervals);
 }
+
+double* initialise_weights(int subintervals)
+{
+    double *weights = malloc(subintervals * sizeof(double));
+    
+    int i;
+    
+    for (i = 0; i < subintervals; ++i){
+	weights[i] = 1;
+    }
+
+    return weights;
+    
+}
+

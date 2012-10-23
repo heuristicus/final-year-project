@@ -32,9 +32,9 @@ void init_rand(void);
 void generate_event_times_homogenous(double lambda, double time, int max_events, double *event_times);
 void run_to_event_limit_non_homogenous(muParserHandle_t hparser, double lambda, double start_time, int max_events, double *event_times, double *lambda_vals);
 int run_to_time_non_homogenous(muParserHandle_t hparser, double lambda, double start_time, double time_to_run, double **event_times, double **lambda_vals, int arr_len);
-void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time, double runtime, char *outfile);
-void run_events_nonhom(muParserHandle_t hparser, double lambda, double start_time, int events, char *outfile);
-void run_time_nstreams(muParserHandle_t hparser, double lambda, double runtime, double *time_delta, int nstreams, char *outfile);
+void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time, double runtime, char *outfile, int outswitch);
+void run_events_nonhom(muParserHandle_t hparser, double lambda, double start_time, int events, char *outfile, int outswitch);
+void run_time_nstreams(muParserHandle_t hparser, double lambda, double runtime, double *time_delta, int nstreams, char *outfile, int outswitch);
 void initialise_generator(char **args);
 
 // math_functions.c
@@ -44,10 +44,13 @@ int rolling_window(double *event_times, int num_events, double start_time, doubl
 
 // file_util.c
 void standard_out(char filename, void *arr1, void *arr2, int len, char *arrtype);
-void double_to_file(char *filename, char *mode, double *arr1, double *arr2, int len);
-void int_to_file(char *filename, char *mode, int *arr1, int *arr2, int len);
+void mult_double_to_file(char *filename, char *mode, double *arr1, double *arr2, int len);
+void mult_int_to_file(char *filename, char *mode, int *arr1, int *arr2, int len);
 char *generate_outfile();
 paramlist *get_parameters(char *filename);
 int valid_param(char *pname);
 char* select_output_file(char* cur_out, char *param_out);
+void arr_to_file(char* filename, void* arr, int len, char* format_string);
+void double_to_file(char *filename, char *mode, double *arr, int len);
+void int_to_file(char *filename, char *mode, int *arr, int len);
 
