@@ -96,6 +96,9 @@ double* get_event_data(char *filename)
     
     int i = 0, max_size = DEFAULT_ARR_SIZE;
     while ((line = fgets(line, MAX_LINE_LENGTH, fp)) != NULL){
+	if (strcmp(line, "\n") == 0)
+	    continue;
+	
 	if (i == max_size){
 	    event_times = realloc(event_times, max_size * 2 * sizeof(double));
 	    max_size *= 2;
