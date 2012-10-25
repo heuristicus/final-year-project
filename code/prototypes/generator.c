@@ -59,7 +59,7 @@ void initialise_generator(char **args)
     
     //run_time_nonhom(hparser, 100.0, 0.0, 100.0, outfile);
     double time_delta[2] = {0.0, 15.0};
-    run_time_nstreams(hparser, 100.0, 100.0, time_delta, 2, outfile, 1);
+    run_time_nstreams(hparser, 50.0, 100.0, time_delta, 2, outfile, 1);
     
     mupRelease(hparser);
     
@@ -135,7 +135,7 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time,
     	time_steps[i] = DEFAULT_WINDOW_SIZE * i;
     }
     
-    mult_int_to_file(outfile, "a", time_steps, rolling, roll_size);
+    //mult_int_to_file(outfile, "a", time_steps, rolling, roll_size);
     
     free(time_steps);
     free(rolling);

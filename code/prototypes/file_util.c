@@ -4,19 +4,23 @@
 
 #define MAX_DATE_LENGTH 26
 #define MAX_PARAM_STRING_LENGTH 100
-#define PARAM_SEPARATOR ' '
+#define MAX_LINE_LENGTH 100
+#define DEFAULT_ARR_SIZE 100
+#define PARAM_SEPARATOR " "
 
-/* int main(int argc, char *argv[]) */
-/* { */
-/*     paramlist *p; */
+int main(int argc, char *argv[])
+{
+    /* paramlist *p; */
     
-/*     p = get_parameters("params.txt"); */
+    /* p = get_parameters("params.txt"); */
         
-/*     print_list(p); */
-/*     free_list(p); */
+    /* print_list(p); */
+    /* free_list(p); */
+
+    get_event_data(argv[1]);
     
-/*     return 0; */
-/* } */
+    return 0;
+}
 
 
 /* 
@@ -78,9 +82,36 @@ paramlist* get_parameters(char* filename)
                 
 }
 
-double* get_data_index()
+/*
+ * Gets event data from the specified file. The file is assumed to contain only
+ * data on event times. A negative number will be inserted into the array after
+ * the last event time.
+ */
+double* get_event_data(char *filename)
 {
+    FILE *fp = fopen(filename, "r");
     
+    char *line = malloc(MAX_LINE_LENGTH);
+    double *event_times = malloc(DEFAULT_ARR_SIZE * sizeof(double));
+    
+    int i = 0, max_size = DEFAULT_ARR_SIZE;
+    while ((line = fgets(line, MAX_LINE_LENGTH, fp)) != NULL){
+	if (i == max_size){
+	    event_times = realloc(event_times, max_size * 2 * sizeof(double));
+	    max_size *= 2;
+	    printf("Max array size now %d\n", max_size);
+	}
+	event_times[i] = atof(line);
+	i++;
+    }
+
+    event_times[i] = -1.0; //marker for the end of the array
+    
+    for (i = 0; i < max_size; ++i){
+	printf("%lf\n", event_times[i]);
+    }
+
+    return event_times;
 }
 
 /*
