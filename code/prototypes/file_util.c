@@ -107,7 +107,7 @@ double* get_event_data(char *filename)
 	i++;
     }
 
-    event_times[0] = i + 1;// Store the length at the start of the array.
+    event_times[0] = i;// Store the length at the start of the array.
     event_times = realloc(event_times, i * sizeof(double)); // Potentially save memory?
     
     fclose(fp);

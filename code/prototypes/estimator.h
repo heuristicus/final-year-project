@@ -14,5 +14,6 @@ double* get_interval_midpoints(double time, int subintervals);
 double mean_x(double *weights, double *midpoints, int size);
 double mean_Y();
 double SSE(double *rand_var, double *weights, double *midpoints, double alpha, double beta, int size);
+double* get_bin_counts(double **intervals, int size, char *filename, double interval_length);
 
 #endif

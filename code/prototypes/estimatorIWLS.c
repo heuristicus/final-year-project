@@ -1,5 +1,6 @@
 #include "estimator.h"
 #include "math_util.h"
+#include "file_util.h"
 
 /* double **intervals; */
 /* double *weights; */
@@ -14,16 +15,17 @@ int main(int argc, char *argv[])
         
     double **intervals = get_subintervals(time, subintervals);
     double *weights = initialise_weights(subintervals);
-    double *bin_counts = get_bin_counts(**intervals, subintervals);
+    double *bin_counts = get_bin_counts(intervals, subintervals, argv[1], time/subintervals);
     /* double *midpoints = get_interval_midpoints(time, subintervals); */
     
     int i;
     
     for (i = 0; i < subintervals; ++i){
-	printf("Interval %d is [%lf, %lf]\n", i, intervals[i][0], intervals[i][0],intervals[i][1]);
+	printf("Interval %d is [%lf, %lf, %lf]\n", i, intervals[i][0], intervals[i][0],intervals[i][1]);
     }
 
     free_pointer_arr((void **) intervals, subintervals);
+    free(bin_counts);
     free(weights);
     
     return 0;
@@ -54,9 +56,20 @@ double** get_subintervals(double time, int subintervals)
 /*
  * Get the number of events that occurred in each subinterval.
  */
-double* get_bin_counts(double **intervals, int size)
+double* get_bin_counts(double **intervals, int size, char *filename, double interval_length)
 {
-    rolling_window()
+    double *events = get_event_data(filename);
+
+    int num_events = (int) events[0] - 1;
+    double start_time = events[1];
+    double end_time = events[num_events];
+        
+    double *bin_counts = sum_events_in_interval(events + 1, num_events, start_time, end_time,interval_length);
+
+    free(events);
+        
+    return bin_counts;
+    
 }
 
 /* double* get_interval_midpoints(double time, int subintervals) */
