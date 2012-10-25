@@ -84,8 +84,9 @@ paramlist* get_parameters(char* filename)
 
 /*
  * Gets event data from the specified file. The file is assumed to contain only
- * data on event times. A negative number will be inserted into the array after
- * the last event time.
+ * data on event times. The size of the array will be stored in the zeroth index - this
+ * does not include that value itself. For example, if there are 10 events, the actual
+ * length will be 11, because of the length in index 0, but the value of the length will be 10.
  */
 double* get_event_data(char *filename)
 {
@@ -94,26 +95,24 @@ double* get_event_data(char *filename)
     char *line = malloc(MAX_LINE_LENGTH);
     double *event_times = malloc(DEFAULT_ARR_SIZE * sizeof(double));
     
-    int i = 0, max_size = DEFAULT_ARR_SIZE;
+    int i = 1, max_size = DEFAULT_ARR_SIZE;
     while ((line = fgets(line, MAX_LINE_LENGTH, fp)) != NULL){
 	if (strcmp(line, "\n") == 0)
-	    continue;
-	
+	    break; // A newline indicates the end of the data.
 	if (i == max_size){
 	    event_times = realloc(event_times, max_size * 2 * sizeof(double));
 	    max_size *= 2;
-	    printf("Max array size now %d\n", max_size);
 	}
 	event_times[i] = atof(line);
 	i++;
     }
 
-    event_times[i] = -1.0; //marker for the end of the array
+    event_times[0] = i + 1;// Store the length at the start of the array.
+    event_times = realloc(event_times, i * sizeof(double)); // Potentially save memory?
     
-    for (i = 0; i < max_size; ++i){
-	printf("%lf\n", event_times[i]);
-    }
-
+    fclose(fp);
+    free(line);
+    
     return event_times;
 }
 
