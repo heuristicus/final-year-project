@@ -2,6 +2,12 @@
 
 int rand_initialised = 0;
 
+int main(int argc, char *argv[])
+{
+    
+    return 0;
+}
+
 long double fact(int i)
 {
     if (i == 0)
@@ -17,30 +23,29 @@ double prob_num_events_in_time_span(double t_start, double t_end, double lambda,
     return (pow(M_E, -lambda * tau) * pow(lambda * tau, k)) / fact(k);
 }
 
-/* Outputs the sum of events in a specific time period to the array provided. The contents of the array will
- * be wiped. Returns the last array location that contains a value.
+/* 
+ * Outputs the number of events in each interval to the array provided. 
  */
-int rolling_window(double *event_times, int num_events, double start_time, double timespan, int *output_array)
+int* sum_events_in_interval(double *event_times, int num_events, double interval_time, int interval_num)
 {
-    int i, spanmult = 0;
-    double time;
-
-    for (i = 0, time = event_times[i]; i < num_events; ++i, time = event_times[i]){
-	while (time > timespan * (spanmult + 1)){
-	    spanmult++;
+    int i = 0, current_interval = 1;
+    double event_time = event_times[0];
+    
+    int *bins = calloc(interval_num, sizeof(int));
+    
+    for (; i < num_events; ++i){
+	while (event_time > interval_time * current_interval){
+	    //printf("%lf is greater than %lf, interval time: %lf, current_interval %d\n", event_time, interval_time * current_interval, interval_time, current_interval);
+	    current_interval++;
 	}
 	
-	//printf("span %d, val %lf\n", spanmult, event_times[i]);
-	//printf("output arr %d\n", output_array[spanmult]);
-	output_array[spanmult]++;
-	
+	bins[current_interval - 1]++;
+	event_time = event_times[i];
     }
 
-    return spanmult;
+    return bins;
     
 }
-
-
 
 /*
  * From "The Art of Computer Programming", Vol.3. Generates a gaussian random

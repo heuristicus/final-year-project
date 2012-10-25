@@ -59,7 +59,7 @@ void initialise_generator(char **args)
     
     //run_time_nonhom(hparser, 100.0, 0.0, 100.0, outfile);
     double time_delta[2] = {0.0, 15.0};
-    run_time_nstreams(hparser, 50.0, 100.0, time_delta, 2, outfile, 1);
+    run_time_nstreams(hparser, 50.0, 5.0, time_delta, 2, outfile, 1);
     
     mupRelease(hparser);
     
@@ -117,7 +117,7 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time,
     
     int size = run_to_time_non_homogenous(hparser, lambda, start_time, runtime, eptr, lptr, DEFAULT_ARR_SIZE);
 
-    int i;
+
     printf("exited\n");
     if (outswitch == 0)
 	mult_double_to_file(outfile, "a", *eptr, *lptr, size);
@@ -125,20 +125,21 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time,
 	double_to_file(outfile, "a", *eptr, size);
         
     printf("output to file\n");
-    int nsize = size / DEFAULT_WINDOW_SIZE;
+    /* int i; */
+    /* int nsize = size / DEFAULT_WINDOW_SIZE; */
             
-    int *rolling = calloc(nsize, sizeof(int));
-    int *time_steps = calloc(nsize, sizeof(int));
-    int roll_size = rolling_window(*eptr, size, start_time, DEFAULT_WINDOW_SIZE, rolling);
-    printf("calculated roll\n");
-    for (i = 0; i < roll_size; ++i){
-    	time_steps[i] = DEFAULT_WINDOW_SIZE * i;
-    }
+    /* int *rolling = calloc(nsize, sizeof(int)); */
+    /* int *time_steps = calloc(nsize, sizeof(int)); */
+    /* int roll_size = rolling_window(*eptr, size, start_time, DEFAULT_WINDOW_SIZE, rolling); */
+    /* printf("calculated roll\n"); */
+    /* for (i = 0; i < roll_size; ++i){ */
+    /* 	time_steps[i] = DEFAULT_WINDOW_SIZE * i; */
+    /* } */
     
     //mult_int_to_file(outfile, "a", time_steps, rolling, roll_size);
     
-    free(time_steps);
-    free(rolling);
+    /* free(time_steps); */
+    /* free(rolling); */
     free(*eptr);
     free(*lptr);
 
