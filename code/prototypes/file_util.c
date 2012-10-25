@@ -78,6 +78,11 @@ paramlist* get_parameters(char* filename)
                 
 }
 
+double* get_data_index()
+{
+    
+}
+
 /*
  * Checks whether a line received from the parameter file is valid.
  */

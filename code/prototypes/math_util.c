@@ -1,5 +1,6 @@
-#include "generator.h"
-#include "estimator.h"
+#include "math_util.h"
+
+int rand_initialised = 0;
 
 long double fact(int i)
 {
@@ -36,5 +37,61 @@ int rolling_window(double *event_times, int num_events, double start_time, doubl
     }
 
     return spanmult;
+    
+}
+
+
+
+/*
+ * From "The Art of Computer Programming", Vol.3. Generates a gaussian random
+ * value with mean of 0 and standard deviation of 1. http://c-faq.com/lib/gaussian.html
+ */
+double rand_gauss()
+{
+
+    if(!rand_initialised){
+	srand(time(NULL));
+	rand_initialised = 1;
+    }
+    
+    static double V1, V2, S;
+    static int phase = 0;
+    double X;
+
+    if(phase == 0) {
+	do {
+	    double U1 = (double)rand() / RAND_MAX;
+	    double U2 = (double)rand() / RAND_MAX;
+
+	    V1 = 2 * U1 - 1;
+	    V2 = 2 * U2 - 1;
+	    S = V1 * V1 + V2 * V2;
+	} while(S >= 1 || S == 0);
+
+	X = V1 * sqrt(-2 * log(S) / S);
+    } else
+	X = V2 * sqrt(-2 * log(S) / S);
+
+    phase = 1 - phase;
+
+    return X;
+}
+
+
+/*
+ * Gets noise based on a poisson distribution centred around the mean
+ * provided. Since the mean and variance of a poisson random variable
+ * are the same, the larger the mean, the larger the variance.
+ */
+double get_poisson_noise(double mean)
+{
+
+    return get_gaussian_noise(mean, mean);
+    
+}
+
+double get_gaussian_noise(double mean, double std_dev)
+{
+    return (rand_gauss() * std_dev) + mean;
     
 }
