@@ -28,18 +28,20 @@ double prob_num_events_in_time_span(double t_start, double t_end, double lambda,
  */
 int* sum_events_in_interval(double *event_times, int num_events, double interval_time, int interval_num)
 {
-    int i = 0, current_interval = 1;
-    double event_time = event_times[0];
-    
+    int i = 0, current_interval = 0;
+    double event_timeb;
+        
     int *bins = calloc(interval_num, sizeof(int));
     
-    for (; i < num_events; ++i){
-	while (event_time > interval_time * current_interval){
-	    //printf("%lf is greater than %lf, interval time: %lf, current_interval %d\n", event_time, interval_time * current_interval, interval_time, current_interval);
+    for (event_time = event_times[0]; i < num_events; ++i, event_time = event_times[i]){
+	while (event_time > interval_time * (current_interval + 1)){
+	    //printf("%lf is greater than %lf, interval time: %lf, current_interval %d\n", event_time, interval_time * current_interval + 1, interval_time, current_interval);
 	    current_interval++;
 	}
+
+	//printf("current time: %lf, interval end: %lf. Adding to loc %d\n", event_time, interval_time * (current_interval + 1), current_interval);
 	
-	bins[current_interval - 1]++;
+	bins[current_interval]++;
 	event_time = event_times[i];
     }
 
