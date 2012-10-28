@@ -12,14 +12,14 @@
 int main(int argc, char *argv[])
 {
     double interval_time = 10.0;
-    int num_subintervals = 10;
+    int num_subintervals = 5;
         
     double **subinterval_data = get_subinterval_data(interval_time, num_subintervals);
     int *bin_counts = get_bin_counts(argv[1], interval_time/num_subintervals, num_subintervals);
     
     double *midpoints = get_interval_midpoints(interval_time, num_subintervals);
     double *weights = initialise_weights(num_subintervals);
-    double *random_variables = initialise_random_variables(midpoints, num_subintervals);
+    double *random_variables = initialise_random_variables(midpoints, num_subintervals, get_rand(0.01), get_rand(0.01));
     
     int i, loop;
     
@@ -168,14 +168,16 @@ double* initialise_weights(int num_subintervals)
  * Initialises each random variable Yk to the event number in the corresponding subinterval
  * (should noise be added here?)
  */
-double* initialise_random_variables(double *midpoints, int num_subintervals)
+double* initialise_random_variables(double *midpoints, int num_subintervals, double alpha, double beta)
 {
     double* rand_var = malloc(num_subintervals * sizeof(double));
     
     int i;
+
+    printf("Initial value of alpha: %.15lf, beta: %.15lf\n", alpha, beta);
         
     for (i = 0; i < num_subintervals; ++i){
-	rand_var[i] = midpoints[i] + get_poisson_noise(midpoints[i]);
+	rand_var[i] = alpha + beta * midpoints[i] + get_poisson_noise(midpoints[i]);
     }
 
     return rand_var;

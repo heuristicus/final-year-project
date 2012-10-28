@@ -16,6 +16,16 @@ long double fact(int i)
 	return i * fact(i - 1);
 }
 
+void init_rand(double seed)
+{
+    if (seed == 0.0)
+	srand48(time(NULL));
+    else
+	srand48(seed);
+    
+    rand_initialised = 1;
+}
+
 /* calculates the probabilty of there being k events between time t_start and t_end. (for homogenous processes)*/
 double prob_num_events_in_time_span(double t_start, double t_end, double lambda, int k)
 {
@@ -56,10 +66,8 @@ int* sum_events_in_interval(double *event_times, int num_events, double interval
 double rand_gauss()
 {
 
-    if(!rand_initialised){
-	srand(time(NULL));
-	rand_initialised = 1;
-    }
+    if(!rand_initialised)
+	init_rand(0.0);
     
     static double V1, V2, S;
     static int phase = 0;
@@ -84,6 +92,13 @@ double rand_gauss()
     return X;
 }
 
+double get_rand(double upper_limit)
+{
+    if (!rand_initialised)
+	init_rand(0.0);
+
+    return drand48() * upper_limit;
+}
 
 /*
  * Gets noise based on a poisson distribution centred around the mean
