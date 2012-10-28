@@ -102,3 +102,24 @@ double get_gaussian_noise(double mean, double std_dev)
     return (rand_gauss() * std_dev) + mean;
     
 }
+
+double* get_interval_midpoints(double total_time, int subintervals)
+{
+    double *midpoints = malloc(subintervals * sizeof(double));
+    
+    int i;
+    
+    for (i = 0; i < subintervals; ++i){
+	midpoints[i] = get_interval_midpoint(i + 1, total_time, subintervals);
+    }
+
+    return midpoints;
+}
+
+/*
+ * Get the midpoint of a specified interval. (midpoint(xk)=(k-1/2)*T/N), 1 <= k <= N
+ */
+double get_interval_midpoint(int interval_number, double total_time, int subintervals)
+{
+    return (interval_number - 1.0/2.0) * (total_time /subintervals);
+}
