@@ -55,7 +55,7 @@ void initialise_generator(char **args)
     /* mupDefineVar(hparser, "b", &b); */
     /* mupDefineVar(hparser, "alpha", &alpha); */
     
-    double time_to_run = 10.0;
+    double time_to_run = 100.0;
     double lambda = 400.0;
     
     char *eqn = "a+b*t";
@@ -156,9 +156,9 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time,
 
     if (outswitch == 0) // Outputs only event data - this is what the real data will be like.
 	double_to_file(outfile, "a", *eptr, size);
-    else if (outswitch == 1) // Outputs only events and lambda values
+    if (outswitch >= 1) // Outputs only events and lambda values
 	mult_double_to_file(outfile, "a", *eptr, *lptr, size);
-    else if (outswitch > 2){ // Outputs all data, including bin counts
+    if (outswitch >= 2){ // Outputs all data, including bin counts
 	int num_intervals = (start_time + runtime) / DEFAULT_WINDOW_SIZE;
 
 	int *bin_counts = sum_events_in_interval(*eptr, size, DEFAULT_WINDOW_SIZE, num_intervals);
