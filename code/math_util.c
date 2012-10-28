@@ -119,7 +119,7 @@ double* get_interval_midpoints(double total_time, int subintervals)
 /*
  * Get the midpoint of a specified interval. (midpoint(xk)=(k-1/2)*T/N), 1 <= k <= N
  */
-double get_interval_midpoint(int interval_number, double total_time, int subintervals)
+double get_interval_midpoint(int interval_index, double total_time, int subintervals)
 {
-    return (interval_number - 1.0/2.0) * (total_time /subintervals);
+    return (interval_index - 1.0/2.0) * (total_time /subintervals);
 }
