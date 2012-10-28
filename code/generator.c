@@ -55,7 +55,7 @@ void initialise_generator(char **args)
     /* mupDefineVar(hparser, "b", &b); */
     /* mupDefineVar(hparser, "alpha", &alpha); */
     
-    double time_to_run = 10.0;
+    double time_to_run = 100.0;
     double lambda = 400.0;
     
     char *eqn = "a+b*t";
@@ -75,7 +75,7 @@ void initialise_generator(char **args)
     
     //run_time_nonhom(hparser, 100.0, 0.0, 100.0, outfile);
     double time_delta[2] = {0.0, 15.0};
-    run_time_nstreams(hparser, lambda, time_to_run, time_delta, 2, outfile, 3);
+    run_time_nstreams(hparser, lambda, time_to_run, time_delta, 2, outfile, 0);
     
     mupRelease(hparser);
     
@@ -156,9 +156,9 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time,
 
     if (outswitch == 0) // Outputs only event data - this is what the real data will be like.
 	double_to_file(outfile, "a", *eptr, size);
-    if (outswitch == 1) // Outputs only events and lambda values
+    if (outswitch >= 1) // Outputs only events and lambda values
 	mult_double_to_file(outfile, "a", *eptr, *lptr, size);
-    if (outswitch == 2){ // Outputs all data, including bin counts
+    if (outswitch >= 2){ // Outputs all data, including bin counts
 	int num_intervals = (start_time + runtime) / DEFAULT_WINDOW_SIZE;
 
 	int *bin_counts = sum_events_in_interval(*eptr, size, DEFAULT_WINDOW_SIZE, num_intervals);
@@ -177,35 +177,6 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time,
 	int_dbl_to_file(outfile, "a", midpoints, bin_counts, num_intervals);
 	free(midpoints);
 	free(bin_counts);
-    }
-    if (outswitch == 3){
-	char *tmp = malloc(strlen(outfile) + 3);
-	sprintf(tmp, "%s_ev", outfile);
-	double_to_file(tmp, "a", *eptr, size);
-	
-	sprintf(tmp, "%s_ad", outfile);
-
-	mult_double_to_file(tmp, "a", *eptr, *lptr, size);
-
-	int num_intervals = (start_time + runtime) / DEFAULT_WINDOW_SIZE;
-
-	int *bin_counts = sum_events_in_interval(*eptr, size, DEFAULT_WINDOW_SIZE, num_intervals);
-    
-	/* int i; */
-	/* for (i = 0; i < num_intervals; ++i){ */
-	/*     printf("Interval %d: %d\n", i, bin_counts[i]); */
-	/* } */
-    
-	double *midpoints = get_interval_midpoints(start_time + runtime, num_intervals);
-
-	/* for (i = 0; i < num_intervals; ++i){ */
-	/*     printf("%lf\n", midpoints[i]); */
-	/* } */
-    
-	int_dbl_to_file(tmp, "a", midpoints, bin_counts, num_intervals);
-	free(midpoints);
-	free(bin_counts);
-	free(tmp);
     }
 
     free(*eptr);

@@ -243,10 +243,10 @@ void double_to_file(char *filename, char *mode, double *arr, int len)
     fclose(fp);
 }
 
-/* Prints the given array to the specified file. Two newlines will be added to
- * the end to allow for indexing in gnuplot.
- * The format string should contain the correct
- */
+/* /\* Prints the given array to the specified file. Two newlines will be added to */
+/*  * the end to allow for indexing in gnuplot.  */
+/*  * The format string should contain the correct  */
+/*  *\/ */
 /* void arr_to_file(char* filename, void* arr, int len, char* format_string) */
 /* { */
 /*     FILE *fp; */
