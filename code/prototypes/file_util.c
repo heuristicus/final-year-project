@@ -191,6 +191,30 @@ void mult_int_to_file(char* filename, char* mode, int* arr1, int* arr2, int len)
     fclose(fp);
     
 }
+/*
+ * Writes two arrays of integers to the specified file.
+ */
+void int_dbl_to_file(char* filename, char* mode, double* arr1, int* arr2, int len)
+{
+    FILE *fp;
+    
+    if ((fp = fopen(filename, mode)) == NULL){
+	perror("Could not open file.");
+	exit(1);
+    }
+    
+    int i;
+
+    for (i = 0; i < len; ++i){
+	fprintf(fp, "%lf %d\n", arr1[i], arr2[i]);
+    }
+
+    fprintf(fp, "\n\n");
+
+    fclose(fp);
+    
+}
+
 
 void double_to_file(char *filename, char *mode, double *arr, int len)
 {

@@ -16,5 +16,6 @@ void arr_to_file(char* filename, void* arr, int len, char* format_string);
 void double_to_file(char *filename, char *mode, double *arr, int len);
 void int_to_file(char *filename, char *mode, int *arr, int len);
 double* get_event_data(char *filename);
+void int_dbl_to_file(char* filename, char* mode, double* arr1, int* arr2, int len);
 
 #endif
