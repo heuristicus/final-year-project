@@ -11,13 +11,20 @@
 int main(int argc, char *argv[])
 {
     double time = 5.0;
-    int subintervals = 2;
+    int subintervals = 3;
         
     double **intervals = get_subintervals(time, subintervals);
     double *weights = initialise_weights(subintervals);
     int *bin_counts = get_bin_counts(argv[1], time/subintervals, subintervals);
+    double *random_variables = initialise_random_variables(bin_counts, subintervals);
     
     int i;
+    
+    for (i = 0; i < subintervals; ++i){
+	printf("%lf - %lf: %d\n", intervals[i][0], intervals[i][2], bin_counts[i]);
+    }
+
+    printf("mean x %lf\n", mean_x(weights, bin_counts, subintervals));
     
     free_pointer_arr((void **) intervals, subintervals);
     free(bin_counts);
@@ -91,6 +98,23 @@ double* initialise_weights(int subintervals)
 }
 
 /*
+ * Initialises each random variable Yk to the event number in the corresponding subinterval
+ * (should noise be added here?)
+ */
+double* initialise_random_variables(int *bin_counts, int length)
+{
+    double* rand_var = malloc(length * sizeof(double));
+    
+    int i;
+        
+    for (i = 0; i < length; ++i){
+	rand_var[i] = bin_counts[i];
+    }
+
+    return rand_var;
+}
+
+/*
  * Estimates the value of beta
  */ 
 double estimate_beta()
@@ -107,11 +131,21 @@ double estimate_alpha()
     return 0.0;
 }
 
+double weight_estimate()
+{
+    return 0.0;
+}
+
+double lambda_estimate()
+{
+    return 0.0;
+}
+
 /*
  * Calculates the mean of the subinterval midpoints, taking into consideration the
  * weight of each value.
  */
-double mean_x(double *weights, double *bin_counts, int size)
+double mean_x(double *weights, int *bin_counts, int size)
 {
     int i;
     double sum = 0.0;
