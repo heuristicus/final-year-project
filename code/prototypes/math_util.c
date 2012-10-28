@@ -29,7 +29,7 @@ double prob_num_events_in_time_span(double t_start, double t_end, double lambda,
 int* sum_events_in_interval(double *event_times, int num_events, double interval_time, int interval_num)
 {
     int i = 0, current_interval = 0;
-    double event_timeb;
+    double event_time;
         
     int *bins = calloc(interval_num, sizeof(int));
     
