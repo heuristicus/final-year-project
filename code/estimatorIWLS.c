@@ -11,7 +11,7 @@
 int main(int argc, char *argv[])
 {
     double time = 10;
-    int subintervals = 10;
+    int subintervals = 5;
         
     double **intervals = get_subintervals(time, subintervals);
     double *weights = initialise_weights(subintervals);
@@ -33,12 +33,28 @@ int main(int argc, char *argv[])
 
     double sse = SSE(random_variables, weights, bin_counts, est_alpha, est_beta, subintervals);
     
+    double a = a_estimate(est_alpha, time, subintervals);
+    double b = b_estimate(est_beta, time, subintervals);
+
+    if (a < 0){
+	printf("Estimate for a is not positive (%lf) - setting a to 0 and recalculating b.\n", a);
+	a = 0;
+	b = constraint_a(weights, bin_counts, random_variables, time, subintervals);
+    } else if (a > 0 && b < -a/time){
+	printf("Estimate for b is not positive (%lf) - setting a=-bT, b=N*beta/T\n", b);
+	a = -b * time;
+	b = constraint_b(weights, bin_counts, random_variables, time, subintervals);
+    }
+    
     printf("mean x %lf\n", x_mean);
     printf("mean randvar %lf\n", Y_mean);
-    
-    printf("beta estimate: %lf\n", est_beta);
+
     printf("alpha estimate: %lf\n", est_alpha);
+    printf("beta estimate: %lf\n", est_beta);
+
+    printf("a estimate: %lf\nb estimate %lf\n", a, b);
     
+
     printf("SSE: %lf\n", sse);
     
     free_pointer_arr((void **) intervals, subintervals);
@@ -124,6 +140,14 @@ double* initialise_random_variables(int *bin_counts, int length)
 }
 
 /*
+ * estimates the value of alpha
+ */
+double alpha_estimate(double mean_y, double mean_x, double beta_estimate)
+{
+    return mean_y - beta_estimate * mean_x;
+}
+
+/*
  * Estimates the value of beta
  */ 
 double beta_estimate(double* weights, int* bin_counts, double *rand_var, double mean_x, int subintervals)
@@ -144,13 +168,49 @@ double beta_estimate(double* weights, int* bin_counts, double *rand_var, double 
         
 }
 
-/*
- * estimates the value of alpha
- */
-double alpha_estimate(double mean_y, double mean_x, double beta_estimate)
+double a_estimate(double alpha, double total_time, int intervals)
 {
-    return mean_y - beta_estimate * mean_x;
+    return alpha * (total_time/intervals);
 }
+
+double b_estimate(double beta, double total_time, int intervals)
+{
+    return beta * (total_time/intervals);
+}
+
+double constraint_a(double *weights, int *bin_counts, double *random_variables, double time, int intervals)
+{
+    double rvsum = 0;
+    double sqsum = 0;
+    
+    int i;
+    
+    for (i = 0; i < intervals; ++i) {
+	rvsum = weights[i] * bin_counts[i] * random_variables[i];
+	sqsum = weights[i] * pow(bin_counts[i], 2);
+    }
+
+    return (time/intervals) * (rvsum/sqsum);
+    
+}
+
+double constraint_b(double *weights, int *bin_counts, double *random_variables, double time, int intervals)
+{
+    double rvsum = 0;
+    double sqsum = 0;
+    
+    int i;
+    
+    for (i = 0; i < intervals; ++i) {
+	rvsum = weights[i] * (time - bin_counts[i]) * random_variables[i];
+	sqsum = weights[i] * pow(time - bin_counts[i], 2);
+    }
+
+    return -(time/intervals) * (rvsum/sqsum);
+    
+}
+
+
 
 double weight_estimate()
 {
