@@ -1,6 +1,7 @@
 #include "generator.h"
 #include "paramlist.h"
 #include "file_util.h"
+#include "math_util.h"
 
 #define DEFAULT_ARR_SIZE 50
 #define DEFAULT_WINDOW_SIZE 1.0
@@ -47,23 +48,59 @@ void initialise_generator(char **args)
 
     muParserHandle_t hparser = mupCreate(0);
 
-    char *eqn = "a-(b*sin(alpha*t))"; // check syntax is correct. Nothing to check if eqn is wrong.
+    /* char *eqn = "a-(b*sin(alpha*t))"; */ // check syntax is correct. Nothing to check if eqn is wrong.
+    /* double a = 10.0, b = 5.0, alpha = 0.05; */
+    /* mupSetExpr(hparser, eqn); */
+    /* mupDefineVar(hparser, "a", &a); */
+    /* mupDefineVar(hparser, "b", &b); */
+    /* mupDefineVar(hparser, "alpha", &alpha); */
     
+    double time_to_run = 10.0;
+    double lambda = 400.0;
+    
+    char *eqn = "a+b*t";
+    double a = 5, b = 2;
     mupSetExpr(hparser, eqn);
-    
-    double a = 10.0, b = 5.0, alpha = 0.05;
     
     mupDefineVar(hparser, "a", &a);
     mupDefineVar(hparser, "b", &b);
-    mupDefineVar(hparser, "alpha", &alpha);
+
+    /* mupDefineVar(hparser, "t", &time_to_run); */
+    	
+    mupSetExpr(hparser, eqn);
+        
+    /* double testl = mupEval(hparser); */
+    
+    /* printf("test lambda = %lf\n", testl); */
     
     //run_time_nonhom(hparser, 100.0, 0.0, 100.0, outfile);
     double time_delta[2] = {0.0, 15.0};
-    run_time_nstreams(hparser, 50.0, 5.0, time_delta, 2, outfile, 1);
+    run_time_nstreams(hparser, lambda, time_to_run, time_delta, 2, outfile, 0);
     
     mupRelease(hparser);
     
     free_list(params);
+}
+
+/* 
+ * Generates a series of streams, with a time delay between them. 
+ * The time_delta array should contain the difference in time between 
+ * each consecutive stream. The values affect the result of evaluating
+ * the lambda function at each timestep. e.g. for a time_delta [10.0, 25.0]
+ * the value passed to the first stream's lambda function will be t + 10.0,
+ * and the second will be t + 25.0. The outswitch parameter determines whether
+ * all data will be output to the file, or just the event times.
+ * *IMPORTANT* The value of lambda MUST exceed the maximum value of the function! *IMPORTANT*
+ */
+void run_time_nstreams(muParserHandle_t hparser, double lambda, double runtime, double *time_delta, int nstreams, char *outfile, int outswitch)
+{
+    int i;
+            
+    for (i = 1; i < nstreams; ++i){
+	printf("Generating event stream %d\n", i);
+	run_time_nonhom(hparser, lambda, time_delta[i - 1], runtime, outfile, outswitch);
+    }
+
 }
 
 /*
@@ -104,8 +141,8 @@ char* select_output_file(char* cur_out, char* param_out)
 
 /* Helper method to run a nonhomogenous process for a specific length
  * of time. Allocates required memory and prints output data to a file.
- * The outswitch parameter determines whether
- * all data will be output to the file, or just the event times.
+ * The outswitch parameter determines what data will be output to the file.
+ * 
  */
 void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time, double runtime, char *outfile, int outswitch)
 {
@@ -117,53 +154,37 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time,
     
     int size = run_to_time_non_homogenous(hparser, lambda, start_time, runtime, eptr, lptr, DEFAULT_ARR_SIZE);
 
-
-    printf("exited\n");
-    if (outswitch == 0)
-	mult_double_to_file(outfile, "a", *eptr, *lptr, size);
-    else 
+    if (outswitch == 0) // Outputs only event data - this is what the real data will be like.
 	double_to_file(outfile, "a", *eptr, size);
-        
-    printf("output to file\n");
-    /* int i; */
-    /* int nsize = size / DEFAULT_WINDOW_SIZE; */
-            
-    /* int *rolling = calloc(nsize, sizeof(int)); */
-    /* int *time_steps = calloc(nsize, sizeof(int)); */
-    /* int roll_size = rolling_window(*eptr, size, start_time, DEFAULT_WINDOW_SIZE, rolling); */
-    /* printf("calculated roll\n"); */
-    /* for (i = 0; i < roll_size; ++i){ */
-    /* 	time_steps[i] = DEFAULT_WINDOW_SIZE * i; */
-    /* } */
+    else if (outswitch == 1) // Outputs only events and lambda values
+	mult_double_to_file(outfile, "a", *eptr, *lptr, size);
+    else if (outswitch > 2){ // Outputs all data, including bin counts
+	int num_intervals = (start_time + runtime) / DEFAULT_WINDOW_SIZE;
+
+	int *bin_counts = sum_events_in_interval(*eptr, size, DEFAULT_WINDOW_SIZE, num_intervals);
     
-    //mult_int_to_file(outfile, "a", time_steps, rolling, roll_size);
+	/* int i; */
+	/* for (i = 0; i < num_intervals; ++i){ */
+	/*     printf("Interval %d: %d\n", i, bin_counts[i]); */
+	/* } */
     
-    /* free(time_steps); */
-    /* free(rolling); */
+	double *midpoints = get_interval_midpoints(start_time + runtime, num_intervals);
+
+	/* for (i = 0; i < num_intervals; ++i){ */
+	/*     printf("%lf\n", midpoints[i]); */
+	/* } */
+    
+	int_dbl_to_file(outfile, "a", midpoints, bin_counts, num_intervals);
+	free(midpoints);
+	free(bin_counts);
+    }
+
     free(*eptr);
     free(*lptr);
 
 }
 
-/* 
- * Generates a series of streams, with a time delay between them. 
- * The time_delta array should contain the difference in time between 
- * each consecutive stream. The values affect the result of evaluating
- * the lambda function at each timestep. e.g. for a time_delta [10.0, 25.0]
- * the value passed to the first stream's lambda function will be t + 10.0,
- * and the second will be t + 25.0. The outswitch parameter determines whether
- * all data will be output to the file, or just the event times.
- */
-void run_time_nstreams(muParserHandle_t hparser, double lambda, double runtime, double *time_delta, int nstreams, char *outfile, int outswitch)
-{
-    int i;
-            
-    for (i = 1; i < nstreams; ++i){
-	printf("%d\n", i);
-	run_time_nonhom(hparser, lambda, time_delta[i], runtime, outfile, outswitch);
-    }
 
-}
 
 /* 
  * Helper method to run a nonhomogenous process until a specific 
