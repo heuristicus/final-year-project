@@ -14,27 +14,47 @@ int main(int argc, char *argv[])
     int subintervals = 5;
         
     double **intervals = get_subintervals(time, subintervals);
-    double *weights = initialise_weights(subintervals);
     int *bin_counts = get_bin_counts(argv[1], time/subintervals, subintervals);
+
+    double *weights = initialise_weights(subintervals);
     double *random_variables = initialise_random_variables(bin_counts, subintervals);
     
     int i;
     
     for (i = 0; i < subintervals; ++i){
 	printf("%lf - %lf: %d\n", intervals[i][0], intervals[i][2], bin_counts[i]);
+
+    }
+
+    for (i = 0; i < subintervals; ++i) {
 	printf("Random variable %d is %lf\n", i, random_variables[i]);
+    }
+
+    for (i = 0; i < subintervals; ++i) {
+	printf("Weight %d is %lf\n", i, weights[i]);
     }
 
     double Y_mean = mean_Y(random_variables, weights, subintervals);
     double x_mean = mean_x(bin_counts, weights, subintervals);
 
+    printf("mean x %lf\n", x_mean);
+    printf("mean randvar %lf\n", Y_mean);
+
+
     double est_beta = beta_estimate(weights, bin_counts, random_variables, x_mean, subintervals);
     double est_alpha = alpha_estimate(Y_mean, x_mean, est_beta);
 
+    printf("alpha estimate: %lf\n", est_alpha);
+    printf("beta estimate: %lf\n", est_beta);
+
     double sse = SSE(random_variables, weights, bin_counts, est_alpha, est_beta, subintervals);
+
+    printf("SSE: %lf\n", sse);
     
     double a = a_estimate(est_alpha, time, subintervals);
     double b = b_estimate(est_beta, time, subintervals);
+
+    printf("a estimate: %lf\nb estimate %lf\n", a, b);
 
     if (a < 0){
 	printf("Estimate for a is not positive (%lf) - setting a to 0 and recalculating b.\n", a);
@@ -45,17 +65,24 @@ int main(int argc, char *argv[])
 	a = -b * time;
 	b = constraint_b(weights, bin_counts, random_variables, time, subintervals);
     }
+
+    lambda_estimate(random_variables, bin_counts, a, b, time, subintervals);
     
-    printf("mean x %lf\n", x_mean);
-    printf("mean randvar %lf\n", Y_mean);
+    for (i = 0; i < subintervals; ++i) {
+	printf("New lambda estimate for random variable %d: %lf\n", i, random_variables[i]);
+    }
 
-    printf("alpha estimate: %lf\n", est_alpha);
-    printf("beta estimate: %lf\n", est_beta);
-
-    printf("a estimate: %lf\nb estimate %lf\n", a, b);
+    weight_estimate(weights, random_variables, subintervals);
     
+    
+    for (i = 0; i < subintervals; ++i) {
+	printf("New weight %d is %lf\n", i, weights[i]);
+    }
 
-    printf("SSE: %lf\n", sse);
+
+    sse = SSE(random_variables, weights, bin_counts, est_alpha, est_beta, subintervals);
+
+    printf("new SSE: %lf\n", sse);
     
     free_pointer_arr((void **) intervals, subintervals);
     free(bin_counts);
@@ -210,16 +237,32 @@ double constraint_b(double *weights, int *bin_counts, double *random_variables, 
     
 }
 
-
-
-double weight_estimate()
+/*
+ * Updates the estimates for the means of the random variables.
+ */
+void lambda_estimate(double *random_variables, int *bin_counts, double a, double b, double time, int intervals)
 {
-    return 0.0;
+    int i;
+    
+    for (i = 0; i < intervals; ++i) {
+	random_variables[i] = (time/intervals) * (a + b * bin_counts[i]);
+    }
+
 }
 
-double lambda_estimate()
+void weight_estimate(double *weights, double *random_variables, int intervals)
 {
-    return 0.0;
+    int i;
+    double randvar_total = 0;
+        
+    for (i = 0; i < intervals; ++i) {
+	randvar_total += 1/random_variables[i];
+    }
+
+    for (i = 0; i < intervals; ++i) {
+	weights[i] = intervals * ((1/random_variables[i]) / randvar_total);
+    }
+
 }
 
 /*
