@@ -17,8 +17,15 @@ int main(int argc, char *argv[])
     /* print_list(p); */
     /* free_list(p); */
 
-    get_event_data(argv[1]);
+    double *events = get_event_data(argv[1]);
     
+    int i;
+    
+    for (i = 1; i < (int) events[0]; ++i) {
+	printf("%lf\n", events[i]);
+    }
+
+
     return 0;
 }
 

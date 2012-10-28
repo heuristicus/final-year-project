@@ -30,7 +30,7 @@ int* sum_events_in_interval(double *event_times, int num_events, double interval
 {
     int i = 0, current_interval = 0;
     double event_time;
-        
+    
     int *bins = calloc(interval_num, sizeof(int));
     
     for (event_time = event_times[0]; i < num_events; ++i, event_time = event_times[i]){

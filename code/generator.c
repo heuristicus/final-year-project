@@ -181,7 +181,6 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time,
 
     free(*eptr);
     free(*lptr);
-
 }
 
 
