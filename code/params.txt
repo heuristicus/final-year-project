@@ -1,0 +1,8 @@
+outfile output.txt
+equation a-(b*sin(alpha*t))
+a 10
+b 5
+alpha 0.01
+timedelta 0.0,15.0
+lambda 100.0
+runtime 100.0
