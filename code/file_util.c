@@ -166,7 +166,7 @@ void mult_double_to_file(char* filename, char* mode, double* arr1, double* arr2,
     int i;
 
     for (i = 0; i < len; ++i){
-	fprintf(fp, "%lf %lf\n", arr1[i], arr2[i]);
+	fprintf(fp, "%.15lf %.15lf\n", arr1[i], arr2[i]);
     }
 
     fprintf(fp, "\n\n");
@@ -213,7 +213,7 @@ void int_dbl_to_file(char* filename, char* mode, double* arr1, int* arr2, int le
     int i;
 
     for (i = 0; i < len; ++i){
-	fprintf(fp, "%lf %d\n", arr1[i], arr2[i]);
+	fprintf(fp, "%.15lf %d\n", arr1[i], arr2[i]);
     }
 
     fprintf(fp, "\n\n");
@@ -235,7 +235,7 @@ void double_to_file(char *filename, char *mode, double *arr, int len)
     int i;
 
     for (i = 0; i < len; ++i){
-	fprintf(fp, "%lf\n", arr[i]);
+	fprintf(fp, "%.15lf\n", arr[i]);
     }
 
     fprintf(fp, "\n\n");
