@@ -18,6 +18,9 @@ void initialise_generator(char **args)
     char *paramfile = NULL;
     paramlist *params = NULL;
     char *tmp;
+    
+    double interval_time = 10.0;
+    double lambda = 100.0;
         
     for (i = 0; i <= sizeof(args)/sizeof(char*); ++i){
 	if (args[i] == NULL)
@@ -39,12 +42,18 @@ void initialise_generator(char **args)
 	free(params);
 	return;
     }
-    
 
+    // If there is a value of nruns in the param file, use that instead of the default
     if ((tmp = get_param_val(params, "nruns")) != NULL)
 	nruns = atoi(tmp);
-        
-    printf("number of runs: %d\n", nruns);
+
+    if ((tmp = get_param_val(params, "lambda")) != NULL)
+	lambda = atol(tmp);
+
+    if ((tmp = get_param_val(params, "interval_time")) != NULL)
+    	interval_time = atol(tmp);
+                
+    printf("Number of runs: %d\nLambda: %lf\nInterval time: %lf\n", nruns, lambda, interval_time);
 
     muParserHandle_t hparser = mupCreate(0);
 
@@ -55,8 +64,7 @@ void initialise_generator(char **args)
     /* mupDefineVar(hparser, "b", &b); */
     /* mupDefineVar(hparser, "alpha", &alpha); */
     
-    double time_to_run = 70.0;
-    double lambda = 400.0;
+    
     
     char *eqn = "a+b*t";
     double a = 5, b = 2;
@@ -73,9 +81,8 @@ void initialise_generator(char **args)
     
     /* printf("test lambda = %lf\n", testl); */
     
-    //run_time_nonhom(hparser, 100.0, 0.0, 100.0, outfile);
     double time_delta[2] = {0.0, 15.0};
-    run_time_nstreams(hparser, lambda, time_to_run, time_delta, 2, outfile, 3);
+    run_time_nstreams(hparser, lambda, interval_time, time_delta, 2, outfile, 3);
     
     mupRelease(hparser);
     
