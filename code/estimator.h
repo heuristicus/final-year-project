@@ -21,7 +21,7 @@ double* initialise_random_variables(int *bin_counts, int length);
 double constraint_a_OLS(double *weights, double *midpoints, int *bin_counts, double interval_time, int num_subintervals);
 double constraint_b_OLS(double *weights, double *midpoints, int *bin_counts, double interval_time, int num_subintervals);
 double constraint_b_IWLS(int *bin_counts, double interval_time, int num_subintervals);
-double* lambda_estimate(double *midpoints, double a, double b, double interval_time, int num_subintervals);
+double* lambda_estimate(double *lambda, double *midpoints, double a, double b, double interval_time, int num_subintervals);
 void weight_estimate(double *weights, double *lambda, int num_subintervals);
 
 

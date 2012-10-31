@@ -4,8 +4,8 @@
 
 int main(int argc, char *argv[])
 {
-    double interval_time = 100.0;
-    int num_subintervals = 10;
+    double interval_time = 10.0;
+    int num_subintervals = 5;
         
     double **intervals = get_subintervals(interval_time, num_subintervals);
     int *bin_counts = get_bin_counts(argv[1], interval_time/num_subintervals, num_subintervals);
@@ -13,7 +13,6 @@ int main(int argc, char *argv[])
     double *midpoints = get_interval_midpoints(interval_time, num_subintervals);
     double *weights = initialise_weights(num_subintervals);
     double *lambda = NULL;
-    //double *random_variables = initialise_random_variables(bin_counts, num_subintervals);
     
     int i, loop;
     
@@ -83,7 +82,7 @@ int main(int argc, char *argv[])
 	}
 	
 
-	lambda = lambda_estimate(midpoints, a, b, interval_time, num_subintervals);
+	lambda = lambda_estimate(lambda, midpoints, a, b, interval_time, num_subintervals);
     
 	/* for (i = 0; i < num_subintervals; ++i) { */
 	/*     printf("New lambda estimate for random variable %d: %lf\n", i, lambda[i]); */
@@ -99,9 +98,9 @@ int main(int argc, char *argv[])
 
 	sse = SSE(weights, midpoints, bin_counts, est_alpha, est_beta, num_subintervals);
 
-	printf("new SSE: %lf\n\n\n\n", sse);
+	printf("new SSE: %lf\n", sse);
 
-	printf("Estimates after %d iterations:\na = %lf\nb = %lf\n", loop + 1, a , b);
+	printf("Estimates after %d iterations:\na = %lf\nb = %lf\n\n\n", loop + 1, a , b);
     
     }
 
@@ -114,8 +113,11 @@ int main(int argc, char *argv[])
 	fprintf(fp, "%lf, %lf, %d, %lf\n", intervals[i][1], a + b * intervals[i][1], bin_counts[i], lambda[i]);
     }
 
+    fclose(fp);
+    
     free_pointer_arr((void **) intervals, num_subintervals);
     free(bin_counts);
+    free(midpoints);
     free(lambda);
     free(weights);
     
@@ -151,6 +153,8 @@ int* get_bin_counts(char *filename, double interval_time, int interval_num)
 {
     double *events = get_event_data(filename);
     int num_events = (int) events[0] - 1;
+
+    printf("num_events %d\n", num_events);
 
     int *bin_counts = sum_events_in_interval(events + 1, num_events, interval_time, interval_num);
     
@@ -298,11 +302,13 @@ double constraint_b_IWLS(int *bin_counts, double interval_time, int num_subinter
 /*
  * Updates the estimates for the means of the random variables.
  */
-double* lambda_estimate(double *midpoints, double a, double b, double interval_time, int num_subintervals)
+double* lambda_estimate(double *lambda, double *midpoints, double a, double b, double interval_time, int num_subintervals)
 {
     int i;
     
-    double *lambda = malloc(num_subintervals * sizeof(double));
+    if (lambda == NULL){
+	lambda = malloc(num_subintervals * sizeof(double));
+    }
         
     for (i = 0; i < num_subintervals; ++i) {
 	lambda[i] = (interval_time/num_subintervals) * (a + b * midpoints[i]);
