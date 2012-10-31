@@ -57,7 +57,7 @@ void initialise_generator(char **args)
 
     muParserHandle_t hparser = mupCreate(0);
 
-    /* char *eqn = "a-(b*sin(alpha*t))"; */ // check syntax is correct. Nothing to check if eqn is wrong.
+    /* char *eqn = "a-(b*sin(alpha*t))"; //check syntax is correct. Nothing to check if eqn is wrong. */
     /* double a = 10.0, b = 5.0, alpha = 0.05; */
     /* mupSetExpr(hparser, eqn); */
     /* mupDefineVar(hparser, "a", &a); */
