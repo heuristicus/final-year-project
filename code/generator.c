@@ -11,7 +11,7 @@
  * and those that are contained in the parameter file, if there is one (there should be).
  * The order in which the arguments are is defined inside start.c
  */
-void initialise_generator(char **args)
+void generate(char **args)
 {
     int i, nruns = 1;
     char *outfile = NULL;
@@ -234,15 +234,6 @@ void run_events_nonhom(muParserHandle_t hparser, double lambda, double start_tim
 
     run_to_event_limit_non_homogenous(hparser, lambda, start_time, events, et, lv);
     mult_double_to_file(outfile, "a", et, lv, events);
-}
-
-/* 
- * seeds the random variable to be used. Should only be called once
- * per run. 
- */
-void init_rand(void)
-{
-    srand48(time(NULL));
 }
 
 /* knuth method. Generates time to next event in a homogenous poisson process. */

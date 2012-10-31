@@ -4,11 +4,20 @@
 
 int main(int argc, char *argv[])
 {
-    double interval_time = 10.0;
-    int num_subintervals = 5;
-        
+    estimate_IWLS(argv[1], argv[2], 100.0, 10, 3);
+    
+    return 0;
+}
+
+void estimate_OLS(char *infile, char *outfile, double interval_time, int num_subintervals)
+{
+    estimate_IWLS(infile, outfile, interval_time, num_subintervals, 1);
+}
+
+void estimate_IWLS(char *infile, char *outfile, double interval_time, int num_subintervals, int iterations)
+{
     double **intervals = get_subintervals(interval_time, num_subintervals);
-    int *bin_counts = get_bin_counts(argv[1], interval_time/num_subintervals, num_subintervals);
+    int *bin_counts = get_bin_counts(infile, interval_time/num_subintervals, num_subintervals);
 
     double *midpoints = get_interval_midpoints(interval_time, num_subintervals);
     double *weights = initialise_weights(num_subintervals);
@@ -106,7 +115,7 @@ int main(int argc, char *argv[])
 
     printf("Final estimates:\na = %lf\nb = %lf\n", a, b);
 
-    FILE *fp = fopen(argv[2], "w");
+    FILE *fp = fopen(outfile, "w");
     
     
     for (i = 0; i < num_subintervals; ++i) {
@@ -120,8 +129,6 @@ int main(int argc, char *argv[])
     free(midpoints);
     free(lambda);
     free(weights);
-    
-    return 0;
 }
 
 /*
@@ -153,8 +160,6 @@ int* get_bin_counts(char *filename, double interval_time, int interval_num)
 {
     double *events = get_event_data(filename);
     int num_events = (int) events[0] - 1;
-
-    printf("num_events %d\n", num_events);
 
     int *bin_counts = sum_events_in_interval(events + 1, num_events, interval_time, interval_num);
     

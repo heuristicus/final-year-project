@@ -3,6 +3,8 @@ equation a-(b*sin(alpha*t))
 a 10
 b 5
 alpha 0.01
+nstreams 1
 timedelta 0.0,15.0
-lambda 500.0
-interval_time 10.0
+lambda 3000.0
+interval_time 100.0
+est_method IWLS

@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
 
     char **args = parse_args(argc, argv);
     
-    initialise_generator(args);
+    generate(args);
     
     free(args);
     

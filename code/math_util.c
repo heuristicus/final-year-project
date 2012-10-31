@@ -34,7 +34,6 @@ int* sum_events_in_interval(double *event_times, int num_events, double interval
     int *bins = calloc(interval_num, sizeof(int));
     
     for (event_time = event_times[0]; i < num_events; ++i){
-	printf("%d: %lf\n", i, event_times[i]);
 	while (event_time > interval_time * (current_interval + 1)){
 	    //printf("%lf is greater than %lf, interval time: %lf, current_interval %d\n", event_time, interval_time * current_interval + 1, interval_time, current_interval);
 	    current_interval++;
@@ -50,6 +49,16 @@ int* sum_events_in_interval(double *event_times, int num_events, double interval
     
 }
 
+void init_rand(double seed)
+{
+    if (seed == 0.0)
+	srand48(time(NULL));
+    else
+	srand48(seed);
+
+    rand_initialised = 1;
+}
+
 /*
  * From "The Art of Computer Programming", Vol.3. Generates a gaussian random
  * value with mean of 0 and standard deviation of 1. http://c-faq.com/lib/gaussian.html
@@ -57,11 +66,9 @@ int* sum_events_in_interval(double *event_times, int num_events, double interval
 double rand_gauss()
 {
 
-    if(!rand_initialised){
-	srand(time(NULL));
-	rand_initialised = 1;
-    }
-    
+    if(!rand_initialised)
+	init_rand(0.0);
+        
     static double V1, V2, S;
     static int phase = 0;
     double X;

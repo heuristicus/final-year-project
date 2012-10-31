@@ -4,6 +4,8 @@
 #ifndef _ESTIMATOR_H
 #define _ESTIMATOR_H
 
+void estimate_OLS(char *infile, char *outfile, double interval_time, int num_subintervals);
+void estimate_IWLS(char *infile, char *outfile, double interval_time, int num_subintervals, int iterations);
 double** get_subintervals(double interval_time, int num_subintervals);
 void free_pointer_arr(void **arr, int length);
 double get_interval_midpoint(int interval_index, double interval_time, int num_subintervals);
