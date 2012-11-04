@@ -36,10 +36,10 @@ int* sum_events_in_interval(double *event_times, int num_events, double start_ti
     int *bins = calloc(num_subintervals, sizeof(int));
     
     for (event_time = event_times[0]; i < num_events; ++i){
-	while (event_time > ((start_time + subinterval_time) * (current_interval + 1))) {
-	    //printf("event time: %lf, end of interval: %lf\n", event_time, (start_time + subinterval_time) * (current_interval + 1));
+	while (event_time > (start_time + (subinterval_time * (current_interval + 1)))) {
+	    //printf("event time: %lf, end of interval: %lf\n", event_time, start_time + (subinterval_time * (current_interval + 1)));
 	    current_interval++;
-	    //printf("%lf is greater than %lf, interval time: %lf, interval incremented to %d\n", event_time, (start_time + subinterval_time) * current_interval + 1, subinterval_time, current_interval);
+	    //printf("%lf is greater than %lf, interval time: %lf, interval incremented to %d\n", event_time, start_time + (subinterval_time * (current_interval + 1)), subinterval_time, current_interval);
 	}
 
 	//printf("current time: %lf, interval end: %lf. Adding to loc %d\n", event_time, (end_time - start_time) * (current_interval + 1), current_interval);
