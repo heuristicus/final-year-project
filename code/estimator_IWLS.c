@@ -2,11 +2,12 @@
 #include "math_util.h"
 #include "file_util.h"
 
-int main(int argc, char *argv[])
-{
-    free(estimate_IWLS(argv[1], argv[2], 25, 75.0, 50, 2));
-    return 0;
-}
+/* int main(int argc, char *argv[]) */
+/* { */
+/*     free(estimate_IWLS(argv[1], argv[2], 33.33, 66.66, 10, 3)); */
+/*     //free(estimate_IWLS(argv[1], argv[3], 0, 25, 50, 2)); */
+/*     return 0; */
+/* } */
 
 /*
  * Estimates a monotonic linear function with the optimum least squares estimator, which
@@ -35,12 +36,12 @@ double* estimate_IWLS(char *infile, char *outfile, double start_time, double end
     
     int i, loop;
 
-    /* for (i = 0; i < num_subintervals; ++i){ */
-    /* 	printf("%lf - %lf: %d\n", intervals[i][0], intervals[i][2], bin_counts[i]); */
+    for (i = 0; i < num_subintervals; ++i){
+    	printf("%lf - (%lf/%lf) -  %lf: %d\n", intervals[i][0], midpoints[i], intervals[i][1], intervals[i][2], bin_counts[i]);
 
-    /* } */
+    }
 
-    double Y_mean, x_mean, est_beta, est_alpha, sse, a, b;
+    double Y_mean, x_mean, est_beta, est_alpha, sse_alpha_beta, sse_a_b, a, b;
     
     for (loop = 0; loop < iterations; ++loop){
 	
@@ -48,9 +49,9 @@ double* estimate_IWLS(char *infile, char *outfile, double start_time, double end
 	/*     printf("Random variable %d is %lf\n", i, random_variables[i]); */
 	/* } */
 
-	/* for (i = 0; i < num_subintervals; ++i) { */
-	/*     printf("Weight %d is %lf\n", i, weights[i]); */
-	/* } */
+	for (i = 0; i < num_subintervals; ++i) {
+	    printf("Weight %d is %lf\n", i, weights[i]);
+	}
 
 	Y_mean = mean_Y(bin_counts, weights, num_subintervals);
 	x_mean = mean_x(midpoints, weights, num_subintervals);
@@ -65,9 +66,9 @@ double* estimate_IWLS(char *infile, char *outfile, double start_time, double end
 	printf("alpha estimate: %lf\n", est_alpha);
 	printf("beta estimate: %lf\n", est_beta);
 
-	sse = SSE(weights, midpoints, bin_counts, est_alpha, est_beta, num_subintervals);
+	sse_alpha_beta = SSE(weights, midpoints, bin_counts, est_alpha, est_beta, num_subintervals);
 
-	printf("SSE: %lf\n", sse);
+	printf("SSE on alpha and beta: %lf\n", sse_alpha_beta);
     
 	a = a_estimate(est_alpha, interval_time, num_subintervals);
 	b = b_estimate(est_beta, interval_time, num_subintervals);
@@ -90,12 +91,14 @@ double* estimate_IWLS(char *infile, char *outfile, double start_time, double end
 	    if (a < 0){
 		printf("Estimate for a is not within constraints (%lf) - setting a to 0 and recalculating b. (IWLS)\n", a);
 		a = 0;
-		b = constraint_b_IWLS(bin_counts, interval_time, num_subintervals);
+		//b = constraint_b_IWLS(bin_counts, interval_time, num_subintervals);
+		b = constraint_b_IWLS(bin_counts, midpoints, interval_time, num_subintervals);
 		printf("New a: %lf\nNew b: %lf\n", a, b);
 	    } else if (a > 0 && b < -a/interval_time){
 		printf("Estimate for b is not within constraints (%lf). Recalculating (IWLS)\n", b);
 		a = -b * interval_time;
-		b = constraint_b_IWLS(bin_counts, interval_time, num_subintervals);
+		//b = constraint_b_IWLS(bin_counts, interval_time, num_subintervals);
+		b = constraint_b_IWLS(bin_counts, midpoints, interval_time, num_subintervals);
 		printf("New a: %lf\nNew b: %lf\n", a, b);
 	    }
 	}
@@ -103,19 +106,19 @@ double* estimate_IWLS(char *infile, char *outfile, double start_time, double end
 
 	lambda = lambda_estimate(lambda, midpoints, a, b, interval_time, num_subintervals);
     
-	/* for (i = 0; i < num_subintervals; ++i) { */
-	/*     printf("New lambda estimate for random variable %d: %lf\n", i, lambda[i]); */
-	/* } */
+	for (i = 0; i < num_subintervals; ++i) {
+	    printf("New lambda estimate for random variable %d: %lf\n", i, lambda[i]);
+	}
 
 	weight_estimate(weights, lambda, num_subintervals);
     
-	/* for (i = 0; i < num_subintervals; ++i) { */
-	/*     printf("New weight %d is %lf\n", i, weights[i]); */
-	/* } */
+	for (i = 0; i < num_subintervals; ++i) {
+	    printf("New weight %d is %lf\n", i, weights[i]);
+	}
 
-	sse = SSE(weights, midpoints, bin_counts, est_alpha, est_beta, num_subintervals);
+	sse_a_b = SSE(weights, midpoints, bin_counts, a, b, num_subintervals);
 
-	printf("new SSE: %lf\n", sse);
+	printf("SSE on a and b: %lf\n", sse_a_b);
 
 	printf("Estimates after %d iterations:\na = %lf\nb = %lf\n\n\n", loop + 1, a , b);
     
@@ -138,12 +141,13 @@ double* estimate_IWLS(char *infile, char *outfile, double start_time, double end
     free(lambda);
     free(weights);
     
-    double *retval = malloc(3 * sizeof(double));
+    double *retval = malloc(4 * sizeof(double));
     
     retval[0] = a;
     retval[1] = b;
-    retval[2] = sse;
-        
+    retval[2] = sse_a_b;
+    retval[3] = sse_alpha_beta;
+            
     return retval;
 }
 
@@ -308,23 +312,23 @@ double constraint_b_OLS(double *weights, double *midpoints, int *bin_counts, dou
     
 }
 
-/*
- * Recalculates b in cases where it violates the constraints imposed. This function is used
- * when IWLS is being used.
- */
-double constraint_b_IWLS(int *bin_counts, double interval_time, int num_subintervals)
-{
-    int i;
-    double sum = 0;
+/* /\* */
+/*  * Recalculates b in cases where it violates the constraints imposed. This function is used */
+/*  * when IWLS is being used. ***CAUSES ERRORS - DO NOT USE*/
+/*  *\/ */
+/* double constraint_b_IWLS(int *bin_counts, double interval_time, int num_subintervals) */
+/* { */
+/*     int i; */
+/*     double sum = 0; */
         
-    for (i = 0; i < num_subintervals; ++i) {
-	sum += bin_counts[i] / pow(interval_time, 2);
-    }
+/*     for (i = 0; i < num_subintervals; ++i) { */
+/* 	sum += bin_counts[i] / pow(interval_time, 2); */
+/*     } */
     
-    //return 2 * sum; According to Massey et al 1996, there should be a factor of 2 applied to the sum,
-    // but this generates incorrect estimates.
-    return sum;
-}
+/*     //return 2 * sum; According to Massey et al 1996, there should be a factor of 2 applied to the sum, */
+/*     // but this generates incorrect estimates. */
+/*     return sum; */
+/* } */
 
 /*
  * Original function for IWLS b estimate recalculation. The function constraint_b_IWLS should have a factor
@@ -332,7 +336,7 @@ double constraint_b_IWLS(int *bin_counts, double interval_time, int num_subinter
  * a simplified version of this function, but appears to have an error. This function correctly recalculates
  * b when it violates the constraints.
  */
-double constraint_b_IWLS_2(int *bin_counts, double *midpoints, double interval_time, int num_subintervals)
+double constraint_b_IWLS(int *bin_counts, double *midpoints, double interval_time, int num_subintervals)
 {
     int i;
     double ysum = 0;
