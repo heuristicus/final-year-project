@@ -126,7 +126,8 @@ double* get_interval_midpoints(double start_time, double end_time, int subinterv
     int i;
     
     for (i = 0; i < subintervals; ++i){
-	midpoints[i] = get_interval_midpoint(i + 1, total_time, subintervals);
+	midpoints[i] = get_interval_midpoint(i + 1, start_time, end_time, subintervals);
+	printf("midpoint for subint %d is %lf\n", i, midpoints[i]);
     }
 
     return midpoints;
@@ -135,7 +136,7 @@ double* get_interval_midpoints(double start_time, double end_time, int subinterv
 /*
  * Get the midpoint of a specified interval. (midpoint(xk)=(k-1/2)*T/N), 1 <= k <= N
  */
-double get_interval_midpoint(int interval_number, double total_time, int subintervals)
+double get_interval_midpoint(int interval_number, double start_time, double end_time, int subintervals)
 {
-    return (interval_number - 1.0/2.0) * (total_time /subintervals);
+    return start_time + ((interval_number - 1.0/2.0) * ((end_time - start_time)/subintervals));
 }

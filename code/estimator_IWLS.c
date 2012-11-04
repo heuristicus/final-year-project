@@ -4,7 +4,7 @@
 
 int main(int argc, char *argv[])
 {
-    free(estimate_IWLS(argv[1], argv[2], 0.0, 100.0, 75, 3));
+    free(estimate_IWLS(argv[1], argv[2], 25, 75.0, 50, 2));
     return 0;
 }
 
@@ -34,15 +34,15 @@ double* estimate_IWLS(char *infile, char *outfile, double start_time, double end
     double *lambda = NULL;
     
     int i, loop;
-    
-    for (i = 0; i < num_subintervals; ++i){
-    	printf("%lf - %lf: %d\n", intervals[i][0], intervals[i][2], bin_counts[i]);
 
-    }
+    /* for (i = 0; i < num_subintervals; ++i){ */
+    /* 	printf("%lf - %lf: %d\n", intervals[i][0], intervals[i][2], bin_counts[i]); */
+
+    /* } */
 
     double Y_mean, x_mean, est_beta, est_alpha, sse, a, b;
     
-    for (loop = 0; loop < 5; ++loop){
+    for (loop = 0; loop < iterations; ++loop){
 	
 	/* for (i = 0; i < num_subintervals; ++i) { */
 	/*     printf("Random variable %d is %lf\n", i, random_variables[i]); */
@@ -88,12 +88,12 @@ double* estimate_IWLS(char *infile, char *outfile, double start_time, double end
 	    }
 	} else {
 	    if (a < 0){
-		printf("Estimate for a is not positive (%lf) - setting a to 0 and recalculating b. (IWLS)\n", a);
+		printf("Estimate for a is not within constraints (%lf) - setting a to 0 and recalculating b. (IWLS)\n", a);
 		a = 0;
 		b = constraint_b_IWLS(bin_counts, interval_time, num_subintervals);
 		printf("New a: %lf\nNew b: %lf\n", a, b);
 	    } else if (a > 0 && b < -a/interval_time){
-		printf("Estimate for b is not positive (%lf). Recalculating (IWLS)\n", b);
+		printf("Estimate for b is not within constraints (%lf). Recalculating (IWLS)\n", b);
 		a = -b * interval_time;
 		b = constraint_b_IWLS(bin_counts, interval_time, num_subintervals);
 		printf("New a: %lf\nNew b: %lf\n", a, b);
@@ -109,11 +109,9 @@ double* estimate_IWLS(char *infile, char *outfile, double start_time, double end
 
 	weight_estimate(weights, lambda, num_subintervals);
     
-    
 	/* for (i = 0; i < num_subintervals; ++i) { */
 	/*     printf("New weight %d is %lf\n", i, weights[i]); */
 	/* } */
-
 
 	sse = SSE(weights, midpoints, bin_counts, est_alpha, est_beta, num_subintervals);
 
@@ -164,9 +162,9 @@ double** get_subintervals(double start_time, double end_time, int num_subinterva
 
     for (i = 0; i < num_subintervals; ++i){
 	subinterval[i] = malloc(3 * sizeof(double));
-	subinterval[i][0] = (i * interval_time)/num_subintervals;
-	subinterval[i][1] = get_interval_midpoint(i + 1, interval_time, num_subintervals);
-	subinterval[i][2] = ((i + 1) * interval_time) / num_subintervals;
+	subinterval[i][0] = start_time + (i * interval_time)/num_subintervals;
+	subinterval[i][1] = get_interval_midpoint(i + 1, start_time, end_time, num_subintervals);
+	subinterval[i][2] = start_time + ((i + 1) * interval_time) / num_subintervals;
     }
     
 
@@ -311,7 +309,8 @@ double constraint_b_OLS(double *weights, double *midpoints, int *bin_counts, dou
 }
 
 /*
- * Recalculates b in cases where it violates the constraints imposed. This function is used only for the 
+ * Recalculates b in cases where it violates the constraints imposed. This function is used
+ * when IWLS is being used.
  */
 double constraint_b_IWLS(int *bin_counts, double interval_time, int num_subintervals)
 {
@@ -322,7 +321,29 @@ double constraint_b_IWLS(int *bin_counts, double interval_time, int num_subinter
 	sum += bin_counts[i] / pow(interval_time, 2);
     }
     
-    return 2.0 * sum;
+    //return 2 * sum; According to Massey et al 1996, there should be a factor of 2 applied to the sum,
+    // but this generates incorrect estimates.
+    return sum;
+}
+
+/*
+ * Original function for IWLS b estimate recalculation. The function constraint_b_IWLS should have a factor
+ * of 2 in it according to Massey et al 1996, but it appears that this factor is unnecessary. That function is
+ * a simplified version of this function, but appears to have an error. This function correctly recalculates
+ * b when it violates the constraints.
+ */
+double constraint_b_IWLS_2(int *bin_counts, double *midpoints, double interval_time, int num_subintervals)
+{
+    int i;
+    double ysum = 0;
+    double xsum = 0;
+    
+    for (i = 0; i < num_subintervals; ++i) {
+	ysum += bin_counts[i];
+	xsum += midpoints[i];
+    }
+    
+    return (num_subintervals / interval_time) * (ysum / xsum);
     
 }
 

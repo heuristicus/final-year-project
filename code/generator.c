@@ -67,7 +67,7 @@ void generate(char **args)
     
     
     char *eqn = "a+b*t";
-    double a = 5, b = 2;
+    double a = 5, b = 1;
     mupSetExpr(hparser, eqn);
     
     mupDefineVar(hparser, "a", &a);
@@ -82,7 +82,7 @@ void generate(char **args)
     /* printf("test lambda = %lf\n", testl); */
     
     double time_delta[2] = {0.0, 15.0};
-    run_time_nstreams(hparser, lambda, interval_time, time_delta, 2, outfile, 3);
+    run_time_nstreams(hparser, lambda, interval_time, time_delta, 1, outfile, 3);
     
     mupRelease(hparser);
     
@@ -103,7 +103,7 @@ void run_time_nstreams(muParserHandle_t hparser, double lambda, double runtime, 
 {
     int i;
             
-    for (i = 1; i < nstreams; ++i){
+    for (i = 0; i < nstreams; ++i){
 	printf("Generating event stream %d\n", i);
 	run_time_nonhom(hparser, lambda, time_delta[i - 1], runtime, outfile, outswitch);
     }
@@ -203,7 +203,7 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time,
 	/*     printf("Interval %d: %d\n", i, bin_counts[i]); */
 	/* } */
     
-	double *midpoints = get_interval_midpoints(start_time,  runtime, num_intervals);
+	double *midpoints = get_interval_midpoints(start_time, runtime, num_intervals);
 
 	/* for (i = 0; i < num_intervals; ++i){ */
 	/*     printf("%lf\n", midpoints[i]); */
@@ -278,7 +278,7 @@ void generate_event_times_homogenous(double lambda, double time, int max_events,
 int run_to_time_non_homogenous(muParserHandle_t hparser, double lambda, double t_delta, double time_to_run, double **event_times, double **lambda_vals, int arr_len)
 {
     init_rand(0.0);
-    
+            
     double run_time = 0,  end_time = time_to_run, arr_max = arr_len, func_in = run_time + t_delta;
     double rand, non_hom_lambda, hom_out;
     int i = 0;
