@@ -250,7 +250,7 @@ double homogenous_time(double lambda)
  */
 void generate_event_times_homogenous(double lambda, double time, int max_events, double *event_times)
 {
-    init_rand();
+    init_rand(0.0);
         
     double run_time = 0;
     int i = 0;
@@ -277,7 +277,7 @@ void generate_event_times_homogenous(double lambda, double time, int max_events,
  */
 int run_to_time_non_homogenous(muParserHandle_t hparser, double lambda, double t_delta, double time_to_run, double **event_times, double **lambda_vals, int arr_len)
 {
-    init_rand();
+    init_rand(0.0);
     
     double run_time = 0,  end_time = time_to_run, arr_max = arr_len, func_in = run_time + t_delta;
     double rand, non_hom_lambda, hom_out;
@@ -327,7 +327,7 @@ int run_to_time_non_homogenous(muParserHandle_t hparser, double lambda, double t
  */
 void run_to_event_limit_non_homogenous(muParserHandle_t hparser, double lambda, double t_delta, int max_events, double *event_times, double *lambda_vals)
 {
-    init_rand();
+    init_rand(0.0);
     
     double run_time = 0, func_in = t_delta + run_time;
     double rand, non_hom_lambda, hom_out;
