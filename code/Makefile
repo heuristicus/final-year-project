@@ -66,4 +66,4 @@ general_util.o: general_util.c general_util.h
 	$(CC) -c $< -o $@
 
 clean:
-	rm -f $(EST_OBJECTS) $(GEN_OBJECTS) $(UTIL_OBJECTS) *.so generator estimator
+	rm -f $(EST_OBJECTS) $(GEN_OBJECTS) $(UTIL_OBJECTS) *.so generator estimator estimator_piecewise
