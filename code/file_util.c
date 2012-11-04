@@ -17,11 +17,11 @@ int main(int argc, char *argv[])
     /* print_list(p); */
     /* free_list(p); */
 
-    double *events = get_event_data(argv[1]);
+    double *events = get_event_data_interval(25.0, 50, argv[1]);
     
     int i;
     
-    for (i = 1; i < (int) events[0]; ++i) {
+    for (i = 0; i < (int) events[0]; ++i) {
 	printf("%lf\n", events[i]);
     }
 
@@ -95,12 +95,15 @@ paramlist* get_parameters(char* filename)
  * does not include that value itself. For example, if there are 10 events, the actual
  * length will be 11, because of the length in index 0, but the value of the length will be 10.
  */
-double* get_event_data(char *filename)
+double* get_event_data_interval(double start_time, double end_time, char *filename)
 {
     FILE *fp = fopen(filename, "r");
     
+    printf("%lf, %lf\n", start_time, end_time);
+
     char *line = malloc(MAX_LINE_LENGTH);
     double *event_times = malloc(DEFAULT_ARR_SIZE * sizeof(double));
+    int all = start_time == end_time; // Whether we want to get all data or not.
     
     int i = 1, max_size = DEFAULT_ARR_SIZE;
     while ((line = fgets(line, MAX_LINE_LENGTH, fp)) != NULL){
@@ -110,6 +113,15 @@ double* get_event_data(char *filename)
 	    event_times = realloc(event_times, max_size * 2 * sizeof(double));
 	    max_size *= 2;
 	}
+
+	if (!all){
+	    // Don't add the event time if it is before the time we have designated as the start time
+	    if (atof(line) < start_time)
+		continue; 
+	    if (atof(line) > end_time)
+		break; // Don't add data past the specified end time.
+	}
+
 	event_times[i] = atof(line);
 	i++;
     }
@@ -119,8 +131,13 @@ double* get_event_data(char *filename)
     
     fclose(fp);
     free(line);
-    
+
     return event_times;
+}
+
+double* get_event_data_all(char *filename)
+{
+    return get_event_data_interval(0.0, 0.0, filename);
 }
 
 /*

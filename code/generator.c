@@ -168,14 +168,14 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time,
     if (outswitch == 2){ // Outputs all data, including bin counts
 	int num_intervals = (start_time + runtime) / DEFAULT_WINDOW_SIZE;
 
-	int *bin_counts = sum_events_in_interval(*eptr, size, DEFAULT_WINDOW_SIZE, num_intervals);
+	int *bin_counts = sum_events_in_interval(*eptr, size, start_time, runtime, num_intervals);
     
 	/* int i; */
 	/* for (i = 0; i < num_intervals; ++i){ */
 	/*     printf("Interval %d: %d\n", i, bin_counts[i]); */
 	/* } */
     
-	double *midpoints = get_interval_midpoints(start_time + runtime, num_intervals);
+	double *midpoints = get_interval_midpoints(start_time, runtime, num_intervals);
 
 	/* for (i = 0; i < num_intervals; ++i){ */
 	/*     printf("%lf\n", midpoints[i]); */
@@ -196,14 +196,14 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time,
 
 	int num_intervals = (start_time + runtime) / DEFAULT_WINDOW_SIZE;
 
-	int *bin_counts = sum_events_in_interval(*eptr, size, DEFAULT_WINDOW_SIZE, num_intervals);
+	int *bin_counts = sum_events_in_interval(*eptr, size, start_time, runtime, num_intervals);
     
 	/* int i; */
 	/* for (i = 0; i < num_intervals; ++i){ */
 	/*     printf("Interval %d: %d\n", i, bin_counts[i]); */
 	/* } */
     
-	double *midpoints = get_interval_midpoints(start_time + runtime, num_intervals);
+	double *midpoints = get_interval_midpoints(start_time,  runtime, num_intervals);
 
 	/* for (i = 0; i < num_intervals; ++i){ */
 	/*     printf("%lf\n", midpoints[i]); */
@@ -250,7 +250,7 @@ double homogenous_time(double lambda)
  */
 void generate_event_times_homogenous(double lambda, double time, int max_events, double *event_times)
 {
-    init_rand();
+    init_rand(0.0);
         
     double run_time = 0;
     int i = 0;
@@ -277,7 +277,7 @@ void generate_event_times_homogenous(double lambda, double time, int max_events,
  */
 int run_to_time_non_homogenous(muParserHandle_t hparser, double lambda, double t_delta, double time_to_run, double **event_times, double **lambda_vals, int arr_len)
 {
-    init_rand();
+    init_rand(0.0);
     
     double run_time = 0,  end_time = time_to_run, arr_max = arr_len, func_in = run_time + t_delta;
     double rand, non_hom_lambda, hom_out;
@@ -327,7 +327,7 @@ int run_to_time_non_homogenous(muParserHandle_t hparser, double lambda, double t
  */
 void run_to_event_limit_non_homogenous(muParserHandle_t hparser, double lambda, double t_delta, int max_events, double *event_times, double *lambda_vals)
 {
-    init_rand();
+    init_rand(0.0);
     
     double run_time = 0, func_in = t_delta + run_time;
     double rand, non_hom_lambda, hom_out;

@@ -1,4 +1,5 @@
 #include "math_util.h"
+#include <assert.h>
 
 int rand_initialised = 0;
 
@@ -26,22 +27,28 @@ double prob_num_events_in_time_span(double t_start, double t_end, double lambda,
 /* 
  * Outputs the number of events in each interval to the array provided. 
  */
-int* sum_events_in_interval(double *event_times, int num_events, double interval_time, int interval_num)
+int* sum_events_in_interval(double *event_times, int num_events, double start_time, double end_time, int num_subintervals)
 {
     int i = 0, current_interval = 0;
     double event_time;
+    double subinterval_time = (end_time - start_time) / num_subintervals;
+
+    printf("subintervals %d\n", num_subintervals);
     
-    int *bins = calloc(interval_num, sizeof(int));
+    int *bins = calloc(num_subintervals, sizeof(int));
     
     for (event_time = event_times[0]; i < num_events; ++i){
-	while (event_time > interval_time * (current_interval + 1)){
-	    //printf("%lf is greater than %lf, interval time: %lf, current_interval %d\n", event_time, interval_time * current_interval + 1, interval_time, current_interval);
+	while (event_time > (start_time + subinterval_time * current_interval + 1)) {
+	    //printf("%lf is greater than %lf, interval time: %lf, current_interval %d\n", event_time, start_time + subinterval_time * current_interval + 1, subinterval_time, current_interval);
 	    current_interval++;
 	}
 
 	//printf("current time: %lf, interval end: %lf. Adding to loc %d\n", event_time, interval_time * (current_interval + 1), current_interval);
 	
+	//assert(current_interval <= num_subintervals);
 	bins[current_interval]++;
+	//assert(i < num_events);
+	
 	event_time = event_times[i];
     }
 
@@ -111,10 +118,11 @@ double get_gaussian_noise(double mean, double std_dev)
     
 }
 
-double* get_interval_midpoints(double total_time, int subintervals)
+double* get_interval_midpoints(double start_time, double end_time, int subintervals)
 {
     double *midpoints = malloc(subintervals * sizeof(double));
-    
+    double total_time = end_time - start_time;
+        
     int i;
     
     for (i = 0; i < subintervals; ++i){

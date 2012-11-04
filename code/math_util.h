@@ -8,12 +8,12 @@
 
 long double fact(int i);
 double prob_num_events_in_time_span(double t_start, double t_end, double lambda, int k);
-int* sum_events_in_interval(double *event_times, int num_events, double interval_time, int interval_num);
+int* sum_events_in_interval(double *event_times, int num_events, double start_time, double end_time, int num_subintervals);
 double get_poisson_noise(double mean);
 double get_gaussian_noise(double mean, double std_dev);
 double rand_gauss(void);
-double* get_interval_midpoints(double time, int subintervals);
-double get_interval_midpoint(int interval_number, double time, int subintervals);
+double* get_interval_midpoints(double start_time, double end_time, int num_subintervals);
+double get_interval_midpoint(int interval_index, double interval_time, int num_subintervals);
 void init_rand(double seed);
 
 #endif
