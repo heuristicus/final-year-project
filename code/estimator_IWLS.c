@@ -2,6 +2,8 @@
 #include "math_util.h"
 #include "file_util.h"
 
+//#define DEBUG
+
 /* int main(int argc, char *argv[]) */
 /* { */
 /*     free(estimate_IWLS(argv[1], argv[2], 33.33, 66.66, 10, 3)); */
@@ -36,22 +38,27 @@ double* estimate_IWLS(char *infile, char *outfile, double start_time, double end
     
     int i, loop;
 
+#ifdef DEBUG
     for (i = 0; i < num_subintervals; ++i){
     	printf("%lf - (%lf/%lf) -  %lf: %d\n", intervals[i][0], midpoints[i], intervals[i][1], intervals[i][2], bin_counts[i]);
-
     }
+#endif
 
     double Y_mean, x_mean, est_beta, est_alpha, sse_alpha_beta, sse_a_b, a, b;
     
     for (loop = 0; loop < iterations; ++loop){
 	
-	/* for (i = 0; i < num_subintervals; ++i) { */
-	/*     printf("Random variable %d is %lf\n", i, random_variables[i]); */
-	/* } */
-
+#ifdef DEBUG
+	if (lambda){
+	    for (i = 0; i < num_subintervals; ++i) {
+		printf("Random variable %d is %lf\n", i, lambda[i]);
+	    }
+	}
+	
 	for (i = 0; i < num_subintervals; ++i) {
 	    printf("Weight %d is %lf\n", i, weights[i]);
 	}
+#endif
 
 	Y_mean = mean_Y(bin_counts, weights, num_subintervals);
 	x_mean = mean_x(midpoints, weights, num_subintervals);
@@ -106,15 +113,19 @@ double* estimate_IWLS(char *infile, char *outfile, double start_time, double end
 
 	lambda = lambda_estimate(lambda, midpoints, a, b, interval_time, num_subintervals);
     
+
+
+	weight_estimate(weights, lambda, num_subintervals);
+
+#ifdef DEBUG
 	for (i = 0; i < num_subintervals; ++i) {
 	    printf("New lambda estimate for random variable %d: %lf\n", i, lambda[i]);
 	}
-
-	weight_estimate(weights, lambda, num_subintervals);
     
 	for (i = 0; i < num_subintervals; ++i) {
 	    printf("New weight %d is %lf\n", i, weights[i]);
 	}
+#endif
 
 	sse_a_b = SSE(weights, midpoints, bin_counts, a, b, num_subintervals);
 
@@ -126,14 +137,27 @@ double* estimate_IWLS(char *infile, char *outfile, double start_time, double end
 
     printf("Final estimates:\na = %lf\nb = %lf\n", a, b);
 
-    FILE *fp = fopen(outfile, "w");
-    
-    
-    for (i = 0; i < num_subintervals; ++i) {
-	fprintf(fp, "%lf, %lf, %d, %lf\n", intervals[i][1], a + b * intervals[i][1], bin_counts[i], lambda[i]);
-    }
 
-    fclose(fp);
+    if (outfile){
+	FILE *fp = fopen(outfile, "w");
+    
+
+	double pos = start_time;
+    
+	while (pos <= end_time){
+	    fprintf(fp, "%lf, %lf\n", pos, a + b * pos);
+	    pos += 1;
+	}
+
+	fprintf(fp, "\n\n");
+        
+	for (i = 0; i < num_subintervals; ++i) {
+	    fprintf(fp, "%lf, %lf, %d, %lf\n", intervals[i][1], a + b * intervals[i][1], bin_counts[i], lambda[i]);
+	}
+
+	fclose(fp);
+    }
+    
     
     free_pointer_arr((void **) intervals, num_subintervals);
     free(bin_counts);
@@ -250,7 +274,9 @@ double beta_estimate(double* weights, double *midpoints, int *bin_counts, double
 	squarediffsum += weights[i] * pow(midpoints[i] - mean_x, 2);
     }
 
+#ifdef DEBUG
     printf("xdiff %lf, sqdiff %lf\n", xdiffsum, squarediffsum);
+#endif
 
     return xdiffsum/squarediffsum;
         
