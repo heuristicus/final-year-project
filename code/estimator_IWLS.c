@@ -24,20 +24,27 @@ double* estimate_OLS(char *infile, char *outfile, double start_time, double end_
 /*
  * Uses iterative weighted least squares to estimate a monotonic linear function. Returns the estimate of 
  * a, b and the sum squared error calculated for these estimates.
+ *
+ * **** THE START AND END TIMES MUST BE THE CORRECT START AND END TIMES FOR THE EVENT DATA THAT YOU HAVE. ****
  */
 double* estimate_IWLS(char *infile, char *outfile, double start_time, double end_time, int num_subintervals, int iterations)
 {
+    // Does it matter if the interval is longer than what we have data for? if lambda is really low then it
+    // is entirely possible that there are no events for a significant period of time after the visible 
+    // data has been checked.
+    
     double interval_time = end_time - start_time;
     
     double **intervals = get_subintervals(start_time, end_time, num_subintervals);
-    int *bin_counts = get_bin_counts(infile, start_time, end_time, num_subintervals);
+    double *events = get_event_data_interval(start_time, end_time, infile);
+    int *bin_counts = get_bin_counts(events, start_time, end_time, num_subintervals);
 
     double *midpoints = get_interval_midpoints(start_time, end_time, num_subintervals);
     double *weights = initialise_weights(num_subintervals);
     double *lambda = NULL;
     
     int i, loop;
-
+    
 #ifdef DEBUG
     for (i = 0; i < num_subintervals; ++i){
     	printf("%lf - (%lf/%lf) -  %lf: %d\n", intervals[i][0], midpoints[i], intervals[i][1], intervals[i][2], bin_counts[i]);
@@ -89,7 +96,7 @@ double* estimate_IWLS(char *infile, char *outfile, double start_time, double end
 		b = constraint_a_OLS(weights, midpoints, bin_counts, interval_time, num_subintervals);
 		printf("New a: %lf\nNew b: %lf\n", a, b);
 	    } else if (a > 0 && b < -a/interval_time){
-		printf("Estimate for b is not positive (%lf) - setting a=-bT, b=N*beta/T. (OLS)\n", b);
+		printf("Estimate for b is not within constraints (%lf) - setting a=-bT, b=N*beta/T. (OLS)\n", b);
 		a = -b * interval_time;
 		b = constraint_b_OLS(weights, midpoints, bin_counts, interval_time, num_subintervals);
 		printf("New a: %lf\nNew b: %lf\n", a, b);
@@ -110,11 +117,8 @@ double* estimate_IWLS(char *infile, char *outfile, double start_time, double end
 	    }
 	}
 	
-
 	lambda = lambda_estimate(lambda, midpoints, a, b, interval_time, num_subintervals);
     
-
-
 	weight_estimate(weights, lambda, num_subintervals);
 
 #ifdef DEBUG
@@ -203,10 +207,8 @@ double** get_subintervals(double start_time, double end_time, int num_subinterva
 /*
  * Get the number of events that occurred in each subinterval.
  */
-int* get_bin_counts(char *filename, double start_time, double end_time, int num_subintervals)
+int* get_bin_counts(double *events, double start_time, double end_time, int num_subintervals)
 {
-
-    double *events = get_event_data_interval(start_time, end_time, filename);
     int num_events = (int) events[0] - 1;
 
     int *bin_counts = sum_events_in_interval(events + 1, num_events, start_time, end_time, num_subintervals);
