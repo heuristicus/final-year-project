@@ -67,10 +67,14 @@ int* sum_events_in_interval(double *event_times, int num_events, double start_ti
 
 void init_rand(double seed)
 {
-    if (seed == 0.0)
+    if (seed == 0.0){
+	int sd = time(NULL);
+	printf("Seed for this run: %d\n", sd);
 	srand48(time(NULL));
-    else
+    } else {
 	srand48(seed);
+    }
+    
 
     rand_initialised = 1;
 }
