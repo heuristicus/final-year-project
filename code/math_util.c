@@ -38,10 +38,13 @@ int* sum_events_in_interval(double *event_times, int num_events, double start_ti
     int *bins = calloc(num_subintervals, sizeof(int));
     
     for (event_time = event_times[0]; i < num_events; ++i){
+	
+	for (; event_time < start_time; i++, event_time = event_times[i]); // get to the start of the interval that we are checking.
+		
 	while (event_time > (start_time + (subinterval_time * (current_interval + 1)))) {
 #ifdef DEBUG
 	    printf("event time: %lf, end of interval: %lf\n", event_time, start_time + (subinterval_time * (current_interval + 1)));
-	    printf("%lf is greater than %lf, interval time: %lf, interval incremented to %d\n", event_time, start_time + (subinterval_time * (current_interval + 2)), subinterval_time, current_interval);
+	    printf("%lf is greater than %lf, interval time: %lf, interval incremented to %d\n", event_time, start_time + (subinterval_time * (current_interval + 1)), subinterval_time, current_interval + 1);
 #endif
 	    current_interval++;
 
