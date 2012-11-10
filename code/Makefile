@@ -19,7 +19,7 @@ runest: estimator
 	LD_LIBRARY_PATH=. ./estimator
 
 generator: generator.o start.o libs
-	$(CC) generator.o start.o -L. -lfile_util -lparamlist -lmath_util $(LIBS) -o $@
+	$(CC) generator.o start.o -L. -lfile_util -lparamlist -lmath_util -lgeneral_util $(LIBS) -o $@
 
 generator.o: generator.c generator.h
 	$(CC) -c $< -o $@
