@@ -26,7 +26,8 @@ void generate(char **args)
     double lambda = 100.0;
     double *time_delta;
     int tdlen;
-        
+    int outswitch = 3;
+            
     int nruns = 1;
 
     for (i = 0; i <= sizeof(args)/sizeof(char*); ++i){
@@ -63,10 +64,7 @@ void generate(char **args)
     if ((tmp = get_param_val(params, "timedelta")) != NULL){
 	char **vals = string_split(tmp, ',');
 	tdlen = atoi(vals[0]) - 1;
-	printf("tdlen %d\n", tdlen);
 	time_delta = malloc((tdlen + 1) * sizeof(double));
-	
-	int i;
 	
 	for (i = 1; i < tdlen + 1; ++i) {
 	    time_delta[i - 1] = atof(vals[i]);
@@ -78,8 +76,10 @@ void generate(char **args)
 	time_delta[0] = 0.0;
 	tdlen = 1;
     }
-    
-                
+
+    if ((tmp = get_param_val(params, "verbosity")) != NULL)
+	outswitch = atoi(tmp);
+                    
     printf("Number of runs: %d\nLambda: %lf\nInterval time: %lf\nTime deltas: ", nruns, lambda, interval_time);
 
     for (i = 0; i < tdlen; ++i) {
@@ -89,6 +89,8 @@ void generate(char **args)
 	else
 	    printf("\n");
     }
+
+    printf("Log verbosity: %d\n", outswitch);
 
 
     muParserHandle_t hparser = mupCreate(0);
@@ -116,7 +118,7 @@ void generate(char **args)
     /* printf("test lambda = %lf\n", testl); */
     
 
-    run_time_nstreams(hparser, lambda, interval_time, time_delta, nruns, outfile, 3);
+    run_time_nstreams(hparser, lambda, interval_time, time_delta, nruns, outfile, outswitch);
     
     mupRelease(hparser);
     

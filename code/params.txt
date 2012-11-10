@@ -1,10 +1,26 @@
+# Inline comments are not supported!
+
+
+# output data
 outfile output.txt
-equation a-(b*sin(alpha*t))
-a 10
-b 5
-alpha 0.01
+# define the verbosity of output to data files. 
+# 0 output only event data for each run
+# 1 output event times and lambda values for each run
+# 2 output event time and lambda values for each run, as well as midpoints and bin counts, to a single file
+# 3 output the above, but also save a file with only event data in it (all data is saved as {filename}_ad, events as {filename}_ev
+verbosity 0
+
+
+# generation parameters
 nruns 2
 timedelta 0.0,10.0
 lambda 3000.0
 interval_time 100.0
 est_method IWLS
+
+
+# equation parameters
+equation a-(b*sin(alpha*t))
+a 10
+b 5
+alpha 0.01

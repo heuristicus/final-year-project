@@ -3,7 +3,7 @@
 #include <time.h>
 
 #define MAX_DATE_LENGTH 26
-#define MAX_PARAM_STRING_LENGTH 100
+#define MAX_PARAM_STRING_LENGTH 500
 #define MAX_LINE_LENGTH 100
 #define DEFAULT_ARR_SIZE 100
 #define PARAM_SEPARATOR " "
@@ -52,7 +52,9 @@ char* generate_outfile()
 
 /* 
  * Gets parameters from a file. The first line of the parameter file should be an
- * integer representing the number of parameters to be read in.
+ * integer representing the number of parameters to be read in. Will ignore lines
+ * which start with # (comments), and newlines. Note that inline comments are not
+ * supported.
  */
 paramlist* get_parameters(char* filename)
 {
@@ -67,6 +69,8 @@ paramlist* get_parameters(char* filename)
 
     while ((line = fgets(line, MAX_PARAM_STRING_LENGTH, fp)) != NULL){
 	// WARNING: Do not use strtok on literals!
+	if (*line == '#' || *line == '\n') // ignore comments and newlines
+	    continue;
 	if (!valid_param(line)){
 	    printf("Invalid parameter: %s\n", line);
 	    continue;
