@@ -1,0 +1,36 @@
+#+TITLE: Estimation of time delays in gravitationally lensed photon streams using kernel regression methods
+#+AUTHOR: Micha{\l} Staniaszek \small{Supervisor: Peter Tiňo}
+
+* Acknowledgements
+* Introduction
+** Problem statement
+   we are trying to find the time delay between two or more photon streams which come from a gravitationally lensed object. In order to do this, we use a kernel regression method to estimate the underlying functions of each stream, and then use various techniques to determine whether the two streams of photons originate from the same object. After confirming that both streams are likely to come from the same object (with some confidence), we determine the time delay between the two streams.
+** Impact of solving (or not solving) the problem
+   Successful completion of the project will lead to a more effective technique for determining the time delay from gravitationally lensed photon streams. In particular, if the technique is more accurate than those currently used for the calculation of these delays, then it could allow more accurate estimation of things that are important to determine the structure of the universe. Time delay calculations have been used to determine the value of the hubble constant to a higher precision, as well as to find out the mass distribution in a certain area of space. Both of these are areas of great importance in astrophysics, and the ability to calculate these values more accurately could potentially lead to discoveries being made in other areas.
+** how we will try and solve the problem
+*** steps to do that
+* Simulation of photon streams
+** Poisson Processes
+*** Homogeneous
+    Times for a homogeneous poisson process can be generated using the formula $\log\frac{-U}{\lambda}$
+*** Non-homogeneous
+*** Experiments
+* Linear Estimation
+** brief method description
+** coding issues
+** experimentation
+*** general cases
+    give some idea of the sorts of error you get 
+*** extreme cases
+    very short time period but v.high rate parameter
+    v long time period but very slow increasing rate parameter
+** issues with the technique
+* Piecewise Estimation
+** method description
+** coding issues
+** experimentation
+* Kernel Regression
+* Time Delay Calculation
+* experimentation on simulated data
+* experimentation on real-world data
+* conclusions
