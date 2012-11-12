@@ -1,5 +1,8 @@
-#+TITLE: Estimation of time delays in gravitationally lensed photon streams using kernel regression methods
+#+TITLE: Kernel regression methods for estimation of time delays in gravitationally lensed photon streams
 #+AUTHOR: Micha{\l} Staniaszek \small{Supervisor: Peter Tiňo}
+#+LATEX_HEADER: \usepackage{fontspec}
+#+LATEX_HEADER: \defaultfontfeatures{Mapping=tex-text}
+#+LATEX_HEADER: \setromanfont[Ligatures={Common},Numbers={Lining}]{Linux Libertine}
 
 * Acknowledgements
 * Introduction
@@ -8,7 +11,18 @@
 ** Impact of solving (or not solving) the problem
    Successful completion of the project will lead to a more effective technique for determining the time delay from gravitationally lensed photon streams. In particular, if the technique is more accurate than those currently used for the calculation of these delays, then it could allow more accurate estimation of things that are important to determine the structure of the universe. Time delay calculations have been used to determine the value of the hubble constant to a higher precision, as well as to find out the mass distribution in a certain area of space. Both of these are areas of great importance in astrophysics, and the ability to calculate these values more accurately could potentially lead to discoveries being made in other areas.
 ** how we will try and solve the problem
-*** steps to do that
+   In order to solve this problem, we will use estimation methods which allow the calculation of the rate parameter $\lambda$ at any time $t \in[0,T]$, where $T$ is the end of the time interval for which we have photon data. Once we are able to do this, we can take two streams of photons and compare the functions that we compute from the streams, and judge whether they are coming from the same lensed object or not, and at the same time calculate the time delay between the two streams. Whether the two streams have the same underlying function will be determined by using a maximum likelihood estimator. Intuitively, the point of maximum likelihood is the value of $\Delta t$ at which there is most overlap between the two functions. The two functions will be judged to be the same function when the return value of some error function drops below a specified threshold. Our estimate for the time delay $\Delta t$ is therefore the value that it takes at the point at which the error is lowest. 
+** steps to do that
+   In order to build a system which can perform the required task, the following components will be necessary.
+   
+*** Photon simulator
+    Although we have access to photon data for a specific gravitationally lensed object, it is useful for testing and experimentation purposes to have a simulator with which the efficacy of techniques can be evaluated. The most suitable way to simulate events in the natural world is by way of poisson processes. In the case of photon streams these will be non-homogeneous processes, since the rate at which photons arrive will be non-linear. We will create generators for both homogeneous and non-homogeneous processes, which will allow the specification of the function to be used to generate the photon stream. The generator will output data which we can use as the ground truth for experimentation.
+*** Linear estimators
+    While a linear estimator is not strictly necessary to complete the project, we feel that the implementation of these estimators will be a good method of increasing understanding of the process of estimation. The knowledge gained from writing these more basic estimators should mean that the theory behind the more complex estimator is approached with a deeper understanding of the foundations of estimation techniques, which should make its implementation easier to tackle, as well as resulting in an intuition as to good ways of proceeding. The first step of this stage is to implement a simple linear estimator, which will estimate functions of the form $y=a+bx$. We can then modify this to work as a piecewise estimator for non-linear functions similar in form to those that the photon data is likely to take.
+*** Kernel regression with maximum likelihood estimator
+    The final estimator will be a maximum likelihood estimator which uses kernel regression techniques to estimate non-linear functions. It is hoped that this estimator will provide us with much better results than the piecewise linear estimator. Whether this is the case will be evaluated in the experiments.
+*** Error function for time delay estimation
+    When the maximum likelihood estimator is completed, we should be able to estimate non-linear functions to a high degree of accuracy, which is necessary to improve the estimation of the time delay. The more accurate our estimate of the function that underlies the photon stream, the better we will be able to estimate the delay. To perform this estimation, we will need an error function which we can use to determine the error between the two photon streams. With this error value, we can give a confidence value to each value of $\Delta t$, and choose the one which produces the lowest error for the two streams.
 * Simulation of photon streams
 ** Poisson Processes
 *** Homogeneous
