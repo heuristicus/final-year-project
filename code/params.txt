@@ -8,13 +8,13 @@ outfile output.txt
 # 1 output event times and lambda values for each run
 # 2 output event time and lambda values for each run, as well as midpoints and bin counts, to a single file
 # 3 output the above, but also save a file with only event data in it (all data is saved as {filename}_ad, events as {filename}_ev
-verbosity 0
+verbosity 3
 
 
 # generation parameters
-nruns 2
+nruns 1
 timedelta 0.0,10.0
-lambda 3000.0
+lambda 30.0
 interval_time 100.0
 est_method IWLS
 

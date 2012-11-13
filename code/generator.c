@@ -95,28 +95,23 @@ void generate(char **args)
 
     muParserHandle_t hparser = mupCreate(0);
 
-    /* char *eqn = "a-(b*sin(alpha*t))"; //check syntax is correct. Nothing to check if eqn is wrong. */
-    /* double a = 10, b = 5.0, alpha = 0.05; */
-    /* mupSetExpr(hparser, eqn); */
-    /* mupDefineVar(hparser, "a", &a); */
-    /* mupDefineVar(hparser, "b", &b); */
-    /* mupDefineVar(hparser, "alpha", &alpha); */
-    
-    char *eqn = "a+b*t";
-    double a = 5, b = 1;
+    char *eqn = "a-(b*sin(alpha*t))"; //check syntax is correct. Nothing to check if eqn is wrong.
+    double a = 10, b = 5.0, alpha = 0.1;
     mupSetExpr(hparser, eqn);
-    
     mupDefineVar(hparser, "a", &a);
     mupDefineVar(hparser, "b", &b);
+    mupDefineVar(hparser, "alpha", &alpha);
 
-    /* mupDefineVar(hparser, "t", &time_to_run); */
-    	
+    //char *eqn = "t^2";
+    
+    /* char *eqn = "a+b*t"; */
+    /* double a = 1, b = 0.001; */
+    /* mupSetExpr(hparser, eqn); */
+    
+    /* mupDefineVar(hparser, "a", &a); */
+    /* mupDefineVar(hparser, "b", &b); */
+
     mupSetExpr(hparser, eqn);
-        
-    /* double testl = mupEval(hparser); */
-    
-    /* printf("test lambda = %lf\n", testl); */
-    
 
     run_time_nstreams(hparser, lambda, interval_time, time_delta, nruns, outfile, outswitch);
     
@@ -187,7 +182,7 @@ char* select_output_file(char* cur_out, char* param_out)
         
 }
 
-/* Helper method to run a nonhomogenous process for a specific length
+/* Helper method to run a nonhomogeneous process for a specific length
  * of time. Allocates required memory and prints output data to a file.
  * The outswitch parameter determines what data will be output to the file.
  * 
@@ -200,7 +195,7 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time,
     double **eptr = &et;
     double **lptr = &lv;
 
-    int size = run_to_time_non_homogenous(hparser, lambda, start_time, end_time, eptr, lptr, DEFAULT_ARR_SIZE);
+    int size = run_to_time_non_homogeneous(hparser, lambda, start_time, end_time, eptr, lptr, DEFAULT_ARR_SIZE);
 
     if (outswitch == 0) // Outputs only event data - this is what the real data will be like.
 	double_to_file(outfile, "w", *eptr, size);
@@ -263,7 +258,7 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time,
 }
 
 /* 
- * Runs a non-homogenous poisson process until the specified time has
+ * Runs a non-homogeneous poisson process until the specified time has
  * elapsed. 
  * The event_times and lambda_vals array will be populated with the 
  * time of an event and the result of evaluating lambda(t) at that 
@@ -272,7 +267,7 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time,
  * Returns the final array location in which there is something 
  * stored.
  */
-int run_to_time_non_homogenous(muParserHandle_t hparser, double lambda, double start_time, double end_time, double **event_times, double **lambda_vals, int arr_len)
+int run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda, double start_time, double end_time, double **event_times, double **lambda_vals, int arr_len)
 {
     init_rand(0.0);
             
@@ -283,7 +278,7 @@ int run_to_time_non_homogenous(muParserHandle_t hparser, double lambda, double s
     mupDefineVar(hparser, "t", &time);
 
     while (time < end_time){
-	hom_out = homogenous_time(lambda);
+	hom_out = homogeneous_time(lambda);
 	time += hom_out;
 	non_hom_lambda = mupEval(hparser);
 	//printf("%lf %lf\n", time, non_hom_lambda);//more granularity on lambda values // get this into output file
@@ -314,7 +309,7 @@ int run_to_time_non_homogenous(muParserHandle_t hparser, double lambda, double s
 }
 
 /* 
- * Helper method to run a nonhomogenous process until a specific 
+ * Helper method to run a nonhomogeneous process until a specific 
  * number of events have occurred. Allocates required memory
  * and prints output data to a file. The outswitch parameter determines whether
  * all data will be output to the file, or just the event times.
@@ -324,17 +319,17 @@ void run_events_nonhom(muParserHandle_t hparser, double lambda, double start_tim
     double *et = malloc(events * sizeof(double));
     double *lv = malloc(events * sizeof(double));
 
-    run_to_event_limit_non_homogenous(hparser, lambda, start_time, events, et, lv);
+    run_to_event_limit_non_homogeneous(hparser, lambda, start_time, events, et, lv);
     mult_double_to_file(outfile, "a", et, lv, events);
 }
 
 /* 
- * Runs a non-homogenous poisson process until the number of events 
+ * Runs a non-homogeneous poisson process until the number of events 
  * specified have occurred. The event_times and lambda_vals array 
  * will be populated with the time of an event and the result of 
  * evaluating lambda(t) at that time.
  */
-void run_to_event_limit_non_homogenous(muParserHandle_t hparser, double lambda, double t_delta, int max_events, double *event_times, double *lambda_vals)
+void run_to_event_limit_non_homogeneous(muParserHandle_t hparser, double lambda, double t_delta, int max_events, double *event_times, double *lambda_vals)
 {
     init_rand(0.0);
     
@@ -345,7 +340,7 @@ void run_to_event_limit_non_homogenous(muParserHandle_t hparser, double lambda, 
     mupDefineVar(hparser, "t", &func_in);
     
     while (i < max_events){
-	hom_out = homogenous_time(lambda);
+	hom_out = homogeneous_time(lambda);
 	run_time += hom_out;
 	func_in += hom_out;
 	non_hom_lambda = mupEval(hparser);
@@ -368,19 +363,19 @@ void run_to_event_limit_non_homogenous(muParserHandle_t hparser, double lambda, 
 }
 
 /* 
- * Generates time for events in a homogenous poisson process until 
+ * Generates time for events in a homogeneous poisson process until 
  * time is exceeded. 
  * Puts event times into the array passed in the parameters. 
  * Puts a -1 in the array location after the last event
  */
-void generate_event_times_homogenous(double lambda, double time, int max_events, double *event_times)
+void generate_event_times_homogeneous(double lambda, double time, int max_events, double *event_times)
 {
     init_rand(0.0);
         
     double run_time = 0;
     int i = 0;
     
-    while ((run_time += homogenous_time(lambda)) < time && i < max_events){
+    while ((run_time += homogeneous_time(lambda)) < time && i < max_events){
 	event_times[i] = run_time;
 	++i;
     }
@@ -390,8 +385,8 @@ void generate_event_times_homogenous(double lambda, double time, int max_events,
     
 }
 
-/* knuth method. Generates time to next event in a homogenous poisson process. */
-double homogenous_time(double lambda)
+/* knuth method. Generates time to next event in a homogeneous poisson process. */
+double homogeneous_time(double lambda)
 {
     return -log(drand48()) / lambda;
 }
