@@ -17,6 +17,7 @@ timedelta 0.0,10.0
 lambda 30.0
 interval_time 100.0
 est_method IWLS
+seed 0
 
 
 # equation parameters

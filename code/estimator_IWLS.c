@@ -32,7 +32,9 @@ double* estimate_IWLS(char *infile, char *outfile, double start_time, double end
     // Does it matter if the interval is longer than what we have data for? if lambda is really low then it
     // is entirely possible that there are no events for a significant period of time after the visible 
     // data has been checked.
-    
+    if (start_time == end_time){
+	return NULL;
+    }
     double interval_time = end_time - start_time;
     
     double **intervals = get_subintervals(start_time, end_time, num_subintervals);
@@ -80,7 +82,7 @@ double* estimate_IWLS(char *infile, char *outfile, double start_time, double end
 	printf("alpha estimate: %lf\n", est_alpha);
 	printf("beta estimate: %lf\n", est_beta);
 
-	sse_alpha_beta = SSE(weights, midpoints, bin_counts, est_alpha, est_beta, num_subintervals);
+	sse_alpha_beta = w_SSE(weights, midpoints, bin_counts, est_alpha, est_beta, num_subintervals);
 
 	printf("SSE on alpha and beta: %lf\n", sse_alpha_beta);
     
@@ -131,7 +133,7 @@ double* estimate_IWLS(char *infile, char *outfile, double start_time, double end
 	}
 #endif
 
-	sse_a_b = SSE(weights, midpoints, bin_counts, a, b, num_subintervals);
+	sse_a_b = w_SSE(weights, midpoints, bin_counts, a, b, num_subintervals);
 
 	printf("SSE on a and b: %lf\n", sse_a_b);
 
@@ -452,7 +454,7 @@ double mean_Y(int *bin_counts, double *weights, int num_subintervals)
 /*
  * Find the sum squared error for a set of estimates
  */
-double SSE(double *weights, double *midpoints, int *bin_counts, double alpha, double beta, int num_subintervals)
+double w_SSE(double *weights, double *midpoints, int *bin_counts, double alpha, double beta, int num_subintervals)
 {
     double sum = 0.0;
     int i;
@@ -462,5 +464,4 @@ double SSE(double *weights, double *midpoints, int *bin_counts, double alpha, do
     }
 
     return sum;
-    
 }

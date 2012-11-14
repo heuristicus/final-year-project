@@ -13,7 +13,7 @@ double a_estimate(double alpha, double interval_time, int num_subintervals);
 double b_estimate(double beta, double interval_time, int num_subintervals);
 double beta_estimate(double* weights, double *midpoints, int *bin_counts, double mean_x, int num_subintervals);
 double alpha_estimate(double mean_y, double mean_x, double beta_estimate);
-double SSE(double *weights, double *midpoints, int *bin_counts, double alpha, double beta, int num_subintervals);
+double w_SSE(double *weights, double *midpoints, int *bin_counts, double alpha, double beta, int num_subintervals);
 int* get_bin_counts(double *events, double start_time, double end_time, int num_subintervals);
 double mean_x(double *midpoints, double *weights, int num_subintervals);
 double mean_Y(int *bin_counts, double *weights, int num_subintervals);
