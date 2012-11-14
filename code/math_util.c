@@ -152,3 +152,62 @@ double get_interval_midpoint(int interval_number, double start_time, double end_
 {
     return start_time + ((interval_number - 1.0/2.0) * ((end_time - start_time)/subintervals));
 }
+
+double avg(double *arr, int len)
+{
+    int i;
+    double sum = 0;
+    
+    for (i = 0; i < len; ++i) {
+	sum += arr[i];
+    }
+    return sum/len;
+}
+
+/*
+ * Calculates the total sum of squares for a set of dependent variables
+ */
+double TSS(double *dependent_variables, int len)
+{
+    double grand_mean = avg(dependent_variables, len);
+
+    int i;
+    double sum = 0;
+    for (i = 0; i < len; ++i) {
+	sum += pow(dependent_variables[i] - grand_mean, 2);
+    }
+
+    return sum;
+}
+
+/*
+ * Calculates explained sum of squares for a set of estimates and dependent variables
+ */
+double ESS(double *estimates, double *dependent_variables, int len)
+{
+    double dep_var_mean = avg(dependent_variables, len);
+    
+    int i;
+    double sum = 0;
+    for (i = 0; i < len; ++i){
+	sum += pow(estimates[i] - dep_var_mean, 2);
+    }
+
+    return sum;
+}
+
+/*
+ * Calculates the residual sum of squares for a specified set of dependent and independent variables.
+ * est_func should be a pointer to a function that will return an estimated value of the dependent variable,
+ * given a specific value of the independent variable.
+ */
+double RSS(double *dependent_variables, double *independent_variables, double (*est_func)(double), int len)
+{
+    int i;
+    int sum = 0;
+    for (i = 0; i < len; ++i) {
+	sum += pow(dependent_variables[i] - est_func(independent_variables[i]), 2);
+    }
+
+    return sum;
+}

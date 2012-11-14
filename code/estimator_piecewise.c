@@ -3,9 +3,8 @@
 #include "math_util.h"
 #include <string.h>
 
-//#define ERROR_THRESHOLD 10000
-#define DEFAULT_INTERVALS 4
-    
+#define INTERVAL_EPSILON 0.5
+
 int check_next_time(char *infile, double *estimate, double start_time, double limit);
 void estimate_to_file(char *filename, double *estimate, char *mode);
 void output_estimates(char *filename, double **estimates, int len);
@@ -18,7 +17,6 @@ void piecewise_estimate(char *infile, char *outfile, double start_time, double e
     double **interval_estimates = malloc((break_points + 1) * sizeof(double*)); // estimates for each piece
     interval_estimates[0] = calloc(1, sizeof(double)); // we will store the size of the array in the first memory location
     interval_estimates += 1;
-    double interval_estimates_size = DEFAULT_INTERVALS;
     
     int i, j;
     double interval_time = end_time - start_time;
@@ -36,21 +34,28 @@ void piecewise_estimate(char *infile, char *outfile, double start_time, double e
 	int accept_estimate = 0;
 	interval_start = start_time + prev_interval_end;
 	interval_end = interval_start + step;
+
+	
 	// Stop the end interval exceeding the total time of the data.
 	interval_end = interval_end > end_time ? end_time : interval_end;
 	if (i - break_points - 1 == 0) // If this is the last interval, end it at the total time.
 	    interval_end = interval_time;
 			
+	if (abs(interval_start - interval_end) < INTERVAL_EPSILON){
+	    printf("Interval start and end are equal\n");
+	    break;
+	}
+
 	sprintf(out_separate, "%s_%d", outfile, i);
 	printf("--------RUN %d STARTING:--------\n", i);
 	printf("interval start: %lf, interval end: %lf\n", interval_start, interval_end);
 	estimates[i] = estimate_IWLS(infile, out_separate, interval_start, interval_end, 10, 3);
-	if (i > interval_estimates_size) {
-	    // Play with the pointer so that the reallocation works.
-	    interval_estimates -= 1;
-	    interval_estimates = realloc(interval_estimates, (interval_estimates_size *= 2) * sizeof(double*));
-	    interval_estimates += 1;
-	}
+	/* if (i > interval_estimates_size) { */
+	/*     // Play with the pointer so that the reallocation works. */
+	/*     interval_estimates -= 1; */
+	/*     interval_estimates = realloc(interval_estimates, (interval_estimates_size *= 2) * sizeof(double*)); */
+	/*     interval_estimates += 1; */
+	/* } */
 	
 	// Save data for this run
 	interval_estimates[i] = malloc(4 * sizeof(double));
@@ -58,7 +63,7 @@ void piecewise_estimate(char *infile, char *outfile, double start_time, double e
 	interval_estimates[i][1] = estimates[i][1];
 	interval_estimates[i][2] = interval_start;
 
-	if (interval_start >= end_time) { // don't try and estimate past the end of the data that we have
+	if (interval_start <= end_time && interval_end < end_time) { // don't try and estimate past the end of the data that we have
 	    printf("Checking if the estimates can be extended for the next time period.\n\n");
 	    for (j = 1; j < 4; ++j) {
 		printf("Checking estimates against estimate for time period [%lf, %lf]\n", interval_end, interval_end + check_forwards/j);
@@ -94,8 +99,9 @@ void piecewise_estimate(char *infile, char *outfile, double start_time, double e
     output_estimates(outfile, interval_estimates, **(interval_estimates - 1));
     
     free(out_separate);
-    free_pointer_arr((void**)estimates, break_points);
     interval_estimates -= 1;
+    // We may end up with fewer estimates than break points due to extension
+    free_pointer_arr((void**)estimates, (**interval_estimates));
     free_pointer_arr((void**)interval_estimates, (**interval_estimates) + 1); // free everything 
     
 }

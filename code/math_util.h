@@ -15,5 +15,9 @@ double rand_gauss(void);
 double* get_interval_midpoints(double start_time, double end_time, int num_subintervals);
 double get_interval_midpoint(int interval_index, double start_time, double end_time, int num_subintervals);
 void init_rand(double seed);
+double avg(double *arr, int len);
+double TSS(double *dependent_variables, int len);
+double ESS(double *estimates, double *dependent_variables, int len);
+double RSS(double *dependent_variables, double *independent_variables, double (*f)(double), int len);
 
 #endif
