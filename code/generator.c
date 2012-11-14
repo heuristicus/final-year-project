@@ -2,9 +2,12 @@
 #include "paramlist.h"
 #include "file_util.h"
 #include "math_util.h"
+#include "general_util.h"
 
 #define DEFAULT_ARR_SIZE 50
 #define DEFAULT_WINDOW_SIZE 1.0
+
+//#define DEBUG
 
 /*
  * Initialises the generator with some values specified by the arguments passed to the program,
@@ -13,7 +16,7 @@
  */
 void generate(char **args)
 {
-    int i, nruns = 1;
+    int i;
     char *outfile = NULL;
     char *paramfile = NULL;
     paramlist *params = NULL;
@@ -21,7 +24,12 @@ void generate(char **args)
     
     double interval_time = 10.0;
     double lambda = 100.0;
-        
+    double *time_delta;
+    int tdlen;
+    int outswitch = 3;
+            
+    int nruns = 1;
+
     for (i = 0; i <= sizeof(args)/sizeof(char*); ++i){
 	if (args[i] == NULL)
 	    continue;
@@ -43,7 +51,7 @@ void generate(char **args)
 	return;
     }
 
-    // If there is a value of nruns in the param file, use that instead of the default
+    // Check param files for parameters and use those instead of defaults if they exist
     if ((tmp = get_param_val(params, "nruns")) != NULL)
 	nruns = atoi(tmp);
 
@@ -52,41 +60,65 @@ void generate(char **args)
 
     if ((tmp = get_param_val(params, "interval_time")) != NULL)
     	interval_time = atol(tmp);
-                
-    printf("Number of runs: %d\nLambda: %lf\nInterval time: %lf\n", nruns, lambda, interval_time);
+
+    if ((tmp = get_param_val(params, "timedelta")) != NULL){
+	char **vals = string_split(tmp, ',');
+	tdlen = atoi(vals[0]) - 1;
+	time_delta = malloc((tdlen + 1) * sizeof(double));
+	
+	for (i = 1; i < tdlen + 1; ++i) {
+	    time_delta[i - 1] = atof(vals[i]);
+	}
+
+	free_pointer_arr((void**) vals, atoi(vals[0]));
+    } else { // setup default time delta for one loop
+	time_delta = malloc(sizeof(double));
+	time_delta[0] = 0.0;
+	tdlen = 1;
+    }
+
+    if ((tmp = get_param_val(params, "verbosity")) != NULL)
+	outswitch = atoi(tmp);
+                    
+    printf("Number of runs: %d\nLambda: %lf\nInterval time: %lf\nTime deltas: ", nruns, lambda, interval_time);
+
+    for (i = 0; i < tdlen; ++i) {
+	printf("%lf", time_delta[i]);
+	if (i != tdlen - 1)
+	    printf(", ");
+	else
+	    printf("\n");
+    }
+
+    printf("Log verbosity: %d\n", outswitch);
+
 
     muParserHandle_t hparser = mupCreate(0);
 
-    /* char *eqn = "a-(b*sin(alpha*t))"; //check syntax is correct. Nothing to check if eqn is wrong. */
-    /* double a = 10.0, b = 5.0, alpha = 0.05; */
-    /* mupSetExpr(hparser, eqn); */
-    /* mupDefineVar(hparser, "a", &a); */
-    /* mupDefineVar(hparser, "b", &b); */
-    /* mupDefineVar(hparser, "alpha", &alpha); */
-    
-    
-    
-    char *eqn = "a+b*t";
-    double a = 5, b = 2;
+    char *eqn = "a-(b*sin(alpha*t))"; //check syntax is correct. Nothing to check if eqn is wrong.
+    double a = 10, b = 5.0, alpha = 0.1;
     mupSetExpr(hparser, eqn);
-    
     mupDefineVar(hparser, "a", &a);
     mupDefineVar(hparser, "b", &b);
+    mupDefineVar(hparser, "alpha", &alpha);
 
-    /* mupDefineVar(hparser, "t", &time_to_run); */
-    	
+    //char *eqn = "t^2";
+    
+    /* char *eqn = "a+b*t"; */
+    /* double a = 1, b = 0.001; */
+    /* mupSetExpr(hparser, eqn); */
+    
+    /* mupDefineVar(hparser, "a", &a); */
+    /* mupDefineVar(hparser, "b", &b); */
+
     mupSetExpr(hparser, eqn);
-        
-    /* double testl = mupEval(hparser); */
-    
-    /* printf("test lambda = %lf\n", testl); */
-    
-    double time_delta[2] = {0.0, 15.0};
-    run_time_nstreams(hparser, lambda, interval_time, time_delta, 2, outfile, 3);
+
+    run_time_nstreams(hparser, lambda, interval_time, time_delta, nruns, outfile, outswitch);
     
     mupRelease(hparser);
     
     free_list(params);
+    free(time_delta);
 }
 
 /* 
@@ -95,17 +127,21 @@ void generate(char **args)
  * each consecutive stream. The values affect the result of evaluating
  * the lambda function at each timestep. e.g. for a time_delta [10.0, 25.0]
  * the value passed to the first stream's lambda function will be t + 10.0,
- * and the second will be t + 25.0. The outswitch parameter determines whether
- * all data will be output to the file, or just the event times.
+ * and the second will be t + 25.0. In this case, t is usually zero. 
+ * The outswitch parameter determines whether all data will be output to the file,
+ * or just the event times.
  * *IMPORTANT* The value of lambda MUST exceed the maximum value of the function! *IMPORTANT*
  */
-void run_time_nstreams(muParserHandle_t hparser, double lambda, double runtime, double *time_delta, int nstreams, char *outfile, int outswitch)
+void run_time_nstreams(muParserHandle_t hparser, double lambda, double end_time, double *time_delta, int nstreams, char *outfile, int outswitch)
 {
     int i;
             
-    for (i = 1; i < nstreams; ++i){
+    for (i = 0; i < nstreams; ++i){
 	printf("Generating event stream %d\n", i);
-	run_time_nonhom(hparser, lambda, time_delta[i - 1], runtime, outfile, outswitch);
+	char *out = malloc(strlen(outfile) + strlen("_stream_n") + 10);
+	sprintf(out, "%s_stream_%d", outfile, i); // save each stream to a separate file
+	run_time_nonhom(hparser, lambda, time_delta[i], end_time, out, outswitch);
+	free(out);
     }
 
 }
@@ -146,47 +182,48 @@ char* select_output_file(char* cur_out, char* param_out)
         
 }
 
-/* Helper method to run a nonhomogenous process for a specific length
+/* Helper method to run a nonhomogeneous process for a specific length
  * of time. Allocates required memory and prints output data to a file.
  * The outswitch parameter determines what data will be output to the file.
  * 
  */
-void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time, double runtime, char *outfile, int outswitch)
+void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time, double end_time, char *outfile, int outswitch)
 {
     double *et = malloc(DEFAULT_ARR_SIZE * sizeof(double));
     double *lv = malloc(DEFAULT_ARR_SIZE * sizeof(double));
     
     double **eptr = &et;
     double **lptr = &lv;
-    
-    int size = run_to_time_non_homogenous(hparser, lambda, start_time, runtime, eptr, lptr, DEFAULT_ARR_SIZE);
+
+    int size = run_to_time_non_homogeneous(hparser, lambda, start_time, end_time, eptr, lptr, DEFAULT_ARR_SIZE);
 
     if (outswitch == 0) // Outputs only event data - this is what the real data will be like.
 	double_to_file(outfile, "w", *eptr, size);
     if (outswitch == 1) // Outputs only events and lambda values
 	mult_double_to_file(outfile, "w", *eptr, *lptr, size);
     if (outswitch == 2){ // Outputs all data, including bin counts
-	int num_intervals = (start_time + runtime) / DEFAULT_WINDOW_SIZE;
+	int num_intervals = (end_time - start_time) / DEFAULT_WINDOW_SIZE;
 
-	int *bin_counts = sum_events_in_interval(*eptr, size, DEFAULT_WINDOW_SIZE, num_intervals);
-    
-	/* int i; */
-	/* for (i = 0; i < num_intervals; ++i){ */
-	/*     printf("Interval %d: %d\n", i, bin_counts[i]); */
-	/* } */
-    
-	double *midpoints = get_interval_midpoints(start_time + runtime, num_intervals);
+	int *bin_counts = sum_events_in_interval(*eptr, size, start_time, end_time, num_intervals);
+	double *midpoints = get_interval_midpoints(start_time, end_time, num_intervals);
 
-	/* for (i = 0; i < num_intervals; ++i){ */
-	/*     printf("%lf\n", midpoints[i]); */
-	/* } */
+#ifdef DEBUG
+	int i;
+	for (i = 0; i < num_intervals; ++i){
+	    printf("Interval %d: %d\n", i, bin_counts[i]);
+	}
+
+	for (i = 0; i < num_intervals; ++i){
+	    printf("%lf\n", midpoints[i]);
+	}
+#endif
     
 	int_dbl_to_file(outfile, "w", midpoints, bin_counts, num_intervals);
 	free(midpoints);
 	free(bin_counts);
     }
     if (outswitch == 3){
-	char *tmp = malloc(strlen(outfile) + 3);
+	char *tmp = malloc(strlen(outfile) + 4); // space for extra chars and null terminator
 	sprintf(tmp, "%s_ev", outfile);
 	double_to_file(tmp, "w", *eptr, size);
 	
@@ -194,20 +231,21 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time,
 
 	mult_double_to_file(tmp, "w", *eptr, *lptr, size);
 
-	int num_intervals = (start_time + runtime) / DEFAULT_WINDOW_SIZE;
+	int num_intervals = (end_time - start_time) / DEFAULT_WINDOW_SIZE;
 
-	int *bin_counts = sum_events_in_interval(*eptr, size, DEFAULT_WINDOW_SIZE, num_intervals);
-    
-	/* int i; */
-	/* for (i = 0; i < num_intervals; ++i){ */
-	/*     printf("Interval %d: %d\n", i, bin_counts[i]); */
-	/* } */
-    
-	double *midpoints = get_interval_midpoints(start_time + runtime, num_intervals);
+	int *bin_counts = sum_events_in_interval(*eptr, size, start_time, end_time, num_intervals);
+	double *midpoints = get_interval_midpoints(start_time, end_time, num_intervals);
 
-	/* for (i = 0; i < num_intervals; ++i){ */
-	/*     printf("%lf\n", midpoints[i]); */
-	/* } */
+#ifdef DEBUG
+	int i;
+	for (i = 0; i < num_intervals; ++i){
+	    printf("Interval %d: %d\n", i, bin_counts[i]);
+	}
+
+	for (i = 0; i < num_intervals; ++i){
+	    printf("midpoint %d: %lf\n", i, midpoints[i]);
+	}
+#endif
     
 	int_dbl_to_file(tmp, "a", midpoints, bin_counts, num_intervals);
 	free(midpoints);
@@ -218,8 +256,6 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time,
     free(*eptr);
     free(*lptr);
 }
-
-
 
 /* 
  * Helper method to run a nonhomogenous process until a specific 
@@ -266,7 +302,7 @@ void generate_event_times_homogenous(double lambda, double time, int max_events,
 }
 
 /* 
- * Runs a non-homogenous poisson process until the specified time has
+ * Runs a non-homogeneous poisson process until the specified time has
  * elapsed. 
  * The event_times and lambda_vals array will be populated with the 
  * time of an event and the result of evaluating lambda(t) at that 
@@ -275,22 +311,21 @@ void generate_event_times_homogenous(double lambda, double time, int max_events,
  * Returns the final array location in which there is something 
  * stored.
  */
-int run_to_time_non_homogenous(muParserHandle_t hparser, double lambda, double t_delta, double time_to_run, double **event_times, double **lambda_vals, int arr_len)
+int run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda, double start_time, double end_time, double **event_times, double **lambda_vals, int arr_len)
 {
     init_rand(0.0);
-    
-    double run_time = 0,  end_time = time_to_run, arr_max = arr_len, func_in = run_time + t_delta;
+            
+    double time = start_time;
     double rand, non_hom_lambda, hom_out;
-    int i = 0;
+    int i = 0, arr_max = arr_len;
     
-    mupDefineVar(hparser, "t", &func_in);
+    mupDefineVar(hparser, "t", &time);
 
-    while (run_time < end_time){
-	hom_out = homogenous_time(lambda);
-	run_time += hom_out;
-	func_in += hom_out;
+    while (time < end_time){
+	hom_out = homogeneous_time(lambda);
+	time += hom_out;
 	non_hom_lambda = mupEval(hparser);
-	//printf("%lf %lf\n", run_time, non_hom_lambda);//more granularity on lambda values // get this into output file
+	//printf("%lf %lf\n", time, non_hom_lambda);//more granularity on lambda values // get this into output file
 	if ((rand = drand48()) <= non_hom_lambda / lambda){
 	    // Number of events may exceed the number of array locations initally assigned
 	    // so may need to reallocate memory to store more.
@@ -306,7 +341,7 @@ int run_to_time_non_homogenous(muParserHandle_t hparser, double lambda, double t
 
 	    }
 	    //printf("putting in arrays\n");
-	    event_times[0][i] = run_time;
+	    event_times[0][i] = time;
 	    lambda_vals[0][i] = non_hom_lambda;
 	    ++i;
 	}
@@ -317,15 +352,28 @@ int run_to_time_non_homogenous(muParserHandle_t hparser, double lambda, double t
     
 }
 
+/* 
+ * Helper method to run a nonhomogeneous process until a specific 
+ * number of events have occurred. Allocates required memory
+ * and prints output data to a file. The outswitch parameter determines whether
+ * all data will be output to the file, or just the event times.
+ */
+void run_events_nonhom(muParserHandle_t hparser, double lambda, double start_time, int events, char *outfile, int outswitch)
+{
+    double *et = malloc(events * sizeof(double));
+    double *lv = malloc(events * sizeof(double));
 
+    run_to_event_limit_non_homogeneous(hparser, lambda, start_time, events, et, lv);
+    mult_double_to_file(outfile, "a", et, lv, events);
+}
 
 /* 
- * Runs a non-homogenous poisson process until the number of events 
+ * Runs a non-homogeneous poisson process until the number of events 
  * specified have occurred. The event_times and lambda_vals array 
  * will be populated with the time of an event and the result of 
  * evaluating lambda(t) at that time.
  */
-void run_to_event_limit_non_homogenous(muParserHandle_t hparser, double lambda, double t_delta, int max_events, double *event_times, double *lambda_vals)
+void run_to_event_limit_non_homogeneous(muParserHandle_t hparser, double lambda, double t_delta, int max_events, double *event_times, double *lambda_vals)
 {
     init_rand(0.0);
     
@@ -336,7 +384,7 @@ void run_to_event_limit_non_homogenous(muParserHandle_t hparser, double lambda, 
     mupDefineVar(hparser, "t", &func_in);
     
     while (i < max_events){
-	hom_out = homogenous_time(lambda);
+	hom_out = homogeneous_time(lambda);
 	run_time += hom_out;
 	func_in += hom_out;
 	non_hom_lambda = mupEval(hparser);
@@ -358,3 +406,31 @@ void run_to_event_limit_non_homogenous(muParserHandle_t hparser, double lambda, 
     free(lambda_vals);
 }
 
+/* 
+ * Generates time for events in a homogeneous poisson process until 
+ * time is exceeded. 
+ * Puts event times into the array passed in the parameters. 
+ * Puts a -1 in the array location after the last event
+ */
+void generate_event_times_homogeneous(double lambda, double time, int max_events, double *event_times)
+{
+    init_rand(0.0);
+        
+    double run_time = 0;
+    int i = 0;
+    
+    while ((run_time += homogeneous_time(lambda)) < time && i < max_events){
+	event_times[i] = run_time;
+	++i;
+    }
+
+    if (i < max_events)
+	event_times[i] = -1.0;
+    
+}
+
+/* knuth method. Generates time to next event in a homogeneous poisson process. */
+double homogeneous_time(double lambda)
+{
+    return -log(drand48()) / lambda;
+}

@@ -1,4 +1,7 @@
 #include "math_util.h"
+#include <assert.h>
+
+//#define DEBUG
 
 int rand_initialised = 0;
 
@@ -26,22 +29,35 @@ double prob_num_events_in_time_span(double t_start, double t_end, double lambda,
 /* 
  * Outputs the number of events in each interval to the array provided. 
  */
-int* sum_events_in_interval(double *event_times, int num_events, double interval_time, int interval_num)
+int* sum_events_in_interval(double *event_times, int num_events, double start_time, double end_time, int num_subintervals)
 {
     int i = 0, current_interval = 0;
     double event_time;
-    
-    int *bins = calloc(interval_num, sizeof(int));
+    double subinterval_time = (end_time - start_time) / num_subintervals;
+
+    int *bins = calloc(num_subintervals, sizeof(int));
     
     for (event_time = event_times[0]; i < num_events; ++i){
-	while (event_time > interval_time * (current_interval + 1)){
-	    //printf("%lf is greater than %lf, interval time: %lf, current_interval %d\n", event_time, interval_time * current_interval + 1, interval_time, current_interval);
+	
+	for (; event_time < start_time; i++, event_time = event_times[i]); // get to the start of the interval that we are checking.
+		
+	while (event_time > (start_time + (subinterval_time * (current_interval + 1)))) {
+#ifdef DEBUG
+	    printf("event time: %lf, end of interval: %lf\n", event_time, start_time + (subinterval_time * (current_interval + 1)));
+	    printf("%lf is greater than %lf, interval time: %lf, interval incremented to %d\n", event_time, start_time + (subinterval_time * (current_interval + 1)), subinterval_time, current_interval + 1);
+#endif
 	    current_interval++;
+
 	}
 
-	//printf("current time: %lf, interval end: %lf. Adding to loc %d\n", event_time, interval_time * (current_interval + 1), current_interval);
-	
+#ifdef DEBUG
+	printf("current time: %lf, interval end: %lf. Adding to loc %d\n", event_time, start_time + (subinterval_time * (current_interval + 1)), current_interval);
+#endif
+
+	assert(current_interval <= num_subintervals);
 	bins[current_interval]++;
+	//assert(i < num_events);
+	
 	event_time = event_times[i];
     }
 
@@ -51,10 +67,15 @@ int* sum_events_in_interval(double *event_times, int num_events, double interval
 
 void init_rand(double seed)
 {
-    if (seed == 0.0)
-	srand48(time(NULL));
-    else
+    if (seed == 0.0){
+	seed = time(NULL);
 	srand48(seed);
+    } else {
+	srand48(seed);
+    }
+
+    printf("Seed for this run: %lf\n", seed);
+    
 
     rand_initialised = 1;
 }
@@ -111,14 +132,14 @@ double get_gaussian_noise(double mean, double std_dev)
     
 }
 
-double* get_interval_midpoints(double total_time, int subintervals)
+double* get_interval_midpoints(double start_time, double end_time, int subintervals)
 {
     double *midpoints = malloc(subintervals * sizeof(double));
-    
+        
     int i;
     
     for (i = 0; i < subintervals; ++i){
-	midpoints[i] = get_interval_midpoint(i + 1, total_time, subintervals);
+	midpoints[i] = get_interval_midpoint(i + 1, start_time, end_time, subintervals);
     }
 
     return midpoints;
@@ -127,7 +148,66 @@ double* get_interval_midpoints(double total_time, int subintervals)
 /*
  * Get the midpoint of a specified interval. (midpoint(xk)=(k-1/2)*T/N), 1 <= k <= N
  */
-double get_interval_midpoint(int interval_number, double total_time, int subintervals)
+double get_interval_midpoint(int interval_number, double start_time, double end_time, int subintervals)
 {
-    return (interval_number - 1.0/2.0) * (total_time /subintervals);
+    return start_time + ((interval_number - 1.0/2.0) * ((end_time - start_time)/subintervals));
+}
+
+double avg(double *arr, int len)
+{
+    int i;
+    double sum = 0;
+    
+    for (i = 0; i < len; ++i) {
+	sum += arr[i];
+    }
+    return sum/len;
+}
+
+/*
+ * Calculates the total sum of squares for a set of dependent variables
+ */
+double TSS(double *dependent_variables, int len)
+{
+    double grand_mean = avg(dependent_variables, len);
+
+    int i;
+    double sum = 0;
+    for (i = 0; i < len; ++i) {
+	sum += pow(dependent_variables[i] - grand_mean, 2);
+    }
+
+    return sum;
+}
+
+/*
+ * Calculates explained sum of squares for a set of estimates and dependent variables
+ */
+double ESS(double *estimates, double *dependent_variables, int len)
+{
+    double dep_var_mean = avg(dependent_variables, len);
+    
+    int i;
+    double sum = 0;
+    for (i = 0; i < len; ++i){
+	sum += pow(estimates[i] - dep_var_mean, 2);
+    }
+
+    return sum;
+}
+
+/*
+ * Calculates the residual sum of squares for a specified set of dependent and independent variables.
+ * est_func should be a pointer to a function that will return an estimated value of the dependent variable,
+ * given a specific value of the independent variable.
+ */
+double RSS(double *dependent_variables, double *independent_variables, double (*est_func)(double), int len)
+{
+    int i;
+    int sum = 0;
+    for (i = 0; i < len; ++i) {
+	sum += pow(dependent_variables[i] - est_func(independent_variables[i]), 2);
+    }
+
+    return sum;
 }
