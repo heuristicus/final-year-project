@@ -258,27 +258,6 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time,
 }
 
 /* 
- * Helper method to run a nonhomogenous process until a specific 
- * number of events have occurred. Allocates required memory
- * and prints output data to a file. The outswitch parameter determines whether
- * all data will be output to the file, or just the event times.
- */
-void run_events_nonhom(muParserHandle_t hparser, double lambda, double start_time, int events, char *outfile, int outswitch)
-{
-    double *et = malloc(events * sizeof(double));
-    double *lv = malloc(events * sizeof(double));
-
-    run_to_event_limit_non_homogenous(hparser, lambda, start_time, events, et, lv);
-    mult_double_to_file(outfile, "a", et, lv, events);
-}
-
-/* knuth method. Generates time to next event in a homogenous poisson process. */
-double homogenous_time(double lambda)
-{
-    return -log(drand48()) / lambda;
-}
-
-/* 
  * Generates time for events in a homogenous poisson process until 
  * time is exceeded. 
  * Puts event times into the array passed in the parameters. 
@@ -291,7 +270,7 @@ void generate_event_times_homogenous(double lambda, double time, int max_events,
     double run_time = 0;
     int i = 0;
     
-    while ((run_time += homogenous_time(lambda)) < time && i < max_events){
+    while ((run_time += homogeneous_time(lambda)) < time && i < max_events){
 	event_times[i] = run_time;
 	++i;
     }

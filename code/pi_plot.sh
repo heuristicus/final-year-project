@@ -1,9 +1,7 @@
 #!/bin/bash
 
 ./generator -p params.txt
-valgrind ./estimator_piecewise output.txt_stream_0_ev est_out.txt
-
-sleep 1
+./estimator_piecewise output.txt_stream_0_ev est_out.txt
 
 gnuplot -persist << EOF
 set key top left

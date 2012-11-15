@@ -7,10 +7,23 @@ int rand_initialised = 0;
 
 int main(int argc, char *argv[])
 {
+
+    
+    double lambda = atof(argv[1]);
+    int i;
+    
+    for (i = 1; i < 100; ++i) {
+	printf("probability of %d events given lambda %lf: %.15lf\n", i, lambda, poisson_PMF(lambda, i));
+    }
     
     return 0;
+    
 }
 
+
+/*
+ * Recursive factorial function.
+ */
 long double fact(int i)
 {
     if (i == 0)
@@ -210,4 +223,52 @@ double RSS(double *dependent_variables, double *independent_variables, double (*
     }
 
     return sum;
+}
+
+/*
+ * Probability mass function for poisson random variables.
+ */
+double poisson_PMF(double lambda, int k)
+{
+    mpf_t res;
+
+    mpf_t top;
+    mpf_t lk;
+    mpf_t el;
+    mpf_t kfacf;
+    mpz_t kfacz;
+        
+    mpz_init(kfacz); // integer factorial
+    
+    mpf_init(top);
+    mpf_init(lk);
+    mpf_init(el);
+    mpf_init(kfacf); // float storage for factorial
+    mpf_init(res);
+                    
+    // This could cause problems if k is too large
+    mpf_set_d(lk, pow(lambda, k));
+    mpf_set_d(el, pow(M_E, -lambda));
+    mpf_mul(top, lk, el);
+
+    //gmp_printf("pow(lambda, k) * pow(e, -lambda) = %Ff\n", top);
+
+    mpz_fac_ui(kfacz, k);
+    
+    mpf_set_z(kfacf, kfacz);
+
+    //gmp_printf("%d factorial = %Ff\n", k, kfacf);
+        
+    mpf_div(res, top, kfacf);
+
+    double result = mpf_get_d(res);
+
+    mpf_clear(kfacf);
+    mpf_clear(res);
+    mpf_clear(top);
+    mpf_clear(lk);
+    mpf_clear(el);
+    mpz_clear(kfacz);
+        
+    return result;
 }

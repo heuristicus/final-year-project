@@ -5,7 +5,8 @@ CC=gcc $(CFLAGS)
 GEN_SOURCES=generator.c start.c
 EST_SOURCES=estimatorIWLS.c
 UTIL_SOURCES=file_util.c paramlist.c util.c math_util.c
-LIBS=-lm -lmuparser
+LIBS=-lm -lmuparser -lgmp
+CUST_LIBS=-lfile_util -lparamlist -lmath_util -lgeneral_util
 UTIL_OBJECTS=$(UTIL:.c=.o)
 GEN_OBJECTS=$(GEN_SOURCES:.c=.o)
 EST_OBJECTS=$(EST_SOURCES:.c=.o)
@@ -19,7 +20,7 @@ runest: estimator
 	LD_LIBRARY_PATH=. ./estimator
 
 generator: generator.o start.o libs
-	$(CC) generator.o start.o -L. -lfile_util -lparamlist -lmath_util -lgeneral_util $(LIBS) -o $@
+	$(CC) generator.o start.o -L. $(CUST_LIBS) $(LIBS) -o $@
 
 generator.o: generator.c generator.h
 	$(CC) -c $< -o $@
@@ -28,13 +29,13 @@ start.o: start.c generator.h
 	$(CC) -c $< -o $@
 
 estimator: estimator_IWLS.o libs
-	$(CC) estimator_IWLS.o -L. -lfile_util -lparamlist -lmath_util -lgeneral_util $(LIBS) -o $@
+	$(CC) estimator_IWLS.o -L. $(CUST_LIBS) $(LIBS) -o $@
 
 estimator_IWLS.o: estimator_IWLS.c estimator.h
 	$(CC) -c $< -o $@
 
 estimator_piecewise: estimator_piecewise.o estimator_IWLS.o libs
-	$(CC) estimator_piecewise.o estimator_IWLS.o -L. -lfile_util -lparamlist -lmath_util -lgeneral_util $(LIBS) -o $@
+	$(CC) estimator_piecewise.o estimator_IWLS.o -L. $(CUST_LIBS) $(LIBS) -o $@
 
 estimator_piecewise.o: estimator_piecewise.c estimator.h
 	$(CC) -c $< -o $@
