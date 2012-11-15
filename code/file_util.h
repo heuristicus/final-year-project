@@ -19,4 +19,5 @@ double* get_event_data_interval(double start_time, double end_time, char *filena
 double* get_event_data_all(char *filename);
 void int_dbl_to_file(char* filename, char* mode, double* arr1, int* arr2, int len);
 
+
 #endif

@@ -61,3 +61,23 @@ char** string_split(char *string, char separator)
     
     return split;
 }
+
+void print_int_arr(int *arr, int len)
+{
+    int i;
+    
+    for (i = 0; i < len; ++i) {
+	printf("%d\n", arr[i]);
+    }
+
+}
+
+void print_double_arr(double *arr, int len)
+{
+    int i;
+    
+    for (i = 0; i < len; ++i) {
+	printf("%lf\n", arr[i]);
+    }
+
+}

@@ -8,7 +8,6 @@ int rand_initialised = 0;
 int main(int argc, char *argv[])
 {
 
-    
     double lambda = atof(argv[1]);
     int i;
     
@@ -223,6 +222,33 @@ double RSS(double *dependent_variables, double *independent_variables, double (*
     }
 
     return sum;
+}
+
+/*
+ * Returns the sum of a double array.
+ */
+double sum_double_arr(double *arr, int len)
+{
+    int i;
+    double sum = 0;
+    
+    for (i = 0; i < len; ++i) {
+	sum += arr[i];
+    }
+
+    return sum;
+}
+
+int sum_int_arr(int *arr, int len)
+{
+    int i;
+    int sum = 0;
+    
+    for (i = 0; i < len; ++i) {
+	sum += arr[i];
+    }
+
+    return sum;    
 }
 
 /*

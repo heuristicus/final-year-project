@@ -3,5 +3,7 @@
 
 void free_pointer_arr(void **arr, int length);
 char** string_split(char *string, char separator);
+void print_int_arr(int *arr, int len);
+void print_double_arr(double *arr, int len);
 
 #endif

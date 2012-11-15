@@ -144,6 +144,15 @@ double* get_event_data_all(char *filename)
     return get_event_data_interval(0.0, 0.0, filename);
 }
 
+/* /\* */
+/*  * Gets all midpoint, event and bin data out of the specified file */
+/*  *\/ */
+/* double** get_mid_ev_bin_all(char *filename, int subintervals) */
+/* { */
+/*     double **data = malloc(3 * sizeof(double)) */
+/* } */
+
+
 /*
  * Checks whether a line received from the parameter file is valid.
  */

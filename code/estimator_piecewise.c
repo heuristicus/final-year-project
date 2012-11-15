@@ -1,6 +1,7 @@
 #include "estimator.h"
 #include "file_util.h"
 #include "math_util.h"
+#include "general_util.h"
 #include <string.h>
 
 #define INTERVAL_EPSILON 0.5
@@ -9,6 +10,8 @@ int check_next_time(char *infile, double *estimate, double start_time, double li
 void estimate_to_file(char *filename, double *estimate, char *mode);
 void output_estimates(char *filename, double **estimates, int len);
 void piecewise_estimate(char *infile, char *outfile, double start_time, double end_time, int break_points);
+double* interval_pmf(int *bin_counts, double *midpoints, int len, double a, double b);
+int pmf_check(char *infile, double start_time, double end_time, double a, double b, int num_subintervals);
 
 void piecewise_estimate(char *infile, char *outfile, double start_time, double end_time, int break_points)
 {
@@ -69,13 +72,16 @@ void piecewise_estimate(char *infile, char *outfile, double start_time, double e
 		printf("Checking estimates against estimate for time period [%lf, %lf]\n", interval_end, interval_end + check_forwards/j);
 		// Check if we can use the estimate we got above to estimate the next lot of data.
 		// If we can't estimate a long interval, try with a few shorter intervals.
-		accept_estimate = check_next_time(infile, estimates[i], interval_end, check_forwards/j);
+		//accept_estimate = check_next_time(infile, estimates[i], interval_end, check_forwards/j);
+		accept_estimate = pmf_check(infile, interval_end, interval_end + check_forwards/j, interval_estimates[i][0], interval_estimates[i][1], check_forwards/j);
 		if (accept_estimate == 1){
 		    printf("Estimates for next time period are similar. Extending the line.\n");
 		    break;
 		} else {
 		    printf("Estimates are not similar enough.\n\n");
 		}
+
+
 	    }
 	}
 
@@ -114,6 +120,32 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+int pmf_check(char *infile, double start_time, double end_time, double a, double b, int num_subintervals)
+{
+    
+    double *evdata = get_event_data_interval(start_time, end_time, infile);
+    int num_events = evdata[0] - 1;
+    evdata += 1;
+        
+    int *bindata = sum_events_in_interval(evdata, num_events, start_time, end_time, num_subintervals);
+    
+    double *midpoints = get_interval_midpoints(start_time, end_time, num_subintervals);
+    
+    double *pmfs = interval_pmf(bindata, midpoints, num_subintervals, a, b);
+
+    double sum = sum_double_arr(pmfs, num_subintervals);
+    printf("Cumulative probability: %lf\n", sum);
+    printf("Mean probability: %lf\n", sum/num_subintervals);
+
+    free(pmfs);
+    free(midpoints);
+    free(bindata);
+    evdata -= 1;
+    free(evdata);
+            
+    return sum > 0.85;
+}
+
 
 
 /*
@@ -131,7 +163,7 @@ int check_next_time(char *infile, double *estimate, double start_time, double li
     /* evdata = evdata + 1; */
     
     /* int *bindata = sum_events_in_interval(evdata, len + 1, start_time, start_time + limit, 10); */
-    
+
     char *out = malloc(10);
     
     sprintf(out, "s_%d.out", (int)start_time);
@@ -166,6 +198,28 @@ int check_next_time(char *infile, double *estimate, double start_time, double li
     
     return ret;
     
+}
+
+/*
+ * Calculates the probability mass function for each bin count.
+ * The function passed in should return the value of lambda at a given
+ * point in time.
+ */
+double* interval_pmf(int *bin_counts, double *midpoints, int len, double a, double b)
+{
+    int i;
+    double *pmf = malloc(len * sizeof(double));
+        
+    for (i = 0; i < len; ++i) {
+	double lambda = a + b * midpoints[i];
+	// lambda can't go below zero
+	lambda = lambda < 0 ? 0 : lambda;
+		
+	pmf[i] = poisson_PMF(lambda, bin_counts[i]);
+	printf("lambda: %lf, bin count %d, pmf %lf\n", lambda, bin_counts[i], pmf[i]);
+    }
+
+    return pmf;
 }
 
 /*

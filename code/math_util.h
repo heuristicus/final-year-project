@@ -21,6 +21,7 @@ double TSS(double *dependent_variables, int len);
 double ESS(double *estimates, double *dependent_variables, int len);
 double RSS(double *dependent_variables, double *independent_variables, double (*f)(double), int len);
 double poisson_PMF(double lambda, int k);
-mpz_t* fast_fact(int n);
+double sum_double_arr(double *arr, int len);
+int sum_int_arr(int *arr, int len);
 
 #endif
