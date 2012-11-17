@@ -43,6 +43,9 @@
 ** method description
 ** coding issues
    Initially, we thought that it may be possible to decide whether to extend the line or not based on the difference in slope between the estimate from the previous time interval and the estimate of the next. If the previous estimate was positive, and the next negative, and vice versa, clearly the line should not be continued. The intercept parameter was considered to be much less important. However, this assumption was highly flawed. Due to the nature of poisson processes, it is perfectly possible that although the function has changed significantly after the end of the previous interval, the estimate for the interval that we are trying to extend the line into could return very similar values to that of the previous interval. Because of this, we extend the line when we should not be doing so. There are several potential solutions to this problem. First, rather than forming a new estimate, we extend the line and then check how much the error has increased. If it goes over a certain threshold, then we reject the extension attempt and try again, this time with a shorter extension. Another potential way of improving the piecewise estimation in general would be to require the estimate for the next time period to start from the end point of the last time period. This would prevent the intercept parameter from changing, and would force the estimator to find the best estimate given a specific starting point, rather than giving it free reign to find the estimate which actually minimises the error.
+
+cubic spline interpolation on midpoints of estimated lines gives reasonable estimates of the function sometimes.
+
 ** experimentation
 * Kernel Regression
 * Time Delay Calculation
