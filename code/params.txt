@@ -12,7 +12,7 @@ verbosity 3
 
 
 # generation parameters
-nruns 1
+nruns 2
 timedelta 0.0,10.0
 lambda 30.0
 interval_time 100.0

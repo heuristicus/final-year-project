@@ -160,6 +160,9 @@ int pmf_check(char *infile, double start_time, double end_time, double a, double
     printf("Mean probability: %lf\n", sum/num_subintervals);
 
     int ret = pmf_threshold_check(pmfs, num_subintervals);
+    /* int ret = pmf_sum_check(pmfs, num_subintervals); */
+    /* int ret = pmf_cumulative_check(pmfs, num_subintervals, 3); */
+    /* int ret = pmf_consecutive_check(pmfs, num_subintervals, 3); */
     
     free(pmfs);
     free(midpoints);

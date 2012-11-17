@@ -79,17 +79,15 @@ int* sum_events_in_interval(double *event_times, int num_events, double start_ti
 
 void init_rand(double seed)
 {
-    if (seed == 0.0){
-	seed = time(NULL);
+    if (! rand_initialised) {
+	if (seed == 0.0)
+	    seed = time(NULL);
+
 	srand48(seed);
-    } else {
-	srand48(seed);
+	printf("Seed for this run: %lf\n", seed);
+
+	rand_initialised = 1;
     }
-
-    printf("Seed for this run: %lf\n", seed);
-    
-
-    rand_initialised = 1;
 }
 
 /*

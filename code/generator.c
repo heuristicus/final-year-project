@@ -140,7 +140,7 @@ void run_time_nstreams(muParserHandle_t hparser, double lambda, double end_time,
 	printf("Generating event stream %d\n", i);
 	char *out = malloc(strlen(outfile) + strlen("_stream_n") + 10);
 	sprintf(out, "%s_stream_%d", outfile, i); // save each stream to a separate file
-	run_time_nonhom(hparser, lambda, time_delta[i], end_time, out, outswitch);
+	run_time_nonhom(hparser, lambda, time_delta[i], 0, end_time, out, outswitch);
 	free(out);
     }
 
@@ -187,7 +187,7 @@ char* select_output_file(char* cur_out, char* param_out)
  * The outswitch parameter determines what data will be output to the file.
  * 
  */
-void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time, double end_time, char *outfile, int outswitch)
+void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta, double start_time, double end_time, char *outfile, int outswitch)
 {
     double *et = malloc(DEFAULT_ARR_SIZE * sizeof(double));
     double *lv = malloc(DEFAULT_ARR_SIZE * sizeof(double));
@@ -195,7 +195,7 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double start_time,
     double **eptr = &et;
     double **lptr = &lv;
 
-    int size = run_to_time_non_homogeneous(hparser, lambda, start_time, end_time, eptr, lptr, DEFAULT_ARR_SIZE);
+    int size = run_to_time_non_homogeneous(hparser, lambda, time_delta, start_time, end_time, eptr, lptr, DEFAULT_ARR_SIZE);
 
     if (outswitch == 0) // Outputs only event data - this is what the real data will be like.
 	double_to_file(outfile, "w", *eptr, size);
@@ -290,19 +290,21 @@ void generate_event_times_homogenous(double lambda, double time, int max_events,
  * Returns the final array location in which there is something 
  * stored.
  */
-int run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda, double start_time, double end_time, double **event_times, double **lambda_vals, int arr_len)
+int run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda, double time_delta, double start_time, double end_time, double **event_times, double **lambda_vals, int arr_len)
 {
     init_rand(0.0);
             
-    double time = start_time;
+    double base_time = start_time;
+    double shifted_time = time_delta + start_time;
     double rand, non_hom_lambda, hom_out;
     int i = 0, arr_max = arr_len;
     
-    mupDefineVar(hparser, "t", &time);
+    mupDefineVar(hparser, "t", &shifted_time);
 
-    while (time < end_time){
+    while (base_time < end_time){
 	hom_out = homogeneous_time(lambda);
-	time += hom_out;
+	base_time += hom_out;
+	shifted_time += hom_out;
 	non_hom_lambda = mupEval(hparser);
 	//printf("%lf %lf\n", time, non_hom_lambda);//more granularity on lambda values // get this into output file
 	if ((rand = drand48()) <= non_hom_lambda / lambda){
@@ -320,7 +322,7 @@ int run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda, double 
 
 	    }
 	    //printf("putting in arrays\n");
-	    event_times[0][i] = time;
+	    event_times[0][i] = base_time;
 	    lambda_vals[0][i] = non_hom_lambda;
 	    ++i;
 	}
