@@ -1,10 +1,18 @@
 % $Header: /home/vedranm/bitbucket/beamer/solutions/conference-talks/conference-ornate-20min.en.tex,v 90e850259b8b 2007/01/28 20:48:30 tantau $
 \documentclass{beamer}
-%\usepackage{lmodern}
+\usepackage{amsmath}
+
+\usepackage[english]{babel}
+% % or whatever
+
+\usepackage[latin1]{inputenc}
+% % or whatever
+
+%\usepackage[T1]{fontenc}
+% Or whatever. Note that the encoding and the font should match. If T1
+% does not look nice, try deleting the line with the fontenc.
 \usepackage{graphicx}
-\usepackage{libertine}
-\usepackage{inconsolata}
-%\usepackage{droidmono}
+\usepackage{cmbright}
 % This file is a solution template for:
 
 % - Talk at a conference/colloquium.
@@ -27,8 +35,7 @@
 \mode<presentation>
 {
   \usetheme{Amsterdam}
-  \usefonttheme{serif}
-  \usecolortheme{rose}
+  %\usefonttheme{serif}
   % or ...
 
   \setbeamercovered{transparent}
@@ -52,18 +59,6 @@
   \vskip0pt%
 }
 \makeatother
-
-
-\usepackage[english]{babel}
-% % or whatever
-
-\usepackage[latin1]{inputenc}
-% % or whatever
-
-\usepackage[T1]{fontenc}
-% Or whatever. Note that the encoding and the font should match. If T1
-% does not look nice, try deleting the line with the fontenc.
-
 
 \title[Photon Time Delay Estimation] % (optional, use only with long paper titles)
 {Estimation of Time Delay in Gravitationally Lensed Photon Stream Pairs}
@@ -92,35 +87,46 @@
 
 \section{The Problem}
 
-\begin{frame}{}
-  \includegraphics[width=\textwidth]{twostreams}
+\begin{frame}{Lensed Photon Streams}
+  \begin{itemize}
+  \item<1-> Two rays of photons are emitted from a star or quasar
+  \item<2-> The gravitational field of a massive object bends the rays
+  \item<3-> The bent light means that we see two images of the source
+  \item<4-> We capture arrival times of photons from each image (events)
+  \item<5-> Stream $s_1$ arrives at time $t$, stream $s_2$ at $t + \Delta t$
+  \item<6-> We want to find $\Delta t$
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{What We Get}
+  \includegraphics[width=\textwidth]{twostreams_counts}
+\end{frame}
+
+\begin{frame}{What We Want}
+  \includegraphics[width=\textwidth]{twostreams_full}
 \end{frame}
 
 \section{Why?}
 
-\begin{frame}{}
-  % - A title should summarize the slide in an understandable fashion
-  %   for anyone how does not follow everything on the slide itself.
-
+\begin{frame}{What Can We Do With $\Delta t$?}
   \begin{itemize}
-  \item
-    
-  \item
-    
+  \item<2-> Estimate $H_o$
+  \item<3-> Improve accuracy of stellar distance measurements
+  \item<4-> Probe the nature of dark matter
+  \item<5-> Detect extrasolar planets
+  \item<6-> Measure mass distribution
+  \item<7-> Along with many other proposed applications
   \end{itemize}
 \end{frame}
 
 \section{How?}
 
 \begin{frame}{How We Approach the Problem}
-  % - A title should summarize the slide in an understandable fashion
-  %   for anyone how does not follow everything on the slide itself.
-
+  \begin{equation}
+    \hat{\beta}=\frac{\displaystyle\sum_{k=1}^{n}w_k(x_k-\bar{x})Y_k}{\displaystyle\sum_{k=1}^{n}w_k(x_k-\bar{x})^2}
+  \end{equation}
   \begin{itemize}
-  \item
-    Use \texttt{itemize} a lot.
-  \item
-    Use very short sentences or short phrases.
+    \item 
   \end{itemize}
 \end{frame}
 
