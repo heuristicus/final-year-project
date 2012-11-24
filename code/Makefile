@@ -3,11 +3,11 @@ LIBDIR=libs/
 CFLAGS=-Wall -g -I$(INCLUDE_DIR)
 CC=gcc $(CFLAGS)
 GEN_SOURCES=generator.c start.c
-EST_SOURCES=estimatorIWLS.c
-UTIL_SOURCES=file_util.c paramlist.c util.c math_util.c
+EST_SOURCES=estimator_IWLS.c estimator_piecewise.c
+UTIL_SOURCES=file_util.c paramlist.c general_util.c math_util.c
 LIBS=-lm -lmuparser -lgmp
 CUST_LIBS=-lfile_util -lparamlist -lmath_util -lgeneral_util
-UTIL_OBJECTS=$(UTIL:.c=.o)
+UTIL_OBJECTS=$(UTIL_SOURCES:.c=.o)
 GEN_OBJECTS=$(GEN_SOURCES:.c=.o)
 EST_OBJECTS=$(EST_SOURCES:.c=.o)
 

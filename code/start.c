@@ -1,14 +1,26 @@
 #include "generator.h"
 
+static char *prog_description = 
+{
+"This program simulates photon arrival times using a poisson process."
+};
+
+static char *options_info = 
+{
+"OPTIONS\n"
+"\t -p or --paramfile\n"
+"\t\t The file containing parameters to use for generation. This can be used to specify a large number of options.\n\n"
+"\t -o or --outfile\n"
+"\t\t Data will be output to this file.\n\n"
+"\t -n or --numruns\n"
+"\t\t Number of times to run generation. Use this to generate multiple streams."
+};
+
 char *valid_switches[3] = {"-o", "-p", "-n"};
 
 int main(int argc, char *argv[])
 {
-    /* char *outfile; */
-    /* int freeflag = 0; // free outfile or not */
-
     char **args = parse_args(argc, argv);
-    
     generate(args);
     
     free(args);
@@ -16,72 +28,43 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+/*
+ * o is the output file, p is the parameter file, n is the number of times
+ * to run the generation process. 
+ */
 char** parse_args(int argc, char *argv[])
 {
-    int i;
-    char **switches = malloc((argc/2) * sizeof(char*));
-    // always need the same size of array so that we can check which args we have.
-    char **args = calloc(sizeof(valid_switches), sizeof(char*));
+    static struct option opts[] =
+	{
+	    {"paramfile",  required_argument, 0, 'p'},
+	    {"outfile",  required_argument, 0, 'o'},
+	    {"numruns",    required_argument, 0, 'n'},
+	    {0, 0, 0, 0}
+	};
 
-    /* if (argc < 2){ */
-    /* 	printf("You must at least provide a parameter file.\nTry `%s --help' for more information.\n", argv[0]); */
-    /* 	free(switches); */
-    /* 	free(args); */
-    /* 	exit(1); */
-    /* } */
+    int c;
+    int opt_ind;
 
-    if (argc == 1){
-	free(switches);
-	return args;
-    }
-    
-            
-    if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0){
-	printf("usage: %s [-o output_file] [-p param_file] [-n number_of_streams]\n", argv[0]);
-    }
-    
-    for (i = 1; i < argc; ++i){
-	if (i % 2 == 0){ // check args
-	    handle_arg(switches[i / 2 - 1], args, argv[i]); // mess around with array locs to get the last switch
-	} else { // check switches
-	    if (!valid(argv[i])){
-		printf("%s: invalid option %s.\nTry `%s --help' for more information.\n", argv[0], argv[i], argv[0]);
-		free(switches);
-		free(args);
-		exit(1);
-	    }
-	    switches[i / 2] = argv[i]; // switches are every second argument
+    // Arguments may not be received every time so use calloc to prevent memory issues.
+    char **args = calloc(3, sizeof(char*));
+        
+    while((c = getopt_long(argc, argv, "o:p:n:", opts, &opt_ind)) != -1){
+	switch(c){
+	case 'o':
+	    args[0] = optarg;
+	    break;
+	case 'p':
+	    args[1] = optarg;
+	    break;
+	case 'n':
+	    args[2] = optarg;
+	    break;
+	default:
+	    printf("%s\n\nusage: %s options\n\n%s\n", prog_description, argv[0], options_info);
+	    free(args);
+	    exit(1);
 	}
     }
-
-    free(switches);
-        
+    
     return args;
-    
-}
-
-// Checks the validity of a switch
-int valid(char* sw)
-{
-    int i;
-    
-    for (i = 0; i < sizeof(valid_switches)/sizeof(char*); ++i){
-	if (strcmp(sw, valid_switches[i]) == 0)
-	    return 1;
-    }
-    return 0;
-}
-
-/*
- * Put each argument in its prespecified location in the argument array. This location
- * corresponds to the location of the argument in the predefined valid_switches array.
- */
-void handle_arg(char *sw, char **args, char *arg)
-{
-    int i;
-
-    for (i = 0; strcmp(sw, valid_switches[i]) != 0; ++i);
-    
-    args[i] = arg;
-        
 }

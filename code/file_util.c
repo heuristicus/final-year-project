@@ -1,8 +1,10 @@
 #include "file_util.h"
 #include <string.h>
 #include <time.h>
+#include <sys/time.h>
+#include <unistd.h>
 
-#define MAX_DATE_LENGTH 26
+#define MAX_DATE_LENGTH 32
 #define MAX_PARAM_STRING_LENGTH 500
 #define MAX_LINE_LENGTH 100
 #define DEFAULT_ARR_SIZE 100
@@ -29,9 +31,9 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-
 /* 
- * Creates a filename to use for data output.
+ * Creates a filename to use for data output with the format:
+ * prefix_dd-mm-yyyy_hr:min:sec_usec.dat
  */
 char* generate_outfile()
 {
@@ -39,9 +41,13 @@ char* generate_outfile()
     char* datetime = malloc(MAX_DATE_LENGTH * sizeof(char));
     char* fname = malloc((MAX_DATE_LENGTH + strlen(prefix)) * sizeof(char));
     time_t timer = time(NULL);
-    
+    struct timeval t;
+
+    gettimeofday(&t, NULL);
+
     strftime(datetime, MAX_DATE_LENGTH, "%d-%m-%Y_%H:%M:%S", localtime(&timer));
-    sprintf(fname, "%s_%s.dat", prefix, datetime);
+    
+    sprintf(fname, "%s_%s_%d.dat", prefix, datetime, (int) t.tv_usec);
 
     free(datetime);
     
@@ -58,7 +64,13 @@ char* generate_outfile()
  */
 paramlist* get_parameters(char* filename)
 {
-    FILE *fp = fopen(filename, "r");
+    FILE *fp;
+    
+    printf("Retrieving parameters from file %s\n", filename);
+    if ((fp = fopen(filename, "r")) == NULL){
+	perror("Could not access specified file");
+	exit(1);
+    }
     
     char *line = malloc(MAX_PARAM_STRING_LENGTH * sizeof(char));
     char *lp = line; // strtok messes around with pointers so keep reference to line.
@@ -101,10 +113,17 @@ paramlist* get_parameters(char* filename)
  */
 double* get_event_data_interval(double start_time, double end_time, char *filename)
 {
-    FILE *fp = fopen(filename, "r");
+    FILE *fp;
     
-    printf("%lf, %lf\n", start_time, end_time);
+    printf("Retrieving event data from file %s\n", filename);
 
+    if ((fp = fopen(filename, "r")) == NULL){
+	perror("Could not access specified file");
+	exit(1);
+    }
+#ifdef DEBUG
+    printf("Getting event data for interval [%lf, %lf]\n", start_time, end_time);
+#endif
     char *line = malloc(MAX_LINE_LENGTH);
     double *event_times = malloc(DEFAULT_ARR_SIZE * sizeof(double));
     int all = start_time == end_time; // Whether we want to get all data or not.

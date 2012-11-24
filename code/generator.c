@@ -7,6 +7,8 @@
 #define DEFAULT_ARR_SIZE 50
 #define DEFAULT_WINDOW_SIZE 1.0
 
+static int generated_outfile = 0;
+
 //#define DEBUG
 
 /*
@@ -95,28 +97,31 @@ void generate(char **args)
 
     muParserHandle_t hparser = mupCreate(0);
 
-    char *eqn = "a-(b*sin(alpha*t))"; //check syntax is correct. Nothing to check if eqn is wrong.
-    double a = 10, b = 5.0, alpha = 0.1;
-    mupSetExpr(hparser, eqn);
-    mupDefineVar(hparser, "a", &a);
-    mupDefineVar(hparser, "b", &b);
-    mupDefineVar(hparser, "alpha", &alpha);
+    /* char *eqn = "a-(b*sin(alpha*t))"; //check syntax is correct. Nothing to check if eqn is wrong. */
+    /* double a = 10, b = 5.0, alpha = 0.1; */
+    /* mupSetExpr(hparser, eqn); */
+    /* mupDefineVar(hparser, "a", &a); */
+    /* mupDefineVar(hparser, "b", &b); */
+    /* mupDefineVar(hparser, "alpha", &alpha); */
 
     //char *eqn = "t^2";
     
-    /* char *eqn = "a+b*t"; */
-    /* double a = 1, b = 0.001; */
-    /* mupSetExpr(hparser, eqn); */
+    char *eqn = "a+b*t";
+    double a = 1, b = 1.5;
+    mupSetExpr(hparser, eqn);
     
-    /* mupDefineVar(hparser, "a", &a); */
-    /* mupDefineVar(hparser, "b", &b); */
+    mupDefineVar(hparser, "a", &a);
+    mupDefineVar(hparser, "b", &b);
 
     mupSetExpr(hparser, eqn);
 
     run_time_nstreams(hparser, lambda, interval_time, time_delta, nruns, outfile, outswitch);
     
     mupRelease(hparser);
-    
+
+    if (generated_outfile)
+	free(outfile);
+
     free_list(params);
     free(time_delta);
 }
@@ -157,6 +162,7 @@ char* select_output_file(char* cur_out, char* param_out)
     if (param_out == NULL && cur_out == NULL){
 	printf("No parameter for the output file found in the parameters file or command line arguments. Auto-generating...\n");
 	outfile = generate_outfile();
+	generated_outfile = 1;
     } else if (param_out != NULL && cur_out != NULL){
 	printf("Output file found in both parameter file and command line arguments.\n");
 	int u = -1;

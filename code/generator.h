@@ -3,6 +3,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
+#include <getopt.h>
 #include <muParserDLL.h>
 
 #ifndef _GENERATOR_H
@@ -10,8 +11,6 @@
 
 // start.c
 char** parse_args(int argc, char *argv[]);
-int valid(char *sw);
-void handle_arg(char *sw, char **args, char *arg);
 
 // generator.c
 double homogeneous_time(double lambda);

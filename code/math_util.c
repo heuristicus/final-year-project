@@ -32,9 +32,10 @@ long double fact(int i)
 }
 
 /* calculates the probabilty of there being k events between time t_start and t_end. (for homogenous processes)*/
-double prob_num_events_in_time_span(double t_start, double t_end, double lambda, int k)
+double prob_num_events_in_time_span(double start_time, double end_time, double lambda, int k)
 {
-    double tau = t_end - t_start;
+    assert(start_time < end_time);
+    double tau = end_time - start_time;
     return (pow(M_E, -lambda * tau) * pow(lambda * tau, k)) / fact(k);
 }
 
@@ -43,6 +44,7 @@ double prob_num_events_in_time_span(double t_start, double t_end, double lambda,
  */
 int* sum_events_in_interval(double *event_times, int num_events, double start_time, double end_time, int num_subintervals)
 {
+    assert(start_time < end_time);
     int i = 0, current_interval = 0;
     double event_time;
     double subinterval_time = (end_time - start_time) / num_subintervals;
@@ -144,6 +146,7 @@ double get_gaussian_noise(double mean, double std_dev)
 
 double* get_interval_midpoints(double start_time, double end_time, int subintervals)
 {
+    assert(start_time < end_time);
     double *midpoints = malloc(subintervals * sizeof(double));
         
     int i;
@@ -160,6 +163,7 @@ double* get_interval_midpoints(double start_time, double end_time, int subinterv
  */
 double get_interval_midpoint(int interval_number, double start_time, double end_time, int subintervals)
 {
+    assert(start_time < end_time);
     return start_time + ((interval_number - 1.0/2.0) * ((end_time - start_time)/subintervals));
 }
 
