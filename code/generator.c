@@ -6,10 +6,17 @@
 
 #define DEFAULT_ARR_SIZE 50
 #define DEFAULT_WINDOW_SIZE 1.0
+#define PARSER_MAXVARS 10
 
 static int generated_outfile = 0;
 
-//#define DEBUG
+void on_error(muParserHandle_t hParser);
+muFloat_t* var_factory(const muChar_t* a_szName, void *pUserData);
+int check_expr_vars(muParserHandle_t hparser, struct paramlist *params);
+double* parser_tptr(muParserHandle_t hparser);
+void view_expr(muParserHandle_t hparser);
+
+//#define VERBOSE
 
 /*
  * Initialises the generator with some values specified by the arguments passed to the program,
@@ -23,14 +30,14 @@ void generate(char **args)
     char *paramfile = NULL;
     paramlist *params = NULL;
     char *tmp;
-    
+
     double interval_time = 10.0;
     double lambda = 100.0;
     double *time_delta;
     int tdlen;
     int outswitch = 3;
-            
     int nruns = 1;
+    char *expr;
 
     for (i = 0; i <= sizeof(args)/sizeof(char*); ++i){
 	if (args[i] == NULL)
@@ -81,7 +88,15 @@ void generate(char **args)
 
     if ((tmp = get_param_val(params, "verbosity")) != NULL)
 	outswitch = atoi(tmp);
-                    
+
+    if ((tmp = get_param_val(params, "expression")) != NULL){
+	expr = tmp;
+    } else {
+	printf("You have not defined an expression to use.\nPlease do so in the parameter file (add \"expression a+b*x\" and define values for the variables; \"a 10\" etc.)\n");
+	exit(1);
+    }
+
+#ifdef VERBOSE
     printf("Number of runs: %d\nLambda: %lf\nInterval time: %lf\nTime deltas: ", nruns, lambda, interval_time);
 
     for (i = 0; i < tdlen; ++i) {
@@ -93,28 +108,27 @@ void generate(char **args)
     }
 
     printf("Log verbosity: %d\n", outswitch);
-
+#endif
 
     muParserHandle_t hparser = mupCreate(0);
-
-    /* char *eqn = "a-(b*sin(alpha*t))"; //check syntax is correct. Nothing to check if eqn is wrong. */
-    /* double a = 10, b = 5.0, alpha = 0.1; */
-    /* mupSetExpr(hparser, eqn); */
-    /* mupDefineVar(hparser, "a", &a); */
-    /* mupDefineVar(hparser, "b", &b); */
-    /* mupDefineVar(hparser, "alpha", &alpha); */
-
-    //char *eqn = "t^2";
+    mupSetVarFactory(hparser, var_factory, NULL);
+    mupSetErrorHandler(hparser, on_error);
     
-    char *eqn = "a+b*t";
-    double a = 1, b = 1.5;
-    mupSetExpr(hparser, eqn);
+    mupSetExpr(hparser, expr);
+
+    if (!check_expr_vars(hparser, params) || mupError(hparser)){
+	printf("Expression is invalid. Exiting.\n");
+	mupRelease(hparser);
+
+	if (generated_outfile)
+	    free(outfile);
+
+	free_list(params);
+	free(args); // free args because we don't go back to the top
+	free(time_delta);
+	exit(1);
+    }
     
-    mupDefineVar(hparser, "a", &a);
-    mupDefineVar(hparser, "b", &b);
-
-    mupSetExpr(hparser, eqn);
-
     run_time_nstreams(hparser, lambda, interval_time, time_delta, nruns, outfile, outswitch);
     
     mupRelease(hparser);
@@ -124,6 +138,110 @@ void generate(char **args)
 
     free_list(params);
     free(time_delta);
+}
+
+/*
+ * Check the parsed equation to ensure that there are values for each
+ * variable specified in the parameter file, and that a variable t is
+ * present in the equation.
+ */
+int check_expr_vars(muParserHandle_t hparser, struct paramlist *params)
+{
+    char* tmp;
+    int valid = 1;
+    int tdef = 0;
+
+    printf("Checking expression %s\n", mupGetExpr(hparser));
+    int nvars = mupGetExprVarNum(hparser);
+        
+    if (nvars == 0){
+	printf("Expression has no variables.\n");
+	valid = 0;
+    } else {
+	int i;
+	const muChar_t *mu_vname = 0;
+	muFloat_t *vaddr = 0;
+	char *vname;
+	    
+	for (i = 0; i < nvars; ++i){
+	    // Get the variable name and value from the parser
+	    mupGetExprVar(hparser, i, &mu_vname, &vaddr);
+	    vname = (char*)mu_vname; // Cast to stop warnings
+	    if ((tmp = get_param_val(params, vname)) != NULL){
+		*vaddr = atof(tmp); // Set the value of the variable inside hparser
+		printf("Varname: %s, value: %lf\n", vname, (double)*vaddr);
+	    } else if (strcmp(vname, "t") == 0){
+		printf("Variable t present.\n");
+		tdef = 1;
+	    } else if (tmp == NULL){
+		printf("Value for %s is not defined in param file. Aborting.\n", vname);
+		valid = 0;
+		break;
+	    } 
+	}
+
+	if (tdef != 1){
+	    printf("The expression must contain a variable t.\n");
+	    valid = 0;
+	}
+    }
+    
+    return valid;
+}
+
+/*
+ * Display all variables in muparser, as well as their current values.
+ */
+void view_expr(muParserHandle_t hparser)
+{
+    int nvars = mupGetExprVarNum(hparser);
+        
+    int i;
+    const muChar_t *mu_vname = 0;
+    muFloat_t *vaddr = 0;
+    char *vname;
+	    
+    for (i = 0; i < nvars; ++i){
+	// Get the variable name and value from the parser
+	mupGetExprVar(hparser, i, &mu_vname, &vaddr);
+	vname = (char*)mu_vname; // Cast to stop warnings
+	printf("Varname %s, value %lf\n", vname, (double)*vaddr);
+    }
+}
+
+/*
+ * Factory for creating new muparser variables. Space is automatically allocated
+ * by the parser. Values can be retrieved by calling mupGetExprVar().
+ */
+muFloat_t* var_factory(const muChar_t* varname, void *pUserData)
+{
+  static muFloat_t var_buf[PARSER_MAXVARS];
+  static int num_vars = 0;
+
+  printf("Generating new variable \"%s\" (slots left: %d)\n", varname, PARSER_MAXVARS-num_vars);
+
+  var_buf[num_vars] = 0;
+  if (num_vars >= PARSER_MAXVARS - 1)
+  {
+     printf("Variable buffer overflow.");
+     return NULL;
+  }
+
+  return &var_buf[num_vars++];
+}
+
+/*
+ * Muparser error handler. Called whenever an error occurs when attempting to evaluate
+ * a parsed expression.
+ */
+void on_error(muParserHandle_t hparser)
+{
+  printf("\nError when parsing equation:\n");
+  printf("------\n");
+  printf("Message:  \"%s\"\n", mupGetErrorMsg(hparser));
+  printf("Token:    \"%s\"\n", mupGetErrorToken(hparser));
+  printf("Position: %d\n", mupGetErrorPos(hparser));
+  printf("Errc:     %d\n", mupGetErrorCode(hparser));
 }
 
 /* 
@@ -213,7 +331,7 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
 	int *bin_counts = sum_events_in_interval(*eptr, size, start_time, end_time, num_intervals);
 	double *midpoints = get_interval_midpoints(start_time, end_time, num_intervals);
 
-#ifdef DEBUG
+#ifdef VERBOSE
 	int i;
 	for (i = 0; i < num_intervals; ++i){
 	    printf("Interval %d: %d\n", i, bin_counts[i]);
@@ -242,7 +360,7 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
 	int *bin_counts = sum_events_in_interval(*eptr, size, start_time, end_time, num_intervals);
 	double *midpoints = get_interval_midpoints(start_time, end_time, num_intervals);
 
-#ifdef DEBUG
+#ifdef VERBOSE
 	int i;
 	for (i = 0; i < num_intervals; ++i){
 	    printf("Interval %d: %d\n", i, bin_counts[i]);
@@ -305,7 +423,7 @@ int run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda, double 
     double rand, non_hom_lambda, hom_out;
     int i = 0, arr_max = arr_len;
     
-    mupDefineVar(hparser, "t", &shifted_time);
+    mupDefineVar(hparser, "t", &shifted_time); // Set the address muparser uses for variable t
 
     while (base_time < end_time){
 	hom_out = homogeneous_time(lambda);
@@ -369,7 +487,7 @@ void run_to_event_limit_non_homogeneous(muParserHandle_t hparser, double lambda,
     int i = 0;
     
     mupDefineVar(hparser, "t", &func_in);
-    
+            
     while (i < max_events){
 	hom_out = homogeneous_time(lambda);
 	run_time += hom_out;
