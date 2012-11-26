@@ -29,10 +29,10 @@ set format '$%g$'
 # Key
 set key right
 
-plot "$1" index 0 using 1:2 with lines linestyle 1 title '$$s_1$$ Function',\
-"$1" index 1 using 1:2 with lines linestyle 2 title '$$s_1$$ counts',\
-"$2" index 0 using 1:2 with lines linestyle 3 title '$$s_2$$ Function',\
-"$2" index 1 using 1:2 with lines linestyle 4 title '$$s_2$$ counts'
+plot "$1" index 0 using 1:2 with lines linestyle 1 title 'Underlying Function $$S_A$$',\
+"$1" index 1 using 1:2 with lines linestyle 2 title '$$s_A$$ counts',\
+"$2" index 0 using 1:2 with lines linestyle 3 title 'Underlying Function $$S_B$$',\
+"$2" index 1 using 1:2 with lines linestyle 4 title '$$s_B$$ counts'
 
-#plot "$1" index 1 using 1:2 with lines linestyle 1 title '$$s_1$$ counts',\
-#"$2" index 1 using 1:2 with lines linestyle 3 title "$$s_2$$ counts"
+#plot "$1" index 1 using 1:2 with lines linestyle 1 title '$$s_A$$ counts',\
+#"$2" index 1 using 1:2 with lines linestyle 3 title "$$s_B$$ counts"

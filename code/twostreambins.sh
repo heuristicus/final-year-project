@@ -1,4 +1,10 @@
-./generator -p params.txt
+#./generator -p params.txt
+
+if [ $# -ne 3 ]
+then
+    echo "Missing arguments.\nusage: `basename $0` outfile stream_data_1 stream_data_2"
+    exit
+fi
 
 gnuplot<<EOF
 
