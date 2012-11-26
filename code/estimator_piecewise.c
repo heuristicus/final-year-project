@@ -42,12 +42,10 @@ void piecewise_estimate(char *infile, char *outfile, double start_time, double e
 
     FILE *fp = fopen("spline.gnu", "w");
 
-
     for (i = 0; i < break_points && prev_interval_end <= end_time; ++i) {
 	int accept_estimate = 0;
 	interval_start = start_time + prev_interval_end;
 	interval_end = interval_start + step;
-
 	
 	// Stop the end interval exceeding the total time of the data.
 	interval_end = interval_end > end_time ? end_time : interval_end;
@@ -55,10 +53,11 @@ void piecewise_estimate(char *infile, char *outfile, double start_time, double e
 	    interval_end = interval_time;
 			
 	if (abs(interval_start - interval_end) < INTERVAL_EPSILON){
+	    
 	    printf("Interval start and end are equal\n");
 	    break;
 	}
-
+	
 	sprintf(out_separate, "%s_%d", outfile, i);
 	printf("--------RUN %d STARTING:--------\n", i);
 	printf("interval start: %lf, interval end: %lf\n", interval_start, interval_end);
@@ -69,7 +68,7 @@ void piecewise_estimate(char *infile, char *outfile, double start_time, double e
 	/*     interval_estimates = realloc(interval_estimates, (interval_estimates_size *= 2) * sizeof(double*)); */
 	/*     interval_estimates += 1; */
 	/* } */
-	
+
 	// Save data for this run
 	interval_estimates[i] = malloc(4 * sizeof(double));
 	interval_estimates[i][0] = estimates[i][0];

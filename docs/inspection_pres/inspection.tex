@@ -1,6 +1,6 @@
 % $Header: /home/vedranm/bitbucket/beamer/solutions/conference-talks/conference-ornate-20min.en.tex,v 90e850259b8b 2007/01/28 20:48:30 tantau $
 \documentclass{beamer}
-\usepackage{amsmath}
+\usepackage{amsmath,algorithm, algorithmic}
 
 \usepackage[english]{babel}
 % % or whatever
@@ -39,6 +39,7 @@
   % or ...
 
   \setbeamercovered{transparent}
+  \beamertemplatenavigationsymbolsempty
   % or whatever (possibly just delete it)
 }
 
@@ -66,6 +67,7 @@
 \author[Micha{\l} Staniaszek]{\large{Micha{\l} Staniaszek} \\ \scriptsize{Supervisor: Peter Ti\v{n}o}}
 \institute[bham]{The University of Birmingham}
 
+\setcounter{tocdepth}{1}
 
 \date{\today}
 
@@ -87,105 +89,153 @@
 
 \section{The Problem}
 
-\begin{frame}{Lensed Photon Streams}
+\subsection{Lensed Photon Streams}
+
+\begin{frame}{A Basic Overview}
   \begin{itemize}
-  \item<1-> Two rays of photons are emitted from a star or quasar
-  \item<2-> The gravitational field of a massive object bends the rays
-  \item<3-> The bent light means that we see two images of the source
-  \item<4-> We capture arrival times of photons from each image (events)
-  \item<5-> Stream $s_1$ arrives at time $t$, stream $s_2$ at $t + \Delta t$
-  \item<6-> We want to find $\Delta t$
+  \item<2-> Two rays of photons are emitted from a star or quasar
+  \item<3-> Gravitational field of a massive object bends the rays
+  \item<4-> Bent light means that we see two images of the source
+  \item<5-> Capture arrival times of photons from each image (events)
+  \item<6-> Stream $s_A$ arrives at time $t$, stream $s_B$ at $t + \Delta$
+  \item<7-> \alert{We want to find $\Delta$}
   \end{itemize}
 \end{frame}
 
 \begin{frame}{What We Get}
-  \includegraphics[width=\textwidth]{twostreams_counts}
+  \begin{center}
+      \includegraphics[width=4in]{twostreams_count}
+  \end{center}
 \end{frame}
 
 \begin{frame}{What We Want}
-  \includegraphics[width=\textwidth]{twostreams_full}
+  \begin{center}
+      \includegraphics[width=4in]{twostreams_full}
+  \end{center}
 \end{frame}
 
 \section{Why?}
 
-\begin{frame}{What Can We Do With $\Delta t$?}
+\begin{frame}{What Can We Do With $\Delta$?}
   \begin{itemize}
   \item<2-> Estimate $H_o$
   \item<3-> Improve accuracy of stellar distance measurements
   \item<4-> Probe the nature of dark matter
   \item<5-> Detect extrasolar planets
   \item<6-> Measure mass distribution
-  \item<7-> Along with many other proposed applications
+  \item<7-> Many more proposed applications
   \end{itemize}
 \end{frame}
 
 \section{How?}
 
-\begin{frame}{How We Approach the Problem}
-  \begin{equation}
-    \hat{\beta}=\frac{\displaystyle\sum_{k=1}^{n}w_k(x_k-\bar{x})Y_k}{\displaystyle\sum_{k=1}^{n}w_k(x_k-\bar{x})^2}
-  \end{equation}
+\subsection{Estimation Methods}
+
+\begin{frame}{Previous Approaches}
+  For estimation of the time delay from quasar Q0957+561, the following methods have been used:
   \begin{itemize}
-    \item 
+  \item Structure-function based methods (PRH)
+  \item Dispersion Spectra
+  \item Cross correlation
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Make Titles Informative.}
-
-  You can create overlays\dots
+\begin{frame}{How We Approach the Problem}
+  Basic function estimation:
   \begin{itemize}
-  \item using the \texttt{pause} command:
-    \begin{itemize}
-    \item
-      First item.
-      \pause
-    \item    
-      Second item.
-    \end{itemize}
-  \item
-    using overlay specifications:
-    \begin{itemize}
-    \item<3->
-      First item.
-    \item<4->
-      Second item.
-    \end{itemize}
-  \item
-    using the general \texttt{uncover} command:
-    \begin{itemize}
-      \uncover<5->{\item
-        First item.}
-      \uncover<6->{\item
-        Second item.}
-    \end{itemize}
+  \item Linear
+  \item Piecewise linear
+  \end{itemize}
+  As a final goal:
+  \begin{itemize}
+  \item Model-based estimators with maximum likelihood
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Implementation}
+  The project will require implementation of:
+  \begin{itemize}
+  \item<2-> Photon event simulator (arrival time only)
+  \item<3-> Linear and piecewise linear estimator
+  \item<4-> Model based estimator
+  \item<5-> A method for calculation of $\Delta$
   \end{itemize}
 \end{frame}
 
 \section{Progress}
+\subsection{Current State}
 
-\begin{frame}{Current State}
-  % - A title should summarize the slide in an understandable fashion
-  %   for anyone how does not follow everything on the slide itself.
-
+\begin{frame}{What Have We Done So Far?}
   \begin{itemize}
-  \item
-    Use \texttt{itemize} a lot.
-  \item
-    Use very short sentences or short phrases.
+  \item<2-> Photon arrival time simulation - \alert{complete}
+  \item<3-> Linear estimator - \alert{complete}
+  \item<4-> Piecewise estimator - in progress
   \end{itemize}
 \end{frame}
+
+\begin{frame}{Photon Simulation}
+  We use a non-homogeneous poisson process (NHPP) to simulate arrival times.
+  \begin{itemize}
+  \item Rate parameter $\lambda$ is the expected number of arrivals per unit time
+  \item Waiting time until the next event has an exponential distribution
+  \item Time to next event in homogeneous process $t=-\frac{1}{\lambda}\ln(U)$
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Poisson Generation Algorithm}
+  \begin{algorithm}[H]
+    \begin{algorithmic}[1]
+      \REQUIRE $\lambda\geq \lambda(t), 0 \leq t \leq T$
+      \STATE $E=\emptyset$, $t=0$, $T=\text{interval length}$
+      \WHILE{$t<T$}
+      \STATE Generate $U_1\sim U(0,1)$
+      \STATE $t=t-\frac{1}{\lambda}\ln(U_1)$
+      \STATE Generate $U_2\sim U(0,1)$, independent of $U_1$
+      \IF{$U_2\leq\frac{\lambda(t)}{\lambda}$}
+      \STATE $E \leftarrow t$
+      \ENDIF
+      \ENDWHILE
+      \RETURN $E$
+    \end{algorithmic}
+    \caption{Simulating T Time Units of a NHPP by Thinning}
+    \label{alg:seq}
+  \end{algorithm}
+\end{frame}
+
+\begin{frame}{Linear Estimation}
+  As a first step, attempt to estimate linear functions of the form $y=a+bx$ using Iterative Weighted Least Squares (IWLS)
+  \begin{itemize}
+  \item Extension of Optimum Least Squares (OLS) method
+  \item Attempt to find \[\min_{\alpha,\beta}\sum_{k=1}^{n}w_k(Y_k-[\alpha+\beta x])^2\]
+  \item $\alpha$ and $\beta$ are estimators for $a$ and $b$, $w_k$ is the weight assigned to each value $Y_k$, which is the event count for the $k$th bin.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Piecewise Linear Estimation}
+  Instead of applying IWLS to the whole time interval, we apply it to a number of subintervals.
+\end{frame}
+
+\begin{frame}{Model Based Estimation}
+\end{frame}
+
+
+\subsection{Projected Schedule}
 
 \begin{frame}{Projected Schedule}
-  % - A title should summarize the slide in an understandable fashion
-  %   for anyone how does not follow everything on the slide itself.
-
   \begin{itemize}
-  \item
-    Use \texttt{itemize} a lot.
-  \item
-    Use very short sentences or short phrases.
+  \item  Over Christmas: 
+    \begin{itemize}
+    \item Complete piecewise estimator
+    \item Reading about ML, Latent Variable Models
+    \item Implementing parts of ML estimator
+    \end{itemize}
+  \item End of January: Prototype ML estimator complete
+  \item Mid February: ML estimator complete
+  \item End of February: Estimation of $\Delta$
+  \item Mid March: Experimentation complete
   \end{itemize}
 \end{frame}
+
 
 \section*{Summary}
 
@@ -194,24 +244,11 @@
   % Keep the summary *very short*.
   \begin{itemize}
   \item
-    The \alert{first main message} of your talk in one or two lines.
+    We want to find the value of $\Delta$, the time delay between photon stream arrival times
   \item
-    The \alert{second main message} of your talk in one or two lines.
+    Currently have linear and piecewise linear estimators
   \item
-    Perhaps a \alert{third message}, but not more than that.
-  \end{itemize}
-  
-  % The following outlook is optional.
-  \vskip0pt plus.5fill
-  \begin{itemize}
-  \item
-    Outlook
-    \begin{itemize}
-    \item
-      Something you haven't solved.
-    \item
-      Something else you haven't solved.
-    \end{itemize}
+    Final goal is to use a model-based estimator
   \end{itemize}
 \end{frame}
 

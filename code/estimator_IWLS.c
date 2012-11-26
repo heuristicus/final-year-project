@@ -6,7 +6,7 @@
 
 /* int main(int argc, char *argv[]) */
 /* { */
-/*     free(estimate_IWLS(argv[1], argv[2], 33.33, 66.66, 10, 3)); */
+/*     free(estimate_IWLS(argv[1], argv[2], 0, 100, 75, 3)); */
 /*     //free(estimate_IWLS(argv[1], argv[3], 0, 25, 50, 2)); */
 /*     return 0; */
 /* } */
