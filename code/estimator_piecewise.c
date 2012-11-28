@@ -9,131 +9,114 @@
 #define PMF_INSTANCE_THRESHOLD 0.02
 #define PMF_SUM_THRESHOLD 0.85
 
-int check_next_time(char *infile, double *estimate, double start_time, double limit);
 void estimate_to_file(char *filename, double *estimate, char *mode);
 void output_estimates(char *filename, double **estimates, int len);
-void piecewise_estimate(char *infile, char *outfile, double start_time, double end_time, int break_points);
+double** piecewise_estimate(char *event_file, char *output_file, double interval_start, 
+			    double interval_end, double max_breakpoints, double IWLS_iterations, 
+			    double IWLS_subintervals, double max_extension);
+double extend_estimate(char *event_file, double *interval_estimate, double start_time, 
+		       double max_extension, int num_subintervals);
 double* interval_pmf(int *bin_counts, double *midpoints, int len, double a, double b);
-int pmf_check(char *infile, double start_time, double end_time, double a, double b, int num_subintervals);
+int pmf_check(double *midpoints, int *bindata, double a, double b, int num_subintervals);
 int pmf_threshold_check(double *pmfs, int len);
 int pmf_cumulative_check(double *pmfs, int len, int limit);
 int pmf_consecutive_check(double *pmfs, int len, int limit);
 
-void piecewise_estimate(char *infile, char *outfile, double start_time, double end_time, int break_points)
-{
-    
-    char *out_separate = malloc(strlen(outfile) + 5); // separate outfiles for each piece
-    double **interval_estimates = malloc((break_points + 1) * sizeof(double*)); // estimates for each piece
-    interval_estimates[0] = calloc(1, sizeof(double)); // we will store the size of the array in the first memory location
-    interval_estimates += 1;
-    
-    int i, j;
-    double interval_time = end_time - start_time;
-    double step = interval_time/break_points;
-    //double min_length = interval_time * MIN_INTERVAL_LENGTH_PROPORTION;
-        
-    double **estimates = malloc(break_points * sizeof(double*));
-
-    double check_forwards = 15; // time to look forwards and see if we can use the same parameters
-                
-    double interval_start = start_time;
-    double interval_end = 0;
-    double prev_interval_end = 0;
-
-    FILE *fp = fopen("spline.gnu", "w");
-
-
-    for (i = 0; i < break_points && prev_interval_end <= end_time; ++i) {
-	int accept_estimate = 0;
-	interval_start = start_time + prev_interval_end;
-	interval_end = interval_start + step;
-
-	
-	// Stop the end interval exceeding the total time of the data.
-	interval_end = interval_end > end_time ? end_time : interval_end;
-	if (i - break_points - 1 == 0) // If this is the last interval, end it at the total time.
-	    interval_end = interval_time;
-			
-	if (abs(interval_start - interval_end) < INTERVAL_EPSILON){
-	    printf("Interval start and end are equal\n");
-	    break;
-	}
-
-	sprintf(out_separate, "%s_%d", outfile, i);
-	printf("--------RUN %d STARTING:--------\n", i);
-	printf("interval start: %lf, interval end: %lf\n", interval_start, interval_end);
-	estimates[i] = estimate_IWLS(infile, out_separate, interval_start, interval_end, 10, 3);
-	/* if (i > interval_estimates_size) { */
-	/*     // Play with the pointer so that the reallocation works. */
-	/*     interval_estimates -= 1; */
-	/*     interval_estimates = realloc(interval_estimates, (interval_estimates_size *= 2) * sizeof(double*)); */
-	/*     interval_estimates += 1; */
-	/* } */
-	
-	// Save data for this run
-	interval_estimates[i] = malloc(4 * sizeof(double));
-	interval_estimates[i][0] = estimates[i][0];
-	interval_estimates[i][1] = estimates[i][1];
-	interval_estimates[i][2] = interval_start;
-
-	if (interval_start <= end_time && interval_end < end_time) { // don't try and estimate past the end of the data that we have
-	    printf("Checking if the estimates can be extended for the next time period.\n\n");
-	    for (j = 1; j < 4; ++j) {
-		printf("Checking estimates against estimate for time period [%lf, %lf]\n", interval_end, interval_end + check_forwards/j);
-		// Check if we can use the estimate we got above to estimate the next lot of data.
-		// If we can't estimate a long interval, try with a few shorter intervals.
-		//accept_estimate = check_next_time(infile, estimates[i], interval_end, check_forwards/j);
-		accept_estimate = pmf_check(infile, interval_end, interval_end + check_forwards/j, interval_estimates[i][0], interval_estimates[i][1], check_forwards/j);
-		if (accept_estimate == 1){
-		    printf("Estimates for next time period are similar. Extending the line.\n");
-		    break;
-		} else {
-		    printf("Estimates are not similar enough.\n\n");
-		}
-	    }
-	}
-
-	if (accept_estimate) {
-	    interval_estimates[i][3] = interval_end + check_forwards/j;
-	} else { // can't estimate next block using the current estimates
-	    interval_estimates[i][3] = interval_end;
-	}
-	printf("Estimates for interval [%lf, %lf]: a = %lf, b = %lf\n\n\n", interval_start, interval_end, interval_estimates[i][0], interval_estimates[i][1]);
-	prev_interval_end = interval_estimates[i][3];
-
-	
-	/* double mid = interval_estimates[i][2] + (1.0/2.0) * (interval_estimates[i][3] - interval_estimates[i][2]); */
-	
-	/* fprintf(fp, "%lf %lf\n", mid, interval_estimates[i][0] + interval_estimates[i][1] * mid); */
-	
-	
-	
-//	printf("updating interval estimate count\n");
-	**(interval_estimates - 1) += 1; // store the size of the array before the data
-    }
-
-    fclose(fp);
-    
-    for (i = 0; i < **(interval_estimates - 1); ++i) {
-	printf("Interval start: %lf, interval end: %lf, a estimate: %lf, b estimate: %lf\n", interval_estimates[i][2], interval_estimates[i][3], interval_estimates[i][0], interval_estimates[i][1]);
-    }
-
-    output_estimates(outfile, interval_estimates, **(interval_estimates - 1));
-    
-    free(out_separate);
-    interval_estimates -= 1;
-    // We may end up with fewer estimates than break points due to extension
-    free_pointer_arr((void**)estimates, (**interval_estimates));
-    free_pointer_arr((void**)interval_estimates, (**interval_estimates) + 1); // free everything 
-    
-}
 
 int main(int argc, char *argv[])
 {
-
-    piecewise_estimate(argv[1], argv[2], 0, 100, 5);
-        
+    double **piece = piecewise_estimate(argv[1], argv[2], 0, 100, 5, 3, 10, 15);
+    
+    output_estimates("testout.txt", piece, 5);
+            
     return 0;
+}
+
+double** piecewise_estimate(char *event_file, char *output_file, double interval_start, 
+			    double interval_end, double max_breakpoints, double IWLS_iterations, 
+			    double IWLS_subintervals, double max_extension)
+{
+    if (!interval_check(interval_start, interval_end)){
+	printf("Interval [%lf, %lf] is invalid.\n", interval_start, interval_end);
+	return NULL;
+    }
+    
+    int i = 0;
+    double default_interval_length;
+    if (max_breakpoints == 0)
+	default_interval_length = interval_end - interval_start;
+    else 
+	default_interval_length = (interval_end - interval_start) / max_breakpoints;
+
+    double start_time = interval_start, end_time = interval_start + default_interval_length; // start time and end time of the subinterval
+    
+    double **interval_data = malloc(max_breakpoints * sizeof(double*));
+    double *interval_estimate;
+        
+    // We want to do this at least once, specifically if max_breakpoints is zero
+    do {
+	printf("Estimating interval [%lf, %lf].\n", start_time, end_time);
+	interval_estimate = estimate_IWLS(event_file, NULL, start_time, end_time, IWLS_subintervals, IWLS_iterations);
+	
+	// Don't bother extending the line if we are at the end of the overall interval,
+	// or if we are estimating the last line segment.
+	if (end_time < interval_end || i == max_breakpoints - 1){
+	    int tmp;
+	    
+	    if ((tmp = extend_estimate(event_file, interval_estimate, end_time, max_extension, 10)) != -1){
+		end_time = tmp;
+		printf("Interval extended. New interval is [%lf, %lf]\n", start_time, end_time);
+	    }
+	}
+
+	double *this_interval = malloc(4 * sizeof(double));
+	this_interval[0] = interval_estimate[0]; // a estimate
+	this_interval[1] = interval_estimate[1]; // b estimate
+	this_interval[2] = start_time;
+	this_interval[3] = end_time;
+
+	interval_data[i] = this_interval;
+
+	printf("Final interval is [%lf, %lf].\n", start_time, end_time);
+				
+	++i;
+	start_time = end_time; // The start of the next interval is the end of the current
+	end_time = start_time + default_interval_length > interval_end ? interval_end : start_time + default_interval_length;
+    } while(i < max_breakpoints && end_time <= interval_end);
+
+    return interval_data;
+}
+
+/*
+ * Check whether the provided estimates for a and b (contained within the interval estimate) 
+ * can also be used as good estimators for a short interval following the end of the 
+ * interval estimated with IWLS
+ */
+double extend_estimate(char *event_file, double *interval_estimate, double start_time, 
+		       double max_extension, int num_subintervals)
+{
+    int i;
+    
+    for (i = 1; i < 5; ++i) {
+
+	double end_time = start_time + max_extension/i; // probably need something better than this
+    
+	// Don't really need to do this every time - just truncate the array
+	double *events = get_event_data_interval(start_time, end_time, event_file);
+	events++; // Increment the pointer past the first array location which contains the size
+	
+	int *bin_counts = sum_events_in_interval(events, events[-1] -1 , start_time, end_time, num_subintervals);
+	double *midpoints = get_interval_midpoints(start_time, end_time, num_subintervals);
+    
+	int res = pmf_check(midpoints, bin_counts, interval_estimate[0], interval_estimate[1], num_subintervals);
+    
+	if (res)
+	    return end_time;
+	else
+	    continue;
+    }
+    
+    return -1;
 }
 
 /*
@@ -142,17 +125,8 @@ int main(int argc, char *argv[])
  * to a time interval. The lambda value for the middle of that time interval is determined, and then this
  * value of lambda is used in the PMF calculation.
  */
-int pmf_check(char *infile, double start_time, double end_time, double a, double b, int num_subintervals)
+int pmf_check(double *midpoints, int *bindata, double a, double b, int num_subintervals)
 {
-    
-    double *evdata = get_event_data_interval(start_time, end_time, infile);
-    int num_events = evdata[0] - 1;
-    evdata += 1;
-        
-    int *bindata = sum_events_in_interval(evdata, num_events, start_time, end_time, num_subintervals);
-    
-    double *midpoints = get_interval_midpoints(start_time, end_time, num_subintervals);
-    
     double *pmfs = interval_pmf(bindata, midpoints, num_subintervals, a, b);
 
     double sum = sum_double_arr(pmfs, num_subintervals);
@@ -161,15 +135,13 @@ int pmf_check(char *infile, double start_time, double end_time, double a, double
 
     int ret = pmf_threshold_check(pmfs, num_subintervals);
     
-    free(pmfs);
-    free(midpoints);
-    free(bindata);
-    evdata -= 1;
-    free(evdata);
-    
     return ret;
 }
 
+/*
+ * Performs a threshold check on the probability mass functions. If one
+ * of the values exceeds the threshold, returns 0.
+ */
 int pmf_threshold_check(double *pmfs, int len)
 {
     int i;
@@ -185,6 +157,10 @@ int pmf_threshold_check(double *pmfs, int len)
     return ret;
 }
 
+/*
+ * Performs a check on the sum of the given probability mass functions.
+ * If the sum exceeds the threshold, 0 is returned.
+ */
 int pmf_sum_check(double *pmfs, int len)
 {
     int i;
@@ -192,11 +168,18 @@ int pmf_sum_check(double *pmfs, int len)
         
     for (i = 0; i < len; ++i) {
 	sum += pmfs[i];
+	if (sum > PMF_SUM_THRESHOLD)
+	    return 0;
     }
 
-    return sum <= PMF_SUM_THRESHOLD;
+    return 1;
 }
 
+/*
+ * Performs a check on the number of probability mass functions which exceed
+ * the threshold. If the number of functions exceeding the threshold goes
+ * over the limit, 0 is returned.
+ */
 int pmf_cumulative_check(double *pmfs, int len, int limit)
 {
     int i;
@@ -205,12 +188,19 @@ int pmf_cumulative_check(double *pmfs, int len, int limit)
     for (i = 0; i < len; ++i) {
 	if (pmfs[i] < PMF_INSTANCE_THRESHOLD){
 	    count++;
+	    if (count > limit)
+		return 0;
 	}
     }
 
-    return count <= limit;
+    return 1;
 }
 
+/*
+ * Performs a check on the number of consecutive probability functions which exceed
+ * the threshold. For example, if there are 4 consecutive values in the array
+ * which exceed the threshold, and the limit is 3, then 0 is returned.
+ */
 int pmf_consecutive_check(double *pmfs, int len, int limit)
 
 {
@@ -281,6 +271,10 @@ void output_estimates(char *filename, double **estimates, int len)
  */
 void estimate_to_file(char *filename, double *estimate, char *mode)
 {
+
+    if (estimate == NULL)
+	return;
+        
     double a = estimate[0];
     double b = estimate[1];
     double start = estimate[2];

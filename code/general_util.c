@@ -81,3 +81,11 @@ void print_double_arr(double *arr, int len)
     }
 
 }
+
+/*
+ * Checks whether a given interval is valid and returns 1 if so.
+ */
+int interval_check(double interval_start, double interval_end)
+{
+    return (interval_start < interval_end) && interval_start >= 0 && interval_end > 0;
+}
