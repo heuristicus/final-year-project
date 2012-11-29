@@ -15,7 +15,7 @@ double** piecewise_estimate(char *event_file, char *output_file, double interval
 			    double interval_end, double max_breakpoints, double IWLS_iterations, 
 			    double IWLS_subintervals, double max_extension);
 double extend_estimate(char *event_file, double *interval_estimate, double start_time, 
-		       double max_extension, int num_subintervals);
+		       double max_extension, double subinterval_time);
 double* interval_pmf(int *bin_counts, double *midpoints, int len, double a, double b);
 int pmf_check(double *midpoints, int *bindata, double a, double b, int num_subintervals);
 int pmf_threshold_check(double *pmfs, int len);
@@ -27,8 +27,6 @@ int main(int argc, char *argv[])
 {
     double **piece = piecewise_estimate(argv[1], argv[2], 0, 100, 5, 3, 10, 15);
     
-    output_estimates("testout.txt", piece, 5);
-
     free_pointer_arr((void**)piece, 5);
                 
     return 0;
@@ -52,7 +50,7 @@ double** piecewise_estimate(char *event_file, char *output_file, double interval
 
     double start_time = interval_start, end_time = interval_start + default_interval_length; // start time and end time of the subinterval
     
-    double **interval_data = malloc(max_breakpoints * sizeof(double*));
+    double **interval_data = calloc(max_breakpoints, sizeof(double*));
     double *interval_estimate;
         
     // We want to do this at least once, specifically if max_breakpoints is zero
@@ -63,12 +61,10 @@ double** piecewise_estimate(char *event_file, char *output_file, double interval
 	// Don't bother extending the line if we are at the end of the overall interval,
 	// or if we are estimating the last line segment.
 	if (end_time < interval_end || i < max_breakpoints - 1){
-	    int tmp;
-	    
-	    if ((tmp = extend_estimate(event_file, interval_estimate, end_time, max_extension, 10)) != -1){
-		end_time = tmp;
-		printf("Interval extended. New interval is [%lf, %lf]\n", start_time, end_time);
-	    }
+	    double extension_time = max_extension > interval_end - end_time ? interval_end - end_time : max_extension;
+
+	    if (extension_time > 0)
+		end_time = extend_estimate(event_file, interval_estimate, end_time, extension_time, 1);
 	}
 
 	double *this_interval = malloc(4 * sizeof(double));
@@ -85,47 +81,64 @@ double** piecewise_estimate(char *event_file, char *output_file, double interval
 	start_time = end_time; // The start of the next interval is the end of the current
 	end_time = start_time + default_interval_length > interval_end ? interval_end : start_time + default_interval_length;
 	free(interval_estimate);
-    } while(i < max_breakpoints && end_time <= interval_end);
+    } while(i < max_breakpoints && start_time != end_time);
 
+    output_estimates(output_file, interval_data, i);
+    
     return interval_data;
 }
 
 /*
  * Check whether the provided estimates for a and b (contained within the interval estimate) 
  * can also be used as good estimators for a short interval following the end of the 
- * interval estimated with IWLS
+ * interval estimated with IWLS. Returns the end time of the extended interval if it
+ * is possible to extend the line, otherwise returns start_time.
+ * 
+ * *********NUM SUBINTERVALS should be relative - using the same number on each means
+ * that the shorter the interval the fewer events there end up being in each interval.
  */
 double extend_estimate(char *event_file, double *interval_estimate, double start_time, 
-		       double max_extension, int num_subintervals)
+		       double max_extension, double subinterval_time)
 {
     int i;
-    double retval = -1;
+    double retval = start_time;
         
-    for (i = 1; i < 5; ++i) {
+    double *events = get_event_data_interval(start_time, start_time + max_extension, event_file);
+    double *lastevents = NULL;
+        
+    for (i = 0; i < 5; ++i) {
+	double end_time = start_time + max_extension / (i + 1);	
 
-	double end_time = start_time + max_extension/i; // probably need something better than this
-    
-	// Don't really need to do this every time - just truncate the array
-	double *events = get_event_data_interval(start_time, end_time, event_file);
-	double *tmp = events; // keep the original pointer so we can mess around with the other
+	printf("checking interval [%lf, %lf]\n", start_time, end_time);
+
+	if (lastevents != NULL){
+	    events = get_event_subinterval(lastevents, start_time, end_time);
+	    free(lastevents);
+	}
+
 	int event_num = events[0] - 1;
-	events++;
 		
-	int *bin_counts = sum_events_in_interval(events, event_num, start_time, end_time, num_subintervals);
+	int num_subintervals = (end_time - start_time)/subinterval_time;
+
+	int *bin_counts = sum_events_in_interval((events + 1), event_num, start_time, end_time, num_subintervals);
 	double *midpoints = get_interval_midpoints(start_time, end_time, num_subintervals);
     
 	int res = pmf_check(midpoints, bin_counts, interval_estimate[0], interval_estimate[1], num_subintervals);
-    
-	free(tmp);
+
 	free(bin_counts);
 	free(midpoints);
-
+		
 	if (res){
 	    retval = end_time;
 	    break;
 	}
+
+	printf("Could not extend estimate to end time %lf\n", end_time);
+	lastevents = events;
     }
-    
+
+    free(events);
+        
     return retval;
 }
 
@@ -272,6 +285,10 @@ void output_estimates(char *filename, double **estimates, int len)
 	//sprintf(f, "%s_%d", filename, i);
 	//estimate_to_file(filename, estimates[i], "w");
 	// Write to file if it's the first run, otherwise append
+	if (estimates[i] == NULL){
+	    printf("null, breaking %d\n", i);
+	    break;
+	}
 	estimate_to_file(filename, estimates[i], i > 0 ? "a" : "w");
     }
 

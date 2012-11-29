@@ -103,7 +103,7 @@ double* get_event_data_interval(double start_time, double end_time, char *filena
 {
     FILE *fp = fopen(filename, "r");
     
-    printf("%lf, %lf\n", start_time, end_time);
+    //printf("%lf, %lf\n", start_time, end_time);
 
     char *line = malloc(MAX_LINE_LENGTH);
     double *event_times = malloc(DEFAULT_ARR_SIZE * sizeof(double));
