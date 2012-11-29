@@ -114,8 +114,10 @@ paramlist* get_parameters(char* filename)
 double* get_event_data_interval(double start_time, double end_time, char *filename)
 {
     FILE *fp;
-    
+
     printf("Retrieving event data from file %s\n", filename);
+    //printf("%lf, %lf\n", start_time, end_time);
+
 
     if ((fp = fopen(filename, "r")) == NULL){
 	perror("Could not access specified file");

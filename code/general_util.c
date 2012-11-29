@@ -81,3 +81,64 @@ void print_double_arr(double *arr, int len)
     }
 
 }
+
+/*
+ * Checks whether a given interval is valid and returns 1 if so.
+ */
+int interval_check(double interval_start, double interval_end)
+{
+    return (interval_start < interval_end) && interval_start >= 0 && interval_end > 0;
+}
+
+/*
+ * Gets a subinterval of the given event array. The array provided is not modified.
+ * This should be used to prevent excessive reading from file. Very naive - complexity
+ * probably O(n^2). Probably marginally better than processing files.
+ *
+ * Note that an unmodified event array is expected - i.e. one which contains the length in
+ * the zeroth location.
+ */
+double* get_event_subinterval(double *events, double interval_start, double interval_end)
+{
+    int count = 0;
+    double *start = NULL;
+//    double *end = NULL;
+    
+    int arr_end = events[0] - 1;
+    
+    int i;
+    double cur_time;
+    
+    //printf("interval start %lf, interval end %lf\n", interval_start, interval_end);
+        
+    for (i = 1, cur_time = events[i]; i < arr_end || events[i] <= interval_end; ++i, cur_time = events[i]) {
+	//printf("cur_time %lf\n", cur_time);
+	if (cur_time >= interval_start && start == NULL){
+	    //printf("interval start detected at %lf\n", cur_time);
+	    start = (events + i); // start pointer moves to indicate the start of the interval
+	    count++;
+	} else if (cur_time > interval_end){
+	    //printf("interval end detected at %lf\n", cur_time);
+	    count++;
+	    break;
+	} else if (cur_time > interval_start && cur_time < interval_end){
+	    count++;
+	}
+    }
+
+    double *pruned_events = malloc((count + 1) * sizeof(double));
+    pruned_events[0] = count;
+
+    //printf("end - start %d\n", end - start);
+    
+    memcpy((void*)(pruned_events + 1), start, count * sizeof(double));
+    
+    
+    /* for (i = 0; i < count; ++i) { */
+    /* 	printf("%lf, %d\n", pruned_events[i], i); */
+    /* } */
+
+    //printf("interval start %lf, first event: %lf, interval end %lf, last event %lf, count %d\n", interval_start, *start, interval_end, *(end - 1), count);
+
+    return pruned_events;
+}

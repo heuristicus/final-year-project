@@ -4,6 +4,23 @@
 
 //#define DEBUG
 
+static double* initialise_weights(int num_subintervals);
+static double a_estimate(double alpha, double interval_time, int num_subintervals);
+static double b_estimate(double beta, double interval_time, int num_subintervals);
+static double beta_estimate(double* weights, double *midpoints, int *bin_counts, double mean_x, int num_subintervals);
+static double alpha_estimate(double mean_y, double mean_x, double beta_estimate);
+static double w_SSE(double *weights, double *midpoints, int *bin_counts, double alpha, double beta, int num_subintervals);
+static int* get_bin_counts(double *events, double start_time, double end_time, int num_subintervals);
+static double mean_x(double *midpoints, double *weights, int num_subintervals);
+static double mean_Y(int *bin_counts, double *weights, int num_subintervals);
+//static double* initialise_random_variables(int *bin_counts, int length);
+static double constraint_a_OLS(double *weights, double *midpoints, int *bin_counts, double interval_time, int num_subintervals);
+static double constraint_b_OLS(double *weights, double *midpoints, int *bin_counts, double interval_time, int num_subintervals);
+//static double constraint_b_IWLS(int *bin_counts, double interval_time, int num_subintervals);
+static double constraint_b_IWLS(int *bin_counts, double *midpoints, double interval_time, int num_subintervals);
+static double* lambda_estimate(double *lambda, double *midpoints, double a, double b, double interval_time, int num_subintervals);
+static void weight_estimate(double *weights, double *lambda, int num_subintervals);
+
 /* int main(int argc, char *argv[]) */
 /* { */
 /*     free(estimate_IWLS(argv[1], argv[2], 0, 100, 75, 3)); */
@@ -23,7 +40,8 @@ double* estimate_OLS(char *infile, char *outfile, double start_time, double end_
 
 /*
  * Uses iterative weighted least squares to estimate a monotonic linear function. Returns the estimate of 
- * a, b and the sum squared error calculated for these estimates.
+ * a, b and the sum squared error calculated for these estimates. The outfile can be null if you do not need
+ * to output any data from the estimator.
  *
  * **** THE START AND END TIMES MUST BE THE CORRECT START AND END TIMES FOR THE EVENT DATA THAT YOU HAVE. ****
  */
@@ -209,7 +227,7 @@ double** get_subintervals(double start_time, double end_time, int num_subinterva
 /*
  * Get the number of events that occurred in each subinterval.
  */
-int* get_bin_counts(double *events, double start_time, double end_time, int num_subintervals)
+static int* get_bin_counts(double *events, double start_time, double end_time, int num_subintervals)
 {
     int num_events = (int) events[0] - 1;
 
@@ -225,7 +243,7 @@ int* get_bin_counts(double *events, double start_time, double end_time, int num_
 /*
  * Initialise the weights assigned to each subinterval to 1.
  */
-double* initialise_weights(int num_subintervals)
+static double* initialise_weights(int num_subintervals)
 {
     double *weights = malloc(num_subintervals * sizeof(double));
     
@@ -242,23 +260,23 @@ double* initialise_weights(int num_subintervals)
 /*
  * Initialises each random variable Yk to the number of events in the corresponding subinterval k
  */
-double* initialise_random_variables(int *bin_counts, int length)
-{
-    double* rand_var = malloc(length * sizeof(double));
+/* static double* initialise_random_variables(int *bin_counts, int length) */
+/* { */
+/*     double* rand_var = malloc(length * sizeof(double)); */
     
-    int i;
+/*     int i; */
         
-    for (i = 0; i < length; ++i){
-	rand_var[i] = bin_counts[i] + get_poisson_noise(bin_counts[i]);
-    }
+/*     for (i = 0; i < length; ++i){ */
+/* 	rand_var[i] = bin_counts[i] + get_poisson_noise(bin_counts[i]); */
+/*     } */
 
-    return rand_var;
-}
+/*     return rand_var; */
+/* } */
 
 /*
  * estimates the value of alpha
  */
-double alpha_estimate(double mean_y, double mean_x, double beta_estimate)
+static double alpha_estimate(double mean_y, double mean_x, double beta_estimate)
 {
     return mean_y - beta_estimate * mean_x;
 }
@@ -266,7 +284,7 @@ double alpha_estimate(double mean_y, double mean_x, double beta_estimate)
 /*
  * Estimates the value of beta
  */ 
-double beta_estimate(double* weights, double *midpoints, int *bin_counts, double mean_x, int num_subintervals)
+static double beta_estimate(double* weights, double *midpoints, int *bin_counts, double mean_x, int num_subintervals)
 {
     double xdiffsum = 0;
     double squarediffsum = 0;
@@ -289,7 +307,7 @@ double beta_estimate(double* weights, double *midpoints, int *bin_counts, double
 /*
  * Estimates the value of a
  */
-double a_estimate(double alpha, double interval_time, int num_subintervals)
+static double a_estimate(double alpha, double interval_time, int num_subintervals)
 {
     return alpha * (num_subintervals/interval_time);
 }
@@ -297,7 +315,7 @@ double a_estimate(double alpha, double interval_time, int num_subintervals)
 /*
  * Estimates the value of b
  */
-double b_estimate(double beta, double interval_time, int num_subintervals)
+static double b_estimate(double beta, double interval_time, int num_subintervals)
 {
     return beta * (num_subintervals/interval_time);
 }
@@ -306,7 +324,7 @@ double b_estimate(double beta, double interval_time, int num_subintervals)
  * Recalculates b in cases where a violates the constraint a >= 0 (i.e. a < 0). This function
  * is used only for OLS.
  */
-double constraint_a_OLS(double *weights, double *midpoints, int *bin_counts, double interval_time, int num_subintervals)
+static double constraint_a_OLS(double *weights, double *midpoints, int *bin_counts, double interval_time, int num_subintervals)
 {
     double rvsum = 0;
     double sqsum = 0;
@@ -326,7 +344,7 @@ double constraint_a_OLS(double *weights, double *midpoints, int *bin_counts, dou
  * Recalculates b in cases where it violates the constraint b >= -a/T (i.e. a >= 0, but b < -a/T).
  * This function is used only for OLS.
  */
-double constraint_b_OLS(double *weights, double *midpoints, int *bin_counts, double interval_time, int num_subintervals)
+static double constraint_b_OLS(double *weights, double *midpoints, int *bin_counts, double interval_time, int num_subintervals)
 {
     double rvsum = 0;
     double sqsum = 0;
@@ -366,7 +384,7 @@ double constraint_b_OLS(double *weights, double *midpoints, int *bin_counts, dou
  * a simplified version of this function, but appears to have an error. This function correctly recalculates
  * b when it violates the constraints.
  */
-double constraint_b_IWLS(int *bin_counts, double *midpoints, double interval_time, int num_subintervals)
+static double constraint_b_IWLS(int *bin_counts, double *midpoints, double interval_time, int num_subintervals)
 {
     int i;
     double ysum = 0;
@@ -384,7 +402,7 @@ double constraint_b_IWLS(int *bin_counts, double *midpoints, double interval_tim
 /*
  * Updates the estimates for the means of the random variables.
  */
-double* lambda_estimate(double *lambda, double *midpoints, double a, double b, double interval_time, int num_subintervals)
+static double* lambda_estimate(double *lambda, double *midpoints, double a, double b, double interval_time, int num_subintervals)
 {
     int i;
     
@@ -403,7 +421,7 @@ double* lambda_estimate(double *lambda, double *midpoints, double a, double b, d
 /*
  * Updates the estimates for the weights
  */
-void weight_estimate(double *weights, double *random_variables, int num_subintervals)
+static void weight_estimate(double *weights, double *random_variables, int num_subintervals)
 {
     int i;
     double randvar_total = 0;
@@ -422,7 +440,7 @@ void weight_estimate(double *weights, double *random_variables, int num_subinter
  * Calculates the mean of the subinterval midpoints, taking into consideration the
  * weight of each value.
  */
-double mean_x(double *midpoints, double *weights, int num_subintervals)
+static double mean_x(double *midpoints, double *weights, int num_subintervals)
 {
     int i;
     double sum = 0.0;
@@ -438,7 +456,7 @@ double mean_x(double *midpoints, double *weights, int num_subintervals)
 /*
  * Calculates the mean value of the random variables, given the current weights
  */
-double mean_Y(int *bin_counts, double *weights, int num_subintervals)
+static double mean_Y(int *bin_counts, double *weights, int num_subintervals)
 {
     int i;
     double sum = 0;
@@ -454,7 +472,7 @@ double mean_Y(int *bin_counts, double *weights, int num_subintervals)
 /*
  * Find the sum squared error for a set of estimates
  */
-double w_SSE(double *weights, double *midpoints, int *bin_counts, double alpha, double beta, int num_subintervals)
+static double w_SSE(double *weights, double *midpoints, int *bin_counts, double alpha, double beta, int num_subintervals)
 {
     double sum = 0.0;
     int i;
