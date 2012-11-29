@@ -50,7 +50,7 @@ double** piecewise_estimate(char *event_file, char *output_file, double interval
 
     double start_time = interval_start, end_time = interval_start + default_interval_length; // start time and end time of the subinterval
     
-    double **interval_data = calloc(max_breakpoints, sizeof(double*));
+    double **interval_data = calloc(max_breakpoints, sizeof(double*)); // calloc so we don't get uninitialised value errors
     double *interval_estimate;
         
     // We want to do this at least once, specifically if max_breakpoints is zero
@@ -61,12 +61,14 @@ double** piecewise_estimate(char *event_file, char *output_file, double interval
 	// Don't bother extending the line if we are at the end of the overall interval,
 	// or if we are estimating the last line segment.
 	if (end_time < interval_end || i < max_breakpoints - 1){
+	    // Do not allow the extension time to go over the overall end time
 	    double extension_time = max_extension > interval_end - end_time ? interval_end - end_time : max_extension;
 
 	    if (extension_time > 0)
 		end_time = extend_estimate(event_file, interval_estimate, end_time, extension_time, 1);
 	}
 
+	// Put this in a struct
 	double *this_interval = malloc(4 * sizeof(double));
 	this_interval[0] = interval_estimate[0]; // a estimate
 	this_interval[1] = interval_estimate[1]; // b estimate
@@ -93,9 +95,6 @@ double** piecewise_estimate(char *event_file, char *output_file, double interval
  * can also be used as good estimators for a short interval following the end of the 
  * interval estimated with IWLS. Returns the end time of the extended interval if it
  * is possible to extend the line, otherwise returns start_time.
- * 
- * *********NUM SUBINTERVALS should be relative - using the same number on each means
- * that the shorter the interval the fewer events there end up being in each interval.
  */
 double extend_estimate(char *event_file, double *interval_estimate, double start_time, 
 		       double max_extension, double subinterval_time)
@@ -284,11 +283,12 @@ void output_estimates(char *filename, double **estimates, int len)
 	//f = malloc(strlen(filename) + 4);
 	//sprintf(f, "%s_%d", filename, i);
 	//estimate_to_file(filename, estimates[i], "w");
-	// Write to file if it's the first run, otherwise append
+	
+	// There might be fewer lines than expected due to extension
 	if (estimates[i] == NULL){
-	    printf("null, breaking %d\n", i);
 	    break;
 	}
+	// Write to file if it's the first run, otherwise append
 	estimate_to_file(filename, estimates[i], i > 0 ? "a" : "w");
     }
 
