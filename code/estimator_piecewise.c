@@ -23,14 +23,14 @@ int pmf_cumulative_check(double *pmfs, int len, int limit);
 int pmf_consecutive_check(double *pmfs, int len, int limit);
 
 
-int main(int argc, char *argv[])
-{
-    double **piece = piecewise_estimate(argv[1], argv[2], 0, 100, 5, 3, 10, 15);
+/* int main(int argc, char *argv[]) */
+/* { */
+/*     double **piece = piecewise_estimate(argv[1], argv[2], 0, 100, 5, 3, 10, 15); */
     
-    free_pointer_arr((void**)piece, 5);
+/*     free_pointer_arr((void**)piece, 5); */
                 
-    return 0;
-}
+/*     return 0; */
+/* } */
 
 double** piecewise_estimate(char *event_file, char *output_file, double interval_start, 
 			    double interval_end, double max_breakpoints, double IWLS_iterations, 
@@ -41,7 +41,7 @@ double** piecewise_estimate(char *event_file, char *output_file, double interval
 	return NULL;
     }
     
-    int i = 0;
+    int i = 1;
     double default_interval_length;
     if (max_breakpoints == 0) // if there are no breakpoints, we work on the whole interval
 	default_interval_length = interval_end - interval_start;
@@ -50,7 +50,7 @@ double** piecewise_estimate(char *event_file, char *output_file, double interval
 
     double start_time = interval_start, end_time = interval_start + default_interval_length; // start time and end time of the subinterval
     
-    double **interval_data = calloc(max_breakpoints, sizeof(double*)); // calloc so we don't get uninitialised value errors
+    double **interval_data = calloc(max_breakpoints + 1, sizeof(double*)); // calloc so we don't get uninitialised value errors
     double *interval_estimate;
         
     // We want to do this at least once, specifically if max_breakpoints is zero
@@ -85,8 +85,12 @@ double** piecewise_estimate(char *event_file, char *output_file, double interval
 	free(interval_estimate);
     } while(i < max_breakpoints && start_time != end_time);
 
-    output_estimates(output_file, interval_data, i);
-    
+    if (output_file != NULL)
+	output_estimates(output_file, interval_data, i);
+
+    interval_data[0] = malloc(sizeof(double));
+    *interval_data[0] = (double)i; // store the number of lines we have in the first array location
+        
     return interval_data;
 }
 
@@ -116,6 +120,9 @@ double extend_estimate(char *event_file, double *interval_estimate, double start
 	}
 
 	int event_num = events[0] - 1;
+
+	if (event_num == 0 || end_time - start_time < subinterval_time)
+	    break;
 		
 	int num_subintervals = (end_time - start_time)/subinterval_time;
 

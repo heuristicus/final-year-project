@@ -300,3 +300,59 @@ double poisson_PMF(double lambda, int k)
         
     return result;
 }
+
+/*
+ * Calculates the gradient of a line given two points on the line.
+ */
+double get_gradient(double a_x, double a_y, double b_x, double b_y)
+{
+    return (b_y-a_y)/(b_x-a_x);
+}
+
+/*
+ * Calculates the intercept of a line given a point on the line and the
+ * line's gradient
+ */
+double get_intercept(double x, double y, double gradient)
+{
+    return y - gradient * x;
+}
+
+/*
+ * Calculates the intercept and gradient of a line starting at point a and ending
+ * at point b.
+ */
+double* get_intercept_and_gradient(double a_x, double a_y, double b_x, double b_y)
+{
+    double *line = malloc(2 * sizeof(double));
+    
+    line[1] = get_gradient(a_x, a_y, b_x, b_y);
+    line[0] = get_intercept(a_x, a_y, line[1]);
+    
+    return line;
+}
+
+/*
+ * Finds the value of y in a linear function of the form y = a + bx.
+ */
+double evaluate_function(double a, double b, double x)
+{
+    return a + b * x;
+}
+
+/*
+ * Calculate the number halfway between two others.
+ */
+double get_midpoint(double a, double b)
+{
+
+    if (a == b)
+	return a;
+    
+    double diff = abs(a - b);
+    
+    if (a < b)
+	return a + diff/2;
+    else
+	return b + diff/2;
+}

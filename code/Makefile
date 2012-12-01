@@ -11,7 +11,7 @@ UTIL_OBJECTS=$(UTIL_SOURCES:.c=.o)
 GEN_OBJECTS=$(GEN_SOURCES:.c=.o)
 EST_OBJECTS=$(EST_SOURCES:.c=.o)
 
-all: generator estimator estimator_piecewise
+all: generator estimator estimator_piecewise estimator_baseline
 
 rungen: generator
 	LD_LIBRARY_PATH=. ./generator
@@ -38,6 +38,12 @@ estimator_piecewise: estimator_piecewise.o estimator_IWLS.o libs
 	$(CC) estimator_piecewise.o estimator_IWLS.o -L. $(CUST_LIBS) $(LIBS) -o $@
 
 estimator_piecewise.o: estimator_piecewise.c estimator.h
+	$(CC) -c $< -o $@
+
+estimator_baseline: estimator_baseline.o estimator_piecewise.o estimator_IWLS.o libs
+	$(CC) estimator_baseline.o estimator_piecewise.o estimator_IWLS.o -L. $(CUST_LIBS) $(LIBS) -o $@
+
+estimator_baseline.o: estimator_baseline.c estimator.h
 	$(CC) -c $< -o $@
 
 libs: libfile_util.so libparamlist.so libmath_util.so libgeneral_util.so
@@ -67,4 +73,4 @@ general_util.o: general_util.c general_util.h
 	$(CC) -c $< -o $@
 
 clean:
-	rm -f $(EST_OBJECTS) $(GEN_OBJECTS) $(UTIL_OBJECTS) *.so generator estimator estimator_piecewise
+	rm -f $(EST_OBJECTS) $(GEN_OBJECTS) $(UTIL_OBJECTS) *.so generator estimator estimator_piecewise estimator_baseline

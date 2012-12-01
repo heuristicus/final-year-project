@@ -24,4 +24,10 @@ double poisson_PMF(double lambda, int k);
 double sum_double_arr(double *arr, int len);
 int sum_int_arr(int *arr, int len);
 
+double evaluate_function(double a, double b, double x);
+double get_intercept(double x, double y, double gradient);
+double get_gradient(double a_x, double a_y, double b_x, double b_y);
+double get_midpoint(double a, double b);
+double* get_intercept_and_gradient(double a_x, double a_y, double b_x, double b_y);
+
 #endif
