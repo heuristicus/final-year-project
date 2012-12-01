@@ -7,6 +7,7 @@ double** baseline_estimate(char *event_file, char *output_file,
 double* get_breakpoint_vector(double **pieces, int max_breakpoints);
 double** recalculate_expressions(double* breakpoint_vector, double* function_values, int max_breakpoints);
 double* get_func_vals_at_breakpoints(double **pieces, int max_breakpoints);
+double* get_breakpoint_midpoints(double* breakpoint_vector, double* func_vals, int len);
 
 int main(int argc, char *argv[])
 {
@@ -27,17 +28,18 @@ double** baseline_estimate(char *event_file, char *output_file,
 
     int len = *pieces[0] - 1;
 
-    printf("there are %d lines in the estimate\n", len);
+    printf("there are %d lines in the estimate, so there are %d breakpoints\n", len, len - 1);
     
     pieces++;
 
-    int i, j;
-
+    int i;
+    
     double *breakpoint_vector = get_breakpoint_vector(pieces, len);
     double *func_eval = get_func_vals_at_breakpoints(pieces, len);
+    double *midpoints = get_breakpoint_midpoints(breakpoint_vector, func_eval, len);
     
     printf("breakpoint values\n");
-    for (i = 0; i < len; ++i) {
+    for (i = 0; i < len + 1; ++i) {
     	printf("%lf\n", breakpoint_vector[i]);
     }
 
@@ -45,16 +47,18 @@ double** baseline_estimate(char *event_file, char *output_file,
     for (i = 0; i < len * 2; ++i) {
     	printf("%lf\n", func_eval[i]);
     }
-    
-    printf("midpoints at breakpoint\n");
-    for (i = 0, j = 1; i < len + 1; ++i, j += 2) {
-	printf("breakpoint: %lf, y midpoint: %lf\n", breakpoint_vector[i], get_midpoint(func_eval[j], func_eval[j+1]));
+
+    printf("midpoint values\n");
+    for (i = 0; i < len + 1; ++i) {
+	printf("%lf\n", midpoints[i]);
     }
 
+    
     free_pointer_arr((void**)pieces, len);
     free(breakpoint_vector);
     free(func_eval);
-    
+    free(midpoints);
+        
     // for each piece
     // find the midpoint at each breakpoint
     // find the equation for line starting at middle of previous breakpoint and ending at the next breakpoint
@@ -104,6 +108,32 @@ double* get_func_vals_at_breakpoints(double **pieces, int num_breakpoints)
     }
 
     return func_eval;
+}
+
+/*
+ * Finds the midpoints of the function values for each estimate at the breakpoints. The function
+ * result at the end of the interval before the breakpoint and the function result at the
+ * start of the interval after the breakpoint are checked, and the point directly between them is found.
+ * The first and last breakpoints are the start and end of the interval, and as such do not have
+ * another point to compare against, and so are returned as is.
+ */
+double* get_breakpoint_midpoints(double* breakpoint_vector, double* func_vals, int len)
+{
+    double *midpoints = malloc((len + 1) * sizeof(double));
+
+    midpoints[0] = func_vals[0];
+    int i, j;
+    
+    for (i = 1, j = 1; i < len; i++, j += 2){
+	printf("i %d, j %d\n", i, j);
+	printf("breakpoint %lf\n", breakpoint_vector[i]);
+	printf("midpoint of [%lf, %lf] is midpoint: %lf\n", func_vals[j], func_vals[j+1], get_midpoint(func_vals[j], func_vals[j+1]));
+	midpoints[i] = get_midpoint(func_vals[j], func_vals[j+1]);
+    }
+
+    midpoints[i] = func_vals[j];
+
+    return midpoints;
 }
 
 /*
