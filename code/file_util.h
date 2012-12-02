@@ -18,6 +18,7 @@ void int_to_file(char *filename, char *mode, int *arr, int len);
 double* get_event_data_interval(double start_time, double end_time, char *filename);
 double* get_event_data_all(char *filename);
 void int_dbl_to_file(char* filename, char* mode, double* arr1, int* arr2, int len);
-
+void estimate_to_file(char *filename, double *estimate, char *mode);
+void output_estimates(char *filename, double **estimates, int len);
 
 #endif

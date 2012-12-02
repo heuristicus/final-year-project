@@ -9,8 +9,6 @@
 #define PMF_INSTANCE_THRESHOLD 0.02
 #define PMF_SUM_THRESHOLD 0.85
 
-void estimate_to_file(char *filename, double *estimate, char *mode);
-void output_estimates(char *filename, double **estimates, int len);
 double** piecewise_estimate(char *event_file, char *output_file, double interval_start, 
 			    double interval_end, double max_breakpoints, double IWLS_iterations, 
 			    double IWLS_subintervals, double max_extension);
@@ -83,10 +81,10 @@ double** piecewise_estimate(char *event_file, char *output_file, double interval
 	start_time = end_time; // The start of the next interval is the end of the current
 	end_time = start_time + default_interval_length > interval_end ? interval_end : start_time + default_interval_length;
 	free(interval_estimate);
-    } while(i < max_breakpoints && start_time != end_time);
+    } while(i <= max_breakpoints && start_time != end_time);
 
     if (output_file != NULL)
-	output_estimates(output_file, interval_data, i);
+	output_estimates(output_file, interval_data+1, i);
 
     interval_data[0] = malloc(sizeof(double));
     *interval_data[0] = (double)i; // store the number of lines we have in the first array location
@@ -278,77 +276,4 @@ double* interval_pmf(int *counts, double *midpoints, int len, double a, double b
     }
 
     return pmf;
-}
-
-/*
- * Outputs a series of estimates to separate files. The filename provided
- * will have the interval number appended to it - the first will be
- * "filename_0"
- */
-void output_estimates(char *filename, double **estimates, int len)
-{
-    int i;
-    //char *f;
-        
-    for (i = 0; i < len; ++i) {
-	//f = malloc(strlen(filename) + 4);
-	//sprintf(f, "%s_%d", filename, i);
-	//estimate_to_file(filename, estimates[i], "w");
-	
-	// There might be fewer lines than expected due to extension
-	if (estimates[i] == NULL){
-	    break;
-	}
-	// Write to file if it's the first run, otherwise append
-	estimate_to_file(filename, estimates[i], i > 0 ? "a" : "w");
-    }
-
-}
-
-/*
- * Prints a single set of estimates to an output file. This will calculate
- * the value of the function for each second within the interval.
- */
-void estimate_to_file(char *filename, double *estimate, char *mode)
-{
-
-    if (estimate == NULL)
-	return;
-        
-    double a = estimate[0];
-    double b = estimate[1];
-    double start = estimate[2];
-    double end = estimate[3];
-    
-    // We will subtract from this value to make sure we cover the whole
-    // length of the interval.
-    double counter = start;
-    
-    printf("int end %lf, int start %lf\n", end, start);
-    
-    FILE *fp = fopen(filename, mode);
-        
-    while(counter < end){
-	fprintf(fp, "%lf %lf\n", counter, a + counter * b);
-#ifdef DEBUG
-	printf("%lf + %lf * %lf = %lf\n", a, counter, b, a + counter * b);
-#endif
-	if (end - counter <= 1){
-	    counter += end - counter;
-#ifdef DEBUG
-	    printf("%lf + %lf * %lf = %lf\n", a, counter, b, a + counter * b);
-#endif
-	    fprintf(fp, "%lf %lf\n", counter, a + counter * b);
-	} else {
-	    counter += 1;
-	}
-#ifdef DEBUG
-	printf("counter: %lf, end %lf\n", counter, end);
-#endif
-    }
-
-    fprintf(fp, "\n\n");
-    
-    fclose(fp);
-    
 }
