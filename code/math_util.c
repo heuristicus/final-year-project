@@ -31,7 +31,9 @@ long double fact(int i)
 	return i * fact(i - 1);
 }
 
-/* calculates the probabilty of there being k events between time t_start and t_end. (for homogenous processes)*/
+/* calculates the probabilty of there being k events between time t_start and t_end. (for homogenous processes)
+ * Does not work if k > 12 or so
+ */
 double prob_num_events_in_time_span(double start_time, double end_time, double lambda, int k)
 {
     assert(start_time < end_time);
