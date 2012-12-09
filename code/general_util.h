@@ -7,5 +7,6 @@ void print_int_arr(int *arr, int len);
 void print_double_arr(double *arr, int len);
 int interval_check(double interval_start, double interval_end);
 double* get_event_subinterval(double *events, double interval_start, double interval_end);
+void print_estimates(est_arr *estimates);
 
 #endif

@@ -23,19 +23,15 @@ double** baseline_estimate(char *event_file, char *output_file,
     
     est_arr *pieces = piecewise_estimate(event_file, NULL, interval_start, interval_end, max_breakpoints, IWLS_iterations, IWLS_subintervals, max_extension);
 
-    int len = pieces->len;
-        
-    printf("there are %d lines in the estimate\n", len);
+    print_estimates(pieces);
     
-    pieces++;
-
-    int i, j;
+    int i, j, len = pieces->len;
 
     double *breakpoint_vector = get_breakpoint_vector(pieces->estimates, len);
     double *func_eval = get_func_vals_at_breakpoints(pieces->estimates, len);
     
     printf("breakpoint values\n");
-    for (i = 0; i < len; ++i) {
+    for (i = 0; i <= len; ++i) {
     	printf("%lf\n", breakpoint_vector[i]);
     }
 
@@ -45,7 +41,8 @@ double** baseline_estimate(char *event_file, char *output_file,
     }
     
     printf("midpoints at breakpoint\n");
-    for (i = 0, j = 1; i < len + 1; ++i, j += 2) {
+    for (i = 0, j = 1; i <= len; ++i, j += 2) {
+	printf("i is %d, j is %d\n", i, j);
 	printf("breakpoint: %lf, y midpoint: %lf\n", breakpoint_vector[i], get_midpoint(func_eval[j], func_eval[j+1]));
     }
 

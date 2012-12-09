@@ -14,9 +14,9 @@ typedef struct
 
 typedef struct
 {
-    est_data *estimates;
+    est_data **estimates;
     int len;
-} est_arr ;
+} est_arr;
 
 est_data* estimate_OLS(char *infile, char *outfile, double start_time, double interval_time, int num_subintervals);
 est_data* estimate_IWLS(char *infile, char *outfile, double start_time, double interval_time, int num_subintervals, int iterations);
