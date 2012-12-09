@@ -46,7 +46,7 @@ double** baseline_estimate(char *event_file, char *output_file,
 	printf("breakpoint: %lf, y midpoint: %lf\n", breakpoint_vector[i], get_midpoint(func_eval[j], func_eval[j+1]));
     }
 
-    free_pointer_arr((void**)pieces, len);
+    free_est_arr(pieces);
     free(breakpoint_vector);
     free(func_eval);
     
