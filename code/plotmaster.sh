@@ -27,7 +27,12 @@ texify (){
     evince $1.pdf&
 }
 
-while getopts "slLpPbe" opt; do
+if [ $# -eq 0 ]; then
+    usage
+    exit
+fi
+
+while getopts "slLpPbeh" opt; do
   case $opt in
     s)
       s=1
@@ -44,6 +49,9 @@ while getopts "slLpPbe" opt; do
     b)
       b=1
       ;;
+    h)
+      usage
+      ;;
     \?)
       usage
       ;;
@@ -51,8 +59,8 @@ while getopts "slLpPbe" opt; do
 done
 
 if [ $s ]; then
-    if [ $# < 4 ]; then
-	echo -e "Missing arguments when plotting two streams.\nusage: `basename $0` -s outfile stream_1_data stream_2_data"
+    if [ $# -ne 4 ]; then
+	echo -e "Missing or excess arguments when plotting two streams.\nusage: `basename $0` -s outfile stream_1_data stream_2_data"
 	exit
     fi
 gnuplot<<EOF
@@ -71,8 +79,8 @@ if [ $L ]; then
 fi
 
 if [ $e ]; then
-    if [ $# < 4 ]; then
-	echo -e "Missing arguments when plotting unspecified estimate.\nusage: `basename $0` -e outfile stream_data_all estimator_output"
+    if [ $# -ne 4 ]; then
+	echo -e "Missing or excess arguments when plotting unspecified estimate.\nusage: `basename $0` -e outfile stream_data_all estimator_output"
 	exit
     fi
 gnuplot <<EOF
@@ -82,8 +90,8 @@ texify $2
 fi
 
 if [ $b ]; then
-    if [ $# < 5 ]; then
-	echo -e "Missing arguments when plotting baseline estimates.\nusage: `basename $0` -b outfile stream_data_all IWLS_output baseline_output"
+    if [ $# -ne 4 ]; then
+	echo -e "Missing or excess arguments when plotting baseline estimates.\nusage: `basename $0` -b outfile stream_data_all IWLS_output baseline_output"
 	exit
     fi
 gnuplot << EOF
