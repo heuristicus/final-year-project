@@ -320,19 +320,43 @@ void double_to_file(char *filename, char *mode, double *arr, int len)
 /* } */
 
 /*
+ * Outputs a series of estimates to separate files. The filename provided
+ * will have the interval number appended to it - the first will be
+ * "filename_0"
+ */
+void output_estimates(char *filename, est_data **estimates, int len)
+{
+    int i;
+    //char *f;
+        
+    for (i = 0; i < len; ++i) {
+	//f = malloc(strlen(filename) + 4);
+	//sprintf(f, "%s_%d", filename, i);
+	//estimate_to_file(filename, estimates[i], "w");
+	
+	// There might be fewer lines than expected due to extension
+	if (estimates[i] == NULL){
+	    break;
+	}
+	// Write to file if it's the first run, otherwise append
+	estimate_to_file(filename, estimates[i], i > 0 ? "a" : "w");
+    }
+}
+
+/*
  * Prints a single set of estimates to an output file. This will calculate
  * the value of the function for each second within the interval.
  */
-void estimate_to_file(char *filename, double *estimate, char *mode)
+void estimate_to_file(char *filename, est_data *estimate, char *mode)
 {
 
     if (estimate == NULL)
 	return;
         
-    double a = estimate[0];
-    double b = estimate[1];
-    double start = estimate[2];
-    double end = estimate[3];
+    double a = estimate->est_a;
+    double b = estimate->est_b;
+    double start = estimate->start;
+    double end = estimate->end;
     
     // We will subtract from this value to make sure we cover the whole
     // length of the interval.
@@ -364,32 +388,5 @@ void estimate_to_file(char *filename, double *estimate, char *mode)
     fprintf(fp, "\n\n");
     
     fclose(fp);
-}
-
-/*
- * Outputs a series of estimates to separate files. The filename provided
- * will have the interval number appended to it - the first will be
- * "filename_0"
- */
-void output_estimates(char *filename, double **estimates, int len)
-{
-    int i;
-    //char *f;
-    printf("length is %d\n", len);
-        
-    for (i = 0; i < len + 1; ++i) {
-	//f = malloc(strlen(filename) + 4);
-	//sprintf(f, "%s_%d", filename, i);
-	//estimate_to_file(filename, estimates[i], "w");
-	printf("outputting to file %s\n", filename);
-	// There might be fewer lines than expected due to extension
-	if (estimates[i] == NULL){
-	    printf("i is %d\n", i);
-	    printf("breaking\n");
-	    break;
-	}
-	// Write to file if it's the first run, otherwise append
-	estimate_to_file(filename, estimates[i], i > 0 ? "a" : "w");
-    }
-
+    
 }

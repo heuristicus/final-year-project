@@ -33,7 +33,7 @@ static void weight_estimate(double *weights, double *lambda, int num_subinterval
  * is equivalent to a single iteration of the IWLS method. Returns a, b and the SSE calculated
  * for the estimate.
  */
-double* estimate_OLS(char *infile, char *outfile, double start_time, double end_time, int num_subintervals)
+est_data* estimate_OLS(char *infile, char *outfile, double start_time, double end_time, int num_subintervals)
 {
     return estimate_IWLS(infile, outfile, start_time, end_time, num_subintervals, 1);
 }
@@ -45,7 +45,7 @@ double* estimate_OLS(char *infile, char *outfile, double start_time, double end_
  *
  * **** THE START AND END TIMES MUST BE THE CORRECT START AND END TIMES FOR THE EVENT DATA THAT YOU HAVE. ****
  */
-double* estimate_IWLS(char *infile, char *outfile, double start_time, double end_time, int num_subintervals, int iterations)
+est_data* estimate_IWLS(char *infile, char *outfile, double start_time, double end_time, int num_subintervals, int iterations)
 {
     // Does it matter if the interval is longer than what we have data for? if lambda is really low then it
     // is entirely possible that there are no events for a significant period of time after the visible 
@@ -189,14 +189,14 @@ double* estimate_IWLS(char *infile, char *outfile, double start_time, double end
     free(lambda);
     free(weights);
     
-    double *retval = malloc(4 * sizeof(double));
+    est_data* result = malloc(4 * sizeof(double));
     
-    retval[0] = a;
-    retval[1] = b;
-    retval[2] = sse_a_b;
-    retval[3] = sse_alpha_beta;
+    result->est_a = a;
+    result->est_b = b;
+    result->start = start_time;
+    result->end = end_time;
             
-    return retval;
+    return result;
 }
 
 /*

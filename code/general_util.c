@@ -142,3 +142,35 @@ double* get_event_subinterval(double *events, double interval_start, double inte
 
     return pruned_events;
 }
+
+/*
+ * Prints the estimates contained within the given estimate array
+ */
+void print_estimates(est_arr *estimates)
+{
+    int len = estimates->len;
+    
+    int i;
+    
+    for (i = 0; i < len && estimates->estimates[i] != NULL; ++i) {
+	printf("Interval %d estimate is:\na: %lf\nb: %lf\nstart: %lf\nend: %lf\n\n", i, estimates->estimates[i]->est_a, estimates->estimates[i]->est_b, estimates->estimates[i]->start, estimates->estimates[i]->end);
+    }
+
+}
+
+/*
+ * Frees an est_arr struct and all the pointers that it contains.
+ */
+void free_est_arr(est_arr *estimates)
+{
+    int len = estimates->len;
+    
+    int i;
+    
+    for (i = 0; i <= len && estimates->estimates[i] != NULL; ++i) {
+	free(estimates->estimates[i]);
+    }
+    
+    free(estimates->estimates);
+    free(estimates);
+}
