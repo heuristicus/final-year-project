@@ -1,0 +1,9 @@
+bin_PROGRAMS = generator estimator estimator_piecewise estimator_baseline
+generator_SOURCES = generator.c start.c
+estimator_SOURCES = estimator_IWLS.c
+estimator_piecewise_SOURCES = estimator_IWLS.c estimator_piecewise.c
+estimator_baseline_SOURCES = estimator_IWLS.c estimator_piecewise.c estimator_baseline.c
+generator_LDADD = libfile_util.la libmath_util.la libgeneral_util.la libparamlist.la
+estimator_LDADD = libfile_util.la libmath_util.la libgeneral_util.la libparamlist.la
+estimator_piecewise_LDADD = libfile_util.la libmath_util.la libgeneral_util.la libparamlist.la
+estimator_baseline_SOURCES = libfile_util.la libmath_util.la libgeneral_util.la libparamlist.la
