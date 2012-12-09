@@ -58,7 +58,9 @@ double** baseline_estimate(char *event_file, char *output_file,
     /* } */
 
     free_est_arr(pieces);
+    free_est_arr(new_est);
     free(breakpoint_vector);
+    free(midpoints);
     free(func_eval);
     
     // for each piece

@@ -167,7 +167,7 @@ void free_est_arr(est_arr *estimates)
     
     int i;
     
-    for (i = 0; i <= len && estimates->estimates[i] != NULL; ++i) {
+    for (i = 0; i < len && estimates->estimates[i] != NULL; ++i) {
 	free(estimates->estimates[i]);
     }
     
