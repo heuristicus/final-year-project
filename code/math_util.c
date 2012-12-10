@@ -1,7 +1,9 @@
 #include "math_util.h"
+#include "general_util.h"
 #include <assert.h>
 
-//#define DEBUG
+#define DEBUG
+#define ZERO_EPSILON 0.000000000000000001
 
 int rand_initialised = 0;
 
@@ -27,16 +29,18 @@ long double fact(int i)
 {
     if (i == 0)
 	return 1;
+    else if (i < 0)
+	return 0;
     else
 	return i * fact(i - 1);
 }
 
 /* calculates the probabilty of there being k events between time t_start and t_end. (for homogenous processes)
- * Does not work if k > 12 or so
  */
 double prob_num_events_in_time_span(double start_time, double end_time, double lambda, int k)
 {
-    assert(start_time < end_time);
+    if (interval_check(start_time, end_time) != 1 || lambda <= 0 || k < 0)
+	return -1;
     double tau = end_time - start_time;
     return (pow(M_E, -lambda * tau) * pow(lambda * tau, k)) / fact(k);
 }
@@ -46,39 +50,37 @@ double prob_num_events_in_time_span(double start_time, double end_time, double l
  */
 int* sum_events_in_interval(double *event_times, int num_events, double start_time, double end_time, int num_subintervals)
 {
-    assert(start_time < end_time);
+    if (interval_check(start_time, end_time) != 1 || event_times == NULL || num_events <= 0 || num_subintervals <= 0)
+	return NULL;
+    
     int i = 0, current_interval = 0;
-    double event_time;
     double subinterval_time = (end_time - start_time) / num_subintervals;
 
     int *bins = calloc(num_subintervals, sizeof(int));
     
-    for (event_time = event_times[0]; i < num_events; ++i){
-	
-	for (; event_time < start_time; i++, event_time = event_times[i]); // get to the start of the interval that we are checking.
+    for (; i < num_events; ++i){
+	for (; event_times[i] < start_time; i++); // get to the start of the interval that we are checking.
 		
-	while (event_time > (start_time + (subinterval_time * (current_interval + 1)))) {
+	if (event_times[i] < 0.0 + ZERO_EPSILON){
+	    return bins;
+	}
+
+	while (event_times[i] > (start_time + (subinterval_time * (current_interval + 1)))) {
 #ifdef DEBUG
-	    printf("event time: %lf, end of interval: %lf\n", event_time, start_time + (subinterval_time * (current_interval + 1)));
-	    printf("%lf is greater than %lf, interval time: %lf, interval incremented to %d\n", event_time, start_time + (subinterval_time * (current_interval + 1)), subinterval_time, current_interval + 1);
+	    printf("event time: %lf, end of interval: %lf\n", event_times[i], start_time + (subinterval_time * (current_interval + 1)));
+	    printf("%lf is greater than %lf, interval time: %lf, interval incremented to %d\n", event_times[i], start_time + (subinterval_time * (current_interval + 1)), subinterval_time, current_interval + 1);
 #endif
 	    current_interval++;
-
 	}
 
 #ifdef DEBUG
-	printf("current time: %lf, interval end: %lf. Adding to loc %d\n", event_time, start_time + (subinterval_time * (current_interval + 1)), current_interval);
+	printf("current time: %lf, interval end: %lf. Adding to loc %d\n", event_times[i], start_time + (subinterval_time * (current_interval + 1)), current_interval);
 #endif
 
-	assert(current_interval <= num_subintervals);
 	bins[current_interval]++;
-	//assert(i < num_events);
-	
-	event_time = event_times[i];
     }
 
     return bins;
-    
 }
 
 void init_rand(double seed)
