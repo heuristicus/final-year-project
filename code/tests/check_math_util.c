@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <check.h>
+#include "tests.h"
 #include "../math_util.h"
 
 START_TEST (test_fact)
@@ -198,9 +199,9 @@ START_TEST (test_get_midpoint)
 }
 END_TEST
 
-Suite* math_suite(void)
+Suite* math_util_suite(void)
 {
-    Suite *s = suite_create("math");
+    Suite *s = suite_create("math_util");
     TCase *tc_core = tcase_create("Core");
     tcase_add_test(tc_core, test_fact);
     tcase_add_test(tc_core, test_prob_num_events_in_time_span);
@@ -218,17 +219,4 @@ Suite* math_suite(void)
     suite_add_tcase(s, tc_core);
 
     return s;
-}
-
-int main(int argc, char *argv[])
-{
-    int number_failed;
-    Suite *math = math_suite();
-    SRunner *sr = srunner_create(math);
-    srunner_run_all(sr, CK_VERBOSE);
-    number_failed = srunner_ntests_failed(sr);
-    srunner_free(sr);
-    return number_failed == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
-    
-    return 0;
 }

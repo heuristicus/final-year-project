@@ -45,8 +45,8 @@ char** string_split(char *string, char separator)
 		break;
 	    }
 	    string += len + 1; // move pointer of string over
-	    len = 1; // reset length
-	    dup += 2; // skip over the separator
+	    len = 0; // reset length
+	    dup += 1; // skip over the separator
 	} else {
 	    len++;
 	    dup++;
@@ -101,19 +101,23 @@ int interval_check(double interval_start, double interval_end)
  */
 double* get_event_subinterval(double *events, double interval_start, double interval_end)
 {
-    int count = 0;
+
+    if (interval_check(interval_start, interval_end) == 0 || events == NULL)
+	return NULL;
+    
+    int count = 1;
     double *start = NULL;
 //    double *end = NULL;
     
-    int arr_end = events[0] - 1;
-    
+    int arr_end = events[0];
+
     int i;
     double cur_time;
     
     //printf("interval start %lf, interval end %lf\n", interval_start, interval_end);
         
-    for (i = 1, cur_time = events[i]; i < arr_end || events[i] <= interval_end; ++i, cur_time = events[i]) {
-	//printf("cur_time %lf\n", cur_time);
+    for (i = 1, cur_time = events[i]; (i < arr_end) && (events[i] <= interval_end); ++i, cur_time = events[i]) {
+	//printf("cur_time %lf, i %d, i > arr_end %d, i < arr_end %d\n", cur_time, i, i > arr_end, i < arr_end);
 	if (cur_time >= interval_start && start == NULL){
 	    //printf("interval start detected at %lf\n", cur_time);
 	    start = (events + i); // start pointer moves to indicate the start of the interval
@@ -126,6 +130,10 @@ double* get_event_subinterval(double *events, double interval_start, double inte
 	    count++;
 	}
     }
+    
+    // If we didn't find any events within the specified interval
+    if (count == 1)
+	return NULL;
 
     double *pruned_events = malloc((count + 1) * sizeof(double));
     pruned_events[0] = count;
