@@ -320,9 +320,7 @@ void double_to_file(char *filename, char *mode, double *arr, int len)
 /* } */
 
 /*
- * Outputs a series of estimates to separate files. The filename provided
- * will have the interval number appended to it - the first will be
- * "filename_0"
+ * Outputs a series of estimates to separate files.
  */
 void output_estimates(char *filename, est_data **estimates, int len)
 {
