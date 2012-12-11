@@ -5,6 +5,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <muParserDLL.h>
+// #include "/usr/include/muParser/muParserDLL.h" // Dirty trick to fix the include
 
 #ifndef _GENERATOR_H
 #define _GENERATOR_H

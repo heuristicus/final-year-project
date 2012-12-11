@@ -5,6 +5,8 @@ libgeneral_util_la_SOURCES = general_util.c general_util.h
 libparamlist_la_SOURCES = paramlist.c paramlist.h
 
 bin_PROGRAMS = generator estimator estimator_piecewise estimator_baseline
+# DIRTY DIRTY HACK!
+generator_CFLAGS = -I/usr/include/muParser
 generator_SOURCES = generator.c start.c generator.h
 estimator_SOURCES = estimator_IWLS.c estimator.h
 estimator_piecewise_SOURCES = estimator_IWLS.c estimator_piecewise.c estimator.h

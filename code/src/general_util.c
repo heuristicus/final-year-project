@@ -1,5 +1,6 @@
-#include "generator.h"
 #include "estimator.h"
+#include <stdlib.h>
+#include <string.h>
 
 #define DEF_ARR_SIZE 5
 
