@@ -1,8 +1,7 @@
 #include "math_util.h"
 #include "general_util.h"
-#include <assert.h>
 
-#define DEBUG
+//#define DEBUG
 #define ZERO_EPSILON 0.000000000000000001
 
 int rand_initialised = 0;
@@ -50,7 +49,7 @@ double prob_num_events_in_time_span(double start_time, double end_time, double l
  */
 int* sum_events_in_interval(double *event_times, int num_events, double start_time, double end_time, int num_subintervals)
 {
-    if (interval_check(start_time, end_time) != 1 || event_times == NULL || num_events <= 0 || num_subintervals <= 0)
+    if (interval_check(start_time, end_time) != 1 || event_times == NULL || num_events < 1 || num_subintervals < 1)
 	return NULL;
     
     int i = 0, current_interval = 0;
@@ -61,7 +60,9 @@ int* sum_events_in_interval(double *event_times, int num_events, double start_ti
     for (; i < num_events; ++i){
 	for (; event_times[i] < start_time; i++); // get to the start of the interval that we are checking.
 		
+	// Just in case we go over the end of the array that we receive. This shouldn't really happen
 	if (event_times[i] < 0.0 + ZERO_EPSILON){
+	    printf("SOMETHING IS VERY ODD - WE WENT OVER THE END OF THE ARRAY RECEIVED BY SUM_EVENTS_IN_INTERVAL\n");
 	    return bins;
 	}
 
@@ -142,15 +143,23 @@ double get_poisson_noise(double mean)
     
 }
 
+/*
+ * Gets gaussian noise with the given mean and standard deviation
+ */
 double get_gaussian_noise(double mean, double std_dev)
 {
     return (rand_gauss() * std_dev) + mean;
     
 }
 
+/*
+ * Get midpoints for an interval with the given number of subintervals.
+ */
 double* get_interval_midpoints(double start_time, double end_time, int subintervals)
 {
-    assert(start_time < end_time);
+    if (interval_check(start_time, end_time) != 1 || subintervals < 1)
+	return NULL;
+    
     double *midpoints = malloc(subintervals * sizeof(double));
         
     int i;
@@ -165,12 +174,17 @@ double* get_interval_midpoints(double start_time, double end_time, int subinterv
 /*
  * Get the midpoint of a specified interval. (midpoint(xk)=(k-1/2)*T/N), 1 <= k <= N
  */
-double get_interval_midpoint(int interval_number, double start_time, double end_time, int subintervals)
+double get_interval_midpoint(int subinterval_number, double start_time, double end_time, int subintervals)
 {
-    assert(start_time < end_time);
-    return start_time + ((interval_number - 1.0/2.0) * ((end_time - start_time)/subintervals));
+    if (interval_check(start_time, end_time) != 1 || subintervals < 1 || subinterval_number < 1 || subinterval_number > subintervals)
+	return -1;
+    
+    return start_time + ((subinterval_number - 1.0/2.0) * ((end_time - start_time)/subintervals));
 }
 
+/*
+ * Simple average
+ */
 double avg(double *arr, int len)
 {
     int i;
@@ -331,6 +345,10 @@ double* get_intercept_and_gradient(double a_x, double a_y, double b_x, double b_
     double *line = malloc(2 * sizeof(double));
     
     line[1] = get_gradient(a_x, a_y, b_x, b_y);
+    if (isnan(line[1])){
+	free(line);
+	return NULL;
+    }
     line[0] = get_intercept(a_x, a_y, line[1]);
     
     return line;

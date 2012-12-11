@@ -83,7 +83,8 @@ void print_double_arr(double *arr, int len)
 }
 
 /*
- * Checks whether a given interval is valid and returns 1 if so.
+ * Checks whether a given interval is valid and returns 1 if so. The start of the interval
+ * must be before the end, and both start and end must be positive
  */
 int interval_check(double interval_start, double interval_end)
 {
