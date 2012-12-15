@@ -22,14 +22,16 @@ paramlist* add(paramlist *head, char *param, char *value)
     // Check if the same item is already present, and do not add it if so.
     // error if the same param is passed in with different values.
     paramlist* c = get_param(head, param);
-    if (c != NULL && strcmp(c->val, value) == 0 && strcmp(c->par, param) != 0){
-	printf("ERROR: There are two parameters with the same name but different values. Check your param file.\n");
-	exit(1);
-    }
-    if (c != NULL && strcmp(c->val, value) == 0){
+    if (c != NULL && strcmp(c->par, param) == 0 && strcmp(c->val, value) != 0){
+	printf("WARNING: There are two parameters with the same name but different values."\
+	       " The latter parameter has been ignored. Check your param file.\n");
 	return head;
     }
-        
+    if (c != NULL && strcmp(c->val, value) == 0){
+	printf("WARNING: Duplicate parameter detected.\n");
+	return head;
+    }
+
     paramlist *new = malloc(sizeof(paramlist));
     char *pname = malloc(strlen(param) + 1);
     char *pval = malloc(strlen(value) + 1);

@@ -1,6 +1,6 @@
 INCLUDE_DIR=/usr/include/muParser
 LIBDIR=libs/
-CFLAGS=-Wall -g -I$(INCLUDE_DIR)
+CFLAGS=-Wall -Werror -g -I$(INCLUDE_DIR)
 CC=gcc $(CFLAGS)
 GEN_SOURCES=generator.c start.c
 EST_SOURCES=estimator_IWLS.c estimator_piecewise.c

@@ -26,6 +26,10 @@ START_TEST (test_add)
     // Check that adding the previously given variable does not modify the list
     fail_unless(b == add(b, "node2", "again"), NULL);
     fail_unless(length(b) == 2, NULL);
+
+    paramlist* c = init_list("node1", "1");
+    fail_unless(add(c, "node1", "2") == c, NULL);
+    fail_unless(length(c) == 1, NULL);
 }
 END_TEST
 
@@ -44,10 +48,32 @@ START_TEST (test_get_param_val)
 }
 END_TEST
 
-START_TEST (test_get_param_val_exit)
+START_TEST (test_get_param)
 {
     paramlist* a = init_list("node1", "1");
-    add(a, "node1", "2");
+    paramlist* b = add(a, "node2", "2");
+    paramlist* c = add(b, "node3", "3");
+    paramlist* d = add(c, "node4", "4");
+    fail_unless(get_param(d, "node1") == a, NULL);
+    fail_unless(get_param(d, "node2") == b, NULL);
+    fail_unless(get_param(d, "node3") == c, NULL);
+    fail_unless(get_param(d, "node4") == d, NULL);
+    
+}
+END_TEST
+
+START_TEST (test_len)
+{
+    paramlist* a = NULL;
+    fail_unless(length(a) == 0, NULL);
+    a = init_list("node1", "1");
+    fail_unless(length(a) == 1, NULL);
+    a = add(a, "node2", "2");
+    fail_unless(length(a) == 2, NULL);
+    a = add(a, "node3", "3");
+    fail_unless(length(a) == 3, NULL);
+    a = add(a, "node4", "4");
+    fail_unless(length(a) == 4, NULL);
 }
 END_TEST
 
@@ -58,7 +84,8 @@ Suite* paramlist_suite(void)
     tcase_add_test(tc_core, test_init_list);
     tcase_add_test(tc_core, test_add);
     tcase_add_test(tc_core, test_get_param_val);
-    tcase_add_exit_test(tc_core, test_get_param_val_exit, 1);
+    tcase_add_test(tc_core, test_len);
+    tcase_add_test(tc_core, test_get_param);
     
     suite_add_tcase(s, tc_core);
     return s;

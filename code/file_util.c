@@ -1,8 +1,10 @@
 #include "file_util.h"
+#include "general_util.h"
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #define MAX_DATE_LENGTH 32
 #define MAX_PARAM_STRING_LENGTH 500
@@ -81,7 +83,7 @@ paramlist* get_parameters(char* filename)
 
     while ((line = fgets(line, MAX_PARAM_STRING_LENGTH, fp)) != NULL){
 	// WARNING: Do not use strtok on literals!
-	if (*line == '#' || *line == '\n') // ignore comments and newlines
+	if (*line == '#' || *line == '\n' || isspace(*line)) // ignore comments and newlines, and blank lines
 	    continue;
 	if (!valid_param(line)){
 	    printf("Invalid parameter: %s\n", line);
@@ -110,6 +112,7 @@ paramlist* get_parameters(char* filename)
  * data on event times. The size of the array will be stored in the zeroth index - this
  * does not include that value itself. For example, if there are 10 events, the actual
  * length will be 11, because of the length in index 0, but the value of the length will be 10.
+ * passing duplicate values into start_time and end_time will return all values.
  */
 double* get_event_data_interval(double start_time, double end_time, char *filename)
 {
@@ -129,6 +132,11 @@ double* get_event_data_interval(double start_time, double end_time, char *filena
     char *line = malloc(MAX_LINE_LENGTH);
     double *event_times = malloc(DEFAULT_ARR_SIZE * sizeof(double));
     int all = start_time == end_time; // Whether we want to get all data or not.
+
+    if (!all && !interval_check(start_time, end_time)){
+	printf("ERROR: Interval passed to get_event_data_interval is invalid: start %lf, end %lf\n", start_time, end_time);
+	return NULL;
+    }
     
     int i = 1, max_size = DEFAULT_ARR_SIZE;
     while ((line = fgets(line, MAX_LINE_LENGTH, fp)) != NULL){
@@ -160,18 +168,13 @@ double* get_event_data_interval(double start_time, double end_time, char *filena
     return event_times;
 }
 
+/*
+ * Gets all event data from the specified file.
+ */
 double* get_event_data_all(char *filename)
 {
     return get_event_data_interval(0.0, 0.0, filename);
 }
-
-/* /\* */
-/*  * Gets all midpoint, event and bin data out of the specified file */
-/*  *\/ */
-/* double** get_mid_ev_bin_all(char *filename, int subintervals) */
-/* { */
-/*     double **data = malloc(3 * sizeof(double)) */
-/* } */
 
 
 /*
