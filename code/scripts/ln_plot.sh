@@ -8,7 +8,7 @@ fi
 
 gnuplot << EOF
 # $1 is the file to output to, $2 is all data from the generator, $3 is the data produced by the estimator
-call "lnplot.plt" "$1" "$2" "$3"
+call "../plots/lnplot.plt" "$1" "$2" "$3"
 
 EOF
 
