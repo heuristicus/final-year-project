@@ -64,7 +64,7 @@ if [ $s ]; then
 	exit
     fi
 gnuplot<<EOF
-call "twostreams.plt" "$2" "$3" "$4"
+call "../plots/twostreams.plt" "$2" "$3" "$4"
 EOF
 texify $2
     exit
@@ -84,7 +84,7 @@ if [ $e ]; then
 	exit
     fi
 gnuplot <<EOF
-call "undef.plt" "$2" "$3" "$4"
+call "../plots/undef.plt" "$2" "$3" "$4"
 EOF
 texify $2
 fi
@@ -96,7 +96,7 @@ if [ $b ]; then
     fi
 gnuplot << EOF
 # $1 is the switch, so skip it $2 is the file to output to, $3 is all data from the generator, $4 is the data produced by the IWLS, $5 is the output from the baseline estimate
-call "blplot.plt" "$2" "$3" "$4" "$5"
+call "../plots/blplot.plt" "$2" "$3" "$4" "$5"
 
 EOF
 texify $2

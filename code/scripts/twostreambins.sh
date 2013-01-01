@@ -8,7 +8,7 @@ fi
 
 gnuplot<<EOF
 
-call "twostreambins.plt" "$1" "$2" "$3"
+call "../plots/twostreambins.plt" "$1" "$2" "$3"
 
 EOF
 
