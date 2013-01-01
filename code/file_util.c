@@ -104,7 +104,6 @@ paramlist* get_parameters(char* filename)
     fclose(fp);
 
     return plist;
-                
 }
 
 /*

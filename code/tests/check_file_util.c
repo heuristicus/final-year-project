@@ -71,6 +71,21 @@ START_TEST (test_get_event_data_interval)
 }
 END_TEST
 
+START_TEST (test_valid_param)
+{
+    fail_unless(valid_param("   ") == 0, NULL);
+    fail_unless(valid_param(" __test1 test") == 0, NULL);
+    fail_unless(valid_param("testing  twospace") == 0, NULL);
+    fail_unless(valid_param("testingtab\ttab") == 0, NULL);
+        
+    fail_unless(valid_param("!\"£$%^&*() chars") == 1, NULL);
+    fail_unless(valid_param("test one") == 1, NULL);
+    fail_unless(valid_param("test_two two") == 1, NULL);
+    fail_unless(valid_param("test3 53,22") == 1, NULL);
+
+}
+END_TEST
+
 Suite* file_util_suite(void)
 {
     Suite* s = suite_create("file_util");
@@ -78,6 +93,8 @@ Suite* file_util_suite(void)
     tcase_add_test(tc_core, test_get_parameters);
     tcase_add_test(tc_core, test_get_event_data_all);
     tcase_add_test(tc_core, test_get_event_data_interval);
+    tcase_add_test(tc_core, test_valid_param);
+    
     
     suite_add_tcase(s, tc_core);
 
