@@ -6,19 +6,19 @@
 
 int rand_initialised = 0;
 
-int main(int argc, char *argv[])
-{
+/* int main(int argc, char *argv[]) */
+/* { */
 
-    double lambda = atof(argv[1]);
-    int i;
+/*     double lambda = atof(argv[1]); */
+/*     int i; */
     
-    for (i = 1; i < 100; ++i) {
-	printf("probability of %d events given lambda %lf: %.15lf\n", i, lambda, poisson_PMF(lambda, i));
-    }
+/*     for (i = 1; i < 100; ++i) { */
+/* 	printf("probability of %d events given lambda %lf: %.15lf\n", i, lambda, poisson_PMF(lambda, i)); */
+/*     } */
     
-    return 0;
+/*     return 0; */
     
-}
+/* } */
 
 
 /*

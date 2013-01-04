@@ -23,11 +23,9 @@ void view_expr(muParserHandle_t hparser);
  * and those that are contained in the parameter file, if there is one (there should be).
  * The order in which the arguments are is defined inside start.c
  */
-void generate(char **args)
+void generate(char *paramfile, char *outfile, int nruns)
 {
     int i;
-    char *outfile = NULL;
-    char *paramfile = NULL;
     paramlist *params = NULL;
     char *tmp;
 
@@ -36,23 +34,13 @@ void generate(char **args)
     double *time_delta;
     int tdlen;
     int outswitch = 3;
-    int nruns = 1;
     char *expr;
 
-    for (i = 0; i <= sizeof(args)/sizeof(char*); ++i){
-	if (args[i] == NULL)
-	    continue;
-	
-	if (i == 0)
-	    outfile = args[i];
-	if (i == 1)
-	    paramfile = args[i];
-	if (i == 2)
-	    nruns = atoi(args[i]);
-    }
-    
     if (paramfile != NULL){
 	params = get_parameters(paramfile);
+    } else {
+	printf("You have not specified a parameter file. Please specify one in the command line call.\n");
+	exit(1);
     }
 
     if ((outfile = select_output_file(outfile, get_param_val(params, "outfile"))) == NULL){
@@ -124,7 +112,6 @@ void generate(char **args)
 	    free(outfile);
 
 	free_list(params);
-	free(args); // free args because we don't go back to the top
 	free(time_delta);
 	exit(1);
     }
@@ -286,7 +273,7 @@ char* select_output_file(char* cur_out, char* param_out)
 	int u = -1;
 	while (u < 0 || u > 1){
 	    printf("To use the file %s, enter 1. To use the file %s, enter 0.\n", param_out, cur_out);
-	    scanf("%d", &u);
+	    int res = scanf("%d", &u);
 	}
 
 	if (u == 1){
