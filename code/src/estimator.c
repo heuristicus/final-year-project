@@ -9,6 +9,7 @@ void run_ols(paramlist* params, char* infile, char* outfile);
 void run_iwls(paramlist* params, char* infile, char* outfile);
 void run_pc(paramlist* params, char* infile, char* outfile);
 void run_base(paramlist* params, char* infile, char* outfile);
+void check_in_out_files(paramlist* params, char* infile, char* outfile);
 
 static char *ols_params[] = {"start_time", "interval_time", "ols_subintervals"};
 static char *iwls_params[] = {"iwls_iterations", "start_time", 
@@ -47,9 +48,9 @@ void estimate(char* paramfile, char* infile, char* outfile, char* estimator_type
 void run_ols(paramlist* params, char* infile, char* outfile)
 {
     if (has_required_params(params, ols_params, sizeof(ols_params)/sizeof(char*))){
-	int subint = atoi(get_param_val(params, "ols_subintervals"));
-	double start = atof(get_param_val(params, "start_time"));
-	double end = atof(get_param_val(params, "interval_time")) + start;
+	int subint = get_int_param(params, "ols_subintervals");
+	double start = get_int_param(params, "start_time");
+	double end = get_int_param(params, "interval_time") + start;
 	
 	estimate_OLS(infile, outfile, start, end, subint);
     } else {
@@ -66,10 +67,10 @@ void run_ols(paramlist* params, char* infile, char* outfile)
 void run_iwls(paramlist* params, char* infile, char* outfile)
 {
     if (has_required_params(params, iwls_params, sizeof(iwls_params)/sizeof(char*))){
-	int subint = atoi(get_param_val(params, "iwls_subintervals"));
-	int iterations = atoi(get_param_val(params, "iwls_iterations"));
-	double start = atof(get_param_val(params, "start_time"));
-	double end = atof(get_param_val(params, "interval_time")) + start;
+	int subint = get_int_param(params, "iwls_subintervals");
+	int iterations = get_int_param(params, "iwls_iterations");
+	double start = get_double_param(params, "start_time");
+	double end = get_double_param(params, "interval_time") + start;
 
 	estimate_IWLS(infile, outfile, start, end, subint, iterations);
     } else {
@@ -87,7 +88,14 @@ void run_iwls(paramlist* params, char* infile, char* outfile)
 void run_pc(paramlist* params, char* infile, char* outfile)
 {
 	if (has_required_params(params, pc_params, sizeof(pc_params)/sizeof(char*))){
-	    printf("pc params ok\n");
+	    int subint = get_int_param(params, "pc_iwls_subintervals");
+	    int iterations = get_int_param(params, "pc_iwls_iterations");
+	    int breakpoints = get_int_param(params, "pc_max_breakpoints");
+	    double max_extension = get_double_param(params, "pc_max_extension");
+	    double start = get_double_param(params, "start_time");
+	    double end = get_double_param(params, "interval_time") + start;
+
+	    estimate_piecewise(infile, outfile, start, end, iterations, subint, breakpoints, max_extension);
 	} else {
 	    print_string_array("Some parameters required for piecewise estimates are missing. "\
 			       "Ensure that your parameter file contains the following entries and try again.",
@@ -102,7 +110,14 @@ void run_pc(paramlist* params, char* infile, char* outfile)
 void run_base(paramlist* params, char* infile, char* outfile)
 {
     if (has_required_params(params, base_params, sizeof(base_params)/sizeof(char*))){
-	printf("base params ok\n");
+	int subint = get_int_param(params, "base_iwls_subintervals");
+	int iterations = get_int_param(params, "base_iwls_iterations");
+	int breakpoints = get_int_param(params, "base_max_breakpoints");
+	double max_extension = get_double_param(params, "base_max_extension");
+	double start = get_double_param(params, "start_time");
+	double end = get_double_param(params, "interval_time") + start;
+
+	estimate_baseline(infile, outfile, start, end, iterations, subint, breakpoints, max_extension);
     } else {
 	print_string_array("Some parameters required for baseline estimates are missing. "\
 			   "Ensure that your parameter file contains the following entries and try again.", 
@@ -137,10 +152,10 @@ int has_required_params(paramlist* params, char** required_params, int len)
 void check_in_out_files(paramlist* params, char* infile, char* outfile)
 {
     if (infile == NULL){
-	infile = get_param_val(params, "infile");
+	infile = get_string_param(params, "infile");
     }
     if (outfile == NULL){
-	outfile = get_param_val(params, "est_outfile");
+	outfile = get_string_param(params, "est_outfile");
     }
 
     if (infile == NULL || outfile == NULL){

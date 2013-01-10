@@ -6,11 +6,11 @@
 START_TEST (test_get_parameters)
 {
     paramlist* a = get_parameters("./files/testparam.txt");
-    fail_unless(strcmp(get_param_val(a, "test"), "1") == 0, NULL);
-    fail_unless(strcmp(get_param_val(a, "anothertest"), "2") == 0, NULL);
-    fail_unless(strcmp(get_param_val(a, "multi"), "1,2,3") == 0, NULL);
-    fail_unless(get_param_val(a, " ") == NULL, NULL);
-    fail_unless(get_param_val(a, "\t") == NULL, NULL);
+    fail_unless(strcmp(get_string_param(a, "test"), "1") == 0, NULL);
+    fail_unless(strcmp(get_string_param(a, "anothertest"), "2") == 0, NULL);
+    fail_unless(strcmp(get_string_param(a, "multi"), "1,2,3") == 0, NULL);
+    fail_unless(get_string_param(a, " ") == NULL, NULL);
+    fail_unless(get_string_param(a, "\t") == NULL, NULL);
 }
 END_TEST
 

@@ -57,7 +57,39 @@ void print_list(paramlist *head)
     }
 }
 
-char* get_param_val(paramlist *head, char *param_name)
+/*
+ * Return the value of the specified parameter as an integer.
+ * Returns 0 if the value of the parameter is not an integer, or -1 if the parameter does not exist.
+ */
+int get_int_param(paramlist* head, char* param_name)
+{
+    paramlist* ret;
+    
+    if ((ret = get_param(head, param_name)) == NULL)
+	return -1;
+    else
+	return atoi(get_param(head, param_name)->val);
+}
+
+/*
+ * Return the value of the specified parameter as a double.
+ * Returns 0.0 if the value of the parameter is not an integer, or -1 if the parameter does not exist.
+ */
+double get_double_param(paramlist* head, char* param_name)
+{
+    paramlist* ret;
+    
+    if ((ret = get_param(head, param_name)) == NULL)
+	return -1;
+    else
+	return atof(get_param(head, param_name)->val);
+}
+
+/*
+ * Return the value of the specified parameter as a string.
+ * Returns a null pointer if the parameter does not exist.
+ */
+char* get_string_param(paramlist* head, char* param_name)
 {
     paramlist *ret;
     

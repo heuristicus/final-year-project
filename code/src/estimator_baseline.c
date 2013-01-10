@@ -3,9 +3,6 @@
 #include "math_util.h"
 #include "file_util.h"
 
-est_arr** baseline_estimate(char *event_file, char *output_file, double interval_start, 
-			   double interval_end, int IWLS_iterations, int IWLS_subintervals,
-			   int max_breakpoints, double max_extension);
 double* get_breakpoint_midpoints(double* breakpoint_vector, double* func_vals, int len);
 double* get_breakpoint_vector(est_data **pieces, int max_breakpoints);
 double** recalculate_expressions(double* breakpoint_vector, double* function_values, int max_breakpoints);
@@ -19,11 +16,11 @@ est_arr* recalculate_estimates(double* breakpoint_vector, double* function_value
 /*     return 0; */
 /* } */
 
-est_arr** baseline_estimate(char *event_file, char *output_file, double interval_start, 
-			   double interval_end,int IWLS_iterations, int IWLS_subintervals,
+est_arr* estimate_baseline(char *event_file, char *output_file, double interval_start, 
+			   double interval_end, int IWLS_iterations, int IWLS_subintervals,
 			   int max_breakpoints, double max_extension)
 {
-    est_arr *pieces = piecewise_estimate(event_file, NULL, interval_start, interval_end,
+    est_arr *pieces = estimate_piecewise(event_file, NULL, interval_start, interval_end,
 					 IWLS_iterations,IWLS_subintervals, max_breakpoints,
 					 max_extension);
 
