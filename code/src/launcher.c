@@ -4,11 +4,11 @@
 #define PROG_DESC "This program simulates photon arrival times using a poisson process."
 #define OPT_INFO "OPTIONS\n"						\
     "\t -e or --estimate\n"						\
-    "\t\t Estimate the underlying function from a given set of photon stream data.\n\n"	\
+    "\t\t Estimate the underlying function from a given set of photon stream data. Requires parameter file.\n\n"	\
     "\t -a or --estimator\n"						\
     "\t\t The estimation algorithm to use. Options are IWLS (iwls), OLS (ols), Piecewise (pc), Baseline (base)\n\n"	\
     "\t -g or --generate\n"						\
-    "\t\t Generate a photon stream.\n\n"				\
+    "\t\t Generate a photon stream. Requires parameter file.\n\n"				\
     "\t -h or --help\n"							\
     "\t\t Display this meessage.\n\n"					\
     "\t -i or --infile\n"						\
@@ -20,7 +20,7 @@
     "\t -p or --paramfile\n"						\
     "\t\t The file containing parameters to use. This can be used to specify a large number of options.\n\n" \
     "\t -x or --experiment\n"						\
-    "\t\t Run an experiment.\n\n"					\
+    "\t\t Run an experiment. Requires parameter file.\n\n"					\
 
 void run_requested_operations(int generator, int estimator, int experiment, char* paramfile, char* infile, char* outfile, int nruns, char* estimator_type);
 int estimator_valid(char* name);
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
     		exit(1);
     	    }
 	    printf("%s\n", optarg);
-    	    paramfile = optarg;
+    	    paramfile = strdup(optarg);
     	    break;
 	case 'a':
 	    if (!estimator_valid(optarg)){
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	    } else {
 		printf("Estimation will be performed using estimator %s\n", optarg);
-		estimator_type = optarg;
+		estimator_type = strdup(optarg);
 	    }
 	    break;
     	case 'g':
@@ -89,22 +89,22 @@ int main(int argc, char *argv[])
     		       " but not more than one at once.\n");
     		exit(1);
     	    }
-    	    paramfile = optarg;
+    	    paramfile = strdup(optarg);
     	    break;
     	case 'h':
     	    printf("%s\n\nusage: %s options\n\n%s\n", PROG_DESC, argv[0], OPT_INFO);
     	    exit(1);
     	case 'i':
-    	    infile = optarg;
+    	    infile = strdup(optarg);
     	    break;
     	case 'n':
     	    nruns = atoi(optarg);
     	    break;
     	case 'o':
-    	    outfile = optarg;
+    	    outfile = strdup(optarg);
     	    break;
     	case 'p':
-    	    paramfile = optarg;
+    	    paramfile = strdup(optarg);
     	    break;
     	case 'x':
     	    exp = 1;
@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
     		       "but not more than one at once.\n");
     		exit(1);
     	    }
-    	    paramfile = optarg;
+    	    paramfile = strdup(optarg);
     	    break;
     	default:
     	    printf("%s\n\nusage: %s options\n\n%s\n", PROG_DESC, argv[0], OPT_INFO);

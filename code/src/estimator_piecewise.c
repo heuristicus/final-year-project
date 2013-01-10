@@ -9,7 +9,6 @@
 #define PMF_INSTANCE_THRESHOLD 0.02
 #define PMF_SUM_THRESHOLD 0.85
 
-
 double extend_estimate(char *event_file, est_data *interval_estimate, double start_time,
 		       double max_extension, double subinterval_time);
 double* interval_pmf(int *bin_counts, double *midpoints, int len, double a, double b);

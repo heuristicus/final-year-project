@@ -9,7 +9,6 @@ void run_ols(paramlist* params, char* infile, char* outfile);
 void run_iwls(paramlist* params, char* infile, char* outfile);
 void run_pc(paramlist* params, char* infile, char* outfile);
 void run_base(paramlist* params, char* infile, char* outfile);
-void check_in_out_files(paramlist* params, char* infile, char* outfile);
 
 static char *ols_params[] = {"start_time", "interval_time", "ols_subintervals"};
 static char *iwls_params[] = {"iwls_iterations", "start_time", 
@@ -26,7 +25,19 @@ static char *base_params[] = {"start_time", "interval_time", "base_iwls_iteratio
 void estimate(char* paramfile, char* infile, char* outfile, char* estimator_type)
 {
     paramlist* params = get_parameters(paramfile);
-    check_in_out_files(params, infile, outfile);    
+
+    if (infile == NULL){
+	infile = get_string_param(params, "infile");
+    }
+    if (outfile == NULL){
+	outfile = get_string_param(params, "est_outfile");
+    }
+
+    if (infile == NULL || outfile == NULL){
+	printf("You must specify input and output files to use. Add \"infile\" and "\
+	       "\"est_outfile\" to your parameter file.\n");
+	exit(1);
+    }
     
     if (strcmp("ols", estimator_type) == 0){
 	run_ols(params, infile, outfile);
@@ -143,24 +154,4 @@ int has_required_params(paramlist* params, char** required_params, int len)
     }
 
     return ok;
-}
-
-/*
- * Checks that input and output files are specified either in the provided parameters
- * or in the parameter list. Exits if unspecified.
- */
-void check_in_out_files(paramlist* params, char* infile, char* outfile)
-{
-    if (infile == NULL){
-	infile = get_string_param(params, "infile");
-    }
-    if (outfile == NULL){
-	outfile = get_string_param(params, "est_outfile");
-    }
-
-    if (infile == NULL || outfile == NULL){
-	printf("You must specify input and output files to use. Add \"infile\" and "\
-	       "\"est_outfile\" to your parameter file.\n");
-	exit(1);
-    }
 }

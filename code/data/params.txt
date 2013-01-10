@@ -44,7 +44,7 @@ est_type baseline
 
 
 # ols parameters
-
+ols_subintervals 5
 
 # iwls parameters
 iwls_iterations 3
@@ -55,9 +55,13 @@ iwls_subintervals 5
 
 
 # piecewise parameters
-
-# specifies the number of sub-intervals on which to operate
-pc_subintervals 5
-
+pc_iwls_iterations 3
+pc_iwls_subintervals 5
+pc_max_extension 15
+pc_max_breakpoints 5
 
 # baseline parameters
+base_iwls_iterations 3
+base_iwls_subintervals 5
+base_max_extension 15
+base_max_breakpoints 5
