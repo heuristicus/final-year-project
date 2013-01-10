@@ -29,10 +29,10 @@ int pmf_consecutive_check(double *pmfs, int len, int limit);
 /* } */
 
 est_arr* piecewise_estimate(char *event_file, char *output_file, double interval_start, 
-			    double interval_end, double max_breakpoints, double IWLS_iterations, 
-			    double IWLS_subintervals, double max_extension)
+			    double interval_end, double IWLS_iterations, double IWLS_subintervals, 
+			    double max_breakpoints, double max_extension)
 {
-    if (!interval_check(interval_start, interval_end)){
+    if (!interval_valid(interval_start, interval_end)){
 	printf("Interval [%lf, %lf] is invalid.\n", interval_start, interval_end);
 	return NULL;
     }

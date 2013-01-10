@@ -3,8 +3,9 @@
 #include "math_util.h"
 #include "file_util.h"
 
-double** baseline_estimate(char *event_file, char *output_file, 
-			   double interval_start, double interval_end);
+est_arr** baseline_estimate(char *event_file, char *output_file, double interval_start, 
+			   double interval_end, int IWLS_iterations, int IWLS_subintervals,
+			   int max_breakpoints, double max_extension);
 double* get_breakpoint_midpoints(double* breakpoint_vector, double* func_vals, int len);
 double* get_breakpoint_vector(est_data **pieces, int max_breakpoints);
 double** recalculate_expressions(double* breakpoint_vector, double* function_values, int max_breakpoints);
@@ -18,13 +19,13 @@ est_arr* recalculate_estimates(double* breakpoint_vector, double* function_value
 /*     return 0; */
 /* } */
 
-double** baseline_estimate(char *event_file, char *output_file, 
-			   double interval_start, double interval_end)
+est_arr** baseline_estimate(char *event_file, char *output_file, double interval_start, 
+			   double interval_end,int IWLS_iterations, int IWLS_subintervals,
+			   int max_breakpoints, double max_extension)
 {
-    double max_breakpoints = 5, IWLS_iterations = 3, 
-	IWLS_subintervals = 10, max_extension = 15;
-    
-    est_arr *pieces = piecewise_estimate(event_file, NULL, interval_start, interval_end, max_breakpoints, IWLS_iterations, IWLS_subintervals, max_extension);
+    est_arr *pieces = piecewise_estimate(event_file, NULL, interval_start, interval_end,
+					 IWLS_iterations,IWLS_subintervals, max_breakpoints,
+					 max_extension);
 
     print_estimates(pieces);
     
@@ -58,7 +59,6 @@ double** baseline_estimate(char *event_file, char *output_file,
     /* } */
 
     free_est_arr(pieces);
-    free_est_arr(new_est);
     free(breakpoint_vector);
     free(midpoints);
     free(func_eval);
@@ -68,7 +68,7 @@ double** baseline_estimate(char *event_file, char *output_file,
     // find the equation for line starting at middle of previous breakpoint and ending at the next breakpoint
     // output the data to file
 
-    return NULL;
+    return new_est;
 }
 
 /*

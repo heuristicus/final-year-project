@@ -19,7 +19,7 @@ verbosity 3
 
 # data input
 # Input file used for estimation
-#infile output.txt_stream_0_ev
+infile output.txt_stream_0_ev
 
 # generation parameters
 start_time 0

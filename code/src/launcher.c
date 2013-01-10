@@ -22,22 +22,25 @@
     "\t -x or --experiment\n"						\
     "\t\t Run an experiment.\n\n"					\
 
+void run_requested_operations(int generator, int estimator, int experiment, char* paramfile, char* infile, char* outfile, int nruns, char* estimator_type);
+int estimator_valid(char* name);
+ 
 static char *estimators[] = {"iwls", "ols", "pc", "base"};
+static struct option opts[] =
+    {
+	{"experiment", required_argument, 0, 'x'},
+	{"generate", required_argument, 0, 'g'},
+	{"estimate", required_argument, 0, 'e'},
+	{"estimator", required_argument, 0, 'a'},
+	{"paramfile",  required_argument, 0, 'p'},
+	{"outfile",  required_argument, 0, 'o'},
+	{"numruns",    required_argument, 0, 'n'},
+	{"help", no_argument, 0, 'h'},
+	{0, 0, 0, 0}
+    };
 
 int main(int argc, char *argv[])
 {
-    struct option opts[] =
-	{
-	    {"experiment", required_argument, 0, 'x'},
-	    {"generate", required_argument, 0, 'g'},
-	    {"estimate", required_argument, 0, 'e'},
-	    {"estimator", required_argument, 0, 'a'},
-	    {"paramfile",  required_argument, 0, 'p'},
-	    {"outfile",  required_argument, 0, 'o'},
-	    {"numruns",    required_argument, 0, 'n'},
-	    {"help", no_argument, 0, 'h'},
-	    {0, 0, 0, 0}
-	};
 
     int c;
     int opt_ind;
@@ -49,6 +52,8 @@ int main(int argc, char *argv[])
     char* paramfile = NULL;
     char* outfile = NULL;
     char* infile = NULL;
+    char* estimator_type = NULL;
+    
 
     if (argc == 1){
 	printf("%s\n\nusage: %s options\n\n%s\n", PROG_DESC, argv[0], OPT_INFO);
@@ -70,9 +75,11 @@ int main(int argc, char *argv[])
     	    break;
 	case 'a':
 	    if (!estimator_valid(optarg)){
-		printf("%s is not a known estimator. Options are iwls, ols, pc, base.\n", optarg);
+		printf(EST_TYPE_ERROR, optarg);
+		exit(1);
 	    } else {
 		printf("Estimation will be performed using estimator %s\n", optarg);
+		estimator_type = optarg;
 	    }
 	    break;
     	case 'g':
@@ -114,33 +121,44 @@ int main(int argc, char *argv[])
     	}
     }
 
-    printf("numruns %d, exp %d, gen %d, est %d, paramfile %s, outfile %s\n", nruns, exp, gen, est, paramfile, outfile);
+    
 
-    if (gen == 1){
-	printf("generating.\n");
+    //    printf("numruns %d, exp %d, gen %d, est %d, paramfile %s, outfile %s\n", nruns, exp, gen, est, paramfile, outfile);
+
+    run_requested_operations(gen, est, exp, paramfile, infile, outfile, nruns, estimator_type);
+
+    return 0;
+}
+
+void run_requested_operations(int generator, int estimator, int experiment, char* paramfile, char* infile, char* outfile, int nruns, char* estimator_type)
+{
+    if (generator == 1){
 	generate(paramfile, outfile, nruns);
-    } else if (est == 1){
-	if (infile == NULL && paramfile == NULL){
-	    printf("You must specify an input file or a parameter file to use.\n");
+    } else if (estimator == 1){
+	if (paramfile == NULL){
+	    printf("You must specify a parameter file to use.\nTry running \"launcher -e [your parameter file] -i iwls\"\n");
 	    exit(1);
 	}
-	printf("estimating\n");
-	estimate(paramfile, NULL, NULL, 'i');
-    } else if (exp == 1){
+	estimate(paramfile, NULL, NULL, estimator_type);
+    } else if (experiment == 1){
 	printf("experimenting\n");
     } else {
 	printf("No action specified. You can run either an estimator, a generator or experiments by using "\
 	       "the -e, -g or -x switches respectively.\n");
     }
-
-    return 0;
 }
 
 /*
  * Checks whether an estimator name is valid.
  */
-int estimator_valid(char** name)
+int estimator_valid(char* name)
 {
-    printf("size of estimator %d\n", sizeof(estimators)/sizeof(char*));
+    int i;
+    
+    for (i = 0; i < sizeof(estimators)/sizeof(char*); ++i) {
+	if (strcmp(name, estimators[i]) == 0)
+	    return 1;
+    }
+
     return 0;
 }

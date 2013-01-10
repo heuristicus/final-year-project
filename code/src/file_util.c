@@ -132,7 +132,7 @@ double* get_event_data_interval(double start_time, double end_time, char *filena
     double *event_times = malloc(DEFAULT_ARR_SIZE * sizeof(double));
     int all = start_time == end_time; // Whether we want to get all data or not.
 
-    if (!all && !interval_check(start_time, end_time)){
+    if (!all && !interval_valid(start_time, end_time)){
 	printf("ERROR: Interval passed to get_event_data_interval is invalid: start %lf, end %lf\n", start_time, end_time);
 	return NULL;
     }

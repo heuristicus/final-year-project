@@ -38,7 +38,7 @@ long double fact(int i)
  */
 double prob_num_events_in_time_span(double start_time, double end_time, double lambda, int k)
 {
-    if (interval_check(start_time, end_time) != 1 || lambda <= 0 || k < 0)
+    if (interval_valid(start_time, end_time) != 1 || lambda <= 0 || k < 0)
 	return -1;
     double tau = end_time - start_time;
     return (pow(M_E, -lambda * tau) * pow(lambda * tau, k)) / fact(k);
@@ -49,7 +49,7 @@ double prob_num_events_in_time_span(double start_time, double end_time, double l
  */
 int* sum_events_in_interval(double *event_times, int num_events, double start_time, double end_time, int num_subintervals)
 {
-    if (interval_check(start_time, end_time) != 1 || event_times == NULL || num_events < 1 || num_subintervals < 1)
+    if (interval_valid(start_time, end_time) != 1 || event_times == NULL || num_events < 1 || num_subintervals < 1)
 	return NULL;
     
     int i = 0, current_interval = 0;
@@ -157,7 +157,7 @@ double get_gaussian_noise(double mean, double std_dev)
  */
 double* get_interval_midpoints(double start_time, double end_time, int subintervals)
 {
-    if (interval_check(start_time, end_time) != 1 || subintervals < 1)
+    if (interval_valid(start_time, end_time) != 1 || subintervals < 1)
 	return NULL;
     
     double *midpoints = malloc(subintervals * sizeof(double));
@@ -176,7 +176,7 @@ double* get_interval_midpoints(double start_time, double end_time, int subinterv
  */
 double get_interval_midpoint(int subinterval_number, double start_time, double end_time, int subintervals)
 {
-    if (interval_check(start_time, end_time) != 1 || subintervals < 1 || subinterval_number < 1 || subinterval_number > subintervals)
+    if (interval_valid(start_time, end_time) != 1 || subintervals < 1 || subinterval_number < 1 || subinterval_number > subintervals)
 	return -1;
     
     return start_time + ((subinterval_number - 1.0/2.0) * ((end_time - start_time)/subintervals));
