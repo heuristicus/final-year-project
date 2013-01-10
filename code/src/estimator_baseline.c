@@ -11,12 +11,12 @@ double** recalculate_expressions(double* breakpoint_vector, double* function_val
 double* get_func_vals_at_breakpoints(est_data **pieces, int max_breakpoints);
 est_arr* recalculate_estimates(double* breakpoint_vector, double* function_values, int len);
 
-int main(int argc, char *argv[])
-{
+/* int main(int argc, char *argv[]) */
+/* { */
     
-    baseline_estimate(argv[1], argv[2], 0, 100);
-    return 0;
-}
+/*     baseline_estimate(argv[1], argv[2], 0, 100); */
+/*     return 0; */
+/* } */
 
 double** baseline_estimate(char *event_file, char *output_file, 
 			   double interval_start, double interval_end)

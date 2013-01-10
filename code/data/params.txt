@@ -1,8 +1,11 @@
 # Inline comments are not supported!
 
 # data output
-# file to which to output data
+# file to which generator outputs data
 outfile output.txt
+
+# file to which estimators output data
+est_outfile est_out.txt
 
 # this will be appended to the output file for each separate stream. The stream number will be added at the end.
 stream_ext _stream_
@@ -14,6 +17,9 @@ stream_ext _stream_
 # 3 output the above, but also save a file with only event data in it (all data is saved as {filename}_ad, events as {filename}_ev
 verbosity 3
 
+# data input
+# Input file used for estimation
+#infile output.txt_stream_0_ev
 
 # generation parameters
 start_time 0

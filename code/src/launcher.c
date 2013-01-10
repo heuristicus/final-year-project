@@ -5,6 +5,8 @@
 #define OPT_INFO "OPTIONS\n"						\
     "\t -e or --estimate\n"						\
     "\t\t Estimate the underlying function from a given set of photon stream data.\n\n"	\
+    "\t -a or --estimator\n"						\
+    "\t\t The estimation algorithm to use. Options are IWLS (iwls), OLS (ols), Piecewise (pc), Baseline (base)\n\n"	\
     "\t -g or --generate\n"						\
     "\t\t Generate a photon stream.\n\n"				\
     "\t -h or --help\n"							\
@@ -20,6 +22,8 @@
     "\t -x or --experiment\n"						\
     "\t\t Run an experiment.\n\n"					\
 
+static char *estimators[] = {"iwls", "ols", "pc", "base"};
+
 int main(int argc, char *argv[])
 {
     struct option opts[] =
@@ -27,6 +31,7 @@ int main(int argc, char *argv[])
 	    {"experiment", required_argument, 0, 'x'},
 	    {"generate", required_argument, 0, 'g'},
 	    {"estimate", required_argument, 0, 'e'},
+	    {"estimator", required_argument, 0, 'a'},
 	    {"paramfile",  required_argument, 0, 'p'},
 	    {"outfile",  required_argument, 0, 'o'},
 	    {"numruns",    required_argument, 0, 'n'},
@@ -50,7 +55,7 @@ int main(int argc, char *argv[])
 	exit(1);
     }
         
-    while((c = getopt_long(argc, argv, "o:p:n:heg:x:i", opts, &opt_ind)) != -1){
+    while((c = getopt_long(argc, argv, "o:p:n:he:g:x:ia:", opts, &opt_ind)) != -1){
     	switch(c){
     	case 'e':
     	    // Need to specify which estimator to use and the input file - put all of this in the param file
@@ -60,8 +65,16 @@ int main(int argc, char *argv[])
     		       " but not more than one at once.\n");
     		exit(1);
     	    }
+	    printf("%s\n", optarg);
     	    paramfile = optarg;
     	    break;
+	case 'a':
+	    if (!estimator_valid(optarg)){
+		printf("%s is not a known estimator. Options are iwls, ols, pc, base.\n", optarg);
+	    } else {
+		printf("Estimation will be performed using estimator %s\n", optarg);
+	    }
+	    break;
     	case 'g':
     	    gen = 1;
     	    if (exp + gen + est > 1){
@@ -112,7 +125,7 @@ int main(int argc, char *argv[])
 	    exit(1);
 	}
 	printf("estimating\n");
-//	estimate();
+	estimate(paramfile, NULL, NULL, 'i');
     } else if (exp == 1){
 	printf("experimenting\n");
     } else {
@@ -120,5 +133,14 @@ int main(int argc, char *argv[])
 	       "the -e, -g or -x switches respectively.\n");
     }
 
+    return 0;
+}
+
+/*
+ * Checks whether an estimator name is valid.
+ */
+int estimator_valid(char** name)
+{
+    printf("size of estimator %d\n", sizeof(estimators)/sizeof(char*));
     return 0;
 }
