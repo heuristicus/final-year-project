@@ -1,0 +1,16 @@
+2013-01-11  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* tests/Makefile.am: Tests can now be compiled using `make check`
+
+	* tests/check_estimator.c: Added a basic test for estimator.c
+
+	* tests/testmain.c: Added estimator test suite.
+
+	* AUTHORS: Added name
+
+	* ChangeLog: Put some actual stuff in it.
+
+	* NEWS: Very brief information about releases.
+
+	* README: Added basic information.
+

@@ -1,0 +1,18 @@
+Alpha 0.3: (11/01/13)
+
++ Moved project to autotools for extra portability and easier compilation.
++ Launcher can be used to run generator and estimators. Try src/launcher -h
+  for more information.
++ Basic baseline estimator added.
+
+--------------------------------------------------------------------------------
+
+Alpha 0.2: (29/11/12)
+
++ Piecewise estimator added to usable estimators.
+
+--------------------------------------------------------------------------------
+
+Alpha 0.1: (04/11/12)
+
++ First release.

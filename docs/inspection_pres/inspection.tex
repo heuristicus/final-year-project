@@ -1,7 +1,8 @@
 % $Header: /home/vedranm/bitbucket/beamer/solutions/conference-talks/conference-ornate-20min.en.tex,v 90e850259b8b 2007/01/28 20:48:30 tantau $
 \documentclass{beamer}
 \usepackage{amsmath,algorithm, algorithmic}
-
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows}
 \usepackage[english]{babel}
 % % or whatever
 
@@ -205,19 +206,116 @@
 \begin{frame}{Linear Estimation}
   As a first step, attempt to estimate linear functions of the form $y=a+bx$ using Iterative Weighted Least Squares (IWLS)
   \begin{itemize}
-  \item Extension of Optimum Least Squares (OLS) method
-  \item Attempt to find \[\min_{\alpha,\beta}\sum_{k=1}^{n}w_k(Y_k-[\alpha+\beta x])^2\]
-  \item $\alpha$ and $\beta$ are estimators for $a$ and $b$, $w_k$ is the weight assigned to each value $Y_k$, which is the event count for the $k$th bin.
+  \item Extension of Optimum Least Squares (OLS) method.
+  \item Find \[\min_{\alpha,\beta}\sum_{k=1}^{n}w_k(Y_k-[\alpha+\beta x])^2\]
+  \item $\alpha$ and $\beta$ are estimators for $a$ and $b$, $w_k$ is the weight assigned to each value $Y_k$, which is the event count for the $k$th bin. $x$ is the midpoint of the sub-interval.
+  \item Update weights at each iteration by using estimated values of $\lambda$ in each sub-interval.
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Piecewise Linear Estimation}
-  Instead of applying IWLS to the whole time interval, we apply it to a number of subintervals.
+\begin{frame}{Other Simple Methods}
+  \begin{enumerate}
+  \item Piecewise estimation
+    \begin{itemize}
+    \item Split the interval into sub-intervals and find an estimate for each one separately.
+    \end{itemize}
+  \item Baseline estimation
+    \begin{itemize}
+    \item Extension of the piecewise method. Find midpoint between two function estimates at breakpoints.
+    \end{itemize}
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{Piecewise Estimate Example}
+  \begin{center}
+      \includegraphics[width=4in]{piecewise}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Baseline Estimate vs Piecewise Estimate}
+  \begin{center}
+      \includegraphics[width=4in]{baseline}
+  \end{center}
 \end{frame}
 
 \begin{frame}{Model Based Estimation}
+  \begin{itemize}
+  \item Attempt to impose an explicit model on how $\lambda$ changes in time.
+  \item Two streams of photons, $S_A$ and $S_B$ have models $\lambda_A(t)$ and $\lambda_B(t)$ respectively.
+  \item If the two streams come from the same source, then $\lambda_B(t) = \lambda_A(t-\Delta)$, as both streams will have the same model.
+  \item To calculate the time delay, we vary $\Delta$ and attempt to maximise the value of \[Pr(S_A,S_B|\lambda_A,\Delta)\]
+  \end{itemize}
 \end{frame}
 
+\begin{frame}{Code Structure}
+  % \pgfdeclarelayer{background}
+  % \pgfdeclarelayer{foreground}
+  % \pgfsetlayers{background,main,foreground}
+  % \tikzstyle{sub}=[draw, fill=blue!20, text width=5em, 
+  %   text centered, minimum height=1.8em]
+
+  % \begin{tikzpicture}
+    % % libs group
+    % \node (math) at (6,2) [sub] {Math};
+    % \node (gut) [sub, below of=math] {General};
+    % \node (file) [sub, below of=gut] {File};
+    % \node (lib) [below of=file] {Libraries};
+    
+    % \node (param) at (2,1.5) [sub] {Parameter server};
+    % % generator group
+    % \node (hom) at (0,0) [sub] {HPP};
+    % \node (nhm) [sub, below of=hom] {NHPP};
+    % \node (gen) [below of=nhm, font=\small] {Generators};
+    % %\node (out) at (3,-1) [sub] {Output files};
+    % % estimator group
+    % \node (ln) at (4,0) [sub] {Linear};
+    % \node (pc) [sub, below of=ln] {Piecewise};
+    % \node (bl) [sub, below of=pc] {Baseline};
+    % \node (est) [below of=bl, font=\small] {Estimators};
+    % \begin{pgfonlayer}{background}
+    %     % Estimator background
+    %     \path (ln.north west)+(-0.2,0.2) node (a) {};
+    %     \path (est.south -| ln.east)+(+0.2,-0.2) node (b) {};
+    %     \path[fill=blue!10,rounded corners, draw=black!50, dashed]
+    %         (a) rectangle (b);
+    %     % generator background
+    %     \path (hom.north west)+(-0.2,0.2) node (c) {};
+    %     \path (gen.south -| hom.east)+(+0.2,-0.2) node (d) {};
+    %     \path[fill=blue!10,rounded corners, draw=black!50, dashed]
+    %         (c) rectangle (d);
+
+    %     % path from param to est
+    %     \path (ln.north)+(0,0.1) node (esttop){};    
+    %     \draw [->,line width=1pt] (param.east) -| (esttop);
+    %     % path from param to gen
+    %     \path (hom.north)+(0,0.1) node (gentop){};    
+    %     \draw [->,line width=1pt] (param.west) -| (gentop);
+    %     % path gen->est
+    %     \path (nhm.east)+(0.1,0) node (geneast){};
+    %     \path (pc.west)+(-0.1,0) node (estwest){};
+    %     \draw [->,line width=1pt] (geneast) -- (estwest);
+    %     % paths from estimator bits
+    %     \draw [->] (ln.south) -- (pc.north);
+    %     \draw [->] (pc.south) -- (bl.north);
+    %     % paths from gen bits
+    %     \draw [->] (hom.south) -- (nhm.north);
+    % \end{pgfonlayer}
+    % \node (lib) at (0,0) [sub] {Libraries};
+    % \node (est) at (1.5,-1) [sub] {Estimators};
+    % \node (gen) at (-1.5,-1) [sub] {Generators};
+    % \node (gra) at (4, -1) [sub] {Graphing scripts};
+    % \draw [->] (lib.east) -| (est.north);
+    % \draw [->] (lib.west) -| (gen.north);
+    % \draw [->] (est.east) -- (gra.west);
+%  \end{tikzpicture}
+    The code is intended to be as modular as possible. Libraries are available to all modules and provide basic utilities that do not belong elsewhere. Current code is split as follows:
+    \begin{itemize}
+    \item Libraries (math, file, general)
+    \item Generators
+    \item Estimators
+    \item Plotting scripts
+    \end{itemize}
+\end{frame}
 
 \subsection{Projected Schedule}
 
@@ -225,7 +323,8 @@
   \begin{itemize}
   \item  Over Christmas: 
     \begin{itemize}
-    \item Complete piecewise estimator
+    \item Complete piecewise estimators
+    \item Code experiment harness, write unit tests, polish current code base
     \item Reading about ML, Latent Variable Models
     \item Implementing parts of ML estimator
     \end{itemize}
