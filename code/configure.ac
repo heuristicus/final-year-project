@@ -18,6 +18,7 @@ AC_SEARCH_LIBS([mupCreate], [muparser], ,AC_MSG_ERROR([Could not find muparser l
 AC_SEARCH_LIBS([__gmpz_init], [gmp], ,AC_MSG_ERROR([Could not find gmp library.]))
 # Use pkg-config to set up the appropriate flags for muparser and gmp
 #PKG_CHECK_MODULES([DEPS], [muparser >= 2.2.2 gmp >= 4.3])
+PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
 
 # Checks for header files.
 AC_CHECK_FILE([/usr/include/muParser/muParser.h], ,AC_MSG_ERROR([muParser header not found.]))
@@ -32,5 +33,6 @@ AC_CHECK_FUNCS([gettimeofday pow sqrt strdup])
 
 AM_INIT_AUTOMAKE
 AC_CONFIG_FILES([Makefile
-                 src/Makefile])
+                 src/Makefile
+		 tests/Makefile])
 AC_OUTPUT

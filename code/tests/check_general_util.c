@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <check.h>
 #include "tests.h"
-#include "../general_util.h"
+#include "general_util.h"
 
 START_TEST (test_string_split)
 {

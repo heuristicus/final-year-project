@@ -1,7 +1,7 @@
 #include <check.h>
 #include "tests.h"
-#include "../file_util.h"
-#include "../paramlist.h"
+#include "file_util.h"
+#include "paramlist.h"
 
 START_TEST (test_get_parameters)
 {

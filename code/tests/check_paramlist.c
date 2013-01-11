@@ -1,5 +1,5 @@
 #include <check.h>
-#include "../paramlist.h"
+#include "paramlist.h"
 #include "tests.h"
 
 START_TEST (test_init_list)

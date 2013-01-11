@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <check.h>
 #include "tests.h"
-#include "../math_util.h"
+#include "math_util.h"
 
 START_TEST (test_fact)
 {
