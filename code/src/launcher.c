@@ -10,7 +10,7 @@
     "\t -g or --generate\n"						\
     "\t\t Generate a photon stream. Requires parameter file.\n\n"				\
     "\t -h or --help\n"							\
-    "\t\t Display this meessage.\n\n"					\
+    "\t\t Display this message.\n\n"					\
     "\t -i or --infile\n"						\
     "\t\t Specify the file to use as input to the estimator.\n\n"	\
     "\t -n or --numruns\n"						\
@@ -20,7 +20,9 @@
     "\t -p or --paramfile\n"						\
     "\t\t The file containing parameters to use. This can be used to specify a large number of options.\n\n" \
     "\t -x or --experiment\n"						\
-    "\t\t Run an experiment. Requires parameter file.\n\n"					\
+    "\t\t Run an experiment. Requires parameter file.\n\n"
+#define VERSION "poissonstream alpha v0.3"
+#define BUGREPORT "Report bugs to mxs968@cs.bham.ac.uk"
 
 void run_requested_operations(int generator, int estimator, int experiment, char* paramfile, char* infile, char* outfile, int nruns, char* estimator_type);
 int estimator_valid(char* name);
@@ -56,7 +58,7 @@ int main(int argc, char *argv[])
     
 
     if (argc == 1){
-	printf("%s\n\nusage: %s options\n\n%s\n", PROG_DESC, argv[0], OPT_INFO);
+	printf("%s\n\nusage: %s options\n\n%s\n%s\n%s\n", PROG_DESC, argv[0], OPT_INFO, VERSION, BUGREPORT);
 	exit(1);
     }
         
@@ -92,7 +94,7 @@ int main(int argc, char *argv[])
     	    paramfile = strdup(optarg);
     	    break;
     	case 'h':
-    	    printf("%s\n\nusage: %s options\n\n%s\n", PROG_DESC, argv[0], OPT_INFO);
+    	    printf("%s\n\n\n%s\n%s\n%s\n", PROG_DESC, OPT_INFO, VERSION, BUGREPORT);
     	    exit(1);
     	case 'i':
     	    infile = strdup(optarg);
