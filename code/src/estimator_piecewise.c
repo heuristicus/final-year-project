@@ -4,18 +4,14 @@
 #include "general_util.h"
 #include <string.h>
 
-#define INTERVAL_EPSILON 0.5
-#define MIN_INTERVAL_LENGTH_PROPORTION 0.1
-#define PMF_INSTANCE_THRESHOLD 0.02
-#define PMF_SUM_THRESHOLD 0.85
-
 double extend_estimate(char *event_file, est_data *interval_estimate, double start_time,
-		       double max_extension, double subinterval_time);
+		       double max_extension, double subinterval_time, double pmf_threshold);
 double* interval_pmf(int *bin_counts, double *midpoints, int len, double a, double b);
-int pmf_check(double *midpoints, int *bindata, double a, double b, int num_subintervals);
-int pmf_threshold_check(double *pmfs, int len);
-int pmf_cumulative_check(double *pmfs, int len, int limit);
-int pmf_consecutive_check(double *pmfs, int len, int limit);
+int pmf_check(double *midpoints, int *bindata, double a, double b, int num_subintervals, double threshold);
+int pmf_threshold_check(double *pmfs, int len, double threshold);
+int pmf_cumulative_check(double *pmfs, int len, int limit, double threshold);
+int pmf_consecutive_check(double *pmfs, int len, int limit, double threshold);
+
 
 
 /* int main(int argc, char *argv[]) */
@@ -39,9 +35,14 @@ est_arr* estimate_piecewise(paramlist* params, char *event_file, char *output_fi
     double max_extension = get_double_param(params, "pc_max_extension");
     double start = get_double_param(params, "start_time");
     double end = get_double_param(params, "interval_time") + start;
+    double min_interval_proportion = get_double_param(params, "pc_min_interval_proportion");
+    double pmf_threshold = get_double_param(params, "pc_pmf_threshold");
+    double pmf_sum_threshold = get_double_param(params, "pc_pmf_sum_threshold");
+    
     
     return _estimate_piecewise(event_file, output_file, start, end, iterations, 
-			       subint, breakpoints, max_extension);
+			       subint, breakpoints, max_extension, min_interval_proportion,
+			       pmf_threshold, pmf_sum_threshold);
 }
 
 /*
@@ -52,7 +53,8 @@ est_arr* estimate_piecewise(paramlist* params, char *event_file, char *output_fi
  */
 est_arr* _estimate_piecewise(char* event_file, char* output_file, double interval_start, 
 			    double interval_end, int IWLS_iterations, int IWLS_subintervals, 
-			    int max_breakpoints, double max_extension)
+			     int max_breakpoints, double max_extension, double min_interval_proportion,
+			     double pmf_threshold, double pmf_sum_threshold)
 {
     if (!interval_valid(interval_start, interval_end)){
 	printf("Interval [%lf, %lf] is invalid.\n", interval_start, interval_end);
@@ -83,7 +85,7 @@ est_arr* _estimate_piecewise(char* event_file, char* output_file, double interva
 	    double extension_time = max_extension > interval_end - end_time ? interval_end - end_time : max_extension;
 
 	    if (extension_time > 0)
-		end_time = extend_estimate(event_file, interval_estimate, end_time, extension_time, 1);
+		end_time = extend_estimate(event_file, interval_estimate, end_time, extension_time, 1, pmf_threshold);
 	}
 
 	// Put this in a struct
@@ -119,7 +121,7 @@ est_arr* _estimate_piecewise(char* event_file, char* output_file, double interva
  * is possible to extend the line, otherwise returns start_time.
  */
 double extend_estimate(char *event_file, est_data *interval_estimate, double start_time, 
-		       double max_extension, double subinterval_time)
+		       double max_extension, double subinterval_time, double pmf_threshold)
 {
     int i;
     double retval = start_time;
@@ -147,7 +149,7 @@ double extend_estimate(char *event_file, est_data *interval_estimate, double sta
 	int *bin_counts = sum_events_in_interval((events + 1), event_num, start_time, end_time, num_subintervals);
 	double *midpoints = get_interval_midpoints(start_time, end_time, num_subintervals);
     
-	int res = pmf_check(midpoints, bin_counts, interval_estimate->est_a, interval_estimate->est_b, num_subintervals);
+	int res = pmf_check(midpoints, bin_counts, interval_estimate->est_a, interval_estimate->est_b, num_subintervals, pmf_threshold);
 
 	free(bin_counts);
 	free(midpoints);
@@ -172,7 +174,7 @@ double extend_estimate(char *event_file, est_data *interval_estimate, double sta
  * to a time interval. The lambda value for the middle of that time interval is determined, and then this
  * value of lambda is used in the PMF calculation.
  */
-int pmf_check(double *midpoints, int *bindata, double a, double b, int num_subintervals)
+int pmf_check(double *midpoints, int *bindata, double a, double b, int num_subintervals, double threshold)
 {
     double *pmfs = interval_pmf(bindata, midpoints, num_subintervals, a, b);
 
@@ -180,11 +182,11 @@ int pmf_check(double *midpoints, int *bindata, double a, double b, int num_subin
     printf("Cumulative probability: %lf\n", sum);
     printf("Mean probability: %lf\n", sum/num_subintervals);
 
-    int ret = pmf_threshold_check(pmfs, num_subintervals);
+    int ret = pmf_threshold_check(pmfs, num_subintervals, threshold);
 
-    /* int ret = pmf_sum_check(pmfs, num_subintervals); */
-    /* int ret = pmf_cumulative_check(pmfs, num_subintervals, 3); */
-    /* int ret = pmf_consecutive_check(pmfs, num_subintervals, 3); */
+    /* int ret = pmf_sum_check(pmfs, num_subintervals, sum_threshold); */
+    /* int ret = pmf_cumulative_check(pmfs, num_subintervals, 3, sum_threshold); */
+    /* int ret = pmf_consecutive_check(pmfs, num_subintervals, 3, threshold); */
 
     free(pmfs);
     
@@ -195,13 +197,13 @@ int pmf_check(double *midpoints, int *bindata, double a, double b, int num_subin
  * Performs a threshold check on the probability mass functions. If one
  * of the values exceeds the threshold, returns 0.
  */
-int pmf_threshold_check(double *pmfs, int len)
+int pmf_threshold_check(double *pmfs, int len, double threshold)
 {
     int i;
     int ret = 1;
     
     for (i = 0; i < len; ++i) {
-	if (pmfs[i] < PMF_INSTANCE_THRESHOLD){
+	if (pmfs[i] < threshold){
 	    ret = 0;
 	    break;
 	}
@@ -214,14 +216,14 @@ int pmf_threshold_check(double *pmfs, int len)
  * Performs a check on the sum of the given probability mass functions.
  * If the sum exceeds the threshold, 0 is returned.
  */
-int pmf_sum_check(double *pmfs, int len)
+int pmf_sum_check(double *pmfs, int len, double threshold)
 {
     int i;
     int sum = 0;
         
     for (i = 0; i < len; ++i) {
 	sum += pmfs[i];
-	if (sum > PMF_SUM_THRESHOLD)
+	if (sum > threshold)
 	    return 0;
     }
 
@@ -233,13 +235,13 @@ int pmf_sum_check(double *pmfs, int len)
  * the threshold. If the number of functions exceeding the threshold goes
  * over the limit, 0 is returned.
  */
-int pmf_cumulative_check(double *pmfs, int len, int limit)
+int pmf_cumulative_check(double *pmfs, int len, int limit, double threshold)
 {
     int i;
     int count = 0;
         
     for (i = 0; i < len; ++i) {
-	if (pmfs[i] < PMF_INSTANCE_THRESHOLD){
+	if (pmfs[i] < threshold){
 	    count++;
 	    if (count > limit)
 		return 0;
@@ -254,7 +256,7 @@ int pmf_cumulative_check(double *pmfs, int len, int limit)
  * the threshold. For example, if there are 4 consecutive values in the array
  * which exceed the threshold, and the limit is 3, then 0 is returned.
  */
-int pmf_consecutive_check(double *pmfs, int len, int limit)
+int pmf_consecutive_check(double *pmfs, int len, int limit, double threshold)
 
 {
     int i;
@@ -262,7 +264,7 @@ int pmf_consecutive_check(double *pmfs, int len, int limit)
     int count = 0;
         
     for (i = 0; (ret = count <= limit) && i < len; ++i) {
-	if (pmfs[i] < PMF_INSTANCE_THRESHOLD){
+	if (pmfs[i] < threshold){
 	    count++;
 	} else {
 	    count = 0;

@@ -39,10 +39,12 @@ est_arr* estimate_baseline(paramlist* params, char *event_file, char *output_fil
 // Easier to use functions above than these.
 est_arr* _estimate_baseline(char *event_file, char *output_file, double interval_start, 
 			    double interval_end, int IWLS_iterations, int IWLS_subintervals,
-			    int max_breakpoints, double max_extension);
-est_arr* _estimate_piecewise(char *event_file, char *output_file, double interval_start, 
-			     double interval_end, int IWLS_iterations, int IWLS_subintervals, 
-			     int max_breakpoints, double max_extension);
+			    int max_breakpoints, double max_extension, double min_interval_proportion,
+			    double pmf_threshold, double pmf_sum_threshold);
+est_arr* _estimate_piecewise(char* event_file, char* output_file, double interval_start, 
+			    double interval_end, int IWLS_iterations, int IWLS_subintervals, 
+			     int max_breakpoints, double max_extension, double min_interval_proportion,
+			     double pmf_threshold, double pmf_sum_threshold);
 est_data* _estimate_OLS(char* infile, char* outfile, double start_time, double end_time,
 			int num_subintervals);
 est_data* _estimate_IWLS(char* infile, char* outfile, double start_time, double end_time,

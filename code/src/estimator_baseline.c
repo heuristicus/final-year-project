@@ -4,9 +4,9 @@
 #include "file_util.h"
 
 double* get_breakpoint_midpoints(double* breakpoint_vector, double* func_vals, int len);
-double* get_breakpoint_vector(est_data **pieces, int max_breakpoints);
+double* get_breakpoint_vector(est_data** pieces, int max_breakpoints);
 double** recalculate_expressions(double* breakpoint_vector, double* function_values, int max_breakpoints);
-double* get_func_vals_at_breakpoints(est_data **pieces, int max_breakpoints);
+double* get_func_vals_at_breakpoints(est_data** pieces, int max_breakpoints);
 est_arr* recalculate_estimates(double* breakpoint_vector, double* function_values, int len);
 
 /* int main(int argc, char *argv[]) */
@@ -16,6 +16,10 @@ est_arr* recalculate_estimates(double* breakpoint_vector, double* function_value
 /*     return 0; */
 /* } */
 
+/*
+ * Helper function for baseline estimator. Extracts parameters from the parameter list and
+ * passes them to the estimator.
+ */
 est_arr* estimate_baseline(paramlist* params, char *event_file, char *output_file)
 {
     int subint = get_int_param(params, "base_iwls_subintervals");
@@ -24,17 +28,28 @@ est_arr* estimate_baseline(paramlist* params, char *event_file, char *output_fil
     double max_extension = get_double_param(params, "base_max_extension");
     double start = get_double_param(params, "start_time");
     double end = get_double_param(params, "interval_time") + start;
+    double min_interval_proportion = get_double_param(params, "base_min_interval_proportion");
+    double pmf_threshold = get_double_param(params, "base_pmf_threshold");
+    double pmf_sum_threshold = get_double_param(params, "base_pmf_sum_threshold");
 
-    return _estimate_baseline(event_file, output_file, start, end, iterations, subint, breakpoints, max_extension);
+    return _estimate_baseline(event_file, output_file, start, end, iterations, 
+			      subint, breakpoints, max_extension, min_interval_proportion,
+			      pmf_threshold, pmf_sum_threshold);
 }
-
+/*
+ * Estimate the given event data using the baseline technique. A piecewise estimate of the data is made,
+ * and the start and end points of consecutive estimates are moved so that they are joined at the midpoint
+ * between them.
+ */
 est_arr* _estimate_baseline(char *event_file, char *output_file, double interval_start, 
-			   double interval_end, int IWLS_iterations, int IWLS_subintervals,
-			   int max_breakpoints, double max_extension)
+			    double interval_end, int IWLS_iterations, int IWLS_subintervals,
+			    int max_breakpoints, double max_extension, double min_interval_proportion, 
+			    double pmf_threshold, double pmf_sum_threshold)
 {
     est_arr *pieces = _estimate_piecewise(event_file, NULL, interval_start, interval_end,
 					 IWLS_iterations,IWLS_subintervals, max_breakpoints,
-					 max_extension);
+					  max_extension, min_interval_proportion, pmf_threshold, 
+					  pmf_sum_threshold);
 
     print_estimates(pieces);
     
@@ -84,7 +99,7 @@ est_arr* _estimate_baseline(char *event_file, char *output_file, double interval
  * Gets the x values (times) of the breakpoints given by the
  * piecewise estimator. Includes the start and end of the interval.
  */
-double* get_breakpoint_vector(est_data **pieces, int num_breakpoints)
+double* get_breakpoint_vector(est_data** pieces, int num_breakpoints)
 {
     double *breakpoints = malloc((num_breakpoints + 1) * sizeof(double));
     
@@ -104,7 +119,7 @@ double* get_breakpoint_vector(est_data **pieces, int num_breakpoints)
  * The function values will be calculated at the start and end of each
  * subinterval, which is marked by the breakpoints.
  */
-double* get_func_vals_at_breakpoints(est_data **pieces, int num_breakpoints)
+double* get_func_vals_at_breakpoints(est_data** pieces, int num_breakpoints)
 {
     int i, j;
     double *func_eval = malloc(num_breakpoints * 2 * sizeof(double));
@@ -157,7 +172,7 @@ double* get_breakpoint_midpoints(double* breakpoint_vector, double* func_vals, i
 est_arr* recalculate_estimates(double* breakpoint_vector, double* function_values, int len)
 {
 
-    est_data **new_est = malloc(len * sizeof(est_data*));
+    est_data** new_est = malloc(len * sizeof(est_data*));
 
     int i;
     

@@ -14,7 +14,7 @@ stream_ext _stream_
 # 0 output only event data for each run
 # 1 output event times and lambda values for each run
 # 2 output event time and lambda values for each run, as well as midpoints and bin counts, to a single file
-# 3 output the above, but also save a file with only event data in it (all data is saved as {filename}_ad, events as {filename}_ev
+# 3 output the above, but also save a file with only event data in it (all data is saved as {filename}_ad, events as {filename}_ev)
 verbosity 3
 
 # data input
@@ -31,7 +31,8 @@ seed 0
 
 
 # expression parameters
-# The equation must contain the variable 't'. The value of the variable will be set by the program. Do not set it here.
+# The equation must contain the variable 't'. The value of the variable will be set by 
+# the program. Do not set it here.
 expression a-(b*sin(alpha*t))
 a 10
 b 5
@@ -55,13 +56,44 @@ iwls_subintervals 5
 
 
 # piecewise parameters
+# Number of times to iterate the IWLS estimator. Recommended value is between 2 and 5.
 pc_iwls_iterations 3
+
+# Number of subintervals to use for the IWLS estimator. The photon stream data will be
+# put into this many bins and the estimate will run on that.
 pc_iwls_subintervals 5
+
+# Maximum amount to extend the lines estimated for each subinterval. Longer lines will
+# be more likely to be rejected if the data varies a lot. If the first attempt fails,
+# further attempts will be made with fractional values of the original.
 pc_max_extension 15
+
+# The maximum number of breakpoints used by the piecewise estimate. The estimator will
+# use at most this number of lines to estimate the underlying function. If extensions
+# succeed or the data is quite linear, fewer subintervals will be required to make a
+# good estimate, so the actual number of breakpoints in the estimate may be lower.
 pc_max_breakpoints 5
+
+# Proportion of the interval time that the minimum possible subinterval length should
+# be. Very short subintervals often result in very bad estimates, especially if the
+# data has large variations.
+pc_min_interval_proportion 0.1
+
+# Threshold at which to reject an extension attempt. This threshold limits the value
+# of the probability mass function calculated at each point on the extended line,
+# checking how likely is it that the point is actually part of the data set. A lower
+# value means that extension will be continued even if the probability is very low.
+pc_pmf_threshold 0.02
+
+# A different threshold for summation of probability mass functions. Used when summing
+# the probability mass functions at each point.
+pc_pmf_sum_threshold 0.85
 
 # baseline parameters
 base_iwls_iterations 3
 base_iwls_subintervals 5
 base_max_extension 15
 base_max_breakpoints 5
+base_min_interval_proportion 0.1
+base_pmf_threshold 0.02
+base_pmf_sum_threshold 0.85

@@ -1,5 +1,10 @@
 2013-01-11  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
+	* estimators: Added a helper function to the estimators so that you do not
+	have to call them with all the parameters specified if it is not necessary.
+	You can now pass in a parameter list containing the relevant parameters,
+	which will be extracted and passed into the function.
+
 	* tests/Makefile.am: Tests can now be compiled using `make check`
 
 	* tests/check_estimator.c: Added a basic test for estimator.c
