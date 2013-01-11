@@ -3,13 +3,6 @@
 #include "file_util.h"
 #include "general_util.h"
 
-void estimate(char* paramfile, char* infile, char* outfile, char* estimator_type);
-int has_required_params(paramlist* params, char** required_params, int len);
-void run_ols(paramlist* params, char* infile, char* outfile);
-void run_iwls(paramlist* params, char* infile, char* outfile);
-void run_pc(paramlist* params, char* infile, char* outfile);
-void run_base(paramlist* params, char* infile, char* outfile);
-
 static char *ols_params[] = {"start_time", "interval_time", "ols_subintervals"};
 static char *iwls_params[] = {"iwls_iterations", "start_time", 
 			      "interval_time", "iwls_subintervals"};

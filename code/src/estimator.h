@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "paramlist.h"
 
 #ifndef _ESTIMATOR_H
 #define _ESTIMATOR_H
@@ -20,6 +21,14 @@ typedef struct
     est_data **estimates;
     int len;
 } est_arr;
+
+void estimate(char* paramfile, char* infile, char* outfile, char* estimator_type);
+int has_required_params(paramlist* params, char** required_params, int len);
+void run_ols(paramlist* params, char* infile, char* outfile);
+void run_iwls(paramlist* params, char* infile, char* outfile);
+void run_pc(paramlist* params, char* infile, char* outfile);
+void run_base(paramlist* params, char* infile, char* outfile);
+
 
 est_data* estimate_OLS(char *infile, char *outfile, double start_time, double interval_time,
 		       int num_subintervals);
