@@ -118,11 +118,18 @@ END_TEST
 
 START_TEST (test_sum_double_arr)
 {
-    double a1[5] = {0.5, 0.1, 0.2, 0.1, 0.1};
-    double a2[5] = {-0.5, -0.1, -0.2, -0.1, -0.1};
-    
-    fail_unless(sum_double_arr(a1, 5) == 1, NULL);
-    fail_unless(sum_double_arr(a2, 5) == -1, NULL);
+    double a1[5] = {0.5, 0.1, 0.2, 0.1, 0.2};
+    double a2[5] = {-0.5, -0.1, -0.2, -0.1, -0.2};
+    double a3[5] = {5, 10, 15, 20, 25};
+    double a4[5] = {-5, -10, -15, -20, -25};
+  
+    double t = sum_double_arr(a1, 5);
+    double t1 = sum_double_arr(a2, 5);
+
+    fail_unless(t == 1.1, NULL);
+    fail_unless(t1 == -1.1, NULL);
+    fail_unless(sum_double_arr(a3, 5) == 75, NULL);
+    fail_unless(sum_double_arr(a4, 5) == -75, NULL);
 }
 END_TEST
 
