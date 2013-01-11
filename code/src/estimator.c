@@ -52,11 +52,7 @@ void estimate(char* paramfile, char* infile, char* outfile, char* estimator_type
 void run_ols(paramlist* params, char* infile, char* outfile)
 {
     if (has_required_params(params, ols_params, sizeof(ols_params)/sizeof(char*))){
-	int subint = get_int_param(params, "ols_subintervals");
-	double start = get_int_param(params, "start_time");
-	double end = get_int_param(params, "interval_time") + start;
-	
-	estimate_OLS(infile, outfile, start, end, subint);
+	estimate_OLS(params, infile, outfile);
     } else {
 	print_string_array("Some parameters required for OLS estimates are missing. " \
 			   "Ensure that your parameter file contains the following entries and try again.",
@@ -71,12 +67,7 @@ void run_ols(paramlist* params, char* infile, char* outfile)
 void run_iwls(paramlist* params, char* infile, char* outfile)
 {
     if (has_required_params(params, iwls_params, sizeof(iwls_params)/sizeof(char*))){
-	int subint = get_int_param(params, "iwls_subintervals");
-	int iterations = get_int_param(params, "iwls_iterations");
-	double start = get_double_param(params, "start_time");
-	double end = get_double_param(params, "interval_time") + start;
-
-	estimate_IWLS(infile, outfile, start, end, subint, iterations);
+	estimate_IWLS(params, infile, outfile);
     } else {
 	print_string_array("Some parameters required for IWLS estimates are missing. "\
 			   "Ensure that your parameter file contains the following entries and try again.",
@@ -92,14 +83,7 @@ void run_iwls(paramlist* params, char* infile, char* outfile)
 void run_pc(paramlist* params, char* infile, char* outfile)
 {
 	if (has_required_params(params, pc_params, sizeof(pc_params)/sizeof(char*))){
-	    int subint = get_int_param(params, "pc_iwls_subintervals");
-	    int iterations = get_int_param(params, "pc_iwls_iterations");
-	    int breakpoints = get_int_param(params, "pc_max_breakpoints");
-	    double max_extension = get_double_param(params, "pc_max_extension");
-	    double start = get_double_param(params, "start_time");
-	    double end = get_double_param(params, "interval_time") + start;
-
-	    estimate_piecewise(infile, outfile, start, end, iterations, subint, breakpoints, max_extension);
+	    estimate_piecewise(params, infile, outfile);
 	} else {
 	    print_string_array("Some parameters required for piecewise estimates are missing. "\
 			       "Ensure that your parameter file contains the following entries and try again.",
@@ -114,14 +98,7 @@ void run_pc(paramlist* params, char* infile, char* outfile)
 void run_base(paramlist* params, char* infile, char* outfile)
 {
     if (has_required_params(params, base_params, sizeof(base_params)/sizeof(char*))){
-	int subint = get_int_param(params, "base_iwls_subintervals");
-	int iterations = get_int_param(params, "base_iwls_iterations");
-	int breakpoints = get_int_param(params, "base_max_breakpoints");
-	double max_extension = get_double_param(params, "base_max_extension");
-	double start = get_double_param(params, "start_time");
-	double end = get_double_param(params, "interval_time") + start;
-
-	estimate_baseline(infile, outfile, start, end, iterations, subint, breakpoints, max_extension);
+	estimate_baseline(params, infile, outfile);
     } else {
 	print_string_array("Some parameters required for baseline estimates are missing. "\
 			   "Ensure that your parameter file contains the following entries and try again.", 

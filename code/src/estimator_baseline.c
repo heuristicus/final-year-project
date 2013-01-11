@@ -16,11 +16,23 @@ est_arr* recalculate_estimates(double* breakpoint_vector, double* function_value
 /*     return 0; */
 /* } */
 
-est_arr* estimate_baseline(char *event_file, char *output_file, double interval_start, 
+est_arr* estimate_baseline(paramlist* params, char *event_file, char *output_file)
+{
+    int subint = get_int_param(params, "base_iwls_subintervals");
+    int iterations = get_int_param(params, "base_iwls_iterations");
+    int breakpoints = get_int_param(params, "base_max_breakpoints");
+    double max_extension = get_double_param(params, "base_max_extension");
+    double start = get_double_param(params, "start_time");
+    double end = get_double_param(params, "interval_time") + start;
+
+    return _estimate_baseline(event_file, output_file, start, end, iterations, subint, breakpoints, max_extension);
+}
+
+est_arr* _estimate_baseline(char *event_file, char *output_file, double interval_start, 
 			   double interval_end, int IWLS_iterations, int IWLS_subintervals,
 			   int max_breakpoints, double max_extension)
 {
-    est_arr *pieces = estimate_piecewise(event_file, NULL, interval_start, interval_end,
+    est_arr *pieces = _estimate_piecewise(event_file, NULL, interval_start, interval_end,
 					 IWLS_iterations,IWLS_subintervals, max_breakpoints,
 					 max_extension);
 

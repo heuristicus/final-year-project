@@ -27,7 +27,30 @@ int pmf_consecutive_check(double *pmfs, int len, int limit);
 /*     return 0; */
 /* } */
 
-est_arr* estimate_piecewise(char *event_file, char *output_file, double interval_start, 
+/*
+ * Helper function for the piecewise estimator. Takes parameters out of a parameter list and 
+ * passes them to the estimator.
+ */
+est_arr* estimate_piecewise(paramlist* params, char *event_file, char *output_file)
+{
+    int subint = get_int_param(params, "pc_iwls_subintervals");
+    int iterations = get_int_param(params, "pc_iwls_iterations");
+    int breakpoints = get_int_param(params, "pc_max_breakpoints");
+    double max_extension = get_double_param(params, "pc_max_extension");
+    double start = get_double_param(params, "start_time");
+    double end = get_double_param(params, "interval_time") + start;
+    
+    return _estimate_piecewise(event_file, output_file, start, end, iterations, 
+			       subint, breakpoints, max_extension);
+}
+
+/*
+ * Estimate the given data in a piecewise manner. Data is broken up into a number of subintervals,
+ * and each is estimated using the IWLS estimator. These estimates are used as the estimates for
+ * each of the subintervals, and the estimate for the whole interval is made up of these subinterval
+ * estimates.
+ */
+est_arr* _estimate_piecewise(char* event_file, char* output_file, double interval_start, 
 			    double interval_end, int IWLS_iterations, int IWLS_subintervals, 
 			    int max_breakpoints, double max_extension)
 {
@@ -45,13 +68,13 @@ est_arr* estimate_piecewise(char *event_file, char *output_file, double interval
 
     double start_time = interval_start, end_time = interval_start + default_interval_length; // start time and end time of the subinterval
     
-    est_data **interval_data = calloc(max_breakpoints + 1, sizeof(est_data*)); // calloc so we don't get uninitialised value errors
-    est_data *interval_estimate;
+    est_data** interval_data = calloc(max_breakpoints + 1, sizeof(est_data*)); // calloc so we don't get uninitialised value errors
+    est_data* interval_estimate;
         
     // We want to do this at least once, specifically if max_breakpoints is zero
     do {
 	printf("Estimating interval [%lf, %lf].\n", start_time, end_time);
-	interval_estimate = estimate_IWLS(event_file, NULL, start_time, end_time, IWLS_subintervals, IWLS_iterations);
+	interval_estimate = _estimate_IWLS(event_file, NULL, start_time, end_time, IWLS_subintervals, IWLS_iterations);
 	
 	// Don't bother extending the line if we are at the end of the overall interval,
 	// or if we are estimating the last line segment.
@@ -64,7 +87,7 @@ est_arr* estimate_piecewise(char *event_file, char *output_file, double interval
 	}
 
 	// Put this in a struct
-	est_data *this_interval = malloc(sizeof(est_data));
+	est_data* this_interval = malloc(sizeof(est_data));
 	this_interval->est_a = interval_estimate->est_a; // a estimate
 	this_interval->est_b = interval_estimate->est_b; // b estimate
 	this_interval->start = start_time;
@@ -81,7 +104,7 @@ est_arr* estimate_piecewise(char *event_file, char *output_file, double interval
     if (output_file != NULL)
 	output_estimates(output_file, interval_data+1, i);
 
-    est_arr *results = malloc(sizeof(est_arr));
+    est_arr* results = malloc(sizeof(est_arr));
     results->len = i;
     results->estimates = interval_data;
     printf("result 1 a %lf\n", results->estimates[0]->est_a);

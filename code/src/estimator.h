@@ -30,16 +30,23 @@ void run_pc(paramlist* params, char* infile, char* outfile);
 void run_base(paramlist* params, char* infile, char* outfile);
 
 
-est_data* estimate_OLS(char *infile, char *outfile, double start_time, double interval_time,
-		       int num_subintervals);
-est_data* estimate_IWLS(char *infile, char *outfile, double start_time, double interval_time,
-			int num_subintervals, int iterations);
-est_arr* estimate_piecewise(char *event_file, char *output_file, double interval_start, 
+// Use these rather than the functions below.
+est_data* estimate_OLS(paramlist* params, char *infile, char *outfile);
+est_data* estimate_IWLS(paramlist* params, char *infile, char *outfile);
+est_arr* estimate_piecewise(paramlist* params, char *event_file, char *output_file);
+est_arr* estimate_baseline(paramlist* params, char *event_file, char *output_file);
+
+// Easier to use functions above than these.
+est_arr* _estimate_baseline(char *event_file, char *output_file, double interval_start, 
 			    double interval_end, int IWLS_iterations, int IWLS_subintervals,
 			    int max_breakpoints, double max_extension);
-est_arr* estimate_baseline(char *event_file, char *output_file, double interval_start, 
-			   double interval_end, int IWLS_iterations, int IWLS_subintervals,
-			   int max_breakpoints, double max_extension);
+est_arr* _estimate_piecewise(char *event_file, char *output_file, double interval_start, 
+			     double interval_end, int IWLS_iterations, int IWLS_subintervals, 
+			     int max_breakpoints, double max_extension);
+est_data* _estimate_OLS(char* infile, char* outfile, double start_time, double end_time,
+			int num_subintervals);
+est_data* _estimate_IWLS(char* infile, char* outfile, double start_time, double end_time,
+			 int num_subintervals, int iterations);
 
 double** get_subintervals(double start_time, double end_time, int num_subintervals);
 void free_pointer_arr(void **arr, int length);
