@@ -87,7 +87,7 @@ void print_double_arr(double *arr, int len)
  * Checks whether a given interval is valid and returns 1 if so. The start of the interval
  * must be before the end, and both start and end must be positive
  */
-int interval_check(double interval_start, double interval_end)
+int interval_valid(double interval_start, double interval_end)
 {
     return (interval_start < interval_end) && interval_start >= 0 && interval_end > 0;
 }
@@ -103,7 +103,7 @@ int interval_check(double interval_start, double interval_end)
 double* get_event_subinterval(double *events, double interval_start, double interval_end)
 {
 
-    if (interval_check(interval_start, interval_end) == 0 || events == NULL)
+    if (!interval_valid(interval_start, interval_end) || events == NULL)
 	return NULL;
     
     int count = 1;
@@ -183,4 +183,19 @@ void free_est_arr(est_arr *estimates)
     
     free(estimates->estimates);
     free(estimates);
+}
+
+/*
+ * Prints an array of strings with a message before it.
+ */
+void print_string_array(char* message, char** array, int len)
+{
+    int i;
+    
+    printf("%s\n", message);
+    
+    for (i = 0; i < len; ++i) {
+	printf("%s\n", array[i]);
+    }
+
 }

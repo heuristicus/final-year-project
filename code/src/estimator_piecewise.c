@@ -9,7 +9,6 @@
 #define PMF_INSTANCE_THRESHOLD 0.02
 #define PMF_SUM_THRESHOLD 0.85
 
-
 double extend_estimate(char *event_file, est_data *interval_estimate, double start_time,
 		       double max_extension, double subinterval_time);
 double* interval_pmf(int *bin_counts, double *midpoints, int len, double a, double b);
@@ -28,11 +27,11 @@ int pmf_consecutive_check(double *pmfs, int len, int limit);
 /*     return 0; */
 /* } */
 
-est_arr* piecewise_estimate(char *event_file, char *output_file, double interval_start, 
-			    double interval_end, double max_breakpoints, double IWLS_iterations, 
-			    double IWLS_subintervals, double max_extension)
+est_arr* estimate_piecewise(char *event_file, char *output_file, double interval_start, 
+			    double interval_end, int IWLS_iterations, int IWLS_subintervals, 
+			    int max_breakpoints, double max_extension)
 {
-    if (!interval_check(interval_start, interval_end)){
+    if (!interval_valid(interval_start, interval_end)){
 	printf("Interval [%lf, %lf] is invalid.\n", interval_start, interval_end);
 	return NULL;
     }

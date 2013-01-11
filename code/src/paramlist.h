@@ -19,5 +19,8 @@ void free_list(paramlist *head);
 int length(paramlist *head);
 paramlist* get_param(paramlist *head, char *param_name);
 char* get_param_val(paramlist *head, char *param_name);
+char* get_string_param(paramlist* head, char* param_name);
+double get_double_param(paramlist* head, char* param_name);
+int get_int_param(paramlist* head, char* param_name);
 
 #endif

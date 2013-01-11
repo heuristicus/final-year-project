@@ -1,9 +1,15 @@
 # Inline comments are not supported!
 
-# output data
+# data output
+# file to which generator outputs data
 outfile output.txt
+
+# file to which estimators output data
+est_outfile est_out.txt
+
 # this will be appended to the output file for each separate stream. The stream number will be added at the end.
 stream_ext _stream_
+
 # define the verbosity of output to data files. 
 # 0 output only event data for each run
 # 1 output event times and lambda values for each run
@@ -11,13 +17,16 @@ stream_ext _stream_
 # 3 output the above, but also save a file with only event data in it (all data is saved as {filename}_ad, events as {filename}_ev
 verbosity 3
 
+# data input
+# Input file used for estimation
+infile output.txt_stream_0_ev
 
 # generation parameters
+start_time 0
 nruns 1
 timedelta 0.0,10.0
 lambda 1000
 interval_time 100
-est_method IWLS
 seed 0
 
 
@@ -27,3 +36,32 @@ expression a-(b*sin(alpha*t))
 a 10
 b 5
 alpha 0.1
+
+
+#estimation parameters
+# specifies the type of estimator to use. Options are ols, iwls, piecewise, baseline
+est_type baseline
+
+
+# ols parameters
+ols_subintervals 5
+
+# iwls parameters
+iwls_iterations 3
+iwls_subintervals 5
+
+# specify the file to output iwls estimate data to
+# iwls_output iwls_out.txt
+
+
+# piecewise parameters
+pc_iwls_iterations 3
+pc_iwls_subintervals 5
+pc_max_extension 15
+pc_max_breakpoints 5
+
+# baseline parameters
+base_iwls_iterations 3
+base_iwls_subintervals 5
+base_max_extension 15
+base_max_breakpoints 5

@@ -42,17 +42,17 @@ START_TEST (test_string_split)
 }
 END_TEST
 
-START_TEST (test_interval_check)
+START_TEST (test_interval_valid)
 {
-    fail_unless(interval_check(0, 0) == 0, NULL);
-    fail_unless(interval_check(-1, -1) == 0, NULL);
-    fail_unless(interval_check(-5, -10) == 0, NULL);
-    fail_unless(interval_check(10, 9) == 0, NULL);
+    fail_unless(interval_valid(0, 0) == 0, NULL);
+    fail_unless(interval_valid(-1, -1) == 0, NULL);
+    fail_unless(interval_valid(-5, -10) == 0, NULL);
+    fail_unless(interval_valid(10, 9) == 0, NULL);
 
-    fail_unless(interval_check(0, 1) == 1, NULL);
+    fail_unless(interval_valid(0, 1) == 1, NULL);
     // very short interval
-    fail_unless(interval_check(0, 0.000000001) == 1, NULL);
-    fail_unless(interval_check(10, 20) == 1, NULL);
+    fail_unless(interval_valid(0, 0.000000001) == 1, NULL);
+    fail_unless(interval_valid(10, 20) == 1, NULL);
 }
 END_TEST
 
@@ -109,7 +109,7 @@ Suite* general_util_suite(void)
     Suite* s = suite_create("general_util");
     TCase* tc_core = tcase_create("Core");
     tcase_add_test(tc_core, test_string_split);
-    tcase_add_test(tc_core, test_interval_check);
+    tcase_add_test(tc_core, test_interval_valid);
     tcase_add_test(tc_core, test_get_event_subinterval);
     
     suite_add_tcase(s, tc_core);

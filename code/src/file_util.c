@@ -12,26 +12,26 @@
 #define DEFAULT_ARR_SIZE 100
 #define PARAM_SEPARATOR " "
 
-int main(int argc, char *argv[])
-{
-    /* paramlist *p; */
+/* int main(int argc, char *argv[]) */
+/* { */
+/*     /\* paramlist *p; *\/ */
     
-    /* p = get_parameters("params.txt"); */
+/*     /\* p = get_parameters("params.txt"); *\/ */
         
-    /* print_list(p); */
-    /* free_list(p); */
+/*     /\* print_list(p); *\/ */
+/*     /\* free_list(p); *\/ */
 
-    double *events = get_event_data_interval(25.0, 50, argv[1]);
+/*     double *events = get_event_data_interval(25.0, 50, argv[1]); */
     
-    int i;
+/*     int i; */
     
-    for (i = 0; i < (int) events[0]; ++i) {
-	printf("%lf\n", events[i]);
-    }
+/*     for (i = 0; i < (int) events[0]; ++i) { */
+/* 	printf("%lf\n", events[i]); */
+/*     } */
 
 
-    return 0;
-}
+/*     return 0; */
+/* } */
 
 /* 
  * Creates a filename to use for data output with the format:
@@ -132,7 +132,7 @@ double* get_event_data_interval(double start_time, double end_time, char *filena
     double *event_times = malloc(DEFAULT_ARR_SIZE * sizeof(double));
     int all = start_time == end_time; // Whether we want to get all data or not.
 
-    if (!all && !interval_check(start_time, end_time)){
+    if (!all && !interval_valid(start_time, end_time)){
 	printf("ERROR: Interval passed to get_event_data_interval is invalid: start %lf, end %lf\n", start_time, end_time);
 	return NULL;
     }

@@ -33,18 +33,18 @@ START_TEST (test_add)
 }
 END_TEST
 
-START_TEST (test_get_param_val)
+START_TEST (test_get_string_param)
 {
     paramlist* a = init_list("node1", "1");
     a = add(a, "node2", "2");
     a = add(a, "node3", "3");
     a = add(a, "node4", "4");
     
-    fail_unless(strcmp(get_param_val(a, "node1"), "1") == 0, NULL);
-    fail_unless(strcmp(get_param_val(a, "node2"), "2") == 0, NULL);
-    fail_unless(strcmp(get_param_val(a, "node3"), "3") == 0, NULL);
-    fail_unless(strcmp(get_param_val(a, "node4"), "4") == 0, NULL);
-    fail_unless(get_param_val(a, "nonexistent") == NULL, NULL);
+    fail_unless(strcmp(get_string_param(a, "node1"), "1") == 0, NULL);
+    fail_unless(strcmp(get_string_param(a, "node2"), "2") == 0, NULL);
+    fail_unless(strcmp(get_string_param(a, "node3"), "3") == 0, NULL);
+    fail_unless(strcmp(get_string_param(a, "node4"), "4") == 0, NULL);
+    fail_unless(get_string_param(a, "nonexistent") == NULL, NULL);
 }
 END_TEST
 
@@ -83,7 +83,7 @@ Suite* paramlist_suite(void)
     TCase* tc_core = tcase_create("Core");
     tcase_add_test(tc_core, test_init_list);
     tcase_add_test(tc_core, test_add);
-    tcase_add_test(tc_core, test_get_param_val);
+    tcase_add_test(tc_core, test_get_string_param);
     tcase_add_test(tc_core, test_len);
     tcase_add_test(tc_core, test_get_param);
     

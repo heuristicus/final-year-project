@@ -23,11 +23,9 @@ void view_expr(muParserHandle_t hparser);
  * and those that are contained in the parameter file, if there is one (there should be).
  * The order in which the arguments are is defined inside start.c
  */
-void generate(char **args)
+void generate(char *paramfile, char *outfile, int nruns)
 {
     int i;
-    char *outfile = NULL;
-    char *paramfile = NULL;
     paramlist *params = NULL;
     char *tmp;
 
@@ -36,41 +34,31 @@ void generate(char **args)
     double *time_delta;
     int tdlen;
     int outswitch = 3;
-    int nruns = 1;
     char *expr;
 
-    for (i = 0; i <= sizeof(args)/sizeof(char*); ++i){
-	if (args[i] == NULL)
-	    continue;
-	
-	if (i == 0)
-	    outfile = args[i];
-	if (i == 1)
-	    paramfile = args[i];
-	if (i == 2)
-	    nruns = atoi(args[i]);
-    }
-    
     if (paramfile != NULL){
 	params = get_parameters(paramfile);
+    } else {
+	printf("You have not specified a parameter file. Please specify one in the command line call.\n");
+	exit(1);
     }
 
-    if ((outfile = select_output_file(outfile, get_param_val(params, "outfile"))) == NULL){
+    if ((outfile = select_output_file(outfile, get_string_param(params, "outfile"))) == NULL){
 	free(params);
 	return;
     }
 
     // Check param files for parameters and use those instead of defaults if they exist
-    if ((tmp = get_param_val(params, "nruns")) != NULL)
+    if ((tmp = get_string_param(params, "nruns")) != NULL)
 	nruns = atoi(tmp);
 
-    if ((tmp = get_param_val(params, "lambda")) != NULL)
+    if ((tmp = get_string_param(params, "lambda")) != NULL)
 	lambda = atol(tmp);
 
-    if ((tmp = get_param_val(params, "interval_time")) != NULL)
+    if ((tmp = get_string_param(params, "interval_time")) != NULL)
     	interval_time = atol(tmp);
 
-    if ((tmp = get_param_val(params, "timedelta")) != NULL){
+    if ((tmp = get_string_param(params, "timedelta")) != NULL){
 	char **vals = string_split(tmp, ',');
 	tdlen = atoi(vals[0]) - 1;
 	time_delta = malloc((tdlen + 1) * sizeof(double));
@@ -86,10 +74,10 @@ void generate(char **args)
 	tdlen = 1;
     }
 
-    if ((tmp = get_param_val(params, "verbosity")) != NULL)
+    if ((tmp = get_string_param(params, "verbosity")) != NULL)
 	outswitch = atoi(tmp);
 
-    if ((tmp = get_param_val(params, "expression")) != NULL){
+    if ((tmp = get_string_param(params, "expression")) != NULL){
 	expr = tmp;
     } else {
 	printf("You have not defined an expression to use.\nPlease do so in the parameter file (add \"expression a+b*x\" and define values for the variables; \"a 10\" etc.)\n");
@@ -124,7 +112,6 @@ void generate(char **args)
 	    free(outfile);
 
 	free_list(params);
-	free(args); // free args because we don't go back to the top
 	free(time_delta);
 	exit(1);
     }
@@ -167,7 +154,7 @@ int check_expr_vars(muParserHandle_t hparser, struct paramlist *params)
 	    // Get the variable name and value from the parser
 	    mupGetExprVar(hparser, i, &mu_vname, &vaddr);
 	    vname = (char*)mu_vname; // Cast to stop warnings
-	    if ((tmp = get_param_val(params, vname)) != NULL){
+	    if ((tmp = get_string_param(params, vname)) != NULL){
 		*vaddr = atof(tmp); // Set the value of the variable inside hparser
 		printf("Varname: %s, value: %lf\n", vname, (double)*vaddr);
 	    } else if (strcmp(vname, "t") == 0){
@@ -286,7 +273,7 @@ char* select_output_file(char* cur_out, char* param_out)
 	int u = -1;
 	while (u < 0 || u > 1){
 	    printf("To use the file %s, enter 1. To use the file %s, enter 0.\n", param_out, cur_out);
-	    scanf("%d", &u);
+	    int res = scanf("%d", &u);
 	}
 
 	if (u == 1){

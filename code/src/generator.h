@@ -21,6 +21,6 @@ int run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda, double 
 void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta, double start_time, double runtime, char *outfile, int outswitch);
 void run_events_nonhom(muParserHandle_t hparser, double lambda, double time_delta, int events, char *outfile, int outswitch);
 void run_time_nstreams(muParserHandle_t hparser, double lambda, double runtime, double *time_delta, int nstreams, char *outfile, int outswitch);
-void generate(char **args);
+void generate(char *paramfile, char *outfile, int nruns);
 
 #endif
