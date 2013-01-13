@@ -1,5 +1,8 @@
 2013-01-13  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
+	* estimator_piecewise.c: Fixed bug with estimation data from the first
+	subinterval not being output to file.
+
 	* defparams.h: New header file containing default parameters for estimators
 	and generator.
 
