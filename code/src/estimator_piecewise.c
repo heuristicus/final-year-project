@@ -76,6 +76,20 @@ est_arr* _estimate_piecewise(char* event_file, char* output_file, double interva
     // We want to do this at least once, specifically if max_breakpoints is zero
     do {
 	printf("Estimating interval [%lf, %lf].\n", start_time, end_time);
+	// If the next interval is too short, make the end time of this interval
+	// the end of the overall interval.
+	if (interval_end - end_time  < (interval_end-interval_start)*min_interval_proportion){
+	    printf("INTERVAL TOO SHORT - RE-ESTIMATING NEW INTERVAL\n");
+	    end_time = interval_end;
+	    printf("Estimating interval [%lf, %lf].\n", start_time, end_time);
+	}
+
+	/* if (interval_end - end_time  < (interval_end-interval_start)*min_interval_proportion){ */
+	/*     printf("INTERVAL TOO SHORT - ADDING TO PREVIOUS\n"); */
+	/*     interval_data[i-1]->end = end_time; */
+	/*     printf("Interval %d is now [%lf, %lf]\n", i-1, interval_data[i-1]->start, interval_data[i-1]->end); */
+	/* } */
+
 	interval_estimate = _estimate_IWLS(event_file, NULL, start_time, end_time, IWLS_subintervals, IWLS_iterations);
 	
 	// Don't bother extending the line if we are at the end of the overall interval,
@@ -109,7 +123,6 @@ est_arr* _estimate_piecewise(char* event_file, char* output_file, double interva
     est_arr* results = malloc(sizeof(est_arr));
     results->len = i;
     results->estimates = interval_data;
-    printf("result 1 a %lf\n", results->estimates[0]->est_a);
     
     return results;
 }
