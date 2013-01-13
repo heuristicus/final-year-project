@@ -1,13 +1,16 @@
 #include "generator.h"
 #include "estimator.h"
+#include "experimenter.h"
 #include "general_util.h"
 
 #define PROG_DESC "This program simulates photon arrival times using a poisson process."
 #define OPT_INFO "OPTIONS\n"						\
     "\t -e or --estimate\n"						\
-    "\t\t Estimate the underlying function from a given set of photon stream data. Requires parameter file.\n\n"	\
+    "\t\t Estimate the underlying function from a given set of photon stream data."\
+    " Requires parameter file.\n\n"					\
     "\t -a or --estimator\n"						\
-    "\t\t The estimation algorithm to use. Options are IWLS (iwls), OLS (ols), Piecewise (pc), Baseline (base)\n\n"	\
+    "\t\t The estimation algorithm to use. Options are IWLS (iwls), OLS (ols), "\
+    "Piecewise (pc), Baseline (base)\n\n"				\
     "\t -d or --defparam\n"						\
     "\t\t Creates a default parameter file with the given name\n\n"	\
     "\t -g or --generate\n"						\
@@ -21,13 +24,16 @@
     "\t -o or --outfile\n"						\
     "\t\t Data will be output to this file.\n\n"			\
     "\t -p or --paramfile\n"						\
-    "\t\t The file containing parameters to use. This can be used to specify a large number of options.\n\n" \
+    "\t\t The file containing parameters to use. This can be used to specify a "\
+    "large number of options.\n\n"					\
     "\t -x or --experiment\n"						\
     "\t\t Run an experiment. Requires parameter file.\n\n"
 #define VERSION "poissonstream alpha v0.3"
 #define BUGREPORT "Report bugs to mxs968@cs.bham.ac.uk"
 
-void run_requested_operations(int generator, int estimator, int experiment, char* paramfile, char* infile, char* outfile, int nruns, char* estimator_type);
+void run_requested_operations(int generator, int estimator, int experiment, 
+			      char* paramfile, char* infile, char* outfile, 
+			      int nruns, char* estimator_type);
 int estimator_valid(char* name);
  
 static char *estimators[] = {"iwls", "ols", "pc", "base"};
@@ -71,8 +77,9 @@ int main(int argc, char *argv[])
     	    // Need to specify which estimator to use and the input file - put all of this in the param file
     	    est = 1;
     	    if (exp + gen + est > 1){
-    		printf("Choose only one of -e, -g or -x. You can run either an estimator, a generator or experiments,"\
-    		       " but not more than one at once.\n");
+    		printf("Choose only one of -e, -g or -x. You can run either an "\
+		       "estimator, a generator or experiments, but not more than "\
+		       "one at once.\n");
     		exit(1);
     	    }
 	    printf("%s\n", optarg);
@@ -94,8 +101,9 @@ int main(int argc, char *argv[])
     	case 'g':
     	    gen = 1;
     	    if (exp + gen + est > 1){
-    		printf("Choose only one of -e, -g or -x. You can run either an estimator, a generator or experiments,"\
-    		       " but not more than one at once.\n");
+    		printf("Choose only one of -e, -g or -x. You can run either an "\
+		       "estimator, a generator or experiments, but not more than "\
+		       "one at once.\n");
     		exit(1);
     	    }
     	    paramfile = strdup(optarg);
@@ -115,8 +123,9 @@ int main(int argc, char *argv[])
     	case 'x':
     	    exp = 1;
     	    if (exp + gen + est > 1){
-    		printf("Choose only one of -e, -g or -x. You can run either an estimator, a generator or experiments," \
-    		       "but not more than one at once.\n");
+    		printf("Choose only one of -e, -g or -x. You can run either an "\
+		       "estimator, a generator or experiments, but not more than "\
+		       "one at once.\n");
     		exit(1);
     	    }
     	    paramfile = strdup(optarg);
@@ -136,21 +145,28 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-void run_requested_operations(int generator, int estimator, int experiment, char* paramfile, char* infile, char* outfile, int nruns, char* estimator_type)
+void run_requested_operations(int generator, int estimator, int exp, char* paramfile,
+			      char* infile, char* outfile, int nruns, char* estimator_type)
 {
     if (generator == 1){
-	generate(paramfile, outfile, nruns);
+	if (paramfile == NULL){
+	    printf("You must specify a parameter file to use.\nTry running \"launcher"\
+		   " -g [your parameter file] \"\n");
+	    exit(1);
+	}
+	generate(paramfile, outfile);
     } else if (estimator == 1){
 	if (paramfile == NULL){
-	    printf("You must specify a parameter file to use.\nTry running \"launcher -e [your parameter file] -i iwls\"\n");
+	    printf("You must specify a parameter file to use.\nTry running \"launcher"\
+		   " -e [your parameter file] -i iwls\"\n");
 	    exit(1);
 	}
 	estimate(paramfile, NULL, NULL, estimator_type);
-    } else if (experiment == 1){
-	printf("experimenting\n");
+    } else if (exp == 1){
+	experiment(paramfile);
     } else {
-	printf("No action specified. You can run either an estimator, a generator or experiments by using "\
-	       "the -e, -g or -x switches respectively.\n");
+	printf("No action specified. You can run either an estimator, a generator or"\
+	       " experiments by using the -e, -g or -x switches respectively.\n");
     }
 }
 

@@ -202,7 +202,28 @@ void print_string_array(char* message, char** array, int len)
 }
 
 /*
+ * Checks that the paramlist provided contains parameters with names corresponding to the
+ * strings provided in the required_params array. Returns 1 if the parameters are present,
+ * 0 otherwise.
+ */
+int has_required_params(paramlist* params, char** required_params, int len)
+{
+    int i;
+    int ok = 1;
+    
+    for (i = 0; i < len; ++i) {
+	if (get_param(params, required_params[i]) == NULL){
+	    printf("Missing parameter: %s\n", required_params[i]);
+	    ok = 0;
+	}
+    }
+
+    return ok;
+}
+
+/*
  * Creates a parameter file with default parameters and comments.
+ * Returns 1 if the file could not be opened, 0 if successful
  */
 int create_default_param_file(char* filename)
 {
@@ -211,7 +232,7 @@ int create_default_param_file(char* filename)
 
     if (fp == NULL){
 	perror("Could not open file");
-	return -1;
+	return 1;
     }
 
     // i/o files and stuff

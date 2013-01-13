@@ -36,10 +36,10 @@
 /* 
  * Creates a filename to use for data output with the format:
  * prefix_dd-mm-yyyy_hr:min:sec_usec.dat
+ * the usec parameters specifies whether to add nanoseconds (0 is no)
  */
-char* generate_outfile()
+char* generate_outfile(char* prefix, int usec)
 {
-    char* prefix = "output_poisson";
     char* datetime = malloc(MAX_DATE_LENGTH * sizeof(char));
     char* fname = malloc((MAX_DATE_LENGTH + strlen(prefix)) * sizeof(char));
     time_t timer = time(NULL);
@@ -49,8 +49,12 @@ char* generate_outfile()
 
     strftime(datetime, MAX_DATE_LENGTH, "%d-%m-%Y_%H:%M:%S", localtime(&timer));
     
-    sprintf(fname, "%s_%s_%d.dat", prefix, datetime, (int) t.tv_usec);
-
+    if (usec){
+	sprintf(fname, "%s_%s_%d.dat", prefix, datetime, (int) t.tv_usec);
+    } else {
+	sprintf(fname, "%s_%s.dat", prefix, datetime);
+    }
+    
     free(datetime);
     
     return fname;

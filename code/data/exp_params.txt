@@ -1,0 +1,11 @@
+base_outfile experiment_data
+outfile exp
+
+# Number of times to repeat each experiment
+repetitions 5
+seed 0
+
+# Whether or not to regenerate the photon stream for each experiment
+regenerate_stream 1
+
+a 2,3...5

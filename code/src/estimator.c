@@ -1,13 +1,14 @@
 #include "estimator.h"
 #include "paramlist.h"
 #include "file_util.h"
+#include "general_util.h"
 
-static char *ols_params[] = {"start_time", "interval_time", "ols_subintervals"};
-static char *iwls_params[] = {"iwls_iterations", "start_time", 
+static char* ols_params[] = {"start_time", "interval_time", "ols_subintervals"};
+static char* iwls_params[] = {"iwls_iterations", "start_time", 
 			      "interval_time", "iwls_subintervals"};
-static char *pc_params[] = {"start_time", "interval_time", "pc_iwls_iterations", 
+static char* pc_params[] = {"start_time", "interval_time", "pc_iwls_iterations", 
 			    "pc_iwls_subintervals", "pc_max_extension", "pc_max_breakpoints"};
-static char *base_params[] = {"start_time", "interval_time", "base_iwls_iterations", 
+static char* base_params[] = {"start_time", "interval_time", "base_iwls_iterations", 
 			      "base_iwls_subintervals", "base_max_extension", "base_max_breakpoints"};
 
 /*
@@ -104,23 +105,4 @@ void run_base(paramlist* params, char* infile, char* outfile)
 			   base_params, sizeof(base_params)/sizeof(char*));
 	exit(1);
     }
-}
-
-/*
- * Checks that the paramlist provided contains parameters with names corresponding to the
- * strings provided in the required_params array.
- */
-int has_required_params(paramlist* params, char** required_params, int len)
-{
-    int i;
-    int ok = 1;
-    
-    for (i = 0; i < len; ++i) {
-	if (get_param(params, required_params[i]) == NULL){
-	    printf("Missing parameter: %s\n", required_params[i]);
-	    ok = 0;
-	}
-    }
-
-    return ok;
 }

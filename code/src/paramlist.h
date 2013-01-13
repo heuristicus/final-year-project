@@ -22,5 +22,8 @@ char* get_param_val(paramlist *head, char *param_name);
 char* get_string_param(paramlist* head, char* param_name);
 double get_double_param(paramlist* head, char* param_name);
 int get_int_param(paramlist* head, char* param_name);
+int set_double_param(paramlist* head, char* param_name, double new_value);
+int set_int_param(paramlist* head, char* param_name, int new_value);
+int set_string_param(paramlist* head, char* param_name, char* new_value);
 
 #endif

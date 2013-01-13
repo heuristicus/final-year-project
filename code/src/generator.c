@@ -9,83 +9,82 @@
 #define PARSER_MAXVARS 10
 
 static int generated_outfile = 0;
+static char* generator_params[] = {"nruns", "lambda", "interval_time",
+				   "timedelta", "verbosity", "expression"};
 
 void on_error(muParserHandle_t hParser);
-muFloat_t* var_factory(const muChar_t* a_szName, void *pUserData);
-int check_expr_vars(muParserHandle_t hparser, struct paramlist *params);
+muFloat_t* var_factory(const muChar_t* a_szName, void* pUserData);
+int check_expr_vars(muParserHandle_t hparser, struct paramlist* params);
 double* parser_tptr(muParserHandle_t hparser);
 void view_expr(muParserHandle_t hparser);
 
 //#define VERBOSE
+
+void generate(char* paramfile, char* outfile)
+{
+    paramlist* params = get_parameters(paramfile);
+
+    if (outfile == NULL){
+	outfile = get_string_param(params, "outfile");
+	if (outfile == NULL){
+	    printf("You must specify an output file to use. Add \"outfile\" to your"\
+		   "parameter file.\n");
+	    exit(1);
+   	}
+    }
+    
+    if (has_required_params(params, generator_params, sizeof(generator_params)/sizeof(char*))){
+	
+    } else {
+	print_string_array("Some parameters required for generating streams are missing. " \
+			   "Ensure that your parameter file contains the following entries"\
+			   " and try again. If you have not defined the expression to use, "\
+			   " this can be done by adding something like \"expression a+b*x\""\
+			   " and defining values for the variables; \"a 10\" etc.",
+			   generator_params, sizeof(generator_params)/sizeof(char*));
+	exit(1);
+    }
+
+
+    int nruns = get_int_param(params, "nruns");
+    double lambda = get_double_param(params, "lambda");
+    double interval_time = get_double_param(params, "interval_time");
+    char* tdelta = get_string_param(params, "timedelta");
+    len_double_arr* time_delta = malloc(sizeof(len_double_arr*));
+    
+    // extract data from the timedelta parameter
+    char** vals = string_split(tdelta, ',');
+    
+    time_delta->len = atoi(vals[0]) - 1;
+    time_delta->data = malloc((time_delta->len + 1) * sizeof(double));
+
+    int i;
+    
+    for (i = 1; i < time_delta->len; ++i) {
+	time_delta->data[i - 1] = atof(vals[i]);
+    }
+    free_pointer_arr((void**) vals, atoi(vals[0]));
+
+    int output_verbosity = get_int_param(params, "verbosity");
+    char* expression = get_string_param(params, "expression");
+
+    _generate(params, outfile, interval_time, lambda, time_delta, output_verbosity,
+	      nruns, expression);
+}
 
 /*
  * Initialises the generator with some values specified by the arguments passed to the program,
  * and those that are contained in the parameter file, if there is one (there should be).
  * The order in which the arguments are is defined inside start.c
  */
-void generate(char *paramfile, char *outfile, int nruns)
+void _generate(paramlist* params, char* outfile, double interval_time, double lambda, 
+	       len_double_arr* time_delta, int output_verbosity, int nruns, char* expr)
 {
     int i;
-    paramlist *params = NULL;
-    char *tmp;
-
-    double interval_time = 10.0;
-    double lambda = 100.0;
-    double *time_delta;
-    int tdlen;
-    int outswitch = 3;
-    char *expr;
-
-    if (paramfile != NULL){
-	params = get_parameters(paramfile);
-    } else {
-	printf("You have not specified a parameter file. Please specify one in the command line call.\n");
-	exit(1);
-    }
-
-    if ((outfile = select_output_file(outfile, get_string_param(params, "outfile"))) == NULL){
-	free(params);
-	return;
-    }
-
-    // Check param files for parameters and use those instead of defaults if they exist
-    if ((tmp = get_string_param(params, "nruns")) != NULL)
-	nruns = atoi(tmp);
-
-    if ((tmp = get_string_param(params, "lambda")) != NULL)
-	lambda = atol(tmp);
-
-    if ((tmp = get_string_param(params, "interval_time")) != NULL)
-    	interval_time = atol(tmp);
-
-    if ((tmp = get_string_param(params, "timedelta")) != NULL){
-	char **vals = string_split(tmp, ',');
-	tdlen = atoi(vals[0]) - 1;
-	time_delta = malloc((tdlen + 1) * sizeof(double));
-	
-	for (i = 1; i < tdlen + 1; ++i) {
-	    time_delta[i - 1] = atof(vals[i]);
-	}
-
-	free_pointer_arr((void**) vals, atoi(vals[0]));
-    } else { // setup default time delta for one loop
-	time_delta = malloc(sizeof(double));
-	time_delta[0] = 0.0;
-	tdlen = 1;
-    }
-
-    if ((tmp = get_string_param(params, "verbosity")) != NULL)
-	outswitch = atoi(tmp);
-
-    if ((tmp = get_string_param(params, "expression")) != NULL){
-	expr = tmp;
-    } else {
-	printf("You have not defined an expression to use.\nPlease do so in the parameter file (add \"expression a+b*x\" and define values for the variables; \"a 10\" etc.)\n");
-	exit(1);
-    }
 
 #ifdef VERBOSE
-    printf("Number of runs: %d\nLambda: %lf\nInterval time: %lf\nTime deltas: ", nruns, lambda, interval_time);
+    printf("Number of runs: %d\nLambda: %lf\nInterval time: %lf\nTime deltas: ", nruns, 
+	   lambda, interval_time);
 
     for (i = 0; i < tdlen; ++i) {
 	printf("%lf", time_delta[i]);
@@ -105,7 +104,7 @@ void generate(char *paramfile, char *outfile, int nruns)
     mupSetExpr(hparser, expr);
 
     if (!check_expr_vars(hparser, params) || mupError(hparser)){
-	printf("Expression is invalid. Exiting.\n");
+	printf("Expression is invalid. Check that you have defined all the variables.\n");
 	mupRelease(hparser);
 
 	if (generated_outfile)
@@ -116,14 +115,13 @@ void generate(char *paramfile, char *outfile, int nruns)
 	exit(1);
     }
     
-    run_time_nstreams(hparser, lambda, interval_time, time_delta, nruns, outfile, outswitch);
+    run_time_nstreams(hparser, lambda, interval_time, time_delta, nruns, outfile, output_verbosity);
     
     mupRelease(hparser);
 
     if (generated_outfile)
 	free(outfile);
 
-    free_list(params);
     free(time_delta);
 }
 
@@ -132,7 +130,7 @@ void generate(char *paramfile, char *outfile, int nruns)
  * variable specified in the parameter file, and that a variable t is
  * present in the equation.
  */
-int check_expr_vars(muParserHandle_t hparser, struct paramlist *params)
+int check_expr_vars(muParserHandle_t hparser, struct paramlist* params)
 {
     char* tmp;
     int valid = 1;
@@ -146,9 +144,9 @@ int check_expr_vars(muParserHandle_t hparser, struct paramlist *params)
 	valid = 0;
     } else {
 	int i;
-	const muChar_t *mu_vname = 0;
-	muFloat_t *vaddr = 0;
-	char *vname;
+	const muChar_t* mu_vname = 0;
+	muFloat_t* vaddr = 0;
+	char* vname;
 	    
 	for (i = 0; i < nvars; ++i){
 	    // Get the variable name and value from the parser
@@ -164,7 +162,7 @@ int check_expr_vars(muParserHandle_t hparser, struct paramlist *params)
 		printf("Value for %s is not defined in param file. Aborting.\n", vname);
 		valid = 0;
 		break;
-	    } 
+	    }
 	}
 
 	if (tdef != 1){
@@ -184,9 +182,9 @@ void view_expr(muParserHandle_t hparser)
     int nvars = mupGetExprVarNum(hparser);
         
     int i;
-    const muChar_t *mu_vname = 0;
-    muFloat_t *vaddr = 0;
-    char *vname;
+    const muChar_t* mu_vname = 0;
+    muFloat_t* vaddr = 0;
+    char* vname;
 	    
     for (i = 0; i < nvars; ++i){
 	// Get the variable name and value from the parser
@@ -200,7 +198,7 @@ void view_expr(muParserHandle_t hparser)
  * Factory for creating new muparser variables. Space is automatically allocated
  * by the parser. Values can be retrieved by calling mupGetExprVar().
  */
-muFloat_t* var_factory(const muChar_t* varname, void *pUserData)
+muFloat_t* var_factory(const muChar_t* varname, void* pUserData)
 {
   static muFloat_t var_buf[PARSER_MAXVARS];
   static int num_vars = 0;
@@ -242,15 +240,15 @@ void on_error(muParserHandle_t hparser)
  * or just the event times.
  * *IMPORTANT* The value of lambda MUST exceed the maximum value of the function! *IMPORTANT*
  */
-void run_time_nstreams(muParserHandle_t hparser, double lambda, double end_time, double *time_delta, int nstreams, char *outfile, int outswitch)
+void run_time_nstreams(muParserHandle_t hparser, double lambda, double end_time, len_double_arr* time_delta, int nstreams, char* outfile, int outswitch)
 {
     int i;
             
     for (i = 0; i < nstreams; ++i){
 	printf("Generating event stream %d\n", i);
-	char *out = malloc(strlen(outfile) + strlen("_stream_n") + 10);
+	char* out = malloc(strlen(outfile) + strlen("_stream_n") + 10);
 	sprintf(out, "%s_stream_%d", outfile, i); // save each stream to a separate file
-	run_time_nonhom(hparser, lambda, time_delta[i], 0, end_time, out, outswitch);
+	run_time_nonhom(hparser, lambda, time_delta->data[i], 0, end_time, out, outswitch);
 	free(out);
     }
 
@@ -266,7 +264,7 @@ char* select_output_file(char* cur_out, char* param_out)
     
     if (param_out == NULL && cur_out == NULL){
 	printf("No parameter for the output file found in the parameters file or command line arguments. Auto-generating...\n");
-	outfile = generate_outfile();
+	outfile = generate_outfile("generator_output", 0);
 	generated_outfile = 1;
     } else if (param_out != NULL && cur_out != NULL){
 	printf("Output file found in both parameter file and command line arguments.\n");
@@ -298,13 +296,13 @@ char* select_output_file(char* cur_out, char* param_out)
  * The outswitch parameter determines what data will be output to the file.
  * 
  */
-void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta, double start_time, double end_time, char *outfile, int outswitch)
+void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta, double start_time, double end_time, char* outfile, int outswitch)
 {
-    double *et = malloc(DEFAULT_ARR_SIZE * sizeof(double));
-    double *lv = malloc(DEFAULT_ARR_SIZE * sizeof(double));
+    double* et = malloc(DEFAULT_ARR_SIZE * sizeof(double));
+    double* lv = malloc(DEFAULT_ARR_SIZE * sizeof(double));
     
-    double **eptr = &et;
-    double **lptr = &lv;
+    double** eptr = &et;
+    double** lptr = &lv;
 
     int size = run_to_time_non_homogeneous(hparser, lambda, time_delta, start_time, end_time, eptr, lptr, DEFAULT_ARR_SIZE);
 
@@ -315,8 +313,8 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
     if (outswitch == 2){ // Outputs all data, including bin counts
 	int num_intervals = (end_time - start_time) / DEFAULT_WINDOW_SIZE;
 
-	int *bin_counts = sum_events_in_interval(*eptr, size, start_time, end_time, num_intervals);
-	double *midpoints = get_interval_midpoints(start_time, end_time, num_intervals);
+	int* bin_counts = sum_events_in_interval(*eptr, size, start_time, end_time, num_intervals);
+	double* midpoints = get_interval_midpoints(start_time, end_time, num_intervals);
 
 #ifdef VERBOSE
 	int i;
@@ -334,7 +332,7 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
 	free(bin_counts);
     }
     if (outswitch == 3){
-	char *tmp = malloc(strlen(outfile) + 4); // space for extra chars and null terminator
+	char* tmp = malloc(strlen(outfile) + 4); // space for extra chars and null terminator
 	sprintf(tmp, "%s_ev", outfile);
 	double_to_file(tmp, "w", *eptr, size);
 	
@@ -344,8 +342,8 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
 
 	int num_intervals = (end_time - start_time) / DEFAULT_WINDOW_SIZE;
 
-	int *bin_counts = sum_events_in_interval(*eptr, size, start_time, end_time, num_intervals);
-	double *midpoints = get_interval_midpoints(start_time, end_time, num_intervals);
+	int* bin_counts = sum_events_in_interval(*eptr, size, start_time, end_time, num_intervals);
+	double* midpoints = get_interval_midpoints(start_time, end_time, num_intervals);
 
 #ifdef VERBOSE
 	int i;
@@ -374,7 +372,7 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
  * Puts event times into the array passed in the parameters. 
  * Puts a -1 in the array location after the last event
  */
-void generate_event_times_homogenous(double lambda, double time, int max_events, double *event_times)
+void generate_event_times_homogenous(double lambda, double time, int max_events, double* event_times)
 {
     init_rand(0.0);
         
@@ -401,7 +399,7 @@ void generate_event_times_homogenous(double lambda, double time, int max_events,
  * Returns the final array location in which there is something 
  * stored.
  */
-int run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda, double time_delta, double start_time, double end_time, double **event_times, double **lambda_vals, int arr_len)
+int run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda, double time_delta, double start_time, double end_time, double** event_times, double** lambda_vals, int arr_len)
 {
     init_rand(0.0);
             
@@ -450,10 +448,10 @@ int run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda, double 
  * and prints output data to a file. The outswitch parameter determines whether
  * all data will be output to the file, or just the event times.
  */
-void run_events_nonhom(muParserHandle_t hparser, double lambda, double start_time, int events, char *outfile, int outswitch)
+void run_events_nonhom(muParserHandle_t hparser, double lambda, double start_time, int events, char* outfile, int outswitch)
 {
-    double *et = malloc(events * sizeof(double));
-    double *lv = malloc(events * sizeof(double));
+    double* et = malloc(events * sizeof(double));
+    double* lv = malloc(events * sizeof(double));
 
     run_to_event_limit_non_homogeneous(hparser, lambda, start_time, events, et, lv);
     mult_double_to_file(outfile, "a", et, lv, events);
@@ -465,7 +463,7 @@ void run_events_nonhom(muParserHandle_t hparser, double lambda, double start_tim
  * will be populated with the time of an event and the result of 
  * evaluating lambda(t) at that time.
  */
-void run_to_event_limit_non_homogeneous(muParserHandle_t hparser, double lambda, double t_delta, int max_events, double *event_times, double *lambda_vals)
+void run_to_event_limit_non_homogeneous(muParserHandle_t hparser, double lambda, double t_delta, int max_events, double* event_times, double* lambda_vals)
 {
     init_rand(0.0);
     
@@ -504,7 +502,7 @@ void run_to_event_limit_non_homogeneous(muParserHandle_t hparser, double lambda,
  * Puts event times into the array passed in the parameters. 
  * Puts a -1 in the array location after the last event
  */
-void generate_event_times_homogeneous(double lambda, double time, int max_events, double *event_times)
+void generate_event_times_homogeneous(double lambda, double time, int max_events, double* event_times)
 {
     init_rand(0.0);
         

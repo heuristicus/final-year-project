@@ -9,7 +9,7 @@
 void standard_out(char filename, void *arr1, void *arr2, int len, char *arrtype);
 void mult_double_to_file(char *filename, char *mode, double *arr1, double *arr2, int len);
 void mult_int_to_file(char *filename, char *mode, int *arr1, int *arr2, int len);
-char *generate_outfile();
+char *generate_outfile(char* prefix, int usec);
 paramlist *get_parameters(char *filename);
 int valid_param(char *pname);
 char* select_output_file(char* cur_out, char *param_out);
