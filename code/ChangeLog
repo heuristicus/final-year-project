@@ -1,4 +1,14 @@
+2013-01-13  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* defparams.h: New header file containing default parameters for estimators
+	and generator.
+
+	* general_util.c: Added a function for generating a default parameter file.
+
 2013-01-11  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* estimator_piecewise.c: Removed preprocessor variables and modified functions
+	to take additional parameters instead.
 
 	* estimators: Added a helper function to the estimators so that you do not
 	have to call them with all the parameters specified if it is not necessary.

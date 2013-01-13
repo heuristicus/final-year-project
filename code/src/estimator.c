@@ -1,7 +1,6 @@
 #include "estimator.h"
 #include "paramlist.h"
 #include "file_util.h"
-#include "general_util.h"
 
 static char *ols_params[] = {"start_time", "interval_time", "ols_subintervals"};
 static char *iwls_params[] = {"iwls_iterations", "start_time", 

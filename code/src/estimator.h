@@ -7,7 +7,6 @@
 
 #define EST_TYPE_ERROR "%s is not a valid estimator. Try -a [ols|iwls|pc|base].\n"
 
-
 typedef struct
 {
     double est_a;
@@ -28,7 +27,6 @@ void run_ols(paramlist* params, char* infile, char* outfile);
 void run_iwls(paramlist* params, char* infile, char* outfile);
 void run_pc(paramlist* params, char* infile, char* outfile);
 void run_base(paramlist* params, char* infile, char* outfile);
-
 
 // Use these rather than the functions below.
 est_data* estimate_OLS(paramlist* params, char *infile, char *outfile);

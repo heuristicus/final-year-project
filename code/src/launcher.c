@@ -1,5 +1,6 @@
 #include "generator.h"
 #include "estimator.h"
+#include "general_util.h"
 
 #define PROG_DESC "This program simulates photon arrival times using a poisson process."
 #define OPT_INFO "OPTIONS\n"						\
@@ -7,14 +8,16 @@
     "\t\t Estimate the underlying function from a given set of photon stream data. Requires parameter file.\n\n"	\
     "\t -a or --estimator\n"						\
     "\t\t The estimation algorithm to use. Options are IWLS (iwls), OLS (ols), Piecewise (pc), Baseline (base)\n\n"	\
+    "\t -d or --defparam\n"						\
+    "\t\t Creates a default parameter file with the given name\n\n"	\
     "\t -g or --generate\n"						\
-    "\t\t Generate a photon stream. Requires parameter file.\n\n"				\
+    "\t\t Generate a photon stream. Requires parameter file.\n\n"       \
     "\t -h or --help\n"							\
     "\t\t Display this message.\n\n"					\
-    "\t -i or --infile\n"						\
-    "\t\t Specify the file to use as input to the estimator.\n\n"	\
     "\t -n or --numruns\n"						\
     "\t\t Number of times to run generation. Use this to generate multiple streams.\n\n" \
+    "\t -i or --infile\n"						\
+    "\t\t Specify the file to use as input to the estimator.\n\n"	\
     "\t -o or --outfile\n"						\
     "\t\t Data will be output to this file.\n\n"			\
     "\t -p or --paramfile\n"						\
@@ -34,8 +37,9 @@ static struct option opts[] =
 	{"generate", required_argument, 0, 'g'},
 	{"estimate", required_argument, 0, 'e'},
 	{"estimator", required_argument, 0, 'a'},
-	{"paramfile",  required_argument, 0, 'p'},
+	{"infile",  required_argument, 0, 'i'},
 	{"outfile",  required_argument, 0, 'o'},
+	{"defparam", required_argument, 0, 'd'},
 	{"numruns",    required_argument, 0, 'n'},
 	{"help", no_argument, 0, 'h'},
 	{0, 0, 0, 0}
@@ -43,7 +47,6 @@ static struct option opts[] =
 
 int main(int argc, char *argv[])
 {
-
     int c;
     int opt_ind;
     
@@ -62,7 +65,7 @@ int main(int argc, char *argv[])
 	exit(1);
     }
         
-    while((c = getopt_long(argc, argv, "o:p:n:he:g:x:ia:", opts, &opt_ind)) != -1){
+    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:h", opts, &opt_ind)) != -1){
     	switch(c){
     	case 'e':
     	    // Need to specify which estimator to use and the input file - put all of this in the param file
@@ -84,6 +87,10 @@ int main(int argc, char *argv[])
 		estimator_type = strdup(optarg);
 	    }
 	    break;
+	case 'd':
+	    create_default_param_file(optarg);
+	    exit(1);
+	    break;
     	case 'g':
     	    gen = 1;
     	    if (exp + gen + est > 1){
@@ -104,9 +111,6 @@ int main(int argc, char *argv[])
     	    break;
     	case 'o':
     	    outfile = strdup(optarg);
-    	    break;
-    	case 'p':
-    	    paramfile = strdup(optarg);
     	    break;
     	case 'x':
     	    exp = 1;

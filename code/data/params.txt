@@ -7,14 +7,17 @@ outfile output.txt
 # file to which estimators output data
 est_outfile est_out.txt
 
-# this will be appended to the output file for each separate stream. The stream number will be added at the end.
+# this will be appended to the output file for each separate stream. The stream
+# number will be added at the end.
 stream_ext _stream_
 
 # define the verbosity of output to data files. 
 # 0 output only event data for each run
 # 1 output event times and lambda values for each run
-# 2 output event time and lambda values for each run, as well as midpoints and bin counts, to a single file
-# 3 output the above, but also save a file with only event data in it (all data is saved as {filename}_ad, events as {filename}_ev)
+# 2 output event time and lambda values for each run, as well as midpoints and 
+# bin counts, to a single file
+# 3 output the above, but also save a file with only event data in it (all data 
+# is saved as {filename}_ad, events as {filename}_ev)
 verbosity 3
 
 # data input
