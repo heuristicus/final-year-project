@@ -1,7 +1,7 @@
-#include "estimator.h"
-
 #ifndef _GEN_UTIL_H
 #define _GEN_UTIL_H
+
+#include "estimator.h"
 
 void free_pointer_arr(void** arr, int length);
 char** string_split(char* string, char separator);

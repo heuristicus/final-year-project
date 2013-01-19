@@ -30,6 +30,7 @@ void estimate(char* paramfile, char* infile, char* outfile, char* estimator_type
 	       "\"est_outfile\" to your parameter file.\n");
 	exit(1);
     }
+    printf("outputting to %s\n", outfile);
     
     if (strcmp("ols", estimator_type) == 0){
 	run_ols(params, infile, outfile);

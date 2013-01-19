@@ -1,10 +1,10 @@
+#ifndef _FUTIL_H
+#define _FUTIL_H
+
 #include "paramlist.h"
 #include "estimator.h"
 #include <stdlib.h>
 #include <stdio.h>
-
-#ifndef _FUTIL_H
-#define _FUTIL_H
 
 void standard_out(char filename, void *arr1, void *arr2, int len, char *arrtype);
 void mult_double_to_file(char *filename, char *mode, double *arr1, double *arr2, int len);

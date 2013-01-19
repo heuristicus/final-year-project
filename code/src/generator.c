@@ -49,7 +49,7 @@ void generate(char *paramfile, char *outfile, int nruns)
     }
 
     // Check param files for parameters and use those instead of defaults if they exist
-    if ((tmp = get_string_param(params, "nruns")) != NULL)
+    if (nruns == 1 && (tmp = get_string_param(params, "nruns")) != NULL)
 	nruns = atoi(tmp);
 
     if ((tmp = get_string_param(params, "lambda")) != NULL)

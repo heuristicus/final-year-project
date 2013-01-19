@@ -1,3 +1,6 @@
+#ifndef _DEFPARAMS_H
+#define _DEFPARAMS_H
+
 // output
 #define DEFAULT_OUTFILE "output.dat"
 #define DEFAULT_EST_OUTFILE "est_out.dat"
@@ -32,3 +35,5 @@
 #define DEFAULT_MIN_INTERVAL_PROP 0.1
 #define DEFAULT_PMF_THRESHOLD 0.02
 #define DEFAULT_PMF_SUM_THRESHOLD 0.85
+
+#endif

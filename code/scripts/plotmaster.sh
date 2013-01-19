@@ -10,6 +10,7 @@ You will need to pass in some files to plot them. Run this script with the switc
 OPTIONS:
   -h   show this message
   -s   plot graph for multiple streams
+  -S   plot graph for multiple streams with multiple estimates
   -l   plot graph with linear estimates
   -L   plot linear estimate graph with extra data
   -e   plot graph with data from the given estimate. Makes no assumptions about the type of the estimate.
@@ -23,7 +24,7 @@ texify (){
     latex -interaction=nonstopmode $1.tex
     dvips -o $1.ps $1.dvi
     ps2pdf $1.ps
-    rm $1.tex $1.ps $1.dvi $1.log $1.aux $1-inc.eps
+#    rm $1.tex $1.ps $1.dvi $1.log $1.aux $1-inc.eps
     evince $1.pdf&
 }
 
@@ -32,10 +33,13 @@ if [ $# -eq 0 ]; then
     exit
 fi
 
-while getopts "slLpPbeh" opt; do
+while getopts "sSlLpPbeh" opt; do
   case $opt in
     s)
       s=1
+      ;;
+    S)
+      S=1
       ;;
     l)
       l=1
@@ -100,5 +104,19 @@ call "../plots/blplot.plt" "$2" "$3" "$4" "$5"
 
 EOF
 texify $2
-    exit
+exit
+fi
+
+if [ $S ]; then
+    if [ $# -ne 6 ]; then
+	echo -e "Missing or excess arguments when plotting multiple stream.\nusage: `basename $0` -b outfile stream_1_data stream_1_estimate stream_2_data stream_2_estimate"
+	exit
+    fi
+gnuplot << EOF
+# $2 is the file to output to, $3 is all data from the generator for stream 1, $4 is the estimate data for stream 1, $5 generator data from stream 2, $6 is estimate data for stream 2.
+call "../plots/multiest.plt" "$2" "$3" "$4" "$5" "$6"
+
+EOF
+texify $2
+exit
 fi

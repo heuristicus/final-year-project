@@ -1,34 +1,4 @@
-#include "generator.h"
-#include "estimator.h"
-#include "general_util.h"
-
-#define PROG_DESC "This program simulates photon arrival times using a poisson process."
-#define OPT_INFO "OPTIONS\n"						\
-    "\t -e or --estimate\n"						\
-    "\t\t Estimate the underlying function from a given set of photon stream data. Requires parameter file.\n\n"	\
-    "\t -a or --estimator\n"						\
-    "\t\t The estimation algorithm to use. Options are IWLS (iwls), OLS (ols), Piecewise (pc), Baseline (base)\n\n"	\
-    "\t -d or --defparam\n"						\
-    "\t\t Creates a default parameter file with the given name\n\n"	\
-    "\t -g or --generate\n"						\
-    "\t\t Generate a photon stream. Requires parameter file.\n\n"       \
-    "\t -h or --help\n"							\
-    "\t\t Display this message.\n\n"					\
-    "\t -n or --numruns\n"						\
-    "\t\t Number of times to run generation. Use this to generate multiple streams.\n\n" \
-    "\t -i or --infile\n"						\
-    "\t\t Specify the file to use as input to the estimator.\n\n"	\
-    "\t -o or --outfile\n"						\
-    "\t\t Data will be output to this file.\n\n"			\
-    "\t -p or --paramfile\n"						\
-    "\t\t The file containing parameters to use. This can be used to specify a large number of options.\n\n" \
-    "\t -x or --experiment\n"						\
-    "\t\t Run an experiment. Requires parameter file.\n\n"
-#define VERSION "poissonstream alpha v0.3"
-#define BUGREPORT "Report bugs to mxs968@cs.bham.ac.uk"
-
-void run_requested_operations(int generator, int estimator, int experiment, char* paramfile, char* infile, char* outfile, int nruns, char* estimator_type);
-int estimator_valid(char* name);
+#include <launcher.h>
  
 static char *estimators[] = {"iwls", "ols", "pc", "base"};
 static struct option opts[] =
@@ -145,7 +115,7 @@ void run_requested_operations(int generator, int estimator, int experiment, char
 	    printf("You must specify a parameter file to use.\nTry running \"launcher -e [your parameter file] -i iwls\"\n");
 	    exit(1);
 	}
-	estimate(paramfile, NULL, NULL, estimator_type);
+	estimate(paramfile, infile, outfile, estimator_type);
     } else if (experiment == 1){
 	printf("experimenting\n");
     } else {

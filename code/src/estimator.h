@@ -1,9 +1,10 @@
+#ifndef _ESTIMATOR_H
+#define _ESTIMATOR_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "paramlist.h"
 
-#ifndef _ESTIMATOR_H
-#define _ESTIMATOR_H
 
 #define EST_TYPE_ERROR "%s is not a valid estimator. Try -a [ols|iwls|pc|base].\n"
 
