@@ -345,7 +345,8 @@ void output_estimates(char *filename, est_data **estimates, int len)
 
 /*
  * Prints a single set of estimates to an output file. This will calculate
- * the value of the function for each second within the interval.
+ * the value of the function for each second within the interval. The mode
+ * specifies the mode to open the file with, as for the fopen function.
  */
 void estimate_to_file(char *filename, est_data *estimate, char *mode)
 {
