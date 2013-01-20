@@ -271,9 +271,10 @@ char* select_output_file(char* cur_out, char* param_out)
     } else if (param_out != NULL && cur_out != NULL){
 	printf("Output file found in both parameter file and command line arguments.\n");
 	int u = -1;
-	while (u < 0 || u > 1){
+	int res = 0;
+	while (res == 0 || (u < 0 || u > 1)){
 	    printf("To use the file %s, enter 1. To use the file %s, enter 0.\n", param_out, cur_out);
-	    int res = scanf("%d", &u);
+	    res = scanf("%d", &u);
 	}
 
 	if (u == 1){

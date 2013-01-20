@@ -157,7 +157,7 @@ double* get_event_subinterval(double *events, double interval_start, double inte
 /*
  * Prints the estimates contained within the given estimate array
  */
-void print_estimates(est_arr *estimates)
+void print_estimates(est_arr* estimates)
 {
     int len = estimates->len;
     

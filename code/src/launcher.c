@@ -97,11 +97,14 @@ int main(int argc, char *argv[])
     	}
     }
 
-    
-
-    //    printf("numruns %d, exp %d, gen %d, est %d, paramfile %s, outfile %s\n", nruns, exp, gen, est, paramfile, outfile);
+    // printf("numruns %d, exp %d, gen %d, est %d, paramfile %s, outfile %s\n", nruns, exp, gen, est, paramfile, outfile);
 
     run_requested_operations(gen, est, exp, paramfile, infile, outfile, nruns, estimator_type);
+
+    free(estimator_type);
+    free(paramfile);
+    free(infile);
+    free(outfile);
 
     return 0;
 }

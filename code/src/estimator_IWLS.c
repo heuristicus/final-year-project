@@ -2,6 +2,7 @@
 #include "math_util.h"
 #include "file_util.h"
 #include "paramlist.h"
+#include "general_util.h"
 
 //#define DEBUG
 
@@ -22,19 +23,11 @@ static double constraint_b_IWLS(int* bin_counts, double* midpoints, double inter
 static double* lambda_estimate(double* lambda, double* midpoints, double a, double b, double interval_time, int num_subintervals);
 static void weight_estimate(double* weights, double* lambda, int num_subintervals);
 
-/* int main(int argc, char* argv[])* /
-/* {* /
-/*     free(estimate_IWLS(argv[1], argv[2], 0, 100, 75, 3));* /
-/*     //free(estimate_IWLS(argv[1], argv[3], 0, 25, 50, 2));* /
-/*     return 0;* /
-/* }* /
-
-
 /*
  * Helper function for OLS estimator. Extracts relevant parameters from a parameter list and
  * passes them to the estimator
  */
-est_data* estimate_OLS(paramlist* params, char* infile, char* outfile)
+est_arr* estimate_OLS(paramlist* params, char* infile, char* outfile)
 {
     int subint = get_int_param(params, "ols_subintervals");
     double start = get_int_param(params, "start_time");
@@ -48,12 +41,12 @@ est_data* estimate_OLS(paramlist* params, char* infile, char* outfile)
  * is equivalent to a single iteration of the IWLS method. Returns a, b and the SSE calculated
  * for the estimate.
  */
-est_data* _estimate_OLS(char* infile, char* outfile, double start_time, double end_time, int num_subintervals)
+est_arr* _estimate_OLS(char* infile, char* outfile, double start_time, double end_time, int num_subintervals)
 {
     return _estimate_IWLS(infile, outfile, start_time, end_time, num_subintervals, 1);
 }
 
-est_data* estimate_IWLS(paramlist* params, char* infile, char* outfile)
+est_arr* estimate_IWLS(paramlist* params, char* infile, char* outfile)
 {
     int subint = get_int_param(params, "iwls_subintervals");
     int iterations = get_int_param(params, "iwls_iterations");
@@ -70,7 +63,7 @@ est_data* estimate_IWLS(paramlist* params, char* infile, char* outfile)
  *
  * **** THE START AND END TIMES MUST BE THE CORRECT START AND END TIMES FOR THE EVENT DATA THAT YOU HAVE. ****
  */
-est_data* _estimate_IWLS(char* infile, char* outfile, double start_time, double end_time, int num_subintervals, int iterations)
+est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double end_time, int num_subintervals, int iterations)
 {
     // Does it matter if the interval is longer than what we have data for? if lambda is really low then it
     // is entirely possible that there are no events for a significant period of time after the visible 
@@ -96,7 +89,7 @@ est_data* _estimate_IWLS(char* infile, char* outfile, double start_time, double 
     }
 #endif
 
-    double Y_mean, x_mean, est_beta, est_alpha, sse_alpha_beta, sse_a_b, a, b;
+    double Y_mean, x_mean, est_beta, est_alpha, sse_alpha_beta, sse_a_b, a = 0, b = 0;
     
     for (loop = 0; loop < iterations; ++loop){
 	
@@ -207,21 +200,31 @@ est_data* _estimate_IWLS(char* infile, char* outfile, double start_time, double 
 	fclose(fp);
     }
     
-    
     free_pointer_arr((void**) intervals, num_subintervals);
     free(bin_counts);
     free(midpoints);
     free(lambda);
     free(weights);
     
-    est_data* result = malloc(4 * sizeof(double));
+    est_data** data = malloc(sizeof(est_data*));
+    est_data* est = malloc(sizeof(est_data));
     
-    result->est_a = a;
-    result->est_b = b;
-    result->start = start_time;
-    result->end = end_time;
-            
-    return result;
+    est->est_a = a;
+    est->est_b = b;
+    est->start = start_time;
+    est->end = end_time;
+
+    data[0] = est;
+
+    est_arr* retval = malloc(sizeof(est_arr));
+    retval->len = 1;
+    retval->estimates = data;
+
+    print_estimates(retval);
+    
+//    printf("%lf, %lf, %lf, %lf\n", retval->estimates[0]->start, retval->estimates[0]->end, retval->estimates[0]->est_a, retval->estimates[0]->est_b);
+
+    return retval;
 }
 
 /*
