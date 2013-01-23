@@ -45,7 +45,6 @@ est_arr* estimate(char* paramfile, char* infile, char* outfile, char* estimator_
     } else {
 	printf(EST_TYPE_ERROR, estimator_type);
     }
-    free_est_arr(result);
     free_list(params);
     
     return result;

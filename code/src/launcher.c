@@ -149,9 +149,13 @@ void run_requested_operations(int generator, int estimator, int experiment,
 }
 
 /*
- * Estimate a series of streams.
+ * Estimate a series of streams. Constructs the file to read data from by using
+ * parameters used to output the data from the generator, and then runs estimators
+ * on each file. Data is then stored and once all estimates have been made the data
+ * is combined to make a single estimate.
  */
-void multi_estimate(char* paramfile, char* infile, char* outfile, char* estimator_type, int nstreams)
+void multi_estimate(char* paramfile, char* infile, char* outfile, char* estimator_type,
+		    int nstreams)
 {
     paramlist* params = get_parameters(paramfile);
     char* fname = get_string_param(params, "outfile");
@@ -190,8 +194,15 @@ void multi_estimate(char* paramfile, char* infile, char* outfile, char* estimato
 	       "Add something like \"timedelta 0,10,20\" to your parameter file\n");
 	exit(1);
     }
+    
+    double interval_time = 0;
 
-    est_arr* combined = combine_function(allstreams, time_delta);
+    if ((interval_time = get_double_param(params, "interval_time")) == 0){
+	printf("interval_time not specified.\n");
+	exit(1);
+    }
+
+    est_arr* combined = combine_function(allstreams, time_delta, interval_time, nstreams);
     output_estimates(outfile, combined->estimates, combined->len);
     free_est_arr(combined);
 }
