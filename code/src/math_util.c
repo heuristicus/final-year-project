@@ -1,25 +1,14 @@
 #include "math_util.h"
 #include "general_util.h"
+#include <gsl/gsl_rng.h>
+#include <gsl/gsl_randist.h>
 
 //#define DEBUG
 #define ZERO_EPSILON 0.000000000000000001
 
+
 int rand_initialised = 0;
-
-/* int main(int argc, char *argv[]) */
-/* { */
-
-/*     double lambda = atof(argv[1]); */
-/*     int i; */
-    
-/*     for (i = 1; i < 100; ++i) { */
-/* 	printf("probability of %d events given lambda %lf: %.15lf\n", i, lambda, poisson_PMF(lambda, i)); */
-/*     } */
-    
-/*     return 0; */
-    
-/* } */
-
+gsl_rng* r;
 
 /*
  * Recursive factorial function.
@@ -84,13 +73,22 @@ int* sum_events_in_interval(double *event_times, int num_events, double start_ti
     return bins;
 }
 
+
+/*
+ * Initialise the random number generator.
+ */
 void init_rand(double seed)
 {
     if (! rand_initialised) {
 	if (seed == 0.0)
 	    seed = time(NULL);
+	
 
-	srand48(seed);
+	const gsl_rng_type* T;
+	gsl_rng_env_setup();
+
+	r = gsl_rng_alloc(gsl_rng_rand48); // need to free this somewhere
+	gsl_rng_set(r, seed);
 	printf("Seed for this run: %lf\n", seed);
 
 	rand_initialised = 1;
@@ -98,38 +96,23 @@ void init_rand(double seed)
 }
 
 /*
- * From "The Art of Computer Programming", Vol.3. Generates a gaussian random
- * value with mean of 0 and standard deviation of 1. http://c-faq.com/lib/gaussian.html
+ * Gets the random number generator that is currently in use.
  */
-double rand_gauss()
+double get_uniform_rand()
 {
-
-    if(!rand_initialised)
+    if (!rand_initialised)
 	init_rand(0.0);
-        
-    static double V1, V2, S;
-    static int phase = 0;
-    double X;
 
-    if(phase == 0) {
-	do {
-	    double U1 = (double)rand() / RAND_MAX;
-	    double U2 = (double)rand() / RAND_MAX;
-
-	    V1 = 2 * U1 - 1;
-	    V2 = 2 * U2 - 1;
-	    S = V1 * V1 + V2 * V2;
-	} while(S >= 1 || S == 0);
-
-	X = V1 * sqrt(-2 * log(S) / S);
-    } else
-	X = V2 * sqrt(-2 * log(S) / S);
-
-    phase = 1 - phase;
-
-    return X;
+    return gsl_rng_uniform(r);
 }
 
+double get_rand_gaussian()
+{
+    if (!rand_initialised)
+	init_rand(0.0);
+
+    return gsl_ran_ugaussian(r);
+}
 
 /*
  * Gets noise based on a poisson distribution centred around the mean
@@ -148,7 +131,10 @@ double get_poisson_noise(double mean)
  */
 double get_gaussian_noise(double mean, double std_dev)
 {
-    return (rand_gauss() * std_dev) + mean;
+    if (!rand_initialised)
+	init_rand(0.0);
+
+    return (get_rand_gaussian() * std_dev) + mean;
     
 }
 
@@ -377,4 +363,132 @@ double get_midpoint(double a, double b)
 	return a + diff/2;
     else
 	return b + diff/2;
+}
+
+
+
+/*
+ * Creates a gaussian with the given mean and standard deviation. Returns NULL if
+ * the standard deviation is <= 0.
+ */
+gaussian* make_gaussian(double mean, double stdev)
+{
+    if (stdev <= 0)
+	return NULL;
+
+    gaussian* g = malloc(sizeof(gaussian));
+    
+    g->mean = mean;
+    g->stdev = stdev;
+    
+    return g;
+}
+
+/*
+ * Calculates the contribution of gaussians in the given vector at the given
+ * point along the x-axis.
+ */
+double sum_gaussians_at_point(double x, gauss_vector* G)
+{
+    int i;
+    double sum = 0;
+
+    for (i = 0; i < G->len; ++i) {
+	sum += G->w[i] * exp(-pow(x - G->gaussians[i]->mean, 2)/G->gaussians[i]->stdev);
+    }
+    return sum;
+}
+
+/*
+ * Performs a discrete gaussian transform on the given vector of gaussians, in the
+ * interval [start, end], with distance step between sample points. Returns a 2-d
+ * vector of the values and points at which the values were sampled.
+ */
+double** gauss_transform(gauss_vector* G, double start, double end, double step)
+{
+    if (!interval_valid(start, end))
+	return NULL;
+
+    double current;
+    int i;
+    double** T = malloc(2 * sizeof(double*));
+    T[0] = malloc(sizeof(double) * ((end - start)/step));
+    T[1] = malloc(sizeof(double) * ((end - start)/step));
+    
+    for (i = 0, current = start; current < end; current += step, i++) {
+	T[1][i] = current;
+	T[0][i] = sum_gaussians_at_point(current, G);
+    }
+    
+    return T;
+}
+
+/*
+ * Generates a vector of specified length with each point p ~ N(0,1)
+ */
+double* random_vector(int len)
+{
+    if (len <= 0)
+	return NULL;
+
+    init_rand(0.0);
+    
+    double* V = malloc(len * sizeof(double));
+    
+    int i;
+    
+    for (i = 0; i < len; ++i) {
+	V[i] = gsl_ran_ugaussian(r);
+	printf("weight is %lf\n", V[i]);
+    }
+
+    return V;
+}
+
+/*
+ * Generates the given number of gaussians with evenly distributed means, and the 
+ * given stdev, within the specified interval.
+ */
+gauss_vector* gen_gaussian_vector_uniform(double stdev, double start, double end, int num)
+{
+    if (!interval_valid(start, end))
+	return NULL;
+    
+    gauss_vector* G = malloc(sizeof(gauss_vector));
+
+    G->gaussians = malloc(sizeof(gaussian*) * num);
+    G->w = random_vector(num);
+    G->len = num;
+
+    double step = (end - start)/num;
+    double current;
+    
+    int i;
+    
+    for (i = 0, current = start; i < num && current < end; ++i, current += step) {
+	G->gaussians[i] = make_gaussian(current, stdev);
+    }
+
+    return G;
+}
+
+/*
+ * Generates a vector of gaussians whose means are centred on the values
+ * in the given array and have the specified standard deviation.
+ */
+gauss_vector* gen_gaussian_vector_from_array(double* means, int len, double stdev)
+{
+    gauss_vector* G = malloc(sizeof(gauss_vector));
+
+    G->gaussians = malloc(sizeof(gaussian*) * len);
+    G->w = random_vector(len);
+    G->len = len;
+
+    int i;
+    
+    for (i = 0; i < len; ++i) {
+	G->gaussians[i] = make_gaussian(means[i], stdev);
+    }
+    
+    return G;
 }

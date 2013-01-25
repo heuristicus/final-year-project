@@ -27,7 +27,7 @@ infile output.txt_stream_0_ev
 # generation parameters
 start_time 0
 nruns 1
-timedelta 0.0,10.0
+timedelta 0.0,10.0,20.0
 lambda 1000
 interval_time 100
 seed 0

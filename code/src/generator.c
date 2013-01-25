@@ -242,7 +242,8 @@ void on_error(muParserHandle_t hparser)
  * or just the event times.
  * *IMPORTANT* The value of lambda MUST exceed the maximum value of the function! *IMPORTANT*
  */
-void run_time_nstreams(muParserHandle_t hparser, double lambda, double end_time, double *time_delta, int nstreams, char *outfile, int outswitch)
+void run_time_nstreams(muParserHandle_t hparser, double lambda, double end_time,
+		       double *time_delta, int nstreams, char *outfile, int outswitch)
 {
     int i;
             
@@ -257,15 +258,16 @@ void run_time_nstreams(muParserHandle_t hparser, double lambda, double end_time,
 }
 
 /*
- * Selects an output file. Will prompt user if there is a file specified in both the command line
- * and in the parameter file.
+ * Selects an output file. Will prompt user if there is a file specified in both
+ * the command line and in the parameter file.
  */
 char* select_output_file(char* cur_out, char* param_out)
 {
     char* outfile;
     
     if (param_out == NULL && cur_out == NULL){
-	printf("No parameter for the output file found in the parameters file or command line arguments. Auto-generating...\n");
+	printf("No parameter for the output file found in the parameters file "\
+	       "or command line arguments. Auto-generating...\n");
 	outfile = generate_outfile();
 	generated_outfile = 1;
     } else if (param_out != NULL && cur_out != NULL){
@@ -299,7 +301,8 @@ char* select_output_file(char* cur_out, char* param_out)
  * The outswitch parameter determines what data will be output to the file.
  * 
  */
-void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta, double start_time, double end_time, char *outfile, int outswitch)
+void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
+		     double start_time, double end_time, char *outfile, int outswitch)
 {
     double *et = malloc(DEFAULT_ARR_SIZE * sizeof(double));
     double *lv = malloc(DEFAULT_ARR_SIZE * sizeof(double));
@@ -307,7 +310,8 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
     double **eptr = &et;
     double **lptr = &lv;
 
-    int size = run_to_time_non_homogeneous(hparser, lambda, time_delta, start_time, end_time, eptr, lptr, DEFAULT_ARR_SIZE);
+    int size = run_to_time_non_homogeneous(hparser, lambda, time_delta, start_time,\
+					   end_time, eptr, lptr, DEFAULT_ARR_SIZE);
 
     if (outswitch == 0) // Outputs only event data - this is what the real data will be like.
 	double_to_file(outfile, "w", *eptr, size);
@@ -375,7 +379,8 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
  * Puts event times into the array passed in the parameters. 
  * Puts a -1 in the array location after the last event
  */
-void generate_event_times_homogenous(double lambda, double time, int max_events, double *event_times)
+void generate_event_times_homogenous(double lambda, double time, int max_events,
+				     double *event_times)
 {
     init_rand(0.0);
         
@@ -402,7 +407,10 @@ void generate_event_times_homogenous(double lambda, double time, int max_events,
  * Returns the final array location in which there is something 
  * stored.
  */
-int run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda, double time_delta, double start_time, double end_time, double **event_times, double **lambda_vals, int arr_len)
+int run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda, 
+				double time_delta, double start_time, 
+				double end_time, double **event_times, 
+				double **lambda_vals, int arr_len)
 {
     init_rand(0.0);
             
@@ -419,7 +427,7 @@ int run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda, double 
 	shifted_time += hom_out;
 	non_hom_lambda = mupEval(hparser);
 	//printf("%lf %lf\n", time, non_hom_lambda);//more granularity on lambda values // get this into output file
-	if ((rand = drand48()) <= non_hom_lambda / lambda){
+	if ((rand = get_uniform_rand()) <= non_hom_lambda / lambda){
 	    // Number of events may exceed the number of array locations initally assigned
 	    // so may need to reallocate memory to store more.
 	    if (i >= arr_max){
@@ -451,7 +459,8 @@ int run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda, double 
  * and prints output data to a file. The outswitch parameter determines whether
  * all data will be output to the file, or just the event times.
  */
-void run_events_nonhom(muParserHandle_t hparser, double lambda, double start_time, int events, char *outfile, int outswitch)
+void run_events_nonhom(muParserHandle_t hparser, double lambda, double start_time,
+		       int events, char *outfile, int outswitch)
 {
     double *et = malloc(events * sizeof(double));
     double *lv = malloc(events * sizeof(double));
@@ -466,7 +475,9 @@ void run_events_nonhom(muParserHandle_t hparser, double lambda, double start_tim
  * will be populated with the time of an event and the result of 
  * evaluating lambda(t) at that time.
  */
-void run_to_event_limit_non_homogeneous(muParserHandle_t hparser, double lambda, double t_delta, int max_events, double *event_times, double *lambda_vals)
+void run_to_event_limit_non_homogeneous(muParserHandle_t hparser, double lambda, 
+					double t_delta, int max_events, 
+					double *event_times, double *lambda_vals)
 {
     init_rand(0.0);
     
@@ -482,7 +493,7 @@ void run_to_event_limit_non_homogeneous(muParserHandle_t hparser, double lambda,
 	func_in += hom_out;
 	non_hom_lambda = mupEval(hparser);
 	//printf("%lf %lf\n", run_time, non_hom_lambda);//more granularity on lambda values // get into the output file
-	if ((rand = drand48()) <= non_hom_lambda / lambda){
+	if ((rand = get_uniform_rand()) <= non_hom_lambda / lambda){
 	    event_times[i] = run_time;
 	    lambda_vals[i] = non_hom_lambda;
 	    ++i;
@@ -505,7 +516,8 @@ void run_to_event_limit_non_homogeneous(muParserHandle_t hparser, double lambda,
  * Puts event times into the array passed in the parameters. 
  * Puts a -1 in the array location after the last event
  */
-void generate_event_times_homogeneous(double lambda, double time, int max_events, double *event_times)
+void generate_event_times_homogeneous(double lambda, double time,
+				      int max_events, double *event_times)
 {
     init_rand(0.0);
         
@@ -525,5 +537,5 @@ void generate_event_times_homogeneous(double lambda, double time, int max_events
 /* knuth method. Generates time to next event in a homogeneous poisson process. */
 double homogeneous_time(double lambda)
 {
-    return -log(drand48()) / lambda;
+    return -log(get_uniform_rand()) / lambda;
 }

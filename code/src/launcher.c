@@ -2,6 +2,8 @@
 #include "combinefunction.h"
 #include "paramlist.h"
 #include "file_util.h"
+#include "math_util.h"
+
  
 static char *estimators[] = {"iwls", "ols", "pc", "base"};
 static struct option opts[] =
@@ -142,6 +144,18 @@ void run_requested_operations(int generator, int estimator, int experiment,
 	}
     } else if (experiment == 1){
 	printf("experimenting\n");
+
+	gauss_vector* G = gen_gaussian_vector_uniform(40, 0, 100, 20);
+	double** T = gauss_transform(G, 0, 100, 0.5);
+	FILE *fp = fopen("testfile", "w");
+
+	double max = 100 /0.5;
+
+	int i;
+
+	for (i = 0; i < max; ++i) {
+	    fprintf(fp, "%lf %lf\n", T[1][i], T[0][i] + 5);
+	}
     } else {
 	printf("No action specified. You can run either an estimator, a generator or experiments by using "\
 	       "the -e, -g or -x switches respectively.\n");

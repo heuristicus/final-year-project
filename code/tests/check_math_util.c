@@ -206,6 +206,51 @@ START_TEST (test_get_midpoint)
 }
 END_TEST
 
+START_TEST(test_make_gaussian)
+{
+    gaussian* g = make_gaussian(2, 3);
+    gaussian* h = make_gaussian(2, 0);
+    gaussian* i = make_gaussian(2, -1);
+    
+    fail_unless(g->mean == 2, NULL);
+    fail_unless(g->stdev == 3, NULL);
+    
+    fail_unless(h == NULL, NULL);
+    fail_unless(i == NULL, NULL);
+}
+END_TEST
+
+START_TEST(test_random_vector)
+{
+    fail_unless(random_vector(0) == NULL, NULL);
+    fail_unless(random_vector(-1) == NULL, NULL);
+}
+END_TEST
+
+START_TEST(test_sum_gaussians_at_point)
+{
+    // implement this
+}
+END_TEST
+
+START_TEST(test_gauss_transform)
+{
+    // implement this
+}
+END_TEST
+
+START_TEST(test_gen_gaussian_vector_uniform)
+{
+    // implement this
+}
+END_TEST
+
+START_TEST(test_gen_gaussian_vector_from_array)
+{
+    // implement this
+}
+END_TEST
+
 Suite* math_util_suite(void)
 {
     Suite *s = suite_create("math_util");
@@ -223,6 +268,8 @@ Suite* math_util_suite(void)
     tcase_add_test(tc_core, test_get_intercept_and_gradient);
     tcase_add_test(tc_core, test_evaluate_function);
     tcase_add_test(tc_core, test_get_midpoint);
+    tcase_add_test(tc_core, test_make_gaussian);
+    tcase_add_test(tc_core, test_random_vector);
     suite_add_tcase(s, tc_core);
 
     return s;
