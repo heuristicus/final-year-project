@@ -1,10 +1,4 @@
 #include "file_util.h"
-#include "general_util.h"
-#include <string.h>
-#include <time.h>
-#include <sys/time.h>
-#include <unistd.h>
-#include <ctype.h>
 
 #define MAX_DATE_LENGTH 32
 #define MAX_PARAM_STRING_LENGTH 500
@@ -389,5 +383,57 @@ void estimate_to_file(char *filename, est_data *estimate, char *mode)
     fprintf(fp, "\n\n");
     
     fclose(fp);
+    
+}
+
+/*
+ * Outputs a 2d array created by the gaussian transform function to a file. The 
+ * zeroth index contains the point on the x-axis, and the first contains the 
+ * total contribution of gaussians at that point. The mode of addition to the file
+ * is specified by the mode parameter.
+ */
+void output_gauss_transform(char* filename, char* mode, double** T, int len)
+{
+    FILE *fp = fopen(filename, mode);
+
+    int i;
+    
+    for (i = 0; i < len; ++i) {
+	fprintf(fp, "%lf %lf\n", T[0][i], T[1][i]);
+    }
+
+    fclose(fp);
+}
+
+/*
+ * Outputs the given vector of gaussians to a file. The apply_weight parameter
+ * specifies whether the weights in the vector should be applied or if the 
+ * gaussians should be output in their raw form - a non-zero value applies them.
+ * The contribution of gaussians is checked in the interval [start, end], with the
+ * given step between each data point
+ */
+void output_gaussians(char* filename, char* mode, gauss_vector* G, double start,
+		      double end, double step, int apply_weight)
+{
+    if (!interval_valid(start, end)){
+	printf("Invalid interval [%lf, %lf] when outputting gaussians to %s.\n",
+	       start, end, filename);
+	return;
+    }
+
+    FILE *fp = fopen(filename, mode);
+    
+    int i, j;
+    double current;
+    
+    for (i = 0; i < G->len; ++i) {
+	for (current = start; current <= end; current += step) {
+	    if (apply_weight)
+		fprintf(fp, "%lf %lf\n", current, gaussian_contribution_at_point(current, G->gaussians[i], G->w[i]));
+	    else
+		fprintf(fp, "%lf %lf\n", current, gaussian_contribution_at_point(current, G->gaussians[i], 1));
+	}
+	fprintf(fp, "\n\n");
+    }
     
 }

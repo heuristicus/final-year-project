@@ -145,17 +145,13 @@ void run_requested_operations(int generator, int estimator, int experiment,
     } else if (experiment == 1){
 	printf("experimenting\n");
 
-	gauss_vector* G = gen_gaussian_vector_uniform(40, 0, 100, 20);
-	double** T = gauss_transform(G, 0, 100, 0.5);
-	FILE *fp = fopen("testfile", "w");
+	double stdev = 60, start = 0, end = 1000, step = 0.5;
+	int num_gaussians = 50;
 
-	double max = 100 /0.5;
-
-	int i;
-
-	for (i = 0; i < max; ++i) {
-	    fprintf(fp, "%lf %lf\n", T[1][i], T[0][i] + 5);
-	}
+	gauss_vector* G = gen_gaussian_vector_uniform(stdev, start, end, num_gaussians);
+	output_gaussians("gaussians", "w", G, start, end, step, 1);
+	double** T = gauss_transform(G, start, end, step);
+	output_gauss_transform("gauss_sum", "w", T, (end - start)/step);
     } else {
 	printf("No action specified. You can run either an estimator, a generator or experiments by using "\
 	       "the -e, -g or -x switches respectively.\n");

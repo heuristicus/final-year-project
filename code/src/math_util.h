@@ -1,11 +1,13 @@
 #ifndef _MATHUTIL_H
 #define _MATHUTIL_H
 
+#include "general_util.h"
+#include <gsl/gsl_rng.h>
+#include <gsl/gsl_randist.h>
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
-#include <gmp.h>
 
 // Make representing gaussians easier.
 typedef struct
@@ -41,7 +43,6 @@ double TSS(double *dependent_variables, int len);
 double ESS(double *estimates, double *dependent_variables, int len);
 double RSS(double *dependent_variables, double *independent_variables,
 	   double (*f)(double), int len);
-double poisson_PMF(double lambda, int k);
 double sum_double_arr(double *arr, int len);
 int sum_int_arr(int *arr, int len);
 
@@ -52,6 +53,8 @@ double get_midpoint(double a, double b);
 double* get_intercept_and_gradient(double a_x, double a_y, double b_x, double b_y);
 
 gaussian* make_gaussian(double mean, double stdev);
+double gaussian_contribution_at_point(double x, gaussian* g, double weight);
+double** gaussian_contribution(gaussian* g, double start, double end, double step, double weight);
 double sum_gaussians_at_point(double x, gauss_vector* G);
 double** gauss_transform(gauss_vector* G, double start, double end, double step);
 double* random_vector(int len);

@@ -15,7 +15,7 @@ PKG_PROG_PKG_CONFIG
 AC_SEARCH_LIBS([cos], [m], , AC_MSG_ERROR([Could not find standard math library.]))
 # Don't forget - muparser not muParser!
 AC_SEARCH_LIBS([mupCreate], [muparser], ,AC_MSG_ERROR([Could not find muparser library.]))
-AC_SEARCH_LIBS([__gmpz_init], [gmp], ,AC_MSG_ERROR([Could not find gmp library.]))
+#AC_SEARCH_LIBS([__gmpz_init], [gmp], ,AC_MSG_ERROR([Could not find gmp library.]))
 AC_SEARCH_LIBS([cblas_dgemm], [gslcblas], ,AC_MSG_ERROR([Could not find gslcblas library.]))
 AC_SEARCH_LIBS([gsl_blas_dgemm], [gsl], ,AC_MSG_ERROR([Could not find gsl library.]))
 AC_CHECK_LIB([m],[cos])

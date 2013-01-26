@@ -3,6 +3,13 @@
 
 #include "paramlist.h"
 #include "estimator.h"
+#include "math_util.h"
+#include "general_util.h"
+#include <string.h>
+#include <time.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -21,5 +28,8 @@ double* get_event_data_all(char *filename);
 void int_dbl_to_file(char* filename, char* mode, double* arr1, int* arr2, int len);
 void estimate_to_file(char *filename, est_data *estimate, char *mode);
 void output_estimates(char *filename, est_data **estimates, int len);
+void output_gauss_transform(char* filename, char* mode, double** T, int len);
+void output_gaussians(char* filename, char* mode, gauss_vector* G, double start,
+		      double end, double step, int apply_weight);
 
 #endif

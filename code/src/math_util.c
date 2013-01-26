@@ -1,7 +1,4 @@
 #include "math_util.h"
-#include "general_util.h"
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_randist.h>
 
 //#define DEBUG
 #define ZERO_EPSILON 0.000000000000000001
@@ -121,9 +118,7 @@ double get_rand_gaussian()
  */
 double get_poisson_noise(double mean)
 {
-
     return get_gaussian_noise(mean, mean);
-    
 }
 
 /*
@@ -135,7 +130,6 @@ double get_gaussian_noise(double mean, double std_dev)
 	init_rand(0.0);
 
     return (get_rand_gaussian() * std_dev) + mean;
-    
 }
 
 /*
@@ -258,54 +252,6 @@ int sum_int_arr(int *arr, int len)
 }
 
 /*
- * Probability mass function for poisson random variables.
- */
-double poisson_PMF(double lambda, int k)
-{
-    mpf_t res;
-
-    mpf_t top;
-    mpf_t lk;
-    mpf_t el;
-    mpf_t kfacf;
-    mpz_t kfacz;
-        
-    mpz_init(kfacz); // integer factorial
-    
-    mpf_init(top);
-    mpf_init(lk);
-    mpf_init(el);
-    mpf_init(kfacf); // float storage for factorial
-    mpf_init(res);
-                    
-    // This could cause problems if k is too large
-    mpf_set_d(lk, pow(lambda, k));
-    mpf_set_d(el, pow(M_E, -lambda));
-    mpf_mul(top, lk, el);
-
-    //gmp_printf("pow(lambda, k) * pow(e, -lambda) = %Ff\n", top);
-
-    mpz_fac_ui(kfacz, k);
-    
-    mpf_set_z(kfacf, kfacz);
-
-    //gmp_printf("%d factorial = %Ff\n", k, kfacf);
-        
-    mpf_div(res, top, kfacf);
-
-    double result = mpf_get_d(res);
-
-    mpf_clear(kfacf);
-    mpf_clear(res);
-    mpf_clear(top);
-    mpf_clear(lk);
-    mpf_clear(el);
-    mpz_clear(kfacz);
-        
-    return result;
-}
-
-/*
  * Calculates the gradient of a line given two points on the line.
  */
 double get_gradient(double a_x, double a_y, double b_x, double b_y)
@@ -385,6 +331,42 @@ gaussian* make_gaussian(double mean, double stdev)
 }
 
 /*
+ * Calculates the contribution of the specified gaussian at the given point.
+ * The weight specified is applied to the gaussian.
+ */
+double gaussian_contribution_at_point(double x, gaussian* g, double weight)
+{
+    if (weight == 0)
+	return 0;
+
+    return weight * exp(-pow(x - g->mean, 2)/pow(g->stdev, 2));
+}
+
+/*
+ * Calculates the contribution of the given gaussian in the interval [start, end]
+ * with the specified step between each contribution check.
+ */
+double** gaussian_contribution(gaussian* g, double start, double end, double step, double weight)
+{
+    if (!interval_valid(start, end))
+	return NULL;
+    
+    int len = (end - start)/step;
+    int i;
+    double current;
+    double** cont = malloc(2 * sizeof(double*));
+    cont[0] = malloc(len * sizeof(double));
+    cont[1] = malloc(len * sizeof(double));
+
+    for (i = 0, current = start; current <= end; current+= step, ++i) {
+	cont[0][i] = current;
+	cont[1][i] = gaussian_contribution_at_point(current, g, weight);
+    }
+
+    return cont;
+}
+
+/*
  * Calculates the contribution of gaussians in the given vector at the given
  * point along the x-axis.
  */
@@ -394,7 +376,7 @@ double sum_gaussians_at_point(double x, gauss_vector* G)
     double sum = 0;
 
     for (i = 0; i < G->len; ++i) {
-	sum += G->w[i] * exp(-pow(x - G->gaussians[i]->mean, 2)/G->gaussians[i]->stdev);
+	sum += gaussian_contribution_at_point(x, G->gaussians[i], G->w[i]);
     }
     return sum;
 }
@@ -412,16 +394,20 @@ double** gauss_transform(gauss_vector* G, double start, double end, double step)
     double current;
     int i;
     double** T = malloc(2 * sizeof(double*));
-    T[0] = malloc(sizeof(double) * ((end - start)/step));
-    T[1] = malloc(sizeof(double) * ((end - start)/step));
     
-    for (i = 0, current = start; current < end; current += step, i++) {
-	T[1][i] = current;
-	T[0][i] = sum_gaussians_at_point(current, G);
+    int memsize = ((end - start)/step) + 1;
+    
+    T[0] = malloc(sizeof(double) * memsize);
+    T[1] = malloc(sizeof(double) * memsize);
+    
+    for (i = 0, current = start; current <= end; current += step, i++) {
+	T[0][i] = current;
+	T[1][i] = sum_gaussians_at_point(current, G);
     }
     
     return T;
 }
+
 
 /*
  * Generates a vector of specified length with each point p ~ N(0,1)

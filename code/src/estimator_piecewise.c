@@ -309,8 +309,7 @@ int pmf_consecutive_check(double *pmfs, int len, int limit, double threshold)
 
 /*
  * Calculates the poisson probability mass function for each bin count.
- * The function passed in should return the value of lambda at a given
- * point in time. This only works for functions which are of the form 
+ * This only works for functions which are of the form 
  * lambda = a + b * x
  * The probabilities in the array returned by this function do not sum
  * to one, because each subinterval has a PMF of its own, and we are taking
@@ -326,7 +325,7 @@ double* interval_pmf(int *counts, double *midpoints, int len, double a, double b
 	// lambda can't go below zero
 	lambda = lambda < 0 ? 0 : lambda;
 		
-	pmf[i] = poisson_PMF(lambda, counts[i]);
+	pmf[i] = gsl_ran_poisson_pdf(counts[i], lambda);
 	printf("time: %lf, lambda: %lf, bin count %d, pmf %lf\n", midpoints[i],
 	       lambda, counts[i], pmf[i]);
     }
