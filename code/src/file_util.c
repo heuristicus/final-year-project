@@ -296,30 +296,25 @@ void double_to_file(char *filename, char *mode, double *arr, int len)
     fclose(fp);
 }
 
-/* /\* Prints the given array to the specified file. Two newlines will be added to */
-/*  * the end to allow for indexing in gnuplot.  */
-/*  * The format string should contain the correct  */
-/*  *\/ */
-/* void arr_to_file(char* filename, void* arr, int len, char* format_string) */
-/* { */
-/*     FILE *fp; */
+void double_mult_dim_to_file(char* filename, char* mode, double_mult_arr* arr)
+{
+    FILE *fp;
     
-/*     if ((fp = fopen(filename, "w")) == NULL){ */
-/* 	perror("Could not open file."); */
-/* 	exit(1); */
-/*     } */
+    if ((fp = fopen(filename, mode)) == NULL){
+	perror("Could not open file.");
+	exit(1);
+    }
     
-/*     int i; */
+    int i;
 
-/*     for (i = 0; i < len; ++i){ */
-/* 	fprintf(fp, format_string, arr[i]); */
-/*     } */
+    for (i = 0; i < arr->len; ++i){
+	fprintf(fp, "%.15lf, %.15lf\n", arr->data1[i], arr->data2[i]);
+    }
 
-/*     fprintf(fp, "\n\n"); */
+    fprintf(fp, "\n\n");
 
-/*     fclose(fp); */
-        
-/* } */
+    fclose(fp);
+}
 
 /*
  * Outputs a series of estimates to separate files.
@@ -389,5 +384,4 @@ void estimate_to_file(char *filename, est_data *estimate, char *mode)
     fprintf(fp, "\n\n");
     
     fclose(fp);
-    
 }

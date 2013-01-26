@@ -1,7 +1,4 @@
-#include <launcher.h>
-#include "combinefunction.h"
-#include "paramlist.h"
-#include "file_util.h"
+#include "launcher.h"
  
 static char *estimators[] = {"iwls", "ols", "pc", "base"};
 static struct option opts[] =
@@ -34,7 +31,6 @@ int main(int argc, char *argv[])
     char* infile = NULL;
     char* estimator_type = NULL;
     
-
     if (argc == 1){
 	printf("%s\n\nusage: %s options\n\n%s\n%s\n%s\n", PROG_DESC, argv[0], OPT_INFO, VERSION, BUGREPORT);
 	exit(1);
@@ -160,6 +156,9 @@ void multi_estimate(char* paramfile, char* infile, char* outfile, char* estimato
     paramlist* params = get_parameters(paramfile);
     char* fname = get_string_param(params, "outfile");
     char* pref = get_string_param(params, "stream_ext");
+    double step = get_double_param(params, "output_sample_step");
+    if (step <= 0)
+	step = DEFAULT_STEP;
     char* tmp = NULL;
     double* time_delta = NULL;
 	    
@@ -175,7 +174,7 @@ void multi_estimate(char* paramfile, char* infile, char* outfile, char* estimato
     int i;
     for (i = 0; i < nstreams; ++i) {
 	sprintf(infname, "%s%s%d_ev", fname, pref, i);
-	allstreams[i] = estimate(paramfile, infname, outfile, estimator_type);
+	allstreams[i] = estimate(paramfile, infname, NULL, estimator_type);
     }
 	    
     /* Find time delay here*/
@@ -202,9 +201,8 @@ void multi_estimate(char* paramfile, char* infile, char* outfile, char* estimato
 	exit(1);
     }
 
-    est_arr* combined = combine_function(allstreams, time_delta, interval_time, nstreams);
-    output_estimates(outfile, combined->estimates, combined->len);
-    free_est_arr(combined);
+    double_mult_arr* combined = combine_functions(allstreams, time_delta, interval_time, nstreams, step);
+    double_mult_dim_to_file(outfile, "w", combined);
 }
 
 /*

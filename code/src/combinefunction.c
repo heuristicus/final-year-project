@@ -7,19 +7,24 @@
  * time delay between each. The average value of the functions at some
  * points is calculated, and this 
  */
-est_arr* combine_function(est_arr** estimates, double* time_delay, double interval_time, int num_estimates)
+double_mult_arr* combine_functions(est_arr** estimates, double* time_delay, 
+			   double interval_time, int num_estimates, double step)
 {
-    FILE* fp = fopen("comb.txt", "w");
-
-    int time;
+    double time;
     int estimate_num;
     double max_delay = 0;
-    
+        
     int i;
 
     for (i = 0; i < num_estimates; ++i) {
 	max_delay = time_delay[i] > max_delay ? time_delay[i] : max_delay;
     }
+
+    double_mult_arr* data = malloc(sizeof(double_mult_arr));
+    int memsize = (int)(((interval_time - max_delay) - max_delay)/ step + 1);
+    data->data1 = malloc(sizeof(double) * memsize);
+    data->data2 = malloc(sizeof(double) * memsize);
+    data->len = memsize;
 
     /*
      * Only have data for all three functions in the intervals in which they
@@ -28,20 +33,16 @@ est_arr* combine_function(est_arr** estimates, double* time_delay, double interv
      * where the maximum delay is. The last time we have data for all functions is 
      * where the least delayed function ends (interval_time - max_delay).
      */
-    for (time = max_delay; time < interval_time - max_delay; ++time) {
-	printf("time is %d\n", time);
+    for (i = 0, time = max_delay; time <= interval_time - max_delay; time += step, ++i) {
 	double total = 0;
 	for (estimate_num = 0; estimate_num < num_estimates; ++estimate_num) {
-	    printf("time delay %lf\n", time_delay[estimate_num]);
 	    total += estimate_at_point(estimates[estimate_num], time - time_delay[estimate_num]);
-	    printf("total is %lf\n", total);
 	}
-	fprintf(fp, "%d %lf\n", time, total/num_estimates);
+	data->data1[i] = time;
+	data->data2[i] = total/num_estimates;
     }
 
-    fclose(fp);
-    
-    return NULL;
+    return data;
 }
 
 /*
