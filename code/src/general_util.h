@@ -1,7 +1,26 @@
-#include "estimator.h"
-
 #ifndef _GEN_UTIL_H
 #define _GEN_UTIL_H
+
+#include "estimator.h"
+
+typedef struct
+{
+    double* data;
+    int len;
+} double_arr;
+
+typedef struct
+{
+    int* data;
+    int len;
+} int_arr;
+
+typedef struct
+{
+    double* data1;
+    double* data2;
+    int len;
+} double_mult_arr;
 
 void free_pointer_arr(void** arr, int length);
 char** string_split(char* string, char separator);

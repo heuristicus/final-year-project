@@ -1,3 +1,6 @@
+#ifndef _GENERATOR_H
+#define _GENERATOR_H
+
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
@@ -6,9 +9,6 @@
 #include <getopt.h>
 #include <muParserDLL.h>
 #include "paramlist.h"
-
-#ifndef _GENERATOR_H
-#define _GENERATOR_H
 
 typedef struct
 {

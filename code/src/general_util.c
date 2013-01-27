@@ -157,7 +157,7 @@ double* get_event_subinterval(double *events, double interval_start, double inte
 /*
  * Prints the estimates contained within the given estimate array
  */
-void print_estimates(est_arr *estimates)
+void print_estimates(est_arr* estimates)
 {
     int len = estimates->len;
     
@@ -252,7 +252,11 @@ int create_default_param_file(char* filename)
     fprintf(fp, "%s\n%s %s\n\n", "# this will be appended to the output file for each separate"\
 	    " stream. The stream\n# number will be added at the end.", "stream_ext",
 	    DEFAULT_EXTENSION);
-    fprintf(fp, "%s\n%s %d\n\n", "# define the verbosity of output to data files.\n"\
+    fprintf(fp, "%s\n%s %lf\n\n", "# Used to determine the granularity of data in"\
+	    " output files. With a step of 1,\n# data in interval [0,5] is gathered"\
+	    " at 0, 1, 2, 3, 4 and 5 along the axis.", "output_step",
+	    DEFAULT_STEP);
+    fprintf(fp, "%s\n%s %d\n\n", "# define the verbosity of output to data files.\n"
 	    "# 0 output only event data for each run\n# 1 output event times and lambda"\
 	    " values for each run\n# 2 output event time and lambda values for each run,"\
 	    " as well as midpoints and\n# bin counts, to a single file\n# 3 output the above, "\
@@ -308,12 +312,12 @@ int create_default_param_file(char* filename)
 	    " bad estimates, especially if the\n# data has large variations.", 
 	    "pc_min_interval_proportion", DEFAULT_MIN_INTERVAL_PROP);
     fprintf(fp, "%s\n%s %lf\n\n", "# Threshold at which to reject an extension attempt. This"\
-	    " threshold limits the value\n# of the probability mass function calculated at"\
+	    " threshold limits the value\n# of the probability density function calculated at"\
 	    " each point on the extended line,\n# checking how likely is it that the point"\
 	    " is actually part of the data set. A lower\n# value means that extension will"\
 	    " be continued even if the probability is very low.", "pc_pmf_threshold", DEFAULT_PMF_THRESHOLD);
-    fprintf(fp, "%s\n%s %lf\n\n", "# A different threshold for summation of probability mass"\
-	    " functions. Used when summing\n# the probability mass functions at each point.", 
+    fprintf(fp, "%s\n%s %lf\n\n", "# A different threshold for summation of probability density"\
+	    " functions. Used when summing\n# the probability density functions at each point.", 
 	    "pc_pmf_sum_threshold", DEFAULT_PMF_SUM_THRESHOLD);
     // baseline
     put_section_header(fp, "baseline parameters");

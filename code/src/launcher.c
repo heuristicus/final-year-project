@@ -1,40 +1,4 @@
-#include "generator.h"
-#include "estimator.h"
-#include "experimenter.h"
-#include "general_util.h"
-
-#define PROG_DESC "This program simulates photon arrival times using a poisson process."
-#define OPT_INFO "OPTIONS\n"						\
-    "\t -e or --estimate\n"						\
-    "\t\t Estimate the underlying function from a given set of photon stream data."\
-    " Requires parameter file.\n\n"					\
-    "\t -a or --estimator\n"						\
-    "\t\t The estimation algorithm to use. Options are IWLS (iwls), OLS (ols), "\
-    "Piecewise (pc), Baseline (base)\n\n"				\
-    "\t -d or --defparam\n"						\
-    "\t\t Creates a default parameter file with the given name\n\n"	\
-    "\t -g or --generate\n"						\
-    "\t\t Generate a photon stream. Requires parameter file.\n\n"       \
-    "\t -h or --help\n"							\
-    "\t\t Display this message.\n\n"					\
-    "\t -n or --numruns\n"						\
-    "\t\t Number of times to run generation. Use this to generate multiple streams.\n\n" \
-    "\t -i or --infile\n"						\
-    "\t\t Specify the file to use as input to the estimator.\n\n"	\
-    "\t -o or --outfile\n"						\
-    "\t\t Data will be output to this file.\n\n"			\
-    "\t -p or --paramfile\n"						\
-    "\t\t The file containing parameters to use. This can be used to specify a "\
-    "large number of options.\n\n"					\
-    "\t -x or --experiment\n"						\
-    "\t\t Run an experiment. Requires parameter file.\n\n"
-#define VERSION "poissonstream alpha v0.3"
-#define BUGREPORT "Report bugs to mxs968@cs.bham.ac.uk"
-
-void run_requested_operations(int generator, int estimator, int experiment, 
-			      char* paramfile, char* infile, char* outfile, 
-			      int nruns, char* estimator_type);
-int estimator_valid(char* name);
+#include "launcher.h"
  
 static char *estimators[] = {"iwls", "ols", "pc", "base"};
 static struct option opts[] =
@@ -46,7 +10,8 @@ static struct option opts[] =
 	{"infile",  required_argument, 0, 'i'},
 	{"outfile",  required_argument, 0, 'o'},
 	{"defparam", required_argument, 0, 'd'},
-	{"numruns",    required_argument, 0, 'n'},
+	{"nstreams",    required_argument, 0, 'n'},
+	{"estall", no_argument, 0, 'l'},
 	{"help", no_argument, 0, 'h'},
 	{0, 0, 0, 0}
     };
@@ -59,19 +24,19 @@ int main(int argc, char *argv[])
     int exp = 0;
     int gen = 0;
     int est = 0;
-    int nruns = 1;
+    int nstreams = 1;
+    int estall = 0;
     char* paramfile = NULL;
     char* outfile = NULL;
     char* infile = NULL;
     char* estimator_type = NULL;
     
-
     if (argc == 1){
 	printf("%s\n\nusage: %s options\n\n%s\n%s\n%s\n", PROG_DESC, argv[0], OPT_INFO, VERSION, BUGREPORT);
 	exit(1);
     }
         
-    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:h", opts, &opt_ind)) != -1){
+    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:hl", opts, &opt_ind)) != -1){
     	switch(c){
     	case 'e':
     	    // Need to specify which estimator to use and the input file - put all of this in the param file
@@ -114,8 +79,11 @@ int main(int argc, char *argv[])
     	case 'i':
     	    infile = strdup(optarg);
     	    break;
+	case 'l':
+	    estall = 1;
+	    break;
     	case 'n':
-    	    nruns = atoi(optarg);
+    	    nstreams = atoi(optarg);
     	    break;
     	case 'o':
     	    outfile = strdup(optarg);
@@ -136,38 +104,108 @@ int main(int argc, char *argv[])
     	}
     }
 
-    
+    // printf("numruns %d, exp %d, gen %d, est %d, paramfile %s, outfile %s\n", nruns, exp, gen, est, paramfile, outfile);
 
-    //    printf("numruns %d, exp %d, gen %d, est %d, paramfile %s, outfile %s\n", nruns, exp, gen, est, paramfile, outfile);
+    run_requested_operations(gen, est, exp, paramfile, infile, outfile, nstreams, estimator_type, estall);
 
-    run_requested_operations(gen, est, exp, paramfile, infile, outfile, nruns, estimator_type);
+    free(estimator_type);
+    free(paramfile);
+    free(infile);
+    free(outfile);
 
     return 0;
 }
 
-void run_requested_operations(int generator, int estimator, int exp, char* paramfile,
-			      char* infile, char* outfile, int nruns, char* estimator_type)
+void run_requested_operations(int generator, int estimator, int experiment, 
+			      char* paramfile, char* infile, char* outfile,
+			      int nstreams, char* estimator_type, int estall)
 {
     if (generator == 1){
 	if (paramfile == NULL){
-	    printf("You must specify a parameter file to use.\nTry running \"launcher"\
-		   " -g [your parameter file] \"\n");
+	    printf("You must specify a parameter file to use.\nTry running "\
+		   "\"launcher -g [your parameter file]\"\n");
 	    exit(1);
 	}
-	generate(paramfile, outfile);
+	generate(paramfile, outfile, nstreams);
     } else if (estimator == 1){
 	if (paramfile == NULL){
-	    printf("You must specify a parameter file to use.\nTry running \"launcher"\
-		   " -e [your parameter file] -i iwls\"\n");
+	    printf("You must specify a parameter file to use.\nTry running "\
+		   "\"launcher -e [your parameter file] -a [estimator]\"\n");
 	    exit(1);
 	}
-	estimate(paramfile, NULL, NULL, estimator_type);
-    } else if (exp == 1){
-	experiment(paramfile);
+	if (estall && nstreams > 1){
+	    multi_estimate(paramfile, infile, outfile, estimator_type, nstreams);
+	} else {
+	    printf("estimating single stream\n");
+	    estimate(paramfile, infile, outfile, estimator_type);
+	}
+    } else if (experiment == 1){
+	printf("experimenting\n");
     } else {
 	printf("No action specified. You can run either an estimator, a generator or"\
 	       " experiments by using the -e, -g or -x switches respectively.\n");
     }
+}
+
+/*
+ * Estimate a series of streams. Constructs the file to read data from by using
+ * parameters used to output the data from the generator, and then runs estimators
+ * on each file. Data is then stored and once all estimates have been made the data
+ * is combined to make a single estimate.
+ */
+void multi_estimate(char* paramfile, char* infile, char* outfile, char* estimator_type,
+		    int nstreams)
+{
+    paramlist* params = get_parameters(paramfile);
+    char* fname = get_string_param(params, "outfile");
+    char* pref = get_string_param(params, "stream_ext");
+    double step = get_double_param(params, "output_sample_step");
+    if (step <= 0)
+	step = DEFAULT_STEP;
+    char* tmp = NULL;
+    double* time_delta = NULL;
+	    
+    if (fname == NULL || pref == NULL){
+	printf("You must include the parameters \"outfile\" and \"stream_ext\" in"\
+	       " your parameter file.\n");
+	exit(1);
+    }
+
+    char* infname = malloc(strlen(fname) + strlen(pref) + 3);
+    printf("running estimator for %d streams\n", nstreams);
+    est_arr** allstreams = malloc(nstreams * sizeof(est_arr*));
+    int i;
+    for (i = 0; i < nstreams; ++i) {
+	sprintf(infname, "%s%s%d_ev", fname, pref, i);
+	allstreams[i] = estimate(paramfile, infname, NULL, estimator_type);
+    }
+	    
+    /* Find time delay here*/
+    if ((tmp = get_string_param(params, "timedelta")) != NULL){
+	char **vals = string_split(tmp, ',');
+	int tdlen = atoi(vals[0]) - 1;
+	time_delta = malloc((tdlen + 1) * sizeof(double));
+	
+	for (i = 1; i < tdlen + 1; ++i) {
+	    time_delta[i - 1] = atof(vals[i]);
+	}
+
+	free_pointer_arr((void**) vals, atoi(vals[0]));
+    } else {
+	printf("You must specify the time delay between each stream. "\
+	       "Add something like \"timedelta 0,10,20\" to your parameter file\n");
+	exit(1);
+    }
+    
+    double interval_time = 0;
+
+    if ((interval_time = get_double_param(params, "interval_time")) == 0){
+	printf("interval_time not specified.\n");
+	exit(1);
+    }
+
+    double_mult_arr* combined = combine_functions(allstreams, time_delta, interval_time, nstreams, step);
+    double_mult_dim_to_file(outfile, "w", combined);
 }
 
 /*

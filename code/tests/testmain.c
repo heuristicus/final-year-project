@@ -1,6 +1,3 @@
-#include <stdlib.h>
-#include <check.h>
-#include <stdio.h>
 #include "tests.h"
 
 int main(int argc, char *argv[])
@@ -13,6 +10,7 @@ int main(int argc, char *argv[])
     srunner_add_suite(sr, paramlist_suite());
     srunner_add_suite(sr, file_util_suite());
     srunner_add_suite(sr, estimator_suite());
+    srunner_add_suite(sr, combinefunction_suite());
     
     srunner_run_all(sr, CK_VERBOSE);
     number_failed = srunner_ntests_failed(sr);

@@ -1,3 +1,20 @@
+Alpha 0.4.1: (27/01/13)
+
++ Hotfix for missing header file
+
+--------------------------------------------------------------------------------
+
+Alpha 0.4: (27/01/13)
+
++ Multiple function estimates can be combined to make a single estimate. Try
+  running 
+  `launcher -g params.txt -n 2`
+  `launcher -e params.txt -a base -l -n 2 -o multitest.txt`
+  and plotting the output.
++ Parameter files can be automatically generated using `launcher -d filename`
+
+--------------------------------------------------------------------------------
+
 Alpha 0.3: (11/01/13)
 
 + Moved project to autotools for extra portability and easier compilation.

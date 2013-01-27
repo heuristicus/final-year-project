@@ -1,11 +1,11 @@
+#ifndef _MATHUTIL_H
+#define _MATHUTIL_H
+
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 #include <gmp.h>
-
-#ifndef _MATHUTIL_H
-#define _MATHUTIL_H
 
 long double fact(int n);
 double prob_num_events_in_time_span(double t_start, double t_end, double lambda, int k);

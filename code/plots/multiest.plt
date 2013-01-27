@@ -2,8 +2,8 @@
 
 reset
 
-set terminal epslatex size 5.0,3.5 standalone header "\\usepackage{cmbright}\n" color colortext
-set output '$0.tex'
+set terminal epslatex size 5.0,3.5 standalone color header "\\usepackage{cmbright}\n" colortext
+set output "$0.tex"
 
 # Line styles
 set border linewidth 2
@@ -18,7 +18,7 @@ set ylabel 'Events per second'
 
 # Axis ranges
 #set yrange [0:25]
-set xrange[0:100]
+#set xrange[0:100]
 
 # Tics in latex format
 set format '$$%g$$'
@@ -31,7 +31,9 @@ set format '$$%g$$'
 # Key
 set key right
 
-plot "$1" index 0 using 1:2 with lines linestyle 1 title 'Underlying Function $$S_A$$',\
-"$1" index 1 using 1:2 with lines linestyle 2 title '$$S_A$$ counts',\
-"$2" index 0 using 1:2 with lines linestyle 3 title 'Underlying Function $$S_B$$',\
-"$2" index 1 using 1:2 with lines linestyle 4 title '$$S_B$$ counts'
+plot "$1" index 0 using 1:2 with lines linestyle 2 title 'Underlying Function $$S_A$$',\
+"$1" index 1 using 1:2 with lines linestyle 2 title '$$s_A$$ counts',\
+"$2" using 1:2 with lines linestyle 1 title '$$s_A$$ estimate',\
+"$3" index 0 using 1:2 with lines linestyle 4 title 'Underlying Function $$S_B$$',\
+"$3" index 1 using 1:2 with lines linestyle 4 title '$$s_B$$ counts',\
+"$4" using 1:2 with lines linestyle 3 title '$$s_B$$ estimate'

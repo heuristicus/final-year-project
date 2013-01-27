@@ -17,11 +17,11 @@ AC_SEARCH_LIBS([pow], [m], , AC_MSG_ERROR([Could not find standard math library.
 AC_SEARCH_LIBS([mupCreate], [muparser], ,AC_MSG_ERROR([Could not find muparser library.]))
 AC_SEARCH_LIBS([__gmpz_init], [gmp], ,AC_MSG_ERROR([Could not find gmp library.]))
 # Use pkg-config to set up the appropriate flags for muparser and gmp
-#PKG_CHECK_MODULES([DEPS], [muparser >= 2.2.2 gmp >= 4.3])
+PKG_CHECK_MODULES([DEPS], [muparser >= 2.2.3])
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
 
 # Checks for header files.
-AC_CHECK_FILE([/usr/include/muParser/muParser.h], ,AC_MSG_ERROR([muParser header not found.]))
+AC_CHECK_FILE([/usr/include/muParser.h], ,AC_MSG_ERROR([muParser header not found.]))
 AC_CHECK_HEADERS([stdlib.h string.h sys/time.h unistd.h], ,AC_MSG_ERROR([Header file missing.]))
 
 # Checks for typedefs, structures, and compiler characteristics.
