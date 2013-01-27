@@ -1,3 +1,9 @@
+2013-01-27  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* math_util.c: Error checking on parameters for some gaussian functions
+
+	* check_math_util.c: Added tests for gaussian-related code
+
 2013-01-26  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* GMP: Removed use of GMP in math library - necessary functionality

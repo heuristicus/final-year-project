@@ -348,7 +348,7 @@ double gaussian_contribution_at_point(double x, gaussian* g, double weight)
  */
 double** gaussian_contribution(gaussian* g, double start, double end, double step, double weight)
 {
-    if (!interval_valid(start, end))
+    if (!interval_valid(start, end) || g == NULL || step <= 0)
 	return NULL;
     
     int len = (end - start)/step;
@@ -372,6 +372,9 @@ double** gaussian_contribution(gaussian* g, double start, double end, double ste
  */
 double sum_gaussians_at_point(double x, gauss_vector* G)
 {
+    if (G == NULL)
+	return 0;
+    
     int i;
     double sum = 0;
 
@@ -388,7 +391,7 @@ double sum_gaussians_at_point(double x, gauss_vector* G)
  */
 double** gauss_transform(gauss_vector* G, double start, double end, double step)
 {
-    if (!interval_valid(start, end))
+    if (!interval_valid(start, end) || step <= 0 || G == NULL)
 	return NULL;
 
     double current;
@@ -432,26 +435,28 @@ double* random_vector(int len)
 }
 
 /*
- * Generates the given number of gaussians with evenly distributed means, and the 
- * given stdev, within the specified interval.
+ * Generates gaussians with the given stdev spaced according to the step parameter
+ * within the interval [start, end]. A gaussian is always placed at the start
+ * of the interval. Returns a null pointer if the interval is invalid or the 
+ * step or stdev are <= 0
  */
-gauss_vector* gen_gaussian_vector_uniform(double stdev, double start, double end, int num)
+gauss_vector* gen_gaussian_vector_uniform(double stdev, double start, double end, double step)
 {
-    if (!interval_valid(start, end))
+    if (!interval_valid(start, end) || step <= 0 || stdev <= 0)
 	return NULL;
     
     gauss_vector* G = malloc(sizeof(gauss_vector));
+    
+    int num = (end - start)/step + 1;
 
     G->gaussians = malloc(sizeof(gaussian*) * num);
     G->w = random_vector(num);
     G->len = num;
-
-    double step = (end - start)/num;
     double current;
     
     int i;
     
-    for (i = 0, current = start; i < num && current < end; ++i, current += step) {
+    for (current = start; current <= end; ++i, current += step) {
 	G->gaussians[i] = make_gaussian(current, stdev);
     }
 
@@ -460,10 +465,14 @@ gauss_vector* gen_gaussian_vector_uniform(double stdev, double start, double end
 
 /*
  * Generates a vector of gaussians whose means are centred on the values
- * in the given array and have the specified standard deviation.
+ * in the given array and have the specified standard deviation. Returns null if
+ * the stdev or len <= 0, or a null pointer is passed in.
  */
 gauss_vector* gen_gaussian_vector_from_array(double* means, int len, double stdev)
 {
+    if (stdev <= 0 || len <= 0 || means == NULL)
+	return NULL;
+    
     gauss_vector* G = malloc(sizeof(gauss_vector));
 
     G->gaussians = malloc(sizeof(gaussian*) * len);
