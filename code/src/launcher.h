@@ -2,6 +2,7 @@
 #define _LAUNCHER_H
 
 #include "estimator.h"
+#include "experimenter.h"
 #include "generator.h"
 #include "general_util.h"
 #include "combinefunction.h"

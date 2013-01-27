@@ -268,7 +268,7 @@ int create_default_param_file(char* filename)
     // generator parameters
     put_section_header(fp, "generation parameters");
     fprintf(fp, "%s %d\n", "start_time", DEFAULT_START);
-    fprintf(fp, "%s %d\n", "nruns", DEFAULT_NRUNS);
+    fprintf(fp, "%s %d\n", "nstreams", DEFAULT_NSTREAMS);
     fprintf(fp, "%s %s\n", "timedelta", DEFAULT_TIMEDELTA);
     fprintf(fp, "%s %d\n", "lambda", DEFAULT_LAMBDA);
     fprintf(fp, "%s %d\n", "interval_time", DEFAULT_INTERVAL);

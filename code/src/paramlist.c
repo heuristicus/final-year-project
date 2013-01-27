@@ -114,6 +114,8 @@ int set_string_param(paramlist* head, char* param_name, char* new_value)
     }
     
     data->val = new_value;
+
+    return 0;
 }
 
 /*
@@ -132,6 +134,8 @@ int set_double_param(paramlist* head, char* param_name, double new_value)
     snprintf(tmp, MAX_VALUE_LENGTH, "%lf", new_value);
 
     data->val = tmp;
+
+    return 0;
 }
 
 /*
@@ -150,6 +154,8 @@ int set_int_param(paramlist* head, char* param_name, int new_value)
     snprintf(tmp, MAX_VALUE_LENGTH, "%d", new_value);
     
     data->val = tmp;
+
+    return 0;
 }
 
 /*

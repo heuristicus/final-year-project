@@ -9,12 +9,7 @@
 #include <getopt.h>
 #include <muParserDLL.h>
 #include "paramlist.h"
-
-typedef struct
-{
-    double* data;
-    int len;
-} len_double_arr;
+#include "general_util.h"
 
 // start.c
 char** parse_args(int argc, char *argv[]);
@@ -34,9 +29,9 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
 void run_events_nonhom(muParserHandle_t hparser, double lambda, double time_delta, 
 		       int events, char *outfile, int outswitch);
 void run_time_nstreams(muParserHandle_t hparser, double lambda, double runtime, 
-		       len_double_arr *time_delta, int nstreams, char *outfile, int outswitch);
-void generate(char* paramfile, char* outfile);
+		       double_arr *time_delta, int nstreams, char *outfile, int outswitch);
+void generate(char* paramfile, char* outfile, int nstreams);
 void _generate(paramlist* params, char *outfile, double interval_time, double lambda, 
-	       len_double_arr* time_delta, int output_verbosity, int nruns, char* expr);
+	       double_arr* time_delta, int output_verbosity, int nruns, char* expr);
 
 #endif

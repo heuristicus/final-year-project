@@ -9,7 +9,7 @@
 #define PARSER_MAXVARS 10
 
 static int generated_outfile = 0;
-static char* generator_params[] = {"nruns", "lambda", "interval_time",
+static char* generator_params[] = {"nstreams", "lambda", "interval_time",
 				   "timedelta", "verbosity", "expression"};
 
 void on_error(muParserHandle_t hParser);
@@ -20,7 +20,7 @@ void view_expr(muParserHandle_t hparser);
 
 //#define VERBOSE
 
-void generate(char* paramfile, char* outfile)
+void generate(char* paramfile, char* outfile, int nstreams)
 {
     paramlist* params = get_parameters(paramfile);
 
@@ -45,11 +45,12 @@ void generate(char* paramfile, char* outfile)
 	exit(1);
     }
 
-    int nruns = get_int_param(params, "nruns");
+    if (nstreams == 1)
+	nstreams = get_int_param(params, "nstreams");
     double lambda = get_double_param(params, "lambda");
     double interval_time = get_double_param(params, "interval_time");
     char* tdelta = get_string_param(params, "timedelta");
-    len_double_arr* time_delta = malloc(sizeof(len_double_arr*));
+    double_arr* time_delta = malloc(sizeof(double_arr*));
     
     // extract data from the timedelta parameter
     char** vals = string_split(tdelta, ',');
@@ -68,7 +69,7 @@ void generate(char* paramfile, char* outfile)
     char* expression = get_string_param(params, "expression");
 
     _generate(params, outfile, interval_time, lambda, time_delta, output_verbosity,
-	      nruns, expression);
+	      nstreams, expression);
 }
 
 /*
@@ -77,13 +78,12 @@ void generate(char* paramfile, char* outfile)
  * The order in which the arguments are is defined inside start.c
  */
 void _generate(paramlist* params, char* outfile, double interval_time, double lambda, 
-	       len_double_arr* time_delta, int output_verbosity, int nruns, char* expr)
+	       double_arr* time_delta, int output_verbosity, int nstreams, char* expr)
 {
-    int i;
-
 #ifdef VERBOSE
-    printf("Number of runs: %d\nLambda: %lf\nInterval time: %lf\nTime deltas: ", nruns, 
+    printf("Number of runs: %d\nLambda: %lf\nInterval time: %lf\nTime deltas: ", nstreams, 
 	   lambda, interval_time);
+    int i;
 
     for (i = 0; i < tdlen; ++i) {
 	printf("%lf", time_delta[i]);
@@ -114,7 +114,7 @@ void _generate(paramlist* params, char* outfile, double interval_time, double la
 	exit(1);
     }
     
-    run_time_nstreams(hparser, lambda, interval_time, time_delta, nruns, outfile, output_verbosity);
+    run_time_nstreams(hparser, lambda, interval_time, time_delta, nstreams, outfile, output_verbosity);
     
     mupRelease(hparser);
 
@@ -239,7 +239,7 @@ void on_error(muParserHandle_t hparser)
  * or just the event times.
  * *IMPORTANT* The value of lambda MUST exceed the maximum value of the function! *IMPORTANT*
  */
-void run_time_nstreams(muParserHandle_t hparser, double lambda, double end_time, len_double_arr* time_delta, int nstreams, char* outfile, int outswitch)
+void run_time_nstreams(muParserHandle_t hparser, double lambda, double end_time, double_arr* time_delta, int nstreams, char* outfile, int outswitch)
 {
     int i;
             
