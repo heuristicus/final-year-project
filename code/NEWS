@@ -1,3 +1,9 @@
+Alpha 0.4.1: (27/01/13)
+
++ Hotfix for missing header file
+
+--------------------------------------------------------------------------------
+
 Alpha 0.4: (27/01/13)
 
 + Multiple function estimates can be combined to make a single estimate. Try
