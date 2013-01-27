@@ -1,4 +1,3 @@
-#include <check.h>
 #include "tests.h"
 #include "paramlist.h"
 

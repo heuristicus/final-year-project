@@ -1,4 +1,5 @@
-#include "estimator.h"
+#include "general_util.h"
+#include "defparams.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -156,7 +157,7 @@ double* get_event_subinterval(double *events, double interval_start, double inte
 /*
  * Prints the estimates contained within the given estimate array
  */
-void print_estimates(est_arr *estimates)
+void print_estimates(est_arr* estimates)
 {
     int len = estimates->len;
     
@@ -198,4 +199,155 @@ void print_string_array(char* message, char** array, int len)
 	printf("%s\n", array[i]);
     }
 
+}
+
+/*
+ * Creates a parameter file with default parameters and comments.
+ */
+int create_default_param_file(char* filename)
+{
+    printf("Writing default parameter file to %s...", filename);
+    FILE* fp = fopen(filename, "w");
+
+    if (fp == NULL){
+	perror("Could not open file");
+	return -1;
+    }
+
+    // i/o files and stuff
+    fprintf(fp, "%s\n\n", "# Inline comments are not supported!");
+    // data output
+    put_section_header(fp, "data output");
+    fprintf(fp, "%s\n%s %s\n\n", "# file to which generator outputs data","outfile", 
+	    DEFAULT_OUTFILE);
+    fprintf(fp, "%s\n%s %s\n\n", "# Estimators output data to this file if no "\
+	    "output file is specified for the\n# estimator being used", "est_outfile",
+	    DEFAULT_EST_OUTFILE);
+    fprintf(fp, "%s\n%s %s\n", "# Individual output files for specific estimators.", 
+	    "# ols_output", DEFAULT_OLS_OUT);
+    fprintf(fp, "%s %s\n", "# iwls_output", DEFAULT_IWLS_OUT);
+    fprintf(fp, "%s %s\n", "# pc_output", DEFAULT_PC_OUT);
+    fprintf(fp, "%s %s\n\n", "# base_output", DEFAULT_BASE_OUT);
+    fprintf(fp, "%s\n%s %s\n\n", "# this will be appended to the output file for each separate"\
+	    " stream. The stream\n# number will be added at the end.", "stream_ext",
+	    DEFAULT_EXTENSION);
+    fprintf(fp, "%s\n%s %lf\n\n", "# Used to determine the granularity of data in"\
+	    " output files. With a step of 1,\n# data in interval [0,5] is gathered"\
+	    " at 0, 1, 2, 3, 4 and 5 along the axis.", "output_step",
+	    DEFAULT_STEP);
+    fprintf(fp, "%s\n%s %d\n\n", "# define the verbosity of output to data files.\n"
+	    "# 0 output only event data for each run\n# 1 output event times and lambda"\
+	    " values for each run\n# 2 output event time and lambda values for each run,"\
+	    " as well as midpoints and\n# bin counts, to a single file\n# 3 output the above, "\
+	    "but also save a file with only event data in it (all data\n# is saved as {filename}"\
+	    "_ad, events as {filename}_ev)", "verbosity", DEFAULT_VERBOSITY);
+    // data input
+    put_section_header(fp, "data input");
+    fprintf(fp, "%s\n%s %s\n\n", "# Input file used for estimation", "infile", DEFAULT_INFILE);
+    // generator parameters
+    put_section_header(fp, "generation parameters");
+    fprintf(fp, "%s %d\n", "start_time", DEFAULT_START);
+    fprintf(fp, "%s %d\n", "nruns", DEFAULT_NRUNS);
+    fprintf(fp, "%s %s\n", "timedelta", DEFAULT_TIMEDELTA);
+    fprintf(fp, "%s %d\n", "lambda", DEFAULT_LAMBDA);
+    fprintf(fp, "%s %d\n", "interval_time", DEFAULT_INTERVAL);
+    fprintf(fp, "%s %d\n\n", "seed", DEFAULT_SEED);
+    fprintf(fp, "%s\n%s %s\n", "# expression parameters\n# The equation must contain the "\
+	    "variable 't'. The value of the variable will be set by\n# the program. Do not"\
+	    " set it here.", "expression", DEFAULT_EXPRESSION);
+    fprintf(fp, "%s %d\n", "a", DEFAULT_A);
+    fprintf(fp, "%s %d\n", "b", DEFAULT_B);
+    fprintf(fp, "%s %.10lf\n\n", "alpha", DEFAULT_ALPHA);
+    // estimator parameters
+    put_section_header(fp, "estimator parameters");
+    fprintf(fp, "%s\n%s %s\n\n", "# specifies the type of estimator to use. Options are"\
+	    " ols, iwls, piecewise, baseline", "est_type", DEFAULT_ESTIMATOR);
+    put_section_header(fp, "ols parameters");
+    fprintf(fp, "%s %d\n\n", "ols_subintervals", DEFAULT_SUBINTERVALS);
+    // iwls
+    put_section_header(fp, "iwls parameters");
+    fprintf(fp, "%s %d\n", "iwls_iterations", DEFAULT_IWLS_ITERATIONS);
+    fprintf(fp, "%s %d\n\n", "iwls_subintervals", DEFAULT_SUBINTERVALS);
+
+    // piecewise
+    put_section_header(fp, "piecewise parameters");
+    fprintf(fp, "%s\n%s %d\n\n", "# Number of times to iterate the IWLS estimator. Recommended"\
+	    " value is between 2 and 5.", "pc_iwls_iterations",DEFAULT_IWLS_ITERATIONS);
+    fprintf(fp, "%s\n%s %d\n\n", "# Number of subintervals to use for the IWLS estimator."\
+	    " The photon stream data will be\n# put into this many bins and the estimate will run on that.",
+	    "pc_iwls_subintervals", DEFAULT_SUBINTERVALS);
+    fprintf(fp, "%s\n%s %lf\n\n", "# Maximum amount to extend the lines estimated for each"\
+	    " subinterval. Longer lines will\n# be more likely to be rejected if the data"\
+	    " varies a lot. If the first attempt fails,\n# further attempts will be made "\
+	    "with fractional values of the original.", "pc_max_extension", DEFAULT_MAX_EXTENSION);
+    fprintf(fp, "%s\n%s %d\n\n", "# The maximum number of breakpoints used by the piecewise"\
+	    " estimate. The estimator will\n# use at most this number of lines to estimate"\
+	    " the underlying function. If extensions\n# succeed or the data is quite linear,"\
+	    " fewer subintervals will be required to make a\n# good estimate, so the actual "\
+	    "number of breakpoints in the estimate may be lower.", "pc_max_breakpoints", 
+	    DEFAULT_MAX_BREAKPOINTS);
+    fprintf(fp, "%s\n%s %lf\n\n", "# Proportion of the interval time that the minimum possible"\
+	    " subinterval length should\n# be. Very short subintervals often result in very"\
+	    " bad estimates, especially if the\n# data has large variations.", 
+	    "pc_min_interval_proportion", DEFAULT_MIN_INTERVAL_PROP);
+    fprintf(fp, "%s\n%s %lf\n\n", "# Threshold at which to reject an extension attempt. This"\
+	    " threshold limits the value\n# of the probability density function calculated at"\
+	    " each point on the extended line,\n# checking how likely is it that the point"\
+	    " is actually part of the data set. A lower\n# value means that extension will"\
+	    " be continued even if the probability is very low.", "pc_pmf_threshold", DEFAULT_PMF_THRESHOLD);
+    fprintf(fp, "%s\n%s %lf\n\n", "# A different threshold for summation of probability density"\
+	    " functions. Used when summing\n# the probability density functions at each point.", 
+	    "pc_pmf_sum_threshold", DEFAULT_PMF_SUM_THRESHOLD);
+    // baseline
+    put_section_header(fp, "baseline parameters");
+    fprintf(fp, "%s %d\n", "base_iwls_iterations", DEFAULT_IWLS_ITERATIONS);
+    fprintf(fp, "%s %d\n", "base_iwls_subintervals", DEFAULT_SUBINTERVALS);
+    fprintf(fp, "%s %lf\n", "base_max_extension", DEFAULT_MAX_EXTENSION);
+    fprintf(fp, "%s %d\n", "base_max_breakpoints", DEFAULT_MAX_BREAKPOINTS);
+    fprintf(fp, "%s %lf\n", "base_min_interval_proportion", DEFAULT_MIN_INTERVAL_PROP);
+    fprintf(fp, "%s %lf\n", "base_pmf_threshold", DEFAULT_PMF_THRESHOLD);
+    fprintf(fp, "%s %lf\n", "base_pmf_sum_threshold", DEFAULT_PMF_SUM_THRESHOLD);
+
+    fclose(fp);
+
+    printf("done\n");
+
+    return 0;
+}
+
+/*
+ * Returns a formatted string to be used for section headings
+ */
+void put_section_header(FILE* fp, char* heading)
+{
+    int len = 80;
+    int midlen = len - strlen(heading);
+    int i;
+    
+    for (i = 0; i < len; ++i) {
+	fputc('#', fp);
+    }
+
+    fputc('\n', fp);
+    fputc('#', fp);
+
+    for (i = 0; i < midlen/2; ++i) {
+	fputc(' ', fp);
+    }
+
+    fprintf(fp, "%s", heading);
+
+
+    for (i += strlen(heading); i < len - 2; ++i) {
+	fputc(' ', fp);
+    }
+
+    fputc('#', fp);
+    fputc('\n', fp);
+
+    for (i = 0; i < len; ++i) {
+	fputc('#', fp);
+    }
+    
+    fputc('\n', fp);
 }

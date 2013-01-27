@@ -49,7 +49,7 @@ void generate(char *paramfile, char *outfile, int nruns)
     }
 
     // Check param files for parameters and use those instead of defaults if they exist
-    if ((tmp = get_string_param(params, "nruns")) != NULL)
+    if (nruns == 1 && (tmp = get_string_param(params, "nruns")) != NULL)
 	nruns = atoi(tmp);
 
     if ((tmp = get_string_param(params, "lambda")) != NULL)
@@ -271,9 +271,10 @@ char* select_output_file(char* cur_out, char* param_out)
     } else if (param_out != NULL && cur_out != NULL){
 	printf("Output file found in both parameter file and command line arguments.\n");
 	int u = -1;
-	while (u < 0 || u > 1){
+	int res = 0;
+	while (res == 0 || (u < 0 || u > 1)){
 	    printf("To use the file %s, enter 1. To use the file %s, enter 0.\n", param_out, cur_out);
-	    int res = scanf("%d", &u);
+	    res = scanf("%d", &u);
 	}
 
 	if (u == 1){

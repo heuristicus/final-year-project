@@ -1,3 +1,6 @@
+#ifndef _GENERATOR_H
+#define _GENERATOR_H
+
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
@@ -5,10 +8,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <muParserDLL.h>
-// #include "/usr/include/muParser/muParserDLL.h" // Dirty trick to fix the include
 
-#ifndef _GENERATOR_H
-#define _GENERATOR_H
 
 // start.c
 char** parse_args(int argc, char *argv[]);

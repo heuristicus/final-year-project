@@ -1,9 +1,9 @@
+#ifndef _PARAMLIST_H
+#define _PARAMLIST_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifndef _PARAMLIST_H
-#define _PARAMLIST_H
 
 struct paramlist 
 {
