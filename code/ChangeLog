@@ -1,3 +1,9 @@
+2013-01-27  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* combinefunction.c: Basic error checking added.
+
+	* tests: Tests for combining functions.
+
 2013-01-26  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* file_util.h: Function for writing one of the new structs to file.

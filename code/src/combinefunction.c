@@ -1,15 +1,18 @@
 #include "combinefunction.h"
-#include <stdio.h>
 
 /*
  * Combines two or more function estimates to produce a single estimate.
  * Takes an array of function estimates from different streams, and the
- * time delay between each. The average value of the functions at some
- * points is calculated, and this 
+ * time delay between each. The average value of these functions is taken.
  */
 double_mult_arr* combine_functions(est_arr** estimates, double* time_delay, 
 			   double interval_time, int num_estimates, double step)
 {
+
+    if (estimates == NULL || time_delay == NULL || step <= 0 || num_estimates <= 0 ||
+	interval_time <= 0)
+	return NULL;
+    
     double time;
     int estimate_num;
     double max_delay = 0;
@@ -27,7 +30,7 @@ double_mult_arr* combine_functions(est_arr** estimates, double* time_delay,
     data->len = memsize;
 
     /*
-     * Only have data for all three functions in the intervals in which they
+     * Only have data for all functions in the intervals in which they
      * are all active, so we must limit the times being checked to this interval.
      * The first point at which we have data for all functions in the same place is
      * where the maximum delay is. The last time we have data for all functions is 
@@ -51,6 +54,9 @@ double_mult_arr* combine_functions(est_arr** estimates, double* time_delay,
 double estimate_at_point(est_arr* estimate, double time)
 {
     est_data* idata = data_at_point(estimate, time);
+
+    if (idata == NULL)
+	return 0;
     
     return idata->est_a + idata->est_b * time;
 }
@@ -61,6 +67,9 @@ double estimate_at_point(est_arr* estimate, double time)
  */
 est_data* data_at_point(est_arr* estimate, double check_time)
 {
+    if (estimate == NULL)
+	return NULL;
+    
     est_data* current = NULL;
     est_data* ret = NULL;
         
