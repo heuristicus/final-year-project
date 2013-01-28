@@ -141,6 +141,7 @@ void run_requested_operations(int generator, int estimator, int experiment,
 	}
     } else if (experiment == 1){
 	printf("experimenting\n");
+	run_experiments(paramfile);
     } else {
 	printf("No action specified. You can run either an estimator, a generator or"\
 	       " experiments by using the -e, -g or -x switches respectively.\n");

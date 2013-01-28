@@ -9,8 +9,8 @@
 #include "paramlist.h"
 #include "general_util.h"
 
-void experiment(char* paramfile);
-double_arr* parse_double_range(char** split_param_string);
-int_arr* parse_int_range(char** split_param_string);
+void run_experiments(char* paramfile);
+double_arr* parse_double_range(string_arr* split_param_string);
+int_arr* parse_int_range(string_arr* split_param_string);
 
 #endif
