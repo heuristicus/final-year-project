@@ -18,21 +18,27 @@ void free_pointer_arr(void **arr, int length)
     free(arr);
 }
 
-/*
- * Splits a string on a separator. The return array will have the number
- * of elements in the array in its first location.
- */
-char** string_split(char *string, char separator)
+void free_string_arr(string_arr* arr)
 {
+    free_pointer_arr((void**) arr->data, arr->len);
+}
+
+/*
+ * Splits a string on a separator.
+ */
+string_arr* string_split(char* string, char separator)
+{
+    if (string == NULL)
+	return NULL;
+    
     char *dup = strdup(string);
     char *ref = dup; // so we can free later
     
-    // Array size will be stored in the first array location
     char **split = malloc(DEF_ARR_SIZE * sizeof(char*));
     
     int max_size = DEF_ARR_SIZE;
     int len = 0;
-    int size = 1;
+    int size = 0;
     int exit = 0;
     
     while (!exit){
@@ -58,10 +64,11 @@ char** string_split(char *string, char separator)
     free(ref);
         
     split = realloc(split, size * sizeof(char*)); // save memory
-    split[0] = malloc(20); // size is maximum of 20 chars long (probably overkill)
-    snprintf(split[0], 20, "%d", size);
-    
-    return split;
+    string_arr* ret = malloc(sizeof(string_arr));
+    ret->data = split;
+    ret->len = size;
+        
+    return ret;
 }
 
 void print_int_arr(int *arr, int len)

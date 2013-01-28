@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 	exit(1);
     }
         
-    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:hl", opts, &opt_ind)) != -1){
+    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:hlp:", opts, &opt_ind)) != -1){
     	switch(c){
     	case 'e':
     	    // Need to specify which estimator to use and the input file - put all of this in the param file
@@ -148,6 +148,11 @@ void run_requested_operations(int generator, int estimator, int experiment,
 	}
     } else if (experiment == 1){
 	printf("experimenting\n");
+	if (extra_paramfile == NULL){
+	    printf("You need to specify the file from which to read default parameters."\
+		   " Use the -p switch to do so.\n");
+	    exit(1);
+	}
 	run_experiments(paramfile, extra_paramfile);
     } else {
 	printf("No action specified. You can run either an estimator, a generator or"\
@@ -190,15 +195,15 @@ void multi_estimate(char* paramfile, char* infile, char* outfile, char* estimato
 	    
     /* Find time delay here*/
     if ((tmp = get_string_param(params, "timedelta")) != NULL){
-	char **vals = string_split(tmp, ',');
-	int tdlen = atoi(vals[0]) - 1;
+	string_arr* vals = string_split(tmp, ',');
+	int tdlen = vals->len;
 	time_delta = malloc((tdlen + 1) * sizeof(double));
 	
 	for (i = 1; i < tdlen + 1; ++i) {
-	    time_delta[i - 1] = atof(vals[i]);
+	    time_delta[i - 1] = atof(vals->data[i]);
 	}
 
-	free_pointer_arr((void**) vals, atoi(vals[0]));
+	free_string_arr(vals);
     } else {
 	printf("You must specify the time delay between each stream. "\
 	       "Add something like \"timedelta 0,10,20\" to your parameter file\n");

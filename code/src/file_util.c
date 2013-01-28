@@ -91,11 +91,15 @@ paramlist* get_parameters(char* filename)
 	param = strtok(line, " ");
 	value = strtok(NULL, "\n");
 	
-	if (plist == NULL)
+	if (value == NULL){
+	    printf("Could not find value for parameter %s. Please check that it "\
+		   "exists.\n", param);
+	    exit(1);
+	} else if (plist == NULL) {
 	    plist = init_list(param, value);
-	else
+	} else {
 	    plist = add(plist, param, value);
-
+	}
     }
         
     free(lp);
@@ -395,15 +399,17 @@ int create_file_in_dir(char* filename, char* dirname)
     int r = mkdir(dirname, S_IRWXU);
     
     if (r == 0 || errno == EEXIST){
-	printf("putting file in\n");
 	char* fullpath = malloc(strlen(filename) + strlen(dirname) + 1);
 	sprintf(fullpath, "%s/%s", dirname, filename);
-	printf("fullpath is %s\n", fullpath);	
 	int file = open(fullpath, O_CREAT | O_EXCL, S_IRWXU | S_IROTH | S_IRGRP);
-	close(file);
+	
+	if (file == -1)
+	    return -1;
+	else
+	    close(file);
+	
 	return 0;
-    } else {
-	return -1;
     }
-    
+
+    return -1;
 }

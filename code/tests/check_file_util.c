@@ -89,13 +89,15 @@ START_TEST(test_create_file_in_dir)
     create_file_in_dir("blah", "bb");
     create_file_in_dir("blah2", "bb");
 
+    fail_unless(create_file_in_dir("blah", "bb") == -1, NULL);
+
     int x = open("bb/blah", O_CREAT | O_EXCL, S_IRWXU | S_IROTH | S_IRGRP);
 
-    fail_unless(errno == EEXIST);
+    fail_unless(errno == EEXIST, NULL);
     
     int y = open("bb/blah", O_CREAT | O_EXCL, S_IRWXU | S_IROTH | S_IRGRP);
 
-    fail_unless(errno == EEXIST);
+    fail_unless(errno == EEXIST, NULL);
 
     unlink("bb/blah2");
     unlink("bb/blah");

@@ -53,17 +53,17 @@ void generate(char* paramfile, char* outfile, int nstreams)
     double_arr* time_delta = malloc(sizeof(double_arr*));
     
     // extract data from the timedelta parameter
-    char** vals = string_split(tdelta, ',');
+    string_arr* vals = string_split(tdelta, ',');
     
-    time_delta->len = atoi(vals[0]) - 1;
+    time_delta->len = vals->len;
     time_delta->data = malloc((time_delta->len + 1) * sizeof(double));
 
     int i;
     
     for (i = 1; i < time_delta->len; ++i) {
-	time_delta->data[i - 1] = atof(vals[i]);
+	time_delta->data[i - 1] = atof(vals->data[i]);
     }
-    free_pointer_arr((void**) vals, atoi(vals[0]));
+    free_string_arr(vals);
 
     int output_verbosity = get_int_param(params, "verbosity");
     char* expression = get_string_param(params, "expression");

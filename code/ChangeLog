@@ -1,3 +1,19 @@
+2013-01-28  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* general_util.c: Modified split_string function and its tests.
+
+	* experimenter.c: Completed range parsing functions, with tests.
+	Experimenter now takes two parameter files to read - one to read
+	default parameters, and one for its own use. Checks that some required
+	parameters are present.
+
+	* exp_param.txt: Added some parameters that make sense to use.
+
+	* check_file_util.c: Test for create file function.
+
+	* file_util.c: Added function for creating files within directories.
+	Fixed crash when parameter in paramfile does not have a value.
+
 2013-01-27  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* combinefunction.c: Basic error checking added.

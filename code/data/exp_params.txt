@@ -1,4 +1,4 @@
-#********************output
+############## output
 # Base name used for output data. The date and time will be appended,
 # perhaps with some more information
 base_outfile experiment_data
@@ -20,11 +20,11 @@ save_paramfile yes
 # will be performed in the program and results will be written to exp_outfile
 output_estimate_data yes
 
-#*********************settings
+######### settings
 
 # Specify the parameters that you want to experiment with and define their
 # priority. Parameters closer to the front of the list are run first.
-experiment_priority 
+experiment_priority iwls_subintervals,iwls_iterations
 
 # If you want to run the experiments with parameters co-varying, set this
 # to no. If you are working on the parameters a 1,2,3 and b 1,2,3, then

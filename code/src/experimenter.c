@@ -1,12 +1,31 @@
 #include "experimenter.h"
 
+static char* experiment_params[] = {"experiment_priority"};
+
 void run_experiments(char* exp_params, char* def_params)
 {
-    paramlist* params = get_parameters(exp_params);
-    
-    char* runols = get_string_param(params, "test_OLS");
+    paramlist* exp_list = get_parameters(exp_params);
+//    paramlist* def_list = get_parameters(def_params);
 
-    printf("runols %s\n", runols);
+    if (!has_required_params(exp_list, experiment_params,\
+			     sizeof(experiment_params)/sizeof(char*))){
+	print_string_array("Some parameters required for experiments are missing. " \
+			   "Ensure that your file contains the following parameters, and"\
+			   " that you're using the right file. Pass the experiment parameters"\
+			   " to -x, and the default ones to -p.",
+			   experiment_params, sizeof(experiment_params)/sizeof(char*));
+	exit(1);
+    }
+
+    string_arr* exp_vars = string_split(get_string_param(exp_list,"experiment_priority"), ',');
+
+    
+    int i;
+    
+    for (i = 0; i < exp_vars->len; ++i) {
+	printf("%s\n", exp_vars->data[i]);
+    }
+
 }
 
 /*
