@@ -28,8 +28,6 @@ START_TEST (test_get_event_data_all)
 	//printf("%lf %lf\n", data[i], file[i + 1]);
 	fail_unless(data[i] == file[i + 1], NULL);
     }
-
-    
 }
 END_TEST
 
@@ -86,6 +84,25 @@ START_TEST (test_valid_param)
 }
 END_TEST
 
+START_TEST(test_create_file_in_dir)
+{
+    create_file_in_dir("blah", "bb");
+    create_file_in_dir("blah2", "bb");
+
+    int x = open("bb/blah", O_CREAT | O_EXCL, S_IRWXU | S_IROTH | S_IRGRP);
+
+    fail_unless(errno == EEXIST);
+    
+    int y = open("bb/blah", O_CREAT | O_EXCL, S_IRWXU | S_IROTH | S_IRGRP);
+
+    fail_unless(errno == EEXIST);
+
+    unlink("bb/blah2");
+    unlink("bb/blah");
+    rmdir("bb");
+}
+END_TEST
+
 Suite* file_util_suite(void)
 {
     Suite* s = suite_create("file_util");
@@ -94,8 +111,8 @@ Suite* file_util_suite(void)
     tcase_add_test(tc_core, test_get_event_data_all);
     tcase_add_test(tc_core, test_get_event_data_interval);
     tcase_add_test(tc_core, test_valid_param);
-    
-    
+    tcase_add_test(tc_core, test_create_file_in_dir);
+        
     suite_add_tcase(s, tc_core);
 
     return s;

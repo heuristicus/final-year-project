@@ -1,10 +1,4 @@
 #include "file_util.h"
-#include "general_util.h"
-#include <string.h>
-#include <time.h>
-#include <sys/time.h>
-#include <unistd.h>
-#include <ctype.h>
 
 #define MAX_DATE_LENGTH 32
 #define MAX_PARAM_STRING_LENGTH 500
@@ -388,4 +382,28 @@ void estimate_to_file(char *filename, est_data *estimate, char *mode)
     fprintf(fp, "\n\n");
     
     fclose(fp);
+}
+
+/*
+ * Creates a file with the filename specified in the directory given. If the
+ * directory does not exist it is created. If all goes well, returns zero, 
+ * else returns -1. The directory is created with read, write and execute 
+ * permissions for the user.
+ */
+int create_file_in_dir(char* filename, char* dirname)
+{
+    int r = mkdir(dirname, S_IRWXU);
+    
+    if (r == 0 || errno == EEXIST){
+	printf("putting file in\n");
+	char* fullpath = malloc(strlen(filename) + strlen(dirname) + 1);
+	sprintf(fullpath, "%s/%s", dirname, filename);
+	printf("fullpath is %s\n", fullpath);	
+	int file = open(fullpath, O_CREAT | O_EXCL, S_IRWXU | S_IROTH | S_IRGRP);
+	close(file);
+	return 0;
+    } else {
+	return -1;
+    }
+    
 }

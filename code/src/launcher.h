@@ -34,15 +34,19 @@
     "\t -o or --outfile\n"						\
     "\t\t Data will be output to this file.\n\n"			\
     "\t -p or --paramfile\n"						\
-    "\t\t The file containing parameters to use. This can be used to specify a "\
+    "\t\t Specify the parameter file in which to find default parameters when experimenting "\
     "large number of options.\n\n"					\
     "\t -x or --experiment\n"						\
     "\t\t Run an experiment. Requires parameter file.\n\n"
 #define VERSION "poissonstream alpha v0.3"
 #define BUGREPORT "Report bugs to mxs968@cs.bham.ac.uk"
 
-void run_requested_operations(int generator, int estimator, int experiment, char* paramfile, char* infile, char* outfile, int nruns, char* estimator_type, int estall);
+void run_requested_operations(int generator, int estimator, int experiment, 
+			      char* paramfile, char* extra_paramfile, 
+			      char* infile, char* outfile, int nruns, 
+			      char* estimator_type, int estall);
 int estimator_valid(char* name);
-void multi_estimate(char* paramfile, char* infile, char* outfile, char* estimator_type, int nstreams);
+void multi_estimate(char* paramfile, char* infile, char* outfile, 
+		    char* estimator_type, int nstreams);
 
 #endif

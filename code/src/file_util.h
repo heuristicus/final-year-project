@@ -4,8 +4,16 @@
 #include "paramlist.h"
 #include "estimator.h"
 #include "general_util.h"
+#include <string.h>
+#include <time.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
+#include <fcntl.h>
 
 void standard_out(char filename, void* arr1, void* arr2, int len, char* arrtype);
 void mult_double_to_file(char* filename, char* mode, double* arr1, double* arr2, int len);
@@ -23,5 +31,6 @@ double* get_event_data_all(char* filename);
 void int_dbl_to_file(char* filename, char* mode, double* arr1, int* arr2, int len);
 void estimate_to_file(char* filename, est_data* estimate, char* mode);
 void output_estimates(char* filename, est_data* *estimates, int len);
+int create_file_in_dir(char* filename, char* dirname);
 
 #endif

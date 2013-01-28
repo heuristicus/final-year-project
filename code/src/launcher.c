@@ -9,6 +9,7 @@ static struct option opts[] =
 	{"estimator", required_argument, 0, 'a'},
 	{"infile",  required_argument, 0, 'i'},
 	{"outfile",  required_argument, 0, 'o'},
+	{"paramfile",  required_argument, 0, 'p'},
 	{"defparam", required_argument, 0, 'd'},
 	{"nstreams",    required_argument, 0, 'n'},
 	{"estall", no_argument, 0, 'l'},
@@ -27,6 +28,7 @@ int main(int argc, char *argv[])
     int nstreams = 1;
     int estall = 0;
     char* paramfile = NULL;
+    char* extra_paramfile = NULL;
     char* outfile = NULL;
     char* infile = NULL;
     char* estimator_type = NULL;
@@ -88,6 +90,9 @@ int main(int argc, char *argv[])
     	case 'o':
     	    outfile = strdup(optarg);
     	    break;
+	case 'p':
+	    extra_paramfile = strdup(optarg);
+	    break;
     	case 'x':
     	    exp = 1;
     	    if (exp + gen + est > 1){
@@ -106,10 +111,11 @@ int main(int argc, char *argv[])
 
     // printf("numruns %d, exp %d, gen %d, est %d, paramfile %s, outfile %s\n", nruns, exp, gen, est, paramfile, outfile);
 
-    run_requested_operations(gen, est, exp, paramfile, infile, outfile, nstreams, estimator_type, estall);
+    run_requested_operations(gen, est, exp, paramfile, extra_paramfile, infile, outfile, nstreams, estimator_type, estall);
 
     free(estimator_type);
     free(paramfile);
+    free(extra_paramfile);
     free(infile);
     free(outfile);
 
@@ -117,8 +123,9 @@ int main(int argc, char *argv[])
 }
 
 void run_requested_operations(int generator, int estimator, int experiment, 
-			      char* paramfile, char* infile, char* outfile,
-			      int nstreams, char* estimator_type, int estall)
+			      char* paramfile, char* extra_paramfile,
+			      char* infile, char* outfile, int nstreams,
+			      char* estimator_type, int estall)
 {
     if (generator == 1){
 	if (paramfile == NULL){
@@ -141,7 +148,7 @@ void run_requested_operations(int generator, int estimator, int experiment,
 	}
     } else if (experiment == 1){
 	printf("experimenting\n");
-	run_experiments(paramfile);
+	run_experiments(paramfile, extra_paramfile);
     } else {
 	printf("No action specified. You can run either an estimator, a generator or"\
 	       " experiments by using the -e, -g or -x switches respectively.\n");

@@ -1,11 +1,49 @@
+#********************output
+# Base name used for output data. The date and time will be appended,
+# perhaps with some more information
 base_outfile experiment_data
-outfile exp
+
+# Name of the file containing results of experiments
+exp_outfile exp
+
+# Directory into which files generated will be placed
+output_dir experiments
+
+# File into which to save information about parameter settings used to generate
+# each file put into the output directory
+param_info_filename parameter_settings.txt
+
+# Save the parameter file used to generate the experiments into the directory
+save_paramfile yes
+
+# Output data from estimators into the output directory or not. If not, processing
+# will be performed in the program and results will be written to exp_outfile
+output_estimate_data yes
+
+#*********************settings
+
+# Specify the parameters that you want to experiment with and define their
+# priority. Parameters closer to the front of the list are run first.
+experiment_priority 
+
+# If you want to run the experiments with parameters co-varying, set this
+# to no. If you are working on the parameters a 1,2,3 and b 1,2,3, then
+# running them with parameters co-varying will get you results for
+# permutations of the parameters. If the experiment priority is a,b then
+# you will get results with parameter settings like a1b1, a1b2, a1b3, a2b1,
+# a2b2, and so on, for all parameter combinations. This might take a very long
+# time if you have a lot of parameters and values.
+run_separately yes
+
+test_generator yes
+test_OLS no
+test_IWLS no
+test_piecewise no
+test_baseline no
 
 # Number of times to repeat each experiment
 repetitions 5
 seed 0
 
 # Whether or not to regenerate the photon stream for each experiment
-regenerate_stream 1
-
-a 2,3...5
+regenerate_stream yes

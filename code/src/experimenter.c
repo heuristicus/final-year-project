@@ -1,7 +1,12 @@
 #include "experimenter.h"
 
-void run_experiments(char* paramfile)
+void run_experiments(char* exp_params, char* def_params)
 {
+    paramlist* params = get_parameters(exp_params);
+    
+    char* runols = get_string_param(params, "test_OLS");
+
+    printf("runols %s\n", runols);
 }
 
 /*
