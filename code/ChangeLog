@@ -1,3 +1,21 @@
+2013-01-29  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* file_util.c: Wondering whether to allow parameters without
+	values specified. Makes having to specify loads of parameters
+	in the experiment paramfile unnecessary if you just want to run
+	experiments on one part of the system.
+
+	* experimenter.c: Function to parse parameters from a string of
+	comma separated values. If the string contains a range indicator
+	(...), then it will revert to the function to calculate the range.
+	Experimenter structure changed. Requires parameters to be defined
+	for all the parts of the system you want to experiment with. Checks
+	whether these parameters exist in the paramfile. Still a work in
+	progress.
+
+	* general_util.c: Function to check whether parameters in a string
+	array are present in a paramlist.
+
 2013-01-28  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* general_util.c: Modified split_string function and its tests.

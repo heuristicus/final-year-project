@@ -21,11 +21,6 @@ save_paramfile yes
 output_estimate_data yes
 
 ######### settings
-
-# Specify the parameters that you want to experiment with and define their
-# priority. Parameters closer to the front of the list are run first.
-experiment_priority iwls_subintervals,iwls_iterations
-
 # If you want to run the experiments with parameters co-varying, set this
 # to no. If you are working on the parameters a 1,2,3 and b 1,2,3, then
 # running them with parameters co-varying will get you results for
@@ -35,11 +30,20 @@ experiment_priority iwls_subintervals,iwls_iterations
 # time if you have a lot of parameters and values.
 run_separately yes
 
-test_generator yes
-test_OLS no
-test_IWLS no
-test_piecewise no
-test_baseline no
+test_generator no
+test_ols yes
+test_iwls yes
+test_piecewise yes
+test_baseline yes
+
+# Specify the parameters to experiment on for the different estimators and
+# generator. The 
+generator_params start_time,nstreams
+ols_params ols_subintervals
+iwls_params iwls_subintervals,iwls_iterations
+piecewise_params pc_max_extension,pc_max_breakpoints
+baseline_params base_max_breakpoints,base_pmf_threshold
+
 
 # Number of times to repeat each experiment
 repetitions 5
@@ -47,3 +51,7 @@ seed 0
 
 # Whether or not to regenerate the photon stream for each experiment
 regenerate_stream yes
+
+######### parameters
+iwls_subintervals 1,2,...,10
+iwls_iterations 1,2,3

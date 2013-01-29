@@ -91,14 +91,21 @@ paramlist* get_parameters(char* filename)
 	param = strtok(line, " ");
 	value = strtok(NULL, "\n");
 	
-	if (value == NULL){
-	    printf("Could not find value for parameter %s. Please check that it "\
-		   "exists.\n", param);
-	    exit(1);
-	} else if (plist == NULL) {
-	    plist = init_list(param, value);
+	if (plist == NULL) {
+
+	    if (value == NULL){
+		printf("No value found for %s.\n", param);
+		plist = init_list(param, "<empty>");
+	    } else {
+		plist = init_list(param, value);	
+	    }
 	} else {
-	    plist = add(plist, param, value);
+	    if (value == NULL){
+		printf("No value found for %s.\n", param);
+		plist = add(plist, param, "<empty>");
+	    } else {
+		plist = add(plist, param, value);
+	    }
 	}
     }
         
@@ -181,18 +188,20 @@ double* get_event_data_all(char *filename)
 /*
  * Checks whether a line received from the parameter file is valid.
  */
-int valid_param(char *pname)
+int valid_param(char* pname)
 {
     int spacecount;
     
     for (spacecount = 0; *pname != '\0'; ++pname){
 	// 10 is the backspace character - seems to come up from time to time
-	if ((32 < *pname && 126 > *pname) || *pname == 10)
+	if ((32 < *pname && 126 > *pname) || *pname == 10) {
 	    continue;
-	else if (*pname == 32)
+	} else if (*pname == ' '){
 	    spacecount++;
-	else
-	    printf("invalid char %d\n", *pname);
+	} else {
+	    printf("invalid char %c\n", *pname);
+	    return 0;
+	}
 	
 	if (spacecount > 1)
 	    return 0;
@@ -202,7 +211,6 @@ int valid_param(char *pname)
 	return 0;
     
     return 1;
-    
 }
 
 /*

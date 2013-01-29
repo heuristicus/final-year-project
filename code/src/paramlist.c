@@ -1,4 +1,5 @@
 #include "paramlist.h"
+#include "general_util.h"
 
 #define MAX_VALUE_LENGTH 30
 
@@ -200,3 +201,4 @@ int length(paramlist* head)
     
     return len;
 }
+

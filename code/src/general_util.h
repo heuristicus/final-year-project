@@ -40,5 +40,6 @@ void print_string_array(char* message, char** array, int len);
 int create_default_param_file(char* filename);
 void put_section_header(FILE* fp, char* heading);
 void free_string_arr(string_arr* arr);
+int has_missing_parameters(string_arr* checklist, paramlist* params);
 
 #endif

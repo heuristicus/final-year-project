@@ -379,3 +379,22 @@ void put_section_header(FILE* fp, char* heading)
     
     fputc('\n', fp);
 }
+
+/*
+ * Checks whether all parameters specified in the checklist are present
+ * in the given parameter list.
+ */
+int has_missing_parameters(string_arr* checklist, paramlist* params)
+{
+    int i;
+    int missing = 0;
+
+    for (i = 0; i < checklist->len; ++i) {
+	if (get_param(params, checklist->data[i]) == NULL){
+	    printf("Missing %s\n", checklist->data[i]);
+	    missing = 1;
+	}
+    }
+
+    return missing;
+}

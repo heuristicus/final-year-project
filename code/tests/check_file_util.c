@@ -75,12 +75,10 @@ START_TEST (test_valid_param)
     fail_unless(valid_param(" __test1 test") == 0, NULL);
     fail_unless(valid_param("testing  twospace") == 0, NULL);
     fail_unless(valid_param("testingtab\ttab") == 0, NULL);
-        
-    fail_unless(valid_param("!\"£$%^&*() chars") == 1, NULL);
+    fail_unless(valid_param("!\"£$%^&*() chars") == 0, NULL);
     fail_unless(valid_param("test one") == 1, NULL);
     fail_unless(valid_param("test_two two") == 1, NULL);
     fail_unless(valid_param("test3 53,22") == 1, NULL);
-
 }
 END_TEST
 

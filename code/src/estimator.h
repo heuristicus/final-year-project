@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include "paramlist.h"
 
-
 #define EST_TYPE_ERROR "%s is not a valid estimator. Try -a [ols|iwls|pc|base].\n"
 
 typedef struct
