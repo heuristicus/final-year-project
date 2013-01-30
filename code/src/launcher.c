@@ -29,6 +29,7 @@ int main(int argc, char *argv[])
     int exp = 0;
     int gen = 0;
     int est = 0;
+    int gauss = 0;
     int nstreams = 1;
     int estall = 0;
     char* paramfile = NULL;
@@ -42,14 +43,15 @@ int main(int argc, char *argv[])
 	exit(1);
     }
         
-    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:hl", opts, &opt_ind)) != -1){
+    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:hls:", opts, &opt_ind)) != -1){
     	switch(c){
     	case 'e':
     	    // Need to specify which estimator to use and the input file - put all of this in the param file
     	    est = 1;
-    	    if (exp + gen + est > 1){
-    		printf("Choose only one of -e, -g or -x. You can run either an estimator, a generator or experiments,"\
-    		       " but not more than one at once.\n");
+    	    if (exp + gen + est + gauss > 1){
+    		printf("Choose only one of -e, -g, -x or -s. You can run either"\
+		       " an estimator, or experiments, or generate gaussians or"\
+		       " poisson streams, but not more than one at once.\n");
     		exit(1);
     	    }
 	    printf("%s\n", optarg);
@@ -70,9 +72,10 @@ int main(int argc, char *argv[])
 	    break;
     	case 'g':
     	    gen = 1;
-    	    if (exp + gen + est > 1){
-    		printf("Choose only one of -e, -g or -x. You can run either an estimator, a generator or experiments,"\
-    		       " but not more than one at once.\n");
+    	    if (exp + gen + est + gauss > 1){
+    		printf("Choose only one of -e, -g, -x or -s. You can run either"\
+		       " an estimator, or experiments, or generate gaussians or"\
+		       " poisson streams, but not more than one at once.\n");
     		exit(1);
     	    }
     	    paramfile = strdup(optarg);
@@ -92,11 +95,22 @@ int main(int argc, char *argv[])
     	case 'o':
     	    outfile = strdup(optarg);
     	    break;
+	case 's':
+	    paramfile = strdup(optarg);
+	    gauss = 1;
+	    if (exp + gen + est + gauss > 1){
+    		printf("Choose only one of -e, -g, -x or -s. You can run either"\
+		       " an estimator, or experiments, or generate gaussians or"\
+		       " poisson streams, but not more than one at once.\n");
+    		exit(1);
+    	    }
+	    break;
     	case 'x':
     	    exp = 1;
-    	    if (exp + gen + est > 1){
-    		printf("Choose only one of -e, -g or -x. You can run either an estimator, a generator or experiments," \
-    		       "but not more than one at once.\n");
+    	    if (exp + gen + est + gauss > 1){
+    		printf("Choose only one of -e, -g, -x or -s. You can run either"\
+		       " an estimator, or experiments, or generate gaussians or"\
+		       " poisson streams, but not more than one at once.\n");
     		exit(1);
     	    }
     	    paramfile = strdup(optarg);
@@ -109,7 +123,7 @@ int main(int argc, char *argv[])
 
     // printf("numruns %d, exp %d, gen %d, est %d, paramfile %s, outfile %s\n", nruns, exp, gen, est, paramfile, outfile);
 
-    run_requested_operations(gen, est, exp, paramfile, infile, outfile, nstreams, estimator_type, estall);
+    run_requested_operations(gen, est, exp, gauss, paramfile, infile, outfile, nstreams, estimator_type, estall);
 
     free(estimator_type);
     free(paramfile);
@@ -120,8 +134,9 @@ int main(int argc, char *argv[])
 }
 
 void run_requested_operations(int generator, int estimator, int experiment, 
-			      char* paramfile, char* infile, char* outfile,
-			      int nstreams, char* estimator_type, int estall)
+			      int gauss, char* paramfile, char* infile, 
+			      char* outfile, int nstreams, char* estimator_type,
+			      int estall)
 {
     if (generator == 1){
 	if (paramfile == NULL){
@@ -144,14 +159,9 @@ void run_requested_operations(int generator, int estimator, int experiment,
 	}
     } else if (experiment == 1){
 	printf("experimenting\n");
-
-	double stdev = 60, start = 0, end = 1000, step = 0.5;
-	int num_gaussians = 50;
-
-	gauss_vector* G = gen_gaussian_vector_uniform(stdev, start, end, num_gaussians);
-	output_gaussians("gaussians", "w", G, start, end, step, 1);
-	double** T = gauss_transform(G, start, end, step);
-	output_gauss_transform("gauss_sum", "w", T, (end - start)/step);
+    } else if (gauss == 1){
+	printf("generating gaussians\n");    
+	generate_gaussians(paramfile, outfile, infile);
     } else {
 	printf("No action specified. You can run either an estimator, a generator or experiments by using "\
 	       "the -e, -g or -x switches respectively.\n");

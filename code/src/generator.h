@@ -8,7 +8,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <muParserDLL.h>
-
+#include "math_util.h"
 
 // start.c
 char** parse_args(int argc, char *argv[]);
@@ -22,5 +22,7 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
 void run_events_nonhom(muParserHandle_t hparser, double lambda, double time_delta, int events, char *outfile, int outswitch);
 void run_time_nstreams(muParserHandle_t hparser, double lambda, double runtime, double *time_delta, int nstreams, char *outfile, int outswitch);
 void generate(char *paramfile, char *outfile, int nruns);
+void _generate_gaussians(double stdev, double start, double interval, double gen_step, double out_step, int num_gaussians, char* outfile, char* infile);
+void generate_gaussians(char* paramfile, char* outfile, char* infile);
 
 #endif

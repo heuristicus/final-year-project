@@ -390,16 +390,17 @@ void estimate_to_file(char *filename, est_data *estimate, char *mode)
  * Outputs a 2d array created by the gaussian transform function to a file. The 
  * zeroth index contains the point on the x-axis, and the first contains the 
  * total contribution of gaussians at that point. The mode of addition to the file
- * is specified by the mode parameter.
+ * is specified by the mode parameter. The data will be shifted along the y-axis
+ * according to the shift parameter.
  */
-void output_gauss_transform(char* filename, char* mode, double** T, int len)
+void output_gauss_transform(char* filename, char* mode, double** T, double shift, int len)
 {
     FILE *fp = fopen(filename, mode);
 
     int i;
-    
+    printf("shift is %lf\n", shift);
     for (i = 0; i < len; ++i) {
-	fprintf(fp, "%lf %lf\n", T[0][i], T[1][i]);
+	fprintf(fp, "%lf %lf\n", T[0][i], T[1][i] + shift);
     }
 
     fclose(fp);
@@ -423,7 +424,7 @@ void output_gaussians(char* filename, char* mode, gauss_vector* G, double start,
 
     FILE *fp = fopen(filename, mode);
     
-    int i, j;
+    int i;
     double current;
     
     for (i = 0; i < G->len; ++i) {

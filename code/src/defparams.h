@@ -8,6 +8,7 @@
 #define DEFAULT_IWLS_OUT "iwls_out.dat"
 #define DEFAULT_PC_OUT "pc_out.dat"
 #define DEFAULT_BASE_OUT "base_out.dat"
+#define DEFAULT_GAUSS_OUT "gauss_out.dat"
 
 // input
 #define DEFAULT_INFILE "output.dat_stream_0_ev"
@@ -25,6 +26,12 @@
 #define DEFAULT_A 10
 #define DEFAULT_B 5
 #define DEFAULT_ALPHA 0.1
+
+// gaussian generation params
+#define DEFAULT_STDEV 10.0
+#define DEFAULT_GEN_STEP 10.0
+#define DEFAULT_OUT_STEP 0.1
+#define DEFAULT_GAUSSIANS 40
 
 // Default parameters for estimators
 #define DEFAULT_ESTIMATOR "baseline"

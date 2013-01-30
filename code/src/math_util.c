@@ -81,7 +81,6 @@ void init_rand(double seed)
 	    seed = time(NULL);
 	
 
-	const gsl_rng_type* T;
 	gsl_rng_env_setup();
 
 	r = gsl_rng_alloc(gsl_rng_rand48); // need to free this somewhere
@@ -435,6 +434,26 @@ double* random_vector(int len)
 }
 
 /*
+ * Generate a vector of length len, with all values set to the specified 
+ * weight.
+ */
+double* weight_vector(double weight, int len)
+{
+    if (len <= 0)
+	return NULL;
+    
+    double* V = malloc(len * sizeof(double));
+    
+    int i;
+    
+    for (i = 0; i < len; ++i) {
+	V[i] = weight;
+    }
+
+    return V;
+}
+
+/*
  * Generates gaussians with the given stdev spaced according to the step parameter
  * within the interval [start, end]. A gaussian is always placed at the start
  * of the interval. Returns a null pointer if the interval is invalid or the 
@@ -456,7 +475,7 @@ gauss_vector* gen_gaussian_vector_uniform(double stdev, double start, double end
     
     int i;
     
-    for (current = start; current <= end; ++i, current += step) {
+    for (i = 0, current = start; current <= end; ++i, current += step) {
 	G->gaussians[i] = make_gaussian(current, stdev);
     }
 
@@ -476,7 +495,7 @@ gauss_vector* gen_gaussian_vector_from_array(double* means, int len, double stde
     gauss_vector* G = malloc(sizeof(gauss_vector));
 
     G->gaussians = malloc(sizeof(gaussian*) * len);
-    G->w = random_vector(len);
+    G->w = weight_vector(len, 1);
     G->len = len;
 
     int i;
@@ -486,4 +505,47 @@ gauss_vector* gen_gaussian_vector_from_array(double* means, int len, double stde
     }
     
     return G;
+}
+
+/*
+ * Adds the specified value to all elements in the array. This is non-destructive.
+ */
+double* add_to_arr(double* data, int len, double add)
+{
+    if (data == NULL || len <= 0){
+	return NULL;
+    }
+    
+    double* new = malloc(len * sizeof(double));
+    
+    int i;
+    
+    for (i = 0; i < len; ++i) {
+	new[i] = data[i] + add;
+    }
+
+    return new;
+}
+
+/*
+ * Finds the minimum value in a double array. Zero can be returned either if it
+ * is the minimum value, if the data is NULL, or if the length is invalid
+ */
+double find_min_value(double* data, int len)
+{
+    if (data == NULL || len <= 0){
+	return 0;
+    }
+    
+    int i;
+    double min = INFINITY;
+    
+    for (i = 0; i < len; ++i) {
+	if (data[i] < min){
+	    min = data[i];
+	    printf("min is now %lf\n", min);
+	}
+	
+    }
+    return min;
 }

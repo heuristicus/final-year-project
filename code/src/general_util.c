@@ -228,6 +228,8 @@ int create_default_param_file(char* filename)
     fprintf(fp, "%s %s\n", "# iwls_output", DEFAULT_IWLS_OUT);
     fprintf(fp, "%s %s\n", "# pc_output", DEFAULT_PC_OUT);
     fprintf(fp, "%s %s\n\n", "# base_output", DEFAULT_BASE_OUT);
+    fprintf(fp, "%s\n%s %s\n", "# File to output gaussian data to..", 
+	    "# gauss_out", DEFAULT_GAUSS_OUT);
     fprintf(fp, "%s\n%s %s\n\n", "# this will be appended to the output file for each separate"\
 	    " stream. The stream\n# number will be added at the end.", "stream_ext",
 	    DEFAULT_EXTENSION);
@@ -254,6 +256,12 @@ int create_default_param_file(char* filename)
     fprintf(fp, "%s %d\n", "a", DEFAULT_A);
     fprintf(fp, "%s %d\n", "b", DEFAULT_B);
     fprintf(fp, "%s %.10lf\n\n", "alpha", DEFAULT_ALPHA);
+    // gaussian parameters
+    fprintf(fp, "%s\n%s %lf\n", "# Gaussian generator\n# Standard deviation to apply "\
+	    "to generated gaussians\n", "gauss_stdev", DEFAULT_STDEV);
+    fprintf(fp, "%s %lf\n", "gauss_gen_step", DEFAULT_GEN_STEP);
+    fprintf(fp, "%s %lf\n", "gauss_out_step", DEFAULT_OUT_STEP);
+    fprintf(fp, "%s %d\n", "num_gaussians", DEFAULT_GAUSSIANS);
     // estimator parameters
     put_section_header(fp, "estimator parameters");
     fprintf(fp, "%s\n%s %s\n\n", "# specifies the type of estimator to use. Options are"\

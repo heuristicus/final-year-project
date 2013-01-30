@@ -128,6 +128,58 @@ void generate(char *paramfile, char *outfile, int nruns)
 }
 
 /*
+ * Helper function for generating a set of gaussians. Checks that the required 
+ * parameters are present in the given parameter file and then calls the main 
+ * function to generate gaussians.
+ */
+void generate_gaussians(char* paramfile, char* outfile, char* infile)
+{
+    paramlist* params = get_parameters(paramfile);
+    
+    double stdev = get_double_param(params, "gauss_stdev");
+    double start = get_double_param(params, "start_time");
+    double interval = get_double_param(params, "interval_time");
+    double gen_step = get_double_param(params, "gauss_gen_step");
+    double out_step = get_double_param(params, "gauss_output_step");
+    int num_gaussians = get_int_param(params, "num_gaussians");
+    if (outfile == NULL){
+	outfile = get_string_param(params, "gauss_out");
+    }
+
+    _generate_gaussians(stdev, start, interval, gen_step, out_step, num_gaussians, outfile, infile);
+}
+
+/*
+ * Generate a set of gaussians and output their linear combination to file. The 
+ * data will be shifted in the y-direction so that the summed gaussians do not
+ * have nonzero values.
+ */
+void _generate_gaussians(double stdev, double start, double interval, 
+			 double gen_step, double out_step,
+			 int num_gaussians, char* outfile, char* infile)
+{
+    gauss_vector* G;
+    
+    if (infile == NULL){
+	G = gen_gaussian_vector_uniform(stdev, start, start + interval, gen_step);
+    } else {
+	double* means = get_event_data_all(infile);
+	G = gen_gaussian_vector_from_array(means + 1, means[0] - 1, stdev);
+    }
+
+    output_gaussians(outfile, "w", G, start, start + interval, out_step, 1);
+    double** T = gauss_transform(G, start, start + interval, out_step);
+    char* sum_out = malloc(strlen(outfile) + strlen("_sum"));
+    sprintf(sum_out, "%s%s", outfile, "_sum");
+    double min = find_min_value(T[1], interval/out_step);
+    double shift = 0;
+    if (min <= 0){
+	shift = -min + 0.1;
+    }
+    output_gauss_transform(sum_out, "w", T, shift,interval/out_step);
+}
+
+/*
  * Check the parsed equation to ensure that there are values for each
  * variable specified in the parameter file, and that a variable t is
  * present in the equation.

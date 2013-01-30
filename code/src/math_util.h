@@ -58,7 +58,10 @@ double** gaussian_contribution(gaussian* g, double start, double end, double ste
 double sum_gaussians_at_point(double x, gauss_vector* G);
 double** gauss_transform(gauss_vector* G, double start, double end, double step);
 double* random_vector(int len);
+double* weight_vector(double weight, int len);
 gauss_vector* gen_gaussian_vector_uniform(double stdev, double start, double end, double step);
 gauss_vector* gen_gaussian_vector_from_array(double* means, int len, double stdev);
+double find_min_value(double* data, int len);
+double* add_to_arr(double* data, int len, double add);
 
 #endif

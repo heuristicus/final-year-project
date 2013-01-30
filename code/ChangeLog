@@ -1,3 +1,18 @@
+2013-01-30  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* check_math_util.c: tests for the new functions
+
+	* math_util.c: Function for generating a vector initialised with the same
+	values, finding the minimum value in an array, adding a constant to an array.
+
+	* launcher.c: Can generate gaussians from the launcher into output files.
+
+	* generator.c: Generation functions for gaussians. Output data to files.
+
+	* general_util.c: Parameters for gaussians added to default file generation.
+
+	* file_util.c: Gauss transform output can be shifted along the y axis.
+
 2013-01-27  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* math_util.c: Error checking on parameters for some gaussian functions

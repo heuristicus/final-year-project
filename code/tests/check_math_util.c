@@ -401,6 +401,75 @@ START_TEST(test_gen_gaussian_vector_from_array)
 }
 END_TEST
 
+START_TEST(test_find_min_value)
+{
+    double data[] = {1,2,3,4,5,6};
+    double data1[] = {-153, -123, -222, -414, 34551};
+    double data2[] = {13,313,444,555};
+
+    printf("%lf min\n", find_min_value(data, 6));
+    double diff = abs(find_min_value(data, 6) - 1.0);
+    printf("diff is %.20lf\n", diff);
+    double diff1 = abs(find_min_value(data1, 5) - -414.0);
+    double diff2 = abs(find_min_value(data2, 4) - 13.0);
+        
+    fail_unless(diff >= 0 && diff < 0.000001, NULL);
+    fail_unless(diff1 >= 0 && diff1 < 0.000001, NULL);
+    fail_unless(diff2 >= 0 && diff2 < 0.000001, NULL);
+
+    fail_unless(find_min_value(NULL, 5) == 0, NULL);
+    fail_unless(find_min_value(data1, -1) == 0, NULL);
+    fail_unless(find_min_value(data1, 0) == 0, NULL);
+}
+END_TEST
+
+START_TEST(test_add_to_arr);
+{
+    double data[] = {10, 10, 10};
+    double data1[] = {0, 0, 0};
+    double data2[] = {-5, -2, -1};
+
+    double* ret = add_to_arr(data, 3, 5);
+    double* ret1 = add_to_arr(data1, 3, 10);
+    double* ret2 = add_to_arr(data2, 3, 5);
+    
+    double correct[] = {15, 15, 15};
+    double correct1[] = {10, 10, 10};
+    double correct2[] = {0, 3, 4};
+    
+    int i;
+    
+    for (i = 0; i < 3; ++i) {
+	double diff = abs(correct[i] - ret[i]);
+	double diff1 = abs(correct1[i] - ret1[i]);
+	double diff2 = abs(correct2[i] - ret2[i]);
+	
+	fail_unless(diff >= 0 && diff < 0.000001, NULL);
+	fail_unless(diff1 >= 0 && diff1 < 0.000001, NULL);
+	fail_unless(diff2 >= 0 && diff2 < 0.000001, NULL);
+    }
+
+}
+END_TEST
+
+START_TEST(test_weight_vector)
+{
+    double* data = weight_vector(2.5, 5);
+    double* data1 = weight_vector(-1.0, 5);
+    
+    int i;
+    
+    for (i = 0; i < 5; ++i) {
+	fail_unless(data[i] == 2.5);
+	fail_unless(data1[i] == -1.0);
+    }
+
+
+    fail_unless(weight_vector(1, -1) == NULL, NULL);
+    fail_unless(weight_vector(1, 0) == NULL, NULL);
+}
+END_TEST
+
 Suite* math_util_suite(void)
 {
     Suite *s = suite_create("math_util");
@@ -426,6 +495,10 @@ Suite* math_util_suite(void)
     tcase_add_test(tc_core, test_gauss_transform);
     tcase_add_test(tc_core, test_gen_gaussian_vector_uniform);
     tcase_add_test(tc_core, test_gen_gaussian_vector_from_array);
+    tcase_add_test(tc_core, test_find_min_value);
+    tcase_add_test(tc_core, test_add_to_arr);
+    tcase_add_test(tc_core, test_weight_vector);
+    
     suite_add_tcase(s, tc_core);
 
     return s;
