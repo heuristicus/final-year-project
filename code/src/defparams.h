@@ -30,7 +30,7 @@
 // gaussian generation params
 #define DEFAULT_STDEV 10.0
 #define DEFAULT_GEN_STEP 10.0
-#define DEFAULT_OUT_STEP 0.1
+#define DEFAULT_GAUSS_RESOLUTION 0.5
 #define DEFAULT_GAUSSIANS 40
 
 // Default parameters for estimators

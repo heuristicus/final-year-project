@@ -9,22 +9,6 @@
 #include <stdio.h>
 #include <time.h>
 
-// Make representing gaussians easier.
-typedef struct
-{
-    double mean;
-    double stdev;
-} gaussian;
-
-// Struct to store a set of gaussians.
-typedef struct
-{
-    int len;
-    gaussian** gaussians;
-    double* w;
-} gauss_vector;
-
-
 long double fact(int n);
 double prob_num_events_in_time_span(double t_start, double t_end, double lambda, int k);
 int* sum_events_in_interval(double *event_times, int num_events, double start_time,
@@ -59,7 +43,7 @@ double sum_gaussians_at_point(double x, gauss_vector* G);
 double** gauss_transform(gauss_vector* G, double start, double end, double step);
 double* random_vector(int len);
 double* weight_vector(double weight, int len);
-gauss_vector* gen_gaussian_vector_uniform(double stdev, double start, double end, double step);
+gauss_vector* gen_gaussian_vector_uniform(double stdev, double start, double interval_time, double step);
 gauss_vector* gen_gaussian_vector_from_array(double* means, int len, double stdev);
 double find_min_value(double* data, int len);
 double* add_to_arr(double* data, int len, double add);

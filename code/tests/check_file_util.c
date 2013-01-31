@@ -86,6 +86,71 @@ START_TEST (test_valid_param)
 }
 END_TEST
 
+START_TEST(test_output_gaussian_vector)
+{
+    gaussian* g1 = make_gaussian(2, 3);
+    gaussian* g2 = make_gaussian(4, 2);
+    gauss_vector* G = malloc(sizeof(gauss_vector));
+    gaussian** gs = malloc(2 * sizeof(gaussian*));
+    gs[0] = g1;
+    gs[1] = g2;
+        
+    G->gaussians = gs;
+    G->len = 2;
+    G->w = malloc(2 * sizeof(double));
+    G->w[0] = 1.5;
+    G->w[1] = 3.5;
+
+    output_gaussian_vector("files/gauss_out", G, "w");
+
+    int i;
+
+    FILE *fp = fopen("files/gauss_out", "r");
+
+    double mu, st, wt;
+
+    char* line = malloc(100);
+
+    /* while ((line = fgets(line, 100, fp)) != NULL){ */
+    /* 	printf("line %s\n", line); */
+    /* } */
+    
+    line = fgets(line, 100, fp);
+    int s = sscanf(line, "%lf %lf %lf", &mu, &st, &wt);
+
+    fail_unless(s == 3, NULL);
+    fail_unless(mu == 2, NULL);
+    fail_unless(st == 3, NULL);
+    fail_unless(wt == 1.5, NULL);
+    
+    line = fgets(line, 100, fp);
+    int t = sscanf(line, "%lf %lf %lf", &mu, &st, &wt);
+
+    fail_unless(s == 3, NULL);
+    fail_unless(mu == 4, NULL);
+    fail_unless(st == 2, NULL);
+    fail_unless(wt == 3.5, NULL);
+
+    fclose(fp);
+
+}
+END_TEST
+
+START_TEST(test_read_gauss_vector)
+{
+    gauss_vector* G = read_gauss_vector("files/gauss_out");
+
+    fail_unless(G->gaussians[0]->mean == 2, NULL);
+    fail_unless(G->gaussians[0]->stdev == 3, NULL);
+    fail_unless(G->w[0] == 1.5, NULL);
+
+    fail_unless(G->gaussians[1]->mean == 4, NULL);
+    fail_unless(G->gaussians[1]->stdev == 2, NULL);
+    fail_unless(G->w[1] == 3.5, NULL);
+}
+END_TEST
+
+
 Suite* file_util_suite(void)
 {
     Suite* s = suite_create("file_util");
@@ -94,10 +159,10 @@ Suite* file_util_suite(void)
     tcase_add_test(tc_core, test_get_event_data_all);
     tcase_add_test(tc_core, test_get_event_data_interval);
     tcase_add_test(tc_core, test_valid_param);
-    
+    tcase_add_test(tc_core, test_output_gaussian_vector);
+    tcase_add_test(tc_core, test_read_gauss_vector);    
     
     suite_add_tcase(s, tc_core);
 
     return s;
 }
-

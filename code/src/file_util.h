@@ -29,7 +29,9 @@ void int_dbl_to_file(char* filename, char* mode, double* arr1, int* arr2, int le
 void estimate_to_file(char *filename, est_data *estimate, char *mode);
 void output_estimates(char *filename, est_data **estimates, int len);
 void output_gauss_transform(char* filename, char* mode, double** T, double shift, int len);
-void output_gaussians(char* filename, char* mode, gauss_vector* G, double start,
-		      double end, double step, int apply_weight);
+void output_gaussian_contributions(char* filename, char* mode, gauss_vector* G, double start,
+				   double end, double resolution, int apply_weight);
+void output_gaussian_vector(char* filename, gauss_vector* V, char* mode);
+gauss_vector* read_gauss_vector(char* filename);
 
 #endif

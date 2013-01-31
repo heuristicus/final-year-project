@@ -139,14 +139,16 @@ void generate_gaussians(char* paramfile, char* outfile, char* infile)
     double stdev = get_double_param(params, "gauss_stdev");
     double start = get_double_param(params, "start_time");
     double interval = get_double_param(params, "interval_time");
-    double gen_step = get_double_param(params, "gauss_gen_step");
-    double out_step = get_double_param(params, "gauss_output_step");
-    int num_gaussians = get_int_param(params, "num_gaussians");
+    double gen_step = get_double_param(params, "gauss_generation_step");
+    double resolution = get_double_param(params, "gauss_resolution");
+    double num_gaussians = get_int_param(params, "num_gaussians");
     if (outfile == NULL){
 	outfile = get_string_param(params, "gauss_out");
     }
 
-    _generate_gaussians(stdev, start, interval, gen_step, out_step, num_gaussians, outfile, infile);
+    _generate_gaussians(stdev, start, interval, gen_step, resolution, num_gaussians, outfile, infile);
+    
+    free_list(params);
 }
 
 /*
@@ -155,28 +157,39 @@ void generate_gaussians(char* paramfile, char* outfile, char* infile)
  * have nonzero values.
  */
 void _generate_gaussians(double stdev, double start, double interval, 
-			 double gen_step, double out_step,
-			 int num_gaussians, char* outfile, char* infile)
+			 double gen_step, double resolution, int num_gaussians,
+			 char* outfile, char* infile)
 {
+    double* means = NULL;
     gauss_vector* G;
     
     if (infile == NULL){
 	G = gen_gaussian_vector_uniform(stdev, start, start + interval, gen_step);
+	output_gaussian_contributions(outfile, "w", G, start, start + interval, resolution, 1);
     } else {
-	double* means = get_event_data_all(infile);
+	means = get_event_data_all(infile);
 	G = gen_gaussian_vector_from_array(means + 1, means[0] - 1, stdev);
+	output_gaussian_contributions(outfile, "w", G, start, start + interval, resolution, 0);
     }
 
-    output_gaussians(outfile, "w", G, start, start + interval, out_step, 1);
-    double** T = gauss_transform(G, start, start + interval, out_step);
-    char* sum_out = malloc(strlen(outfile) + strlen("_sum"));
-    sprintf(sum_out, "%s%s", outfile, "_sum");
-    double min = find_min_value(T[1], interval/out_step);
-    double shift = 0;
-    if (min <= 0){
-	shift = -min + 0.1;
-    }
-    output_gauss_transform(sum_out, "w", T, shift,interval/out_step);
+    double** T = gauss_transform(G, start, start + interval, resolution);
+    /* char* sum_out = malloc(strlen(outfile) + strlen("_sum") + 1); */
+    /* sprintf(sum_out, "%s%s", outfile, "_sum"); */
+    /* double min = find_min_value(T[1], interval/resolution); */
+    /* double shift = 0; */
+    /* if (min <= 0){ */
+    /* 	shift = -min + 0.1; */
+    /* } */
+    output_gauss_transform("testout", "w", T, 0, interval/resolution);
+
+    free_gauss_vector(G);
+    
+    free(T[0]);
+    free(T[1]);
+    free(T);
+
+    free(means);
+//    free(sum_out);
 }
 
 /*

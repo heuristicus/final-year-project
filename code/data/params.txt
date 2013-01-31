@@ -16,6 +16,8 @@ est_outfile est_out.dat
 # pc_output pc_out.dat
 # base_output base_out.dat
 
+# File to output gaussian data to.
+gauss_out gauss_out.dat
 # this will be appended to the output file for each separate stream. The stream
 # number will be added at the end.
 stream_ext _stream_
@@ -55,10 +57,16 @@ alpha 0.1000000000
 
 # Gaussian generator
 # Standard deviation to apply to generated gaussians
+gauss_stdev 0.5
 
-gauss_stdev 10.000000
-gauss_gen_step 10.000000
-gauss_out_step 0.100000
+# Specifies the distance on the x-axis between each gaussian when generating.
+gauss_generation_step 10.000000
+
+# Specifies the distance between points at which the gaussianis sampled when summing
+# or outputting data. A high value for this will result in fast computation but loss
+# of detail, and a low value will give more granularity but summing gaussians will take longer. 
+gauss_resolution 0.1
+
 num_gaussians 40
 ################################################################################
 #                              estimator parameters                            #

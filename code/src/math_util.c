@@ -455,18 +455,20 @@ double* weight_vector(double weight, int len)
 
 /*
  * Generates gaussians with the given stdev spaced according to the step parameter
- * within the interval [start, end]. A gaussian is always placed at the start
+ * within the interval [start, start + interval_time]. A gaussian is always placed at the start
  * of the interval. Returns a null pointer if the interval is invalid or the 
  * step or stdev are <= 0
  */
-gauss_vector* gen_gaussian_vector_uniform(double stdev, double start, double end, double step)
+gauss_vector* gen_gaussian_vector_uniform(double stdev, double start, double interval_time, double step)
 {
+    double end = start + interval_time;
+    printf("%lf %lf %lf %lf\n", stdev, start, interval_time, step);
     if (!interval_valid(start, end) || step <= 0 || stdev <= 0)
 	return NULL;
     
     gauss_vector* G = malloc(sizeof(gauss_vector));
     
-    int num = (end - start)/step + 1;
+    int num = interval_time/step + 1;
 
     G->gaussians = malloc(sizeof(gaussian*) * num);
     G->w = random_vector(num);
@@ -495,11 +497,11 @@ gauss_vector* gen_gaussian_vector_from_array(double* means, int len, double stde
     gauss_vector* G = malloc(sizeof(gauss_vector));
 
     G->gaussians = malloc(sizeof(gaussian*) * len);
-    G->w = weight_vector(len, 1);
+    G->w = weight_vector(1, len);
     G->len = len;
 
     int i;
-    
+
     for (i = 0; i < len; ++i) {
 	G->gaussians[i] = make_gaussian(means[i], stdev);
     }
@@ -543,7 +545,6 @@ double find_min_value(double* data, int len)
     for (i = 0; i < len; ++i) {
 	if (data[i] < min){
 	    min = data[i];
-	    printf("min is now %lf\n", min);
 	}
 	
     }

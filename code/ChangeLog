@@ -1,3 +1,20 @@
+2013-01-31  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* file_util.c: Extremely weird bug where crash occurs on fclose discovered.
+	Not sure how to solve yet. Functions to read and write gaussians with 
+	mean, stdev and weight representation, along with tests.
+
+	* struct.h: Header file for structs to prevent interdependencies causing
+	compilation issues.
+
+	* defparams.h: Default gaussian parameters
+
+	* general_util.c: Gaussian parameters added to default paramfile generation.
+	Functions for printing and freeing gaussian vectors.
+
+	* params.txt: Added gaussian parameters
+
+
 2013-01-30  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* check_math_util.c: tests for the new functions

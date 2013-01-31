@@ -3,24 +3,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "struct.h"
 #include "paramlist.h"
 
 
 #define EST_TYPE_ERROR "%s is not a valid estimator. Try -a [ols|iwls|pc|base].\n"
-
-typedef struct
-{
-    double est_a;
-    double est_b;
-    double start;
-    double end;
-} est_data;
-
-typedef struct
-{
-    est_data** estimates;
-    int len;
-} est_arr;
 
 est_arr* estimate(char* paramfile, char* infile, char* outfile, char* estimator_type);
 int has_required_params(paramlist* params, char** required_params, int len);
