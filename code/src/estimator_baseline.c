@@ -1,7 +1,4 @@
 #include "estimator.h"
-#include "general_util.h"
-#include "math_util.h"
-#include "file_util.h"
 
 double* get_breakpoint_midpoints(double* breakpoint_vector, double* func_vals, int len);
 double* get_breakpoint_vector(est_data** pieces, int max_breakpoints);

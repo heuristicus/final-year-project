@@ -220,6 +220,8 @@ int create_default_param_file(char* filename)
     put_section_header(fp, "data output");
     fprintf(fp, "%s\n%s %s\n\n", "# file to which generator outputs data","outfile", 
 	    DEFAULT_OUTFILE);
+    fprintf(fp, "%s\n%s %s\n\n", "# file to which gaussian generator outputs data","gauss_out", 
+	    DEFAULT_GAUSS_GEN_OUT);
     fprintf(fp, "%s\n%s %s\n\n", "# Estimators output data to this file if no "\
 	    "output file is specified for the\n# estimator being used", "est_outfile",
 	    DEFAULT_EST_OUTFILE);
@@ -227,9 +229,9 @@ int create_default_param_file(char* filename)
 	    "# ols_output", DEFAULT_OLS_OUT);
     fprintf(fp, "%s %s\n", "# iwls_output", DEFAULT_IWLS_OUT);
     fprintf(fp, "%s %s\n", "# pc_output", DEFAULT_PC_OUT);
-    fprintf(fp, "%s %s\n\n", "# base_output", DEFAULT_BASE_OUT);
-    fprintf(fp, "%s\n%s %s\n", "# File to output gaussian data to.", 
-	    "gauss_out", DEFAULT_GAUSS_OUT);
+    fprintf(fp, "%s %s\n", "# base_output", DEFAULT_BASE_OUT);
+    fprintf(fp, "%s\n%s %s\n\n", "# File to output gaussian estimate data to.", 
+	    "gauss_est_out", DEFAULT_GAUSS_EST_OUT);
     fprintf(fp, "%s\n%s %s\n\n", "# this will be appended to the output file for each separate"\
 	    " stream. The stream\n# number will be added at the end.", "stream_ext",
 	    DEFAULT_EXTENSION);
@@ -262,7 +264,7 @@ int create_default_param_file(char* filename)
     fprintf(fp, "%s\n%s %lf\n\n", "# Specifies the distance on the x-axis between each gaussian "\
 	    "when generating.", "gauss_generation_step", DEFAULT_GEN_STEP);
     fprintf(fp, "%s\n%s %lf\n\n", "# Specifies the distance between points at which the gaussian"\
-	    "is sampled when summing\n# or outputting data. A high value for this will result"\
+	    " is sampled when summing\n# or outputting data. A high value for this will result"\
 	    " in fast computation but loss\n# of detail, and a low value will give more granularity"\
 	    " but summing gaussians will take longer. ","gauss_resolution", DEFAULT_GAUSS_RESOLUTION);
     fprintf(fp, "%s %d\n", "num_gaussians", DEFAULT_GAUSSIANS);
@@ -314,8 +316,15 @@ int create_default_param_file(char* filename)
     fprintf(fp, "%s %d\n", "base_max_breakpoints", DEFAULT_MAX_BREAKPOINTS);
     fprintf(fp, "%s %lf\n", "base_min_interval_proportion", DEFAULT_MIN_INTERVAL_PROP);
     fprintf(fp, "%s %lf\n", "base_pmf_threshold", DEFAULT_PMF_THRESHOLD);
-    fprintf(fp, "%s %lf\n", "base_pmf_sum_threshold", DEFAULT_PMF_SUM_THRESHOLD);
-
+    fprintf(fp, "%s %lf\n\n", "base_pmf_sum_threshold", DEFAULT_PMF_SUM_THRESHOLD);
+    // gaussian
+    put_section_header(fp, "gaussian parameters");
+    fprintf(fp, "%s\n%s %lf\n\n", "# Standard deviation to apply to gaussian"\
+	    " kernels used to estimate functions","gauss_est_stdev",
+	    DEFAULT_GAUSS_EST_STDEV);
+    fprintf(fp, "%s\n%s %lf\n\n", "# Specify resolution of kernels used to estimate"\
+	    " gaussians. A small value will\n# give higher precision but take longer"
+	    ,"gauss_est_resolution", DEFAULT_GAUSS_EST_RESOLUTION);
     fclose(fp);
 
     printf("done\n");

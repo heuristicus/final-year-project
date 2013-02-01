@@ -6,6 +6,9 @@
 # file to which generator outputs data
 outfile output.dat
 
+# file to which gaussian generator outputs data
+gauss_out gauss_out.dat
+
 # Estimators output data to this file if no output file is specified for the
 # estimator being used
 est_outfile est_out.dat
@@ -15,9 +18,9 @@ est_outfile est_out.dat
 # iwls_output iwls_out.dat
 # pc_output pc_out.dat
 # base_output base_out.dat
+# File to output gaussian estimate data to.
+gauss_est_out gauss_est_out.dat
 
-# File to output gaussian data to.
-gauss_out gauss_out.dat
 # this will be appended to the output file for each separate stream. The stream
 # number will be added at the end.
 stream_ext _stream_
@@ -57,15 +60,15 @@ alpha 0.1000000000
 
 # Gaussian generator
 # Standard deviation to apply to generated gaussians
-gauss_stdev 0.5
+gauss_stdev 10.000000
 
 # Specifies the distance on the x-axis between each gaussian when generating.
 gauss_generation_step 10.000000
 
-# Specifies the distance between points at which the gaussianis sampled when summing
+# Specifies the distance between points at which the gaussian is sampled when summing
 # or outputting data. A high value for this will result in fast computation but loss
 # of detail, and a low value will give more granularity but summing gaussians will take longer. 
-gauss_resolution 0.1
+gauss_resolution 0.500000
 
 num_gaussians 40
 ################################################################################
@@ -131,3 +134,14 @@ base_max_breakpoints 5
 base_min_interval_proportion 0.100000
 base_pmf_threshold 0.020000
 base_pmf_sum_threshold 0.850000
+
+################################################################################
+#                              gaussian parameters                             #
+################################################################################
+# Standard deviation to apply to gaussian kernels used to estimate functions
+gauss_est_stdev 2
+
+# Specify resolution of kernels used to estimate gaussians. A small value will
+# give higher precision but take longer
+gauss_est_resolution 0.100000
+

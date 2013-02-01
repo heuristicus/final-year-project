@@ -8,7 +8,8 @@
 #define DEFAULT_IWLS_OUT "iwls_out.dat"
 #define DEFAULT_PC_OUT "pc_out.dat"
 #define DEFAULT_BASE_OUT "base_out.dat"
-#define DEFAULT_GAUSS_OUT "gauss_out.dat"
+#define DEFAULT_GAUSS_GEN_OUT "gauss_out.dat"
+#define DEFAULT_GAUSS_EST_OUT "gauss_est_out.dat"
 
 // input
 #define DEFAULT_INFILE "output.dat_stream_0_ev"
@@ -42,5 +43,7 @@
 #define DEFAULT_MIN_INTERVAL_PROP 0.1
 #define DEFAULT_PMF_THRESHOLD 0.02
 #define DEFAULT_PMF_SUM_THRESHOLD 0.85
+#define DEFAULT_GAUSS_EST_STDEV 0.5
+#define DEFAULT_GAUSS_EST_RESOLUTION 0.1
 
 #endif

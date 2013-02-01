@@ -1,3 +1,24 @@
+2013-02-01  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* math_util.c: Fixed cause of crash on fclose when calling the
+	gauss_transform function - data was being written to un-malloced
+	locations.
+
+	* estimator.c: New file can be run by calling the estimator with the
+	-a gauss switch. Return types are different so not yet fully integrated.
+
+	* estimator_gaussian.c: New estimator which uses kernel density
+	to estimate functions. Prototype functions implemented.
+
+	* makefile.am: Dependencies for new file added.
+
+	* defparams.h: Added gaussian estimation and generation parameters.
+
+	* general_util.c: Added writing of gaussian parameters to default
+	paramfile.
+
+	* params.txt: Gaussian estimation and generation parameters split.
+
 2013-01-31  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* file_util.c: Extremely weird bug where crash occurs on fclose discovered.

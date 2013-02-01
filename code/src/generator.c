@@ -173,14 +173,15 @@ void _generate_gaussians(double stdev, double start, double interval,
     }
 
     double** T = gauss_transform(G, start, start + interval, resolution);
-    /* char* sum_out = malloc(strlen(outfile) + strlen("_sum") + 1); */
-    /* sprintf(sum_out, "%s%s", outfile, "_sum"); */
-    /* double min = find_min_value(T[1], interval/resolution); */
-    /* double shift = 0; */
-    /* if (min <= 0){ */
-    /* 	shift = -min + 0.1; */
-    /* } */
-    output_gauss_transform("testout", "w", T, 0, interval/resolution);
+    char* sum_out = malloc(strlen(outfile) + strlen("_sum") + 1);
+    sprintf(sum_out, "%s%s", outfile, "_sum");
+    double min = find_min_value(T[1], interval/resolution);
+    double shift = 0;
+    if (min <= 0){
+    	shift = -min + 0.1;
+    }
+
+    output_gauss_transform(sum_out, "w", T, shift, interval/resolution, 1);
 
     free_gauss_vector(G);
     
@@ -189,7 +190,7 @@ void _generate_gaussians(double stdev, double start, double interval,
     free(T);
 
     free(means);
-//    free(sum_out);
+    free(sum_out);
 }
 
 /*

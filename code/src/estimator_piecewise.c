@@ -1,8 +1,4 @@
 #include "estimator.h"
-#include "file_util.h"
-#include "math_util.h"
-#include "general_util.h"
-#include <string.h>
 
 double extend_estimate(char *event_file, est_data *interval_estimate, double start_time,
 		       double max_extension, double subinterval_time, double pmf_threshold);
@@ -39,7 +35,6 @@ est_arr* estimate_piecewise(paramlist* params, char *event_file, char *output_fi
     double min_interval_proportion = get_double_param(params, "pc_min_interval_proportion");
     double pmf_threshold = get_double_param(params, "pc_pmf_threshold");
     double pmf_sum_threshold = get_double_param(params, "pc_pmf_sum_threshold");
-    
     
     return _estimate_piecewise(event_file, output_file, start, end, iterations, 
 			       subint, breakpoints, max_extension, min_interval_proportion,

@@ -5,7 +5,7 @@
 #include "math_util.h"
 
  
-static char *estimators[] = {"iwls", "ols", "pc", "base"};
+static char *estimators[] = {"iwls", "ols", "pc", "base", "gauss"};
 static struct option opts[] =
     {
 	{"experiment", required_argument, 0, 'x'},

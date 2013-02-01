@@ -397,12 +397,12 @@ double** gauss_transform(gauss_vector* G, double start, double end, double step)
     int i;
     double** T = malloc(2 * sizeof(double*));
     
-    int memsize = ((end - start)/step) + 1;
+    int memsize = ((end - start)/step);
     
     T[0] = malloc(sizeof(double) * memsize);
     T[1] = malloc(sizeof(double) * memsize);
     
-    for (i = 0, current = start; current <= end; current += step, i++) {
+    for (i = 0, current = start; current <= end && i < memsize; current += step, i++) {
 	T[0][i] = current;
 	T[1][i] = sum_gaussians_at_point(current, G);
     }

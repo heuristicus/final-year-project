@@ -345,11 +345,18 @@ void estimate_to_file(char *filename, est_data *estimate, char *mode)
  * zeroth index contains the point on the x-axis, and the first contains the 
  * total contribution of gaussians at that point. The mode of addition to the file
  * is specified by the mode parameter. The data will be shifted along the y-axis
- * according to the shift parameter.
+ * according to the shift parameter. The contribution at each point can be normalised
+ * by providing a normalising constant.
  */
-void output_gauss_transform(char* filename, char* mode, double** T, double shift, int len)
+void output_gauss_transform(char* filename, char* mode, double** T, double shift,
+			    int len, double normaliser)
 {
     FILE* fp;
+    
+    if (normaliser == 0){
+	printf("Received normalising constant of 0. Setting to 1.\n");
+	normaliser == 1;
+    }
     
     printf("Outputting gauss transform to %s.\n", filename);
 
@@ -361,7 +368,7 @@ void output_gauss_transform(char* filename, char* mode, double** T, double shift
     int i;
 
     for (i = 0; i < len; ++i) {
-	fprintf(fp, "%lf %lf\n", T[0][i], T[1][i] + shift);
+	fprintf(fp, "%lf %lf\n", T[0][i], (T[1][i] + shift)/normaliser);
     }
 
     if (fclose(fp)){
