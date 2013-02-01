@@ -10,7 +10,7 @@
 #include "file_util.h"
 #include "general_util.h"
 
-#define EST_TYPE_ERROR "%s is not a valid estimator. Try -a [ols|iwls|pc|base].\n"
+#define EST_TYPE_ERROR "%s is not a valid estimator. Try -a [ols|iwls|pc|base|gauss].\n"
 
 est_arr* estimate(char* paramfile, char* infile, char* outfile, char* estimator_type);
 int has_required_params(paramlist* params, char** required_params, int len);

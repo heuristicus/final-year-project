@@ -34,5 +34,6 @@ void output_gaussian_contributions(char* filename, char* mode, gauss_vector* G, 
 				   double end, double resolution, int apply_weight);
 void output_gaussian_vector(char* filename, gauss_vector* V, char* mode);
 gauss_vector* read_gauss_vector(char* filename);
+void output_double_multi_arr(char* filename, char* mode, double_multi_arr* arr);
 
 #endif

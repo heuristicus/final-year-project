@@ -104,6 +104,7 @@ START_TEST (test_get_event_subinterval)
 }
 END_TEST
 
+
 Suite* general_util_suite(void)
 {
     Suite* s = suite_create("general_util");
@@ -111,6 +112,7 @@ Suite* general_util_suite(void)
     tcase_add_test(tc_core, test_string_split);
     tcase_add_test(tc_core, test_interval_valid);
     tcase_add_test(tc_core, test_get_event_subinterval);
+
     
     suite_add_tcase(s, tc_core);
 

@@ -150,6 +150,40 @@ START_TEST(test_read_gauss_vector)
 }
 END_TEST
 
+START_TEST(test_output_double_multi_arr)
+{
+    double_multi_arr* ck = malloc(sizeof(double_multi_arr));
+    double** dt = malloc(3 * sizeof(double*));
+    double* a = malloc(3 * sizeof(double));
+    double* b = malloc(3 * sizeof(double));
+    double* c = malloc(3 * sizeof(double));
+
+    a[0] = 1;
+    a[1] = 2;
+    a[2] = 3;
+ 
+    b[0] = 4;
+    b[1] = 5;
+    b[2] = 6;
+    
+    c[0] = 7;
+    c[1] = 8;
+    c[2] = 9;
+    
+    dt[0] = a;
+    dt[1] = b;
+    dt[2] = c;
+
+    int ls[] = {3,3,3};
+    int l = 3;
+    
+    ck->data = dt;
+    ck->lengths = ls;
+    ck->len = l;
+    
+    output_double_multi_arr("files/multi_arr", "w", ck);
+}
+END_TEST
 
 Suite* file_util_suite(void)
 {
@@ -161,6 +195,7 @@ Suite* file_util_suite(void)
     tcase_add_test(tc_core, test_valid_param);
     tcase_add_test(tc_core, test_output_gaussian_vector);
     tcase_add_test(tc_core, test_read_gauss_vector);    
+    tcase_add_test(tc_core, test_output_double_multi_arr);
     
     suite_add_tcase(s, tc_core);
 

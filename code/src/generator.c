@@ -146,17 +146,16 @@ void generate_gaussians(char* paramfile, char* outfile, char* infile)
 	outfile = get_string_param(params, "gauss_out");
     }
 
-    _generate_gaussians(stdev, start, interval, gen_step, resolution, num_gaussians, outfile, infile);
-    
     free_list(params);
+
+    _generate_gaussians(stdev, start, interval, gen_step, resolution, num_gaussians, outfile, infile);
 }
 
 /*
- * Generate a set of gaussians and output their linear combination to file. The 
- * data will be shifted in the y-direction so that the summed gaussians do not
- * have nonzero values.
+ * Generate a set of weighted gaussians. If an input file is provided, data points
+ * are assumed to provide the means for gaussians.
  */
-void _generate_gaussians(double stdev, double start, double interval, 
+gauss_vector* _generate_gaussians(double stdev, double start, double interval, 
 			 double gen_step, double resolution, int num_gaussians,
 			 char* outfile, char* infile)
 {
@@ -165,32 +164,86 @@ void _generate_gaussians(double stdev, double start, double interval,
     
     if (infile == NULL){
 	G = gen_gaussian_vector_uniform(stdev, start, start + interval, gen_step);
-	output_gaussian_contributions(outfile, "w", G, start, start + interval, resolution, 1);
+//	output_gaussian_contributions(outfile, "w", G, start, start + interval, resolution, 1);
     } else {
 	means = get_event_data_all(infile);
 	G = gen_gaussian_vector_from_array(means + 1, means[0] - 1, stdev);
-	output_gaussian_contributions(outfile, "w", G, start, start + interval, resolution, 0);
+//	output_gaussian_contributions(outfile, "w", G, start, start + interval, resolution, 0);
     }
-
-    double** T = gauss_transform(G, start, start + interval, resolution);
-    char* sum_out = malloc(strlen(outfile) + strlen("_sum") + 1);
-    sprintf(sum_out, "%s%s", outfile, "_sum");
-    double min = find_min_value(T[1], interval/resolution);
-    double shift = 0;
-    if (min <= 0){
-    	shift = -min + 0.1;
-    }
-
-    output_gauss_transform(sum_out, "w", T, shift, interval/resolution, 1);
-
-    free_gauss_vector(G);
-    
-    free(T[0]);
-    free(T[1]);
-    free(T);
 
     free(means);
-    free(sum_out);
+
+    return G;
+
+    /* double** T = gauss_transform(G, start, start + interval, resolution); */
+    /* char* sum_out = malloc(strlen(outfile) + strlen("_sum") + 1); */
+    /* sprintf(sum_out, "%s%s", outfile, "_sum"); */
+    /* double min = find_min_value(T[1], interval/resolution); */
+    /* double shift = 0; */
+    /* if (min <= 0){ */
+    /* 	shift = -min + 0.1; */
+    /* } */
+
+    /* output_gauss_transform(sum_out, "w", T, shift, interval/resolution, 1); */
+
+    /* free_gauss_vector(G); */
+    
+    /* free(T[0]); */
+    /* free(T[1]); */
+    /* free(T); */
+
+    /* free(means); */
+    /* free(sum_out); */
+}
+
+void generate_random_function(char* paramfile, char* outfile, int number)
+{
+    paramlist* params = get_parameters(paramfile);
+    
+    double stdev = get_double_param(params, "gauss_stdev");
+    double start = get_double_param(params, "start_time");
+    double interval = get_double_param(params, "interval_time");
+    double gen_step = get_double_param(params, "gauss_generation_step");
+    double resolution = get_double_param(params, "gauss_resolution");
+    
+    if (outfile == NULL){
+	outfile = "random_functions";
+    }
+
+    int i;
+    double_multi_arr* func;
+
+    for (i = 0; i < number; ++i) {
+	func = _generate_random_function(stdev, start, interval, gen_step, resolution);    
+	output_double_multi_arr(outfile, i  == 0 ? "w" : "a", func);
+    }
+}
+
+/*
+ * Uses weighted gaussians uniformly distributed in the interval 
+ * [start, start + interval] to construct a random function. Returns the function
+ * sampled at intervals of resolution. The function is guaranteed to be >= 0 at
+ * all points.
+ */
+double_multi_arr* _generate_random_function(double stdev, double start, double interval,
+				   double step, double resolution)
+{
+    if (step <= 0 || resolution <= 0 || !interval_valid(start, start + interval))
+	return NULL;
+    
+    gauss_vector* V = gen_gaussian_vector_uniform(stdev, start, interval, step);
+    double_multi_arr* func = gauss_transform(V, start, start + interval, resolution);
+
+    double min = find_min_value(func->data[1], func->lengths[1]);
+    double shift = 0;
+    if (min <= 0){
+    	shift = -min;
+    }
+    
+    func->data[1] = add_to_arr(func->data[1], func->lengths[1], shift);
+    free_gauss_vector(V);
+    
+    return func;
 }
 
 /*

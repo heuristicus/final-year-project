@@ -357,7 +357,7 @@ double** gaussian_contribution(gaussian* g, double start, double end, double ste
     cont[0] = malloc(len * sizeof(double));
     cont[1] = malloc(len * sizeof(double));
 
-    for (i = 0, current = start; current <= end; current+= step, ++i) {
+    for (i = 0, current = start; current <= end && i <= len; current+= step, ++i) {
 	cont[0][i] = current;
 	cont[1][i] = gaussian_contribution_at_point(current, g, weight);
     }
@@ -385,31 +385,69 @@ double sum_gaussians_at_point(double x, gauss_vector* G)
 
 /*
  * Performs a discrete gaussian transform on the given vector of gaussians, in the
- * interval [start, end], with distance step between sample points. Returns a 2-d
+ * interval [start, end], with the given data resolution. Returns a 2-d
  * vector of the values and points at which the values were sampled.
  */
-double** gauss_transform(gauss_vector* G, double start, double end, double step)
+double_multi_arr* gauss_transform(gauss_vector* G, double start, double end, double resolution)
 {
-    if (!interval_valid(start, end) || step <= 0 || G == NULL)
+    if (!interval_valid(start, end) || resolution <= 0 || G == NULL)
 	return NULL;
 
     double current;
     int i;
+    double_multi_arr* ret = malloc(sizeof(double_multi_arr));
+    ret->len = 2;
+    ret->lengths = malloc(sizeof(int) * ret->len);
+    
     double** T = malloc(2 * sizeof(double*));
     
-    int memsize = ((end - start)/step);
+    
+    int memsize = ((end - start)/resolution) + 1;
     
     T[0] = malloc(sizeof(double) * memsize);
     T[1] = malloc(sizeof(double) * memsize);
+    ret->lengths[0] = memsize;
+    ret->lengths[1] = memsize;
     
-    for (i = 0, current = start; current <= end && i < memsize; current += step, i++) {
+    for (i = 0, current = start; current <= end && i < memsize; current += resolution, i++) {
 	T[0][i] = current;
 	T[1][i] = sum_gaussians_at_point(current, G);
     }
+
+    ret->data = T;
     
-    return T;
+    return ret;
 }
 
+double** kernel_density(double* events, int len, double start, double end, double bandwidth, double resolution)
+{
+    double current = start;
+    
+    while (current <= end){
+	printf("kernel density at %lf is %lf\n", current, kernel_density_at_point(events, len, current, bandwidth));
+	current += resolution;
+    }
+
+    return NULL;
+}
+
+double kernel_density_at_point(double* events, int len, int x, double bandwidth)
+{
+    int i;
+    double sum = 0;    
+
+    for (i = 0; i < len; ++i) {
+	sum = (1/(len * bandwidth)) * gaussian_kernel((x - events[i])/bandwidth, x, bandwidth);
+    }
+    
+    return sum;
+}
+
+double gaussian_kernel(double x, double mean, double stdev)
+{
+    return exp(-pow(x - mean, 2)/(2 * pow(stdev, 2)));
+//    return (1/sqrt(2 * M_PI)) * exp((-1/2) * pow(x, 2));
+}
 
 /*
  * Generates a vector of specified length with each point p ~ N(0,1)
@@ -541,6 +579,24 @@ double find_min_value(double* data, int len)
     
     int i;
     double min = INFINITY;
+    
+    for (i = 0; i < len; ++i) {
+	if (data[i] < min){
+	    min = data[i];
+	}
+	
+    }
+    return min;
+}
+
+int find_min_value_int(int* data, int len)
+{
+        if (data == NULL || len <= 0){
+	return 0;
+    }
+    
+    int i;
+    int min = INT_MAX;
     
     for (i = 0; i < len; ++i) {
 	if (data[i] < min){

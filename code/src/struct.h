@@ -40,9 +40,20 @@ typedef struct paramlist paramlist;
 
 typedef struct
 {
-    double* data;
+    double** data;
+    int* lengths;
     int len;
-} double_arr;
+} double_multi_arr;
 
+typedef struct
+{
+    int gen;
+    int est;
+    int exp;
+    int gauss;
+    int rfunc;
+    int nstreams;
+    int estall;
+} launcher_args;
 
 #endif

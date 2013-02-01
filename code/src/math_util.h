@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <limits.h>
 
 long double fact(int n);
 double prob_num_events_in_time_span(double t_start, double t_end, double lambda, int k);
@@ -40,12 +41,17 @@ gaussian* make_gaussian(double mean, double stdev);
 double gaussian_contribution_at_point(double x, gaussian* g, double weight);
 double** gaussian_contribution(gaussian* g, double start, double end, double step, double weight);
 double sum_gaussians_at_point(double x, gauss_vector* G);
-double** gauss_transform(gauss_vector* G, double start, double end, double step);
+double_multi_arr* gauss_transform(gauss_vector* G, double start, double end, double resolution);
 double* random_vector(int len);
 double* weight_vector(double weight, int len);
 gauss_vector* gen_gaussian_vector_uniform(double stdev, double start, double interval_time, double step);
 gauss_vector* gen_gaussian_vector_from_array(double* means, int len, double stdev);
 double find_min_value(double* data, int len);
 double* add_to_arr(double* data, int len, double add);
+double** kernel_density(double* events, int len, double start, double end, double bandwidth, double resolution);
+double kernel_density_at_point(double* events, int len, int x, double bandwidth);
+double gaussian_kernel(double x, double mean, double stdev);
+int find_min_value_int(int* data, int len);
 
 #endif
+

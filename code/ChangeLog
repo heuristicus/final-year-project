@@ -1,11 +1,28 @@
 2013-02-01  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
+	* launcher.c: Added struct to make adding switches easier. Split
+	multi-estimate function into gaussian and other estimators since
+	return types are different.
+
+	* generator.c: Random functions can now be generated with the
+	-r switch. Still untested, but appears to work as intended. Another
+	function for gaussians also implemented, but not sure of what
+	functionality it should have. One function is required to generate
+	random functions for experimenting on, the other is used to generate
+	gaussians from event data to use in gaussian estimates?
+
+	* file_util.c: Function for outputting double_multi_arr struct.
+
 	* math_util.c: Fixed cause of crash on fclose when calling the
 	gauss_transform function - data was being written to un-malloced
-	locations.
+	locations. Changed return type of gaussian transform to struct to
+	make it easier to work with. Gaussian transform needs some kind of
+	normalisation parameter so that it outputs data int the correct range
+	for the function it is being used to estimate. Attempted to implement
+	kernel density estimation, but still unsure of how to proceed.
 
 	* estimator.c: New file can be run by calling the estimator with the
-	-a gauss switch. Return types are different so not yet fully integrated.
+	-a gauss switch. Multiple stream estimates are also possible.
 
 	* estimator_gaussian.c: New estimator which uses kernel density
 	to estimate functions. Prototype functions implemented.

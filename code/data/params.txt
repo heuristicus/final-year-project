@@ -60,10 +60,10 @@ alpha 0.1000000000
 
 # Gaussian generator
 # Standard deviation to apply to generated gaussians
-gauss_stdev 10.000000
+gauss_stdev 10
 
 # Specifies the distance on the x-axis between each gaussian when generating.
-gauss_generation_step 10.000000
+gauss_generation_step 5
 
 # Specifies the distance between points at which the gaussian is sampled when summing
 # or outputting data. A high value for this will result in fast computation but loss
@@ -75,7 +75,7 @@ num_gaussians 40
 #                              estimator parameters                            #
 ################################################################################
 # specifies the type of estimator to use. Options are ols, iwls, piecewise, baseline
-est_type baseline
+est_type base
 
 ################################################################################
 #                                 ols parameters                               #
@@ -139,7 +139,7 @@ base_pmf_sum_threshold 0.850000
 #                              gaussian parameters                             #
 ################################################################################
 # Standard deviation to apply to gaussian kernels used to estimate functions
-gauss_est_stdev 2
+gauss_est_stdev 5
 
 # Specify resolution of kernels used to estimate gaussians. A small value will
 # give higher precision but take longer

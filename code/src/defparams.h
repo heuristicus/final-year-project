@@ -35,7 +35,7 @@
 #define DEFAULT_GAUSSIANS 40
 
 // Default parameters for estimators
-#define DEFAULT_ESTIMATOR "baseline"
+#define DEFAULT_ESTIMATOR "base"
 #define DEFAULT_SUBINTERVALS 5
 #define DEFAULT_IWLS_ITERATIONS 3
 #define DEFAULT_MAX_EXTENSION 15.0

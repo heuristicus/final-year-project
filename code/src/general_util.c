@@ -397,3 +397,4 @@ void free_gauss_vector(gauss_vector* G)
     free(G->gaussians);
     free(G);
 }
+

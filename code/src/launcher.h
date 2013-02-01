@@ -40,11 +40,11 @@
 #define VERSION "poissonstream alpha v0.3"
 #define BUGREPORT "Report bugs to mxs968@cs.bham.ac.uk"
 
-void run_requested_operations(int generator, int estimator, int experiment,
-			      int gauss, char* paramfile, char* infile,
-			      char* outfile, int nruns, char* estimator_type,
-			      int estall);
+void run_requested_operations(launcher_args* args, char* paramfile, char* infile,
+			      char* outfile, char* estimator_type);
 int estimator_valid(char* name);
 void multi_estimate(char* paramfile, char* infile, char* outfile, char* estimator_type, int nstreams);
+void multi_est_gauss(paramlist* params, char* infile, char* outfile, int nstreams);
+void multi_est_default(char* paramfile, char* infile, char* outfile, char* estimator_type, int nstreams);
 
 #endif

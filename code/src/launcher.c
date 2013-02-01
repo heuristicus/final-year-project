@@ -16,6 +16,7 @@ static struct option opts[] =
 	{"outfile",  required_argument, 0, 'o'},
 	{"defparam", required_argument, 0, 'd'},
 	{"nstreams",    required_argument, 0, 'n'},
+	{"randfunc",    required_argument, 0, 'r'},
 	{"estall", no_argument, 0, 'l'},
 	{"help", no_argument, 0, 'h'},
 	{0, 0, 0, 0}
@@ -26,12 +27,8 @@ int main(int argc, char *argv[])
     int c;
     int opt_ind;
     
-    int exp = 0;
-    int gen = 0;
-    int est = 0;
-    int gauss = 0;
-    int nstreams = 1;
-    int estall = 0;
+    launcher_args* args = malloc(sizeof(launcher_args));
+    args->nstreams = 1;
     char* paramfile = NULL;
     char* outfile = NULL;
     char* infile = NULL;
@@ -43,18 +40,11 @@ int main(int argc, char *argv[])
 	exit(1);
     }
         
-    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:hls:", opts, &opt_ind)) != -1){
+    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:hls:r:", opts, &opt_ind)) != -1){
     	switch(c){
     	case 'e':
     	    // Need to specify which estimator to use and the input file - put all of this in the param file
-    	    est = 1;
-    	    if (exp + gen + est + gauss > 1){
-    		printf("Choose only one of -e, -g, -x or -s. You can run either"\
-		       " an estimator, or experiments, or generate gaussians or"\
-		       " poisson streams, but not more than one at once.\n");
-    		exit(1);
-    	    }
-	    printf("%s\n", optarg);
+    	    args->est = 1;
     	    paramfile = strdup(optarg);
     	    break;
 	case 'a':
@@ -71,13 +61,7 @@ int main(int argc, char *argv[])
 	    exit(1);
 	    break;
     	case 'g':
-    	    gen = 1;
-    	    if (exp + gen + est + gauss > 1){
-    		printf("Choose only one of -e, -g, -x or -s. You can run either"\
-		       " an estimator, or experiments, or generate gaussians or"\
-		       " poisson streams, but not more than one at once.\n");
-    		exit(1);
-    	    }
+    	    args->gen = 1;
     	    paramfile = strdup(optarg);
     	    break;
     	case 'h':
@@ -87,81 +71,89 @@ int main(int argc, char *argv[])
     	    infile = strdup(optarg);
     	    break;
 	case 'l':
-	    estall = 1;
+	    args->estall = 1;
 	    break;
     	case 'n':
-    	    nstreams = atoi(optarg);
+    	    args->nstreams = atoi(optarg);
     	    break;
     	case 'o':
     	    outfile = strdup(optarg);
     	    break;
+	case 'r':
+	    paramfile = strdup(optarg);
+	    args->rfunc = 1;
+    	    break;
 	case 's':
 	    paramfile = strdup(optarg);
-	    gauss = 1;
-	    if (exp + gen + est + gauss > 1){
-    		printf("Choose only one of -e, -g, -x or -s. You can run either"\
-		       " an estimator, or experiments, or generate gaussians or"\
-		       " poisson streams, but not more than one at once.\n");
-    		exit(1);
-    	    }
+	    args->gauss = 1;
 	    break;
     	case 'x':
-    	    exp = 1;
-    	    if (exp + gen + est + gauss > 1){
-    		printf("Choose only one of -e, -g, -x or -s. You can run either"\
-		       " an estimator, or experiments, or generate gaussians or"\
-		       " poisson streams, but not more than one at once.\n");
-    		exit(1);
-    	    }
+    	    args->exp = 1;
     	    paramfile = strdup(optarg);
     	    break;
     	default:
     	    printf("%s\n\nusage: %s options\n\n%s\n", PROG_DESC, argv[0], OPT_INFO);
     	    exit(1);
     	}
+
+	if (args->exp + args->gen + args->est + args->gauss + args->rfunc > 1){
+    		printf("Choose only one of -e, -g, -x or -s. You can run either"\
+		       " an estimator, or experiments, or generate gaussians or"\
+		       " poisson streams, but not more than one at once.\n");
+    		exit(1);
+	}
     }
 
-    // printf("numruns %d, exp %d, gen %d, est %d, paramfile %s, outfile %s\n", nruns, exp, gen, est, paramfile, outfile);
-
-    run_requested_operations(gen, est, exp, gauss, paramfile, infile, outfile, nstreams, estimator_type, estall);
+    run_requested_operations(args, paramfile, infile, outfile, estimator_type);
 
     free(estimator_type);
     free(paramfile);
     free(infile);
     free(outfile);
+    free(args);
 
     return 0;
 }
 
-void run_requested_operations(int generator, int estimator, int experiment, 
-			      int gauss, char* paramfile, char* infile, 
-			      char* outfile, int nstreams, char* estimator_type,
-			      int estall)
+void run_requested_operations(launcher_args* args, char* paramfile, char* infile, 
+			      char* outfile, char* estimator_type)
 {
-    if (generator == 1){
+    if (args->gen == 1){
 	if (paramfile == NULL){
 	    printf("You must specify a parameter file to use.\nTry running "\
 		   "\"launcher -g [your parameter file]\"\n");
 	    exit(1);
 	}
-	generate(paramfile, outfile, nstreams);
-    } else if (estimator == 1){
+	generate(paramfile, outfile, args->nstreams);
+    } else if (args->est == 1){
 	if (paramfile == NULL){
 	    printf("You must specify a parameter file to use.\nTry running "\
 		   "\"launcher -e [your parameter file] -a [estimator]\"\n");
 	    exit(1);
+	} else if (estimator_type == NULL){
+	    printf("No estimator type specified. Retrieving from paramfile.\n");
+	    paramlist* params = get_parameters(paramfile);
+	    if ((estimator_type = get_string_param(params, "est_type")) == NULL){
+		printf("Parameter est_type not specified in file. Aborting.\n");
+		free_list(params);
+		exit(1);
+	    } else {
+		printf("Estimator type set to %s.\n", estimator_type);
+	    }
 	}
-	if (estall && nstreams > 1){
-	    multi_estimate(paramfile, infile, outfile, estimator_type, nstreams);
+	if (args->estall && args->nstreams > 1){
+	    multi_estimate(paramfile, infile, outfile, estimator_type, args->nstreams);
 	} else {
 	    printf("estimating single stream\n");
 	    estimate(paramfile, infile, outfile, estimator_type);
 	}
-    } else if (experiment == 1){
+    } else if (args->exp == 1){
 	printf("experimenting\n");
-    } else if (gauss == 1){
+    } else if (args->gauss == 1){
 	printf("generating gaussians\n");    
 	generate_gaussians(paramfile, outfile, infile);
+    } else if (args->rfunc == 1){
+	generate_random_function(paramfile, outfile, args->nstreams);
     } else {
 	printf("No action specified. You can run either an estimator, a generator or experiments by using "\
 	       "the -e, -g or -x switches respectively.\n");
@@ -177,6 +169,42 @@ void run_requested_operations(int generator, int estimator, int experiment,
 void multi_estimate(char* paramfile, char* infile, char* outfile, char* estimator_type,
 		    int nstreams)
 {
+    if (strcmp(estimator_type, "gauss") == 0){
+	paramlist* params = get_parameters(paramfile);
+	multi_est_gauss(params, infile, outfile, nstreams);
+	free_list(params);
+    } else {
+	multi_est_default(paramfile, infile, outfile, estimator_type, nstreams);
+    }
+}
+
+void multi_est_gauss(paramlist* params, char* infile, char* outfile, int nstreams)
+{
+    char* fname = get_string_param(params, "outfile");
+    char* pref = get_string_param(params, "stream_ext");
+//    char* tmp = NULL;
+//    double* time_delta = NULL;
+	    
+    if (fname == NULL || pref == NULL){
+	printf("You must include the parameters \"outfile\" and \"stream_ext\" in"\
+	       " your parameter file.\n");
+	exit(1);
+    }
+
+    printf("running estimator %s for %d streams\n", "gauss", nstreams);
+    char* infname = malloc(strlen(fname) + strlen(pref) + 3);
+    char* outname = malloc(10);
+    int i;
+    
+    for (i = 0; i < nstreams; ++i) {
+	sprintf(infname, "%s%s%d_ev", fname, pref, i);
+	sprintf(outname, "%s%d", "gaussout", i);
+	estimate_gaussian(params, infname, outname);
+    }
+}
+
+void multi_est_default(char* paramfile, char* infile, char* outfile, char* estimator_type, int nstreams)
+{
     paramlist* params = get_parameters(paramfile);
     char* fname = get_string_param(params, "outfile");
     char* pref = get_string_param(params, "stream_ext");
@@ -190,7 +218,8 @@ void multi_estimate(char* paramfile, char* infile, char* outfile, char* estimato
     }
 
     char* infname = malloc(strlen(fname) + strlen(pref) + 3);
-    printf("running estimator for %d streams\n", nstreams);
+    printf("running estimator %s for %d streams\n", estimator_type, nstreams);
+
     est_arr** allstreams = malloc(nstreams * sizeof(est_arr*));
     int i;
     for (i = 0; i < nstreams; ++i) {
@@ -225,6 +254,7 @@ void multi_estimate(char* paramfile, char* infile, char* outfile, char* estimato
     est_arr* combined = combine_function(allstreams, time_delta, interval_time, nstreams);
     output_estimates(outfile, combined->estimates, combined->len);
     free_est_arr(combined);
+    free_list(params);
 }
 
 /*
@@ -232,6 +262,9 @@ void multi_estimate(char* paramfile, char* infile, char* outfile, char* estimato
  */
 int estimator_valid(char* name)
 {
+    if (name == NULL)
+	return 0;
+    
     int i;
     
     for (i = 0; i < sizeof(estimators)/sizeof(char*); ++i) {

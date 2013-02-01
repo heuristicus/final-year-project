@@ -309,19 +309,19 @@ START_TEST(test_gauss_transform)
 
     const double correct[] = {1.009059829, 1.536019705, 1.894839316, 1.894839316, 1.536019705, 1.009059829};
 
-    double** res = gauss_transform(G, 0, 6, 1);
+    double_multi_arr* res = gauss_transform(G, 0, 6, 1);
     
     int i;
     
     for (i = 0; i < 6; ++i) {
-	fail_unless(res[0][i] == i, "Data gathering point does not match expected.");
-	fail_unless(res[1][i] - correct[i] < 0.0000001, "Transform at point does not match expected value.");
+	fail_unless(res->data[0][i] == i, "Data gathering point does not match expected.");
+	fail_unless(res->data[1][i] - correct[i] < 0.0000001, "Transform at point does not match expected value.");
     }
 
-    double** zerostep = gauss_transform(G, 0, 6, 0);
-    double** negstep = gauss_transform(G, 0, 6, -1);
-    double** zeroint = gauss_transform(G, 0, 0, -1);
-    double** negint = gauss_transform(G, -4, 0, -1);
+    double_multi_arr* zerostep = gauss_transform(G, 0, 6, 0);
+    double_multi_arr* negstep = gauss_transform(G, 0, 6, -1);
+    double_multi_arr* zeroint = gauss_transform(G, 0, 0, -1);
+    double_multi_arr* negint = gauss_transform(G, -4, 0, -1);
     
     fail_unless(zerostep == NULL, "Zero step size non-null return");
     fail_unless(negstep == NULL, "Negative step size non-null return");

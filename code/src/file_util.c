@@ -276,7 +276,7 @@ void output_estimates(char *filename, est_data **estimates, int len)
 {
     int i;
     //char *f;
-        
+        printf("outing\n");
     for (i = 0; i < len; ++i) {
 	//f = malloc(strlen(filename) + 4);
 	//sprintf(f, "%s_%d", filename, i);
@@ -287,6 +287,7 @@ void output_estimates(char *filename, est_data **estimates, int len)
 	    break;
 	}
 	// Write to file if it's the first run, otherwise append
+	printf("ok\n");
 	estimate_to_file(filename, estimates[i], i > 0 ? "a" : "w");
     }
 }
@@ -355,7 +356,7 @@ void output_gauss_transform(char* filename, char* mode, double** T, double shift
     
     if (normaliser == 0){
 	printf("Received normalising constant of 0. Setting to 1.\n");
-	normaliser == 1;
+	normaliser = 1;
     }
     
     printf("Outputting gauss transform to %s.\n", filename);
@@ -488,4 +489,24 @@ gauss_vector* read_gauss_vector(char* filename)
     printf("%lf %lf %lf\n", ret->gaussians[0]->mean, ret->gaussians[0]->stdev, ret->w[0]);
 
     return ret;
+}
+
+void output_double_multi_arr(char* filename, char* mode, double_multi_arr* arr)
+{
+    int minlen = find_min_value_int(arr->lengths, arr->len);
+    FILE *fp = fopen(filename, mode);
+    int i, j;
+    
+    for (i = 0; i < minlen; ++i) {
+	for (j = 0; j < arr->len; ++j) {
+	    if (j + 1 == arr->len){
+		fprintf(fp, "%lf\n", arr->data[j][i]);
+	    } else {
+		fprintf(fp, "%lf ", arr->data[j][i]);
+	    }
+	}
+    }
+    fprintf(fp, "\n\n");
+
+    fclose(fp);
 }
