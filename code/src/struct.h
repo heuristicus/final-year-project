@@ -38,6 +38,7 @@ struct paramlist
 };
 typedef struct paramlist paramlist;
 
+
 typedef struct
 {
     double** data;
@@ -53,7 +54,6 @@ typedef struct
     int gauss;
     int rfunc;
     int nstreams;
-    int estall;
 } launcher_args;
 
 #endif

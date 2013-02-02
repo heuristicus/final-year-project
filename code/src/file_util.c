@@ -497,6 +497,8 @@ void output_double_multi_arr(char* filename, char* mode, double_multi_arr* arr)
     FILE *fp = fopen(filename, mode);
     int i, j;
     
+    printf("Outputting to %s.\n", filename);
+    
     for (i = 0; i < minlen; ++i) {
 	for (j = 0; j < arr->len; ++j) {
 	    if (j + 1 == arr->len){

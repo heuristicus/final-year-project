@@ -220,7 +220,7 @@ int create_default_param_file(char* filename)
     put_section_header(fp, "data output");
     fprintf(fp, "%s\n%s %s\n\n", "# file to which generator outputs data","outfile", 
 	    DEFAULT_OUTFILE);
-    fprintf(fp, "%s\n%s %s\n\n", "# file to which gaussian generator outputs data","gauss_out", 
+    fprintf(fp, "%s\n%s %s\n\n", "# file to which gaussian generator outputs data","gauss_outfile", 
 	    DEFAULT_GAUSS_GEN_OUT);
     fprintf(fp, "%s\n%s %s\n\n", "# Estimators output data to this file if no "\
 	    "output file is specified for the\n# estimator being used", "est_outfile",
@@ -398,3 +398,15 @@ void free_gauss_vector(gauss_vector* G)
     free(G);
 }
 
+void free_double_multi_arr(double_multi_arr* arr)
+{
+    int i;
+    
+    for (i = 0; i < arr->len; ++i) {
+	free(arr->data[i]);
+    }
+
+    free(arr->lengths);
+    free(arr->data);
+    free(arr);
+}

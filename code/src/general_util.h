@@ -17,7 +17,6 @@ int create_default_param_file(char* filename);
 void put_section_header(FILE* fp, char* heading);
 void print_gauss_vector(gauss_vector* G);
 void free_gauss_vector(gauss_vector* G);
-
-
+void free_double_multi_arr(double_multi_arr* arr);
 
 #endif

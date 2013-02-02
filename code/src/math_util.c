@@ -7,6 +7,12 @@
 int rand_initialised = 0;
 gsl_rng* r;
 
+// Cleanup any allocated memory.
+void cleanup()
+{
+    gsl_rng_free(r);
+}
+
 /*
  * Recursive factorial function.
  */
@@ -83,11 +89,12 @@ void init_rand(double seed)
 
 	gsl_rng_env_setup();
 
-	r = gsl_rng_alloc(gsl_rng_rand48); // need to free this somewhere
+	r = gsl_rng_alloc(gsl_rng_rand48);
 	gsl_rng_set(r, seed);
 	printf("Seed for this run: %lf\n", seed);
 
 	rand_initialised = 1;
+	atexit(cleanup); // make sure we free the random number generator on exit
     }
 }
 
@@ -401,7 +408,6 @@ double_multi_arr* gauss_transform(gauss_vector* G, double start, double end, dou
     
     double** T = malloc(2 * sizeof(double*));
     
-    
     int memsize = ((end - start)/resolution) + 1;
     
     T[0] = malloc(sizeof(double) * memsize);
@@ -605,4 +611,22 @@ int find_min_value_int(int* data, int len)
 	
     }
     return min;
+}
+
+double find_max_value(double* data, int len)
+{
+    if (data == NULL || len <= 0){
+	return 0;
+    }
+    
+    int i;
+    double max = -INFINITY;
+    
+    for (i = 0; i < len; ++i) {
+	if (data[i] > max){
+	    max = data[i];
+	}
+	
+    }
+    return max;
 }

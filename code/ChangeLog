@@ -1,3 +1,18 @@
+2013-02-02  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* general_util.c: Function for freeing memory allocated for
+	double_multi_arr structs.
+
+	* math_util.c: GSL random number generator is deallocated when
+	the program exits using an atexit function.
+
+	* generator.c: Generation of event streams from gaussians.
+
+	* launcher.c: Generation of event streams from gaussians possible
+	by passing the -f rand switch to the launcher. If no parameter is
+	provided then the default muparser version is used which takes the
+	function in the paramfile.
+
 2013-02-01  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* launcher.c: Added struct to make adding switches easier. Split

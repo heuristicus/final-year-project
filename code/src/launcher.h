@@ -25,9 +25,7 @@
     "\t\t Display this message.\n\n"					\
     "\t -n or --nstreams\n"						\
     "\t\t Number of times to run generation. Use this to generate multiple streams."\
-    " Also specifies the number of stream estimates to combine when using the -l switch.\n\n"								\
-    "\t -l or --estall\n"						\
-    "\t\t Estimates the functions of multiple streams and then combines the functions.\n\n" \
+    " Also specifies how many functions to estimate when using the -e switch..\n\n"\
     "\t -i or --infile\n"						\
     "\t\t Specify the file to use as input to the estimator.\n\n"	\
     "\t -o or --outfile\n"						\
@@ -37,12 +35,12 @@
     "large number of options.\n\n"					\
     "\t -x or --experiment\n"						\
     "\t\t Run an experiment. Requires parameter file.\n\n"
-#define VERSION "poissonstream alpha v0.3"
+#define VERSION "poissonstream alpha v0.5"
 #define BUGREPORT "Report bugs to mxs968@cs.bham.ac.uk"
 
 void run_requested_operations(launcher_args* args, char* paramfile, char* infile,
-			      char* outfile, char* estimator_type);
-int estimator_valid(char* name);
+			      char* outfile, char* estimator_type, char* generator_type);
+int exists_in_arr(char** arr, int len, char* name);
 void multi_estimate(char* paramfile, char* infile, char* outfile, char* estimator_type, int nstreams);
 void multi_est_gauss(paramlist* params, char* infile, char* outfile, int nstreams);
 void multi_est_default(char* paramfile, char* infile, char* outfile, char* estimator_type, int nstreams);

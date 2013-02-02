@@ -52,6 +52,7 @@ double** kernel_density(double* events, int len, double start, double end, doubl
 double kernel_density_at_point(double* events, int len, int x, double bandwidth);
 double gaussian_kernel(double x, double mean, double stdev);
 int find_min_value_int(int* data, int len);
+double find_max_value(double* data, int len);
 
 #endif
 

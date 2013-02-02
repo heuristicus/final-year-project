@@ -6,6 +6,7 @@
 
  
 static char *estimators[] = {"iwls", "ols", "pc", "base", "gauss"};
+static char *generators[] = {"mup", "rand"};
 static struct option opts[] =
     {
 	{"experiment", required_argument, 0, 'x'},
@@ -33,14 +34,14 @@ int main(int argc, char *argv[])
     char* outfile = NULL;
     char* infile = NULL;
     char* estimator_type = NULL;
-    
+    char* generator_type = NULL;
 
     if (argc == 1){
 	printf("%s\n\nusage: %s options\n\n%s\n%s\n%s\n", PROG_DESC, argv[0], OPT_INFO, VERSION, BUGREPORT);
 	exit(1);
     }
         
-    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:hls:r:", opts, &opt_ind)) != -1){
+    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:hs:r:f:", opts, &opt_ind)) != -1){
     	switch(c){
     	case 'e':
     	    // Need to specify which estimator to use and the input file - put all of this in the param file
@@ -48,7 +49,7 @@ int main(int argc, char *argv[])
     	    paramfile = strdup(optarg);
     	    break;
 	case 'a':
-	    if (!estimator_valid(optarg)){
+	    if (!exists_in_arr(estimators, sizeof(estimators)/sizeof(char*), optarg)){
 		printf(EST_TYPE_ERROR, optarg);
 		exit(1);
 	    } else {
@@ -60,6 +61,14 @@ int main(int argc, char *argv[])
 	    create_default_param_file(optarg);
 	    exit(1);
 	    break;
+	case 'f':
+	    if (!exists_in_arr(generators, sizeof(generators)/sizeof(char*), optarg)){
+		printf("Unknown generator type %s. Use mup or rand.\n", optarg);
+		exit(1);
+	    } else {
+		generator_type = strdup(optarg);
+	    }
+	    break;
     	case 'g':
     	    args->gen = 1;
     	    paramfile = strdup(optarg);
@@ -70,9 +79,6 @@ int main(int argc, char *argv[])
     	case 'i':
     	    infile = strdup(optarg);
     	    break;
-	case 'l':
-	    args->estall = 1;
-	    break;
     	case 'n':
     	    args->nstreams = atoi(optarg);
     	    break;
@@ -104,9 +110,10 @@ int main(int argc, char *argv[])
 	}
     }
 
-    run_requested_operations(args, paramfile, infile, outfile, estimator_type);
+    run_requested_operations(args, paramfile, infile, outfile, estimator_type, generator_type);
 
     free(estimator_type);
+    free(generator_type);
     free(paramfile);
     free(infile);
     free(outfile);
@@ -116,7 +123,7 @@ int main(int argc, char *argv[])
 }
 
 void run_requested_operations(launcher_args* args, char* paramfile, char* infile, 
-			      char* outfile, char* estimator_type)
+			      char* outfile, char* estimator_type, char* generator_type)
 {
     if (args->gen == 1){
 	if (paramfile == NULL){
@@ -124,7 +131,13 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* infile
 		   "\"launcher -g [your parameter file]\"\n");
 	    exit(1);
 	}
-	generate(paramfile, outfile, args->nstreams);
+	if (generator_type == NULL || strcmp(generator_type, "mup") == 0){
+	    generate(paramfile, outfile, args->nstreams);
+	} else if (strcmp(generator_type, "rand") == 0){
+	    generate_from_gaussian(paramfile, outfile, infile, args->nstreams);
+	} else {
+	    printf("something bad happened.\n");
+	}
     } else if (args->est == 1){
 	if (paramfile == NULL){
 	    printf("You must specify a parameter file to use.\nTry running "\
@@ -141,7 +154,7 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* infile
 		printf("Estimator type set to %s.\n", estimator_type);
 	    }
 	}
-	if (args->estall && args->nstreams > 1){
+	if (args->nstreams > 1){
 	    multi_estimate(paramfile, infile, outfile, estimator_type, args->nstreams);
 	} else {
 	    printf("estimating single stream\n");
@@ -258,17 +271,17 @@ void multi_est_default(char* paramfile, char* infile, char* outfile, char* estim
 }
 
 /*
- * Checks whether an estimator name is valid.
+ * Checks whether a string exists in the given array
  */
-int estimator_valid(char* name)
+int exists_in_arr(char** arr, int len, char* name)
 {
     if (name == NULL)
 	return 0;
     
     int i;
     
-    for (i = 0; i < sizeof(estimators)/sizeof(char*); ++i) {
-	if (strcmp(name, estimators[i]) == 0)
+    for (i = 0; i < len; ++i) {
+	if (strcmp(name, arr[i]) == 0)
 	    return 1;
     }
 

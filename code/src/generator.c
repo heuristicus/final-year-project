@@ -128,6 +128,135 @@ void generate(char *paramfile, char *outfile, int nruns)
 }
 
 /*
+ * Generates an event stream by using a random function provided by a set of 
+ * gaussians. The gaussians are expected as input in raw form from the infile.
+ * If no input is provided, a random function will be generated and events will
+ * be generated from that.
+ */
+void generate_from_gaussian(char* paramfile, char* outfile, char* infile, int nstreams)
+{
+
+    printf("generating from gaussian\n");
+    gauss_vector* G;
+    paramlist* params = get_parameters(paramfile);
+    
+    double stdev = get_double_param(params, "gauss_stdev");
+    double start = get_double_param(params, "start_time");
+    double interval = get_double_param(params, "interval_time");
+    double step = get_double_param(params, "gauss_generation_step");
+    double resolution = get_double_param(params, "gauss_resolution");
+    char* stream_ext = get_string_param(params, "stream_ext");
+    
+    double* time_delta;
+    char* tmp;
+    int tdlen;
+    int i;
+    
+    if ((tmp = get_string_param(params, "timedelta")) != NULL){
+	char** vals = string_split(tmp, ',');
+	tdlen = atoi(vals[0]) - 1;
+	time_delta = malloc(tdlen * sizeof(double));
+	
+	for (i = 0; i < tdlen; ++i) {
+	    printf("%d \n", i);
+	    time_delta[i] = atof(vals[i + 1]);
+	    printf("td i %lf\n", time_delta[i]);
+	}
+
+	free_pointer_arr((void**) vals, atoi(vals[0]));
+    } else {
+	printf("no timedelta provided.\n");
+	exit(1);
+    }
+
+    if (outfile == NULL){
+	outfile = get_string_param(params, "gauss_outfile");
+    }
+    
+    if (infile == NULL){
+	G = gen_gaussian_vector_uniform(stdev, start, interval, step);
+    } else {
+	G = read_gauss_vector(infile);
+    }
+
+    // Need this to get values for lambda and the shift to make all values nonnegative
+    double_multi_arr* T = gauss_transform(G, start, start+interval, resolution);
+    
+    double max = find_max_value(T->data[1], T->lengths[1]);
+    double min = find_min_value(T->data[1], T->lengths[1]);
+    double lambda = ceil(-min + max);
+//    output_gauss_transform("gen_transform", "w", T->data, -min, T->lengths[1], 1);
+//    output_gaussian_contributions("gen_gauss" , "w", G, start, start + interval, resolution, 1);
+
+    char* out = malloc(strlen(outfile) + strlen(stream_ext) + 5);
+
+    for (i = 0; i < nstreams; ++i) {
+	sprintf(out, "%s%s%d", outfile, stream_ext, i);
+    	double_multi_arr* stream = nonhom_from_gaussian(G, lambda, start, interval, time_delta[i], -min);
+	if (i == 0){
+	    output_double_multi_arr(out, "w", stream);
+	} else {
+	    output_double_multi_arr(out, "a", stream);
+	}
+	free_double_multi_arr(stream);
+    }
+
+    free_gauss_vector(G);
+    free_double_multi_arr(T);
+    free(time_delta);
+    free_list(params);
+    free(out);
+}
+
+/*
+ * Generates a stream of events using a nonhomogeneous poisson process
+ * with the fuction specified by a linear combination of gaussians as the
+ * generating function.
+ */
+double_multi_arr* nonhom_from_gaussian(gauss_vector* G, double lambda, 
+				       double start, double interval, double time_delta, double shift)
+{
+    init_rand(0.0);
+            
+    double base_time = start;
+    double shifted_time = time_delta + start;
+    double end = start + interval;
+    double rand, non_hom_lambda, hom_out;
+    int i = 0, arr_max = DEFAULT_ARR_SIZE;
+    double_multi_arr* ret = malloc(sizeof(double_multi_arr));
+    ret->data = malloc(2 * sizeof(double*));
+    ret->data[0] = malloc(arr_max * sizeof(double));
+    ret->data[1] = malloc(arr_max * sizeof(double));
+    ret->len = 2;
+    ret->lengths = malloc(2 * sizeof(int));
+    
+    while (base_time < end){
+	hom_out = homogeneous_time(lambda);
+	base_time += hom_out;
+	shifted_time += hom_out;
+	non_hom_lambda = sum_gaussians_at_point(shifted_time, G) + shift;
+	if ((rand = get_uniform_rand()) <= non_hom_lambda / lambda){
+	    if (i >= arr_max){
+		ret->data[0] = realloc(ret->data[0], i * 2 * sizeof(double));
+		ret->data[1] = realloc(ret->data[1], i * 2 * sizeof(double));
+		if (!ret->data[0] || !ret->data[1]){
+		    printf("Memory reallocation for arrays failed during generation. Exiting.\n");
+		    exit(1);
+		}
+		arr_max = i * 2;
+	    }
+	    ret->data[0][i] = base_time;
+	    ret->data[1][i] = non_hom_lambda;
+	    ++i;
+	}
+    }
+
+    ret->lengths[0] = ret->lengths[1] = i;
+
+    return ret;
+}
+
+/*
  * Helper function for generating a set of gaussians. Checks that the required 
  * parameters are present in the given parameter file and then calls the main 
  * function to generate gaussians.
@@ -365,15 +494,13 @@ void run_time_nstreams(muParserHandle_t hparser, double lambda, double end_time,
 		       double *time_delta, int nstreams, char *outfile, int outswitch)
 {
     int i;
-            
+    char *out = malloc(strlen(outfile) + strlen("_stream_n") + 10);
     for (i = 0; i < nstreams; ++i){
 	printf("Generating event stream %d\n", i);
-	char *out = malloc(strlen(outfile) + strlen("_stream_n") + 10);
 	sprintf(out, "%s_stream_%d", outfile, i); // save each stream to a separate file
 	run_time_nonhom(hparser, lambda, time_delta[i], 0, end_time, out, outswitch);
-	free(out);
     }
-
+    free(out);
 }
 
 /*

@@ -7,7 +7,7 @@
 outfile output.dat
 
 # file to which gaussian generator outputs data
-gauss_out gauss_out.dat
+gauss_outfile gauss_out.dat
 
 # Estimators output data to this file if no output file is specified for the
 # estimator being used
