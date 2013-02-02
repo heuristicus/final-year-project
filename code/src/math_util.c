@@ -445,7 +445,6 @@ double_multi_arr* shifted_transform(gauss_vector* V, double start, double interv
     double* rep = add_to_arr(func->data[1], func->lengths[1], shift);
     free(func->data[1]);
     func->data[1] = rep;
-    free_gauss_vector(V);
     
     return func;
 }

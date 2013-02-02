@@ -1,5 +1,8 @@
 2013-02-02  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
+	* launcher.h: Updated help info for switches, -R replaced with -t, specify
+	output type.
+
 	* general_util.c: Function for freeing memory allocated for
 	double_multi_arr structs. Default parameter file has more files to output
 	gaussian data to. Separate ones for raw data and that generated from
@@ -10,7 +13,8 @@
 	a gauss transform so that all points are non-negative
 
 	* generator.c: Generation of event streams from gaussians. Generation
-	of functions simplified to a single function.
+	of functions simplified to a single function. Output of contribution
+	of gaussians if the -t 2 switch is used.
 
 	* launcher.c: Generation of event streams from gaussians possible
 	by passing the -f rand switch to the launcher. If no parameter is

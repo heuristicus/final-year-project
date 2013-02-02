@@ -35,6 +35,6 @@ double_multi_arr* nonhom_from_gaussian(gauss_vector* G, double lambda,
 				       double start, double interval, double time_delta, double shift);
 void generate_from_gaussian(char* paramfile, char* outfile, char* infile, int nstreams);
 
-void generate_gaussian_data(char* paramfile, char* infile, char* outfile, int number, int raw_output);
+void generate_gaussian_data(char* paramfile, char* infile, char* outfile, int number, int output_type);
 
 #endif

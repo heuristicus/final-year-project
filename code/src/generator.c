@@ -256,7 +256,7 @@ double_multi_arr* nonhom_from_gaussian(gauss_vector* G, double lambda,
  * 0 outputs the discrete transform, which gives the value of the function at evenly
  * spaced points along the x-axis.
  */
-void generate_gaussian_data(char* paramfile, char* infile, char* outfile, int number, int raw_output)
+void generate_gaussian_data(char* paramfile, char* infile, char* outfile, int number, int output_type)
 {
     paramlist* params = get_parameters(paramfile);
     
@@ -268,7 +268,7 @@ void generate_gaussian_data(char* paramfile, char* infile, char* outfile, int nu
     
     if (outfile == NULL){
 	if (infile == NULL){
-	    if (raw_output >= 1) {
+	    if (output_type == 0) {
 		printf("Outputting raw uniformly spaced gaussians.\n");
 		outfile = get_string_param(params, "gauss_func_outfile_raw");
 	    } else {
@@ -277,7 +277,7 @@ void generate_gaussian_data(char* paramfile, char* infile, char* outfile, int nu
 		outfile = get_string_param(params, "gauss_func_outfile");
 	    }
 	} else {
-	    if (raw_output >= 1) {
+	    if (output_type == 0) {
 		printf("Outputting raw gaussians with means centred on data "\
 		       "from file.\n");
 		outfile = get_string_param(params, "gauss_event_func_outfile_raw");
@@ -294,10 +294,10 @@ void generate_gaussian_data(char* paramfile, char* infile, char* outfile, int nu
     char* out = malloc(strlen(outfile) + 5 + strlen(".dat"));
 
     for (i = 0; i < number; ++i) {
-	sprintf(out, "%s_%d%s", outfile, i, ".dat");
+	sprintf(out, "%s_%d.dat", outfile, i);
 	gauss_vector* G = _generate_gaussian(infile, stdev, start, interval, 
 					     step, resolution);
-	if (raw_output >= 1){
+	if (output_type == 0){
 	    output_gaussian_vector(out, "w", G);
 	} else {
 	    // Need to apply something to normalise when you have input file. Dividing buy the
@@ -305,6 +305,12 @@ void generate_gaussian_data(char* paramfile, char* infile, char* outfile, int nu
 	    double_multi_arr* func = shifted_transform(G, start, interval, step, resolution);
     	    output_double_multi_arr(out, "w", func);
     	    free_double_multi_arr(func);
+	    if (output_type == 2){
+	    	char* c_out = malloc(strlen(outfile) + strlen("_contrib") + strlen(".dat") + 5);
+	    	sprintf(c_out, "%s_%d_contrib.dat", outfile, i);
+	    	output_gaussian_contributions(c_out, "w", G, start, start + interval, resolution, 1);
+	    	free(c_out);
+	    }
 	}
 	free_gauss_vector(G);
 	printf("Output to %s.\n", out);

@@ -17,8 +17,7 @@ static struct option opts[] =
 	{"outfile",  required_argument, 0, 'o'},
 	{"defparam", required_argument, 0, 'd'},
 	{"nstreams",    required_argument, 0, 'n'},
-	{"randfunc",    required_argument, 0, 'r'},
-	{"gaussians",    required_argument, 0, 's'},
+	{"outtype",    required_argument, 0, 't'},
 	{"help", no_argument, 0, 'h'},
 	{0, 0, 0, 0}
     };
@@ -40,7 +39,7 @@ int main(int argc, char *argv[])
 	exit(1);
     }
         
-    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:f:hsrR", opts, &opt_ind)) != -1){
+    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:f:hrt:", opts, &opt_ind)) != -1){
     	switch(c){
     	case 'e': // estimate
     	    args->est = 1;
@@ -72,7 +71,7 @@ int main(int argc, char *argv[])
     	    paramfile = strdup(optarg);
     	    break;
     	case 'h': // print help
-    	    printf("%s\n\n\n%s\n%s\n%s\n", PROG_DESC, OPT_INFO, VERSION, BUGREPORT);
+    	    printf("%s\n\n%s\n%s\n%s\n", PROG_DESC, OPT_INFO, VERSION, BUGREPORT);
     	    exit(1);
     	case 'i': // specify input file
     	    infile = strdup(optarg);
@@ -86,12 +85,8 @@ int main(int argc, char *argv[])
 	case 'r': // switch to generate random functions. Used with -g
 	    args->rfunc = 1;
     	    break;
-	case 'R': // specify output format when generating random functionsn
-	    args->raw = 1;
-	    break;
-	case 's': // switch to generate gaussians. Used with -g
-	    paramfile = strdup(optarg);
-	    args->gauss = 1;
+	case 't': // specify output type when generating random functions
+	    args->writing = atoi(optarg);
 	    break;
     	case 'x':
     	    args->exp = 1;
@@ -130,10 +125,10 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* infile
 	    printf("You must specify a parameter file to use.\nTry running "\
 		   "\"launcher -g [your parameter file]\"\n");
 	    exit(1);
-	} else if (args->rfunc == 1 || args->gauss == 1){
+	} else if (args->rfunc == 1){
 	    // combine rfunc and gauss - they are pretty much the same!
 	    printf("Generating gaussians.\n");
-	    generate_gaussian_data(paramfile, infile, outfile, args->nstreams, args->raw);
+	    generate_gaussian_data(paramfile, infile, outfile, args->nstreams, args->writing);
 	} else if (generator_type == NULL || strcmp(generator_type, "mup") == 0){
 	    generate(paramfile, outfile, args->nstreams);
 	} else if (strcmp(generator_type, "rand") == 0){
@@ -278,7 +273,7 @@ launcher_args* make_arg_struct()
     a->gauss = 0;
     a->gen = 0;
     a->nstreams = 1;
-    a->raw = 0;
+    a->writing = 0;
     a->rfunc = 0;
 
     return a;
