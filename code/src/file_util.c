@@ -395,8 +395,6 @@ void output_gaussian_contributions(char* filename, char* mode, gauss_vector* G, 
 
     FILE *fp = fopen(filename, mode);
 
-    printf("Outputting gaussian data to %s.\n", filename);
-    
     int i;
     double current;
     
@@ -419,7 +417,7 @@ void output_gaussian_contributions(char* filename, char* mode, gauss_vector* G, 
  * Writes a vector of gaussians to file. Data looks like
  * xpos stdev weight
  */
-void output_gaussian_vector(char* filename, gauss_vector* V, char* mode)
+void output_gaussian_vector(char* filename, char* mode, gauss_vector* V)
 {
     int i;
     FILE *fp = fopen(filename, mode);

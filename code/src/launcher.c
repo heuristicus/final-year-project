@@ -18,7 +18,7 @@ static struct option opts[] =
 	{"defparam", required_argument, 0, 'd'},
 	{"nstreams",    required_argument, 0, 'n'},
 	{"randfunc",    required_argument, 0, 'r'},
-	{"estall", no_argument, 0, 'l'},
+	{"gaussians",    required_argument, 0, 's'},
 	{"help", no_argument, 0, 'h'},
 	{0, 0, 0, 0}
     };
@@ -28,8 +28,7 @@ int main(int argc, char *argv[])
     int c;
     int opt_ind;
     
-    launcher_args* args = malloc(sizeof(launcher_args));
-    args->nstreams = 1;
+    launcher_args* args = make_arg_struct();
     char* paramfile = NULL;
     char* outfile = NULL;
     char* infile = NULL;
@@ -41,14 +40,13 @@ int main(int argc, char *argv[])
 	exit(1);
     }
         
-    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:hs:r:f:", opts, &opt_ind)) != -1){
+    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:f:hsrR", opts, &opt_ind)) != -1){
     	switch(c){
-    	case 'e':
-    	    // Need to specify which estimator to use and the input file - put all of this in the param file
+    	case 'e': // estimate
     	    args->est = 1;
     	    paramfile = strdup(optarg);
     	    break;
-	case 'a':
+	case 'a': // estimation algorithm
 	    if (!exists_in_arr(estimators, sizeof(estimators)/sizeof(char*), optarg)){
 		printf(EST_TYPE_ERROR, optarg);
 		exit(1);
@@ -57,11 +55,11 @@ int main(int argc, char *argv[])
 		estimator_type = strdup(optarg);
 	    }
 	    break;
-	case 'd':
+	case 'd': // default paramfile
 	    create_default_param_file(optarg);
 	    exit(1);
 	    break;
-	case 'f':
+	case 'f': // specify generator type/function
 	    if (!exists_in_arr(generators, sizeof(generators)/sizeof(char*), optarg)){
 		printf("Unknown generator type %s. Use mup or rand.\n", optarg);
 		exit(1);
@@ -69,27 +67,29 @@ int main(int argc, char *argv[])
 		generator_type = strdup(optarg);
 	    }
 	    break;
-    	case 'g':
+    	case 'g': // generate streams or functions
     	    args->gen = 1;
     	    paramfile = strdup(optarg);
     	    break;
-    	case 'h':
+    	case 'h': // print help
     	    printf("%s\n\n\n%s\n%s\n%s\n", PROG_DESC, OPT_INFO, VERSION, BUGREPORT);
     	    exit(1);
-    	case 'i':
+    	case 'i': // specify input file
     	    infile = strdup(optarg);
     	    break;
-    	case 'n':
+    	case 'n': // specify number of streams/functions
     	    args->nstreams = atoi(optarg);
     	    break;
-    	case 'o':
+    	case 'o': // specify output file
     	    outfile = strdup(optarg);
     	    break;
-	case 'r':
-	    paramfile = strdup(optarg);
+	case 'r': // switch to generate random functions. Used with -g
 	    args->rfunc = 1;
     	    break;
-	case 's':
+	case 'R': // specify output format when generating random functionsn
+	    args->raw = 1;
+	    break;
+	case 's': // switch to generate gaussians. Used with -g
 	    paramfile = strdup(optarg);
 	    args->gauss = 1;
 	    break;
@@ -102,10 +102,10 @@ int main(int argc, char *argv[])
     	    exit(1);
     	}
 
-	if (args->exp + args->gen + args->est + args->gauss + args->rfunc > 1){
-    		printf("Choose only one of -e, -g, -x or -s. You can run either"\
-		       " an estimator, or experiments, or generate gaussians or"\
-		       " poisson streams, but not more than one at once.\n");
+	if (args->exp + args->gen + args->est > 1){
+    		printf("Choose only one of -e, -g, -x. You can run either"\
+		       " an estimator, experiments or the generator,"\
+		       "but not more than one at once.\n");
     		exit(1);
 	}
     }
@@ -130,10 +130,14 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* infile
 	    printf("You must specify a parameter file to use.\nTry running "\
 		   "\"launcher -g [your parameter file]\"\n");
 	    exit(1);
-	}
-	if (generator_type == NULL || strcmp(generator_type, "mup") == 0){
+	} else if (args->rfunc == 1 || args->gauss == 1){
+	    // combine rfunc and gauss - they are pretty much the same!
+	    printf("Generating gaussians.\n");
+	    generate_gaussian_data(paramfile, infile, outfile, args->nstreams, args->raw);
+	} else if (generator_type == NULL || strcmp(generator_type, "mup") == 0){
 	    generate(paramfile, outfile, args->nstreams);
 	} else if (strcmp(generator_type, "rand") == 0){
+	    printf("Generating event stream with random functions.\n");
 	    generate_from_gaussian(paramfile, outfile, infile, args->nstreams);
 	} else {
 	    printf("something bad happened.\n");
@@ -162,11 +166,6 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* infile
 	}
     } else if (args->exp == 1){
 	printf("experimenting\n");
-    } else if (args->gauss == 1){
-	printf("generating gaussians\n");    
-	generate_gaussians(paramfile, outfile, infile);
-    } else if (args->rfunc == 1){
-	generate_random_function(paramfile, outfile, args->nstreams);
     } else {
 	printf("No action specified. You can run either an estimator, a generator or experiments by using "\
 	       "the -e, -g or -x switches respectively.\n");
@@ -268,6 +267,21 @@ void multi_est_default(char* paramfile, char* infile, char* outfile, char* estim
     output_estimates(outfile, combined->estimates, combined->len);
     free_est_arr(combined);
     free_list(params);
+}
+
+launcher_args* make_arg_struct()
+{
+    launcher_args* a = malloc(sizeof(launcher_args));
+    
+    a->est = 0;
+    a->exp = 0;
+    a->gauss = 0;
+    a->gen = 0;
+    a->nstreams = 1;
+    a->raw = 0;
+    a->rfunc = 0;
+
+    return a;
 }
 
 /*

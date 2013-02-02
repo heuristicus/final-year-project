@@ -54,6 +54,7 @@ typedef struct
     int gauss;
     int rfunc;
     int nstreams;
+    int raw;
 } launcher_args;
 
 #endif

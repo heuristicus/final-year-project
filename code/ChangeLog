@@ -1,17 +1,24 @@
 2013-02-02  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* general_util.c: Function for freeing memory allocated for
-	double_multi_arr structs.
+	double_multi_arr structs. Default parameter file has more files to output
+	gaussian data to. Separate ones for raw data and that generated from
+	an event file.
 
 	* math_util.c: GSL random number generator is deallocated when
-	the program exits using an atexit function.
+	the program exits using an atexit function. Function for shifting
+	a gauss transform so that all points are non-negative
 
-	* generator.c: Generation of event streams from gaussians.
+	* generator.c: Generation of event streams from gaussians. Generation
+	of functions simplified to a single function.
 
 	* launcher.c: Generation of event streams from gaussians possible
 	by passing the -f rand switch to the launcher. If no parameter is
 	provided then the default muparser version is used which takes the
-	function in the paramfile.
+	function in the paramfile. Function generation is done using the
+	-r switch. Adding -R outputs gaussians in their raw forms, and
+	including an input file with one-dimensional data has the program
+	centre a gaussian on each point.
 
 2013-02-01  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 

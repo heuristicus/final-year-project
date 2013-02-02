@@ -101,9 +101,7 @@ START_TEST(test_output_gaussian_vector)
     G->w[0] = 1.5;
     G->w[1] = 3.5;
 
-    output_gaussian_vector("files/gauss_out", G, "w");
-
-    int i;
+    output_gaussian_vector("files/gauss_out", "w", G);
 
     FILE *fp = fopen("files/gauss_out", "r");
 
@@ -126,7 +124,7 @@ START_TEST(test_output_gaussian_vector)
     line = fgets(line, 100, fp);
     int t = sscanf(line, "%lf %lf %lf", &mu, &st, &wt);
 
-    fail_unless(s == 3, NULL);
+    fail_unless(t == 3, NULL);
     fail_unless(mu == 4, NULL);
     fail_unless(st == 2, NULL);
     fail_unless(wt == 3.5, NULL);

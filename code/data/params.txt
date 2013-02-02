@@ -4,26 +4,43 @@
 #                                  data output                                 #
 ################################################################################
 # file to which generator outputs data
-outfile output.dat
+outfile output
 
 # file to which gaussian generator outputs data
-gauss_outfile gauss_out.dat
+gauss_outfile gauss_out
 
-# Estimators output data to this file if no output file is specified for the
-# estimator being used
-est_outfile est_out.dat
+# Files to which functions generated using gaussians are output. 
+# File for gaussians in their raw form (xpos stdev weight).
+gauss_func_outfile_raw random_function_raw
 
-# Individual output files for specific estimators.
-# ols_output ols_out.dat
-# iwls_output iwls_out.dat
-# pc_output pc_out.dat
-# base_output base_out.dat
-# File to output gaussian estimate data to.
-gauss_est_out gauss_est_out.dat
+# File for gaussians in their summed form.
+gauss_func_outfile random_function
+
+# File for gaussians generated from event data
+gauss_event_func_outfile gauss_stream_function
+
+# File for gaussians generated from event data in raw form
+gauss_event_func_outfile_raw gauss_stream_function_raw
+
+# This is appended to filenames when outputting multiple randomly generated
+# functions.
+func_gen_ext _func_
 
 # this will be appended to the output file for each separate stream. The stream
 # number will be added at the end.
 stream_ext _stream_
+
+# Estimators output data to this file if no output file is specified for the
+# estimator being used
+est_outfile est_out
+
+# Individual output files for specific estimators.
+# ols_output ols_out
+# iwls_output iwls_out
+# pc_output pc_out
+# base_output base_out
+# File to output gaussian estimate data to.
+gauss_est_out gauss_est_out
 
 # define the verbosity of output to data files.
 # 0 output only event data for each run
@@ -38,7 +55,7 @@ verbosity 3
 #                                   data input                                 #
 ################################################################################
 # Input file used for estimation
-infile output.dat_stream_0_ev
+infile output_stream_0_ev.dat
 
 ################################################################################
 #                             generation parameters                            #
@@ -60,10 +77,10 @@ alpha 0.1000000000
 
 # Gaussian generator
 # Standard deviation to apply to generated gaussians
-gauss_stdev 10
+gauss_stdev 10.000000
 
 # Specifies the distance on the x-axis between each gaussian when generating.
-gauss_generation_step 5
+gauss_generation_step 10.000000
 
 # Specifies the distance between points at which the gaussian is sampled when summing
 # or outputting data. A high value for this will result in fast computation but loss
@@ -139,7 +156,7 @@ base_pmf_sum_threshold 0.850000
 #                              gaussian parameters                             #
 ################################################################################
 # Standard deviation to apply to gaussian kernels used to estimate functions
-gauss_est_stdev 5
+gauss_est_stdev 0.500000
 
 # Specify resolution of kernels used to estimate gaussians. A small value will
 # give higher precision but take longer

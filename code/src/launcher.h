@@ -44,5 +44,6 @@ int exists_in_arr(char** arr, int len, char* name);
 void multi_estimate(char* paramfile, char* infile, char* outfile, char* estimator_type, int nstreams);
 void multi_est_gauss(paramlist* params, char* infile, char* outfile, int nstreams);
 void multi_est_default(char* paramfile, char* infile, char* outfile, char* estimator_type, int nstreams);
+launcher_args* make_arg_struct();
 
 #endif

@@ -135,11 +135,9 @@ void generate(char *paramfile, char *outfile, int nruns)
  */
 void generate_from_gaussian(char* paramfile, char* outfile, char* infile, int nstreams)
 {
-
-    printf("generating from gaussian\n");
     gauss_vector* G;
     paramlist* params = get_parameters(paramfile);
-    
+
     double stdev = get_double_param(params, "gauss_stdev");
     double start = get_double_param(params, "start_time");
     double interval = get_double_param(params, "interval_time");
@@ -158,9 +156,7 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile, int ns
 	time_delta = malloc(tdlen * sizeof(double));
 	
 	for (i = 0; i < tdlen; ++i) {
-	    printf("%d \n", i);
 	    time_delta[i] = atof(vals[i + 1]);
-	    printf("td i %lf\n", time_delta[i]);
 	}
 
 	free_pointer_arr((void**) vals, atoi(vals[0]));
@@ -179,7 +175,6 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile, int ns
 	G = read_gauss_vector(infile);
     }
 
-    // Need this to get values for lambda and the shift to make all values nonnegative
     double_multi_arr* T = gauss_transform(G, start, start+interval, resolution);
     
     double max = find_max_value(T->data[1], T->lengths[1]);
@@ -188,16 +183,12 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile, int ns
 //    output_gauss_transform("gen_transform", "w", T->data, -min, T->lengths[1], 1);
 //    output_gaussian_contributions("gen_gauss" , "w", G, start, start + interval, resolution, 1);
 
-    char* out = malloc(strlen(outfile) + strlen(stream_ext) + 5);
+    char* out = malloc(strlen(outfile) + strlen(stream_ext) + 5 + strlen(".dat"));
 
     for (i = 0; i < nstreams; ++i) {
-	sprintf(out, "%s%s%d", outfile, stream_ext, i);
+	sprintf(out, "%s%s%d%s", outfile, stream_ext, i, ".dat");
     	double_multi_arr* stream = nonhom_from_gaussian(G, lambda, start, interval, time_delta[i], -min);
-	if (i == 0){
-	    output_double_multi_arr(out, "w", stream);
-	} else {
-	    output_double_multi_arr(out, "a", stream);
-	}
+	output_double_multi_arr(out, "w", stream);
 	free_double_multi_arr(stream);
     }
 
@@ -257,122 +248,91 @@ double_multi_arr* nonhom_from_gaussian(gauss_vector* G, double lambda,
 }
 
 /*
- * Helper function for generating a set of gaussians. Checks that the required 
- * parameters are present in the given parameter file and then calls the main 
- * function to generate gaussians.
+ * Generates gaussian data of the type specified. If an input file is provided, 
+ * the assumed 1-dimensional data provides the means for unweighted gaussians 
+ * with the given standard deviation. If no input file is specified, then gaussians
+ * are generated uniformly over the interval specified in the parameter file.
+ * A value of 1 outputs raw gaussians, which can be used to generate event streams. 
+ * 0 outputs the discrete transform, which gives the value of the function at evenly
+ * spaced points along the x-axis.
  */
-void generate_gaussians(char* paramfile, char* outfile, char* infile)
+void generate_gaussian_data(char* paramfile, char* infile, char* outfile, int number, int raw_output)
 {
     paramlist* params = get_parameters(paramfile);
     
     double stdev = get_double_param(params, "gauss_stdev");
     double start = get_double_param(params, "start_time");
     double interval = get_double_param(params, "interval_time");
-    double gen_step = get_double_param(params, "gauss_generation_step");
+    double step = get_double_param(params, "gauss_generation_step");
     double resolution = get_double_param(params, "gauss_resolution");
-    double num_gaussians = get_int_param(params, "num_gaussians");
+    
     if (outfile == NULL){
-	outfile = get_string_param(params, "gauss_out");
+	if (infile == NULL){
+	    if (raw_output >= 1) {
+		printf("Outputting raw uniformly spaced gaussians.\n");
+		outfile = get_string_param(params, "gauss_func_outfile_raw");
+	    } else {
+		printf("Outputting discrete transform of uniformly spaced"\
+		       " gaussians.\n");
+		outfile = get_string_param(params, "gauss_func_outfile");
+	    }
+	} else {
+	    if (raw_output >= 1) {
+		printf("Outputting raw gaussians with means centred on data "\
+		       "from file.\n");
+		outfile = get_string_param(params, "gauss_event_func_outfile_raw");
+	    } else {
+		printf("Outputting discrete transform of gaussians with means"\
+		       " centred on data from file.\n");
+		outfile = get_string_param(params, "gauss_event_func_outfile");
+	    }
+	}
     }
 
-    free_list(params);
+    int i;
 
-    _generate_gaussians(stdev, start, interval, gen_step, resolution, num_gaussians, outfile, infile);
+    char* out = malloc(strlen(outfile) + 5 + strlen(".dat"));
+
+    for (i = 0; i < number; ++i) {
+	sprintf(out, "%s_%d%s", outfile, i, ".dat");
+	gauss_vector* G = _generate_gaussian(infile, stdev, start, interval, 
+					     step, resolution);
+	if (raw_output >= 1){
+	    output_gaussian_vector(out, "w", G);
+	} else {
+	    // Need to apply something to normalise when you have input file. Dividing buy the
+	    // stdev is ok, but not good enough.
+	    double_multi_arr* func = shifted_transform(G, start, interval, step, resolution);
+    	    output_double_multi_arr(out, "w", func);
+    	    free_double_multi_arr(func);
+	}
+	free_gauss_vector(G);
+	printf("Output to %s.\n", out);
+    }
+
+    free(out);
+    free_list(params);
 }
 
 /*
  * Generate a set of weighted gaussians. If an input file is provided, data points
  * are assumed to provide the means for gaussians.
  */
-gauss_vector* _generate_gaussians(double stdev, double start, double interval, 
-			 double gen_step, double resolution, int num_gaussians,
-			 char* outfile, char* infile)
+gauss_vector* _generate_gaussian(char* infile, double stdev, double start, double interval, 
+			 double gen_step, double resolution)
 {
     double* means = NULL;
     gauss_vector* G;
     
     if (infile == NULL){
 	G = gen_gaussian_vector_uniform(stdev, start, start + interval, gen_step);
-//	output_gaussian_contributions(outfile, "w", G, start, start + interval, resolution, 1);
     } else {
 	means = get_event_data_all(infile);
 	G = gen_gaussian_vector_from_array(means + 1, means[0] - 1, stdev);
-//	output_gaussian_contributions(outfile, "w", G, start, start + interval, resolution, 0);
+	free(means);
     }
-
-    free(means);
 
     return G;
-
-    /* double** T = gauss_transform(G, start, start + interval, resolution); */
-    /* char* sum_out = malloc(strlen(outfile) + strlen("_sum") + 1); */
-    /* sprintf(sum_out, "%s%s", outfile, "_sum"); */
-    /* double min = find_min_value(T[1], interval/resolution); */
-    /* double shift = 0; */
-    /* if (min <= 0){ */
-    /* 	shift = -min + 0.1; */
-    /* } */
-
-    /* output_gauss_transform(sum_out, "w", T, shift, interval/resolution, 1); */
-
-    /* free_gauss_vector(G); */
-    
-    /* free(T[0]); */
-    /* free(T[1]); */
-    /* free(T); */
-
-    /* free(means); */
-    /* free(sum_out); */
-}
-
-void generate_random_function(char* paramfile, char* outfile, int number)
-{
-    paramlist* params = get_parameters(paramfile);
-    
-    double stdev = get_double_param(params, "gauss_stdev");
-    double start = get_double_param(params, "start_time");
-    double interval = get_double_param(params, "interval_time");
-    double gen_step = get_double_param(params, "gauss_generation_step");
-    double resolution = get_double_param(params, "gauss_resolution");
-    
-    if (outfile == NULL){
-	outfile = "random_functions";
-    }
-
-    int i;
-    double_multi_arr* func;
-
-    for (i = 0; i < number; ++i) {
-	func = _generate_random_function(stdev, start, interval, gen_step, resolution);    
-	output_double_multi_arr(outfile, i  == 0 ? "w" : "a", func);
-    }
-}
-
-/*
- * Uses weighted gaussians uniformly distributed in the interval 
- * [start, start + interval] to construct a random function. Returns the function
- * sampled at intervals of resolution. The function is guaranteed to be >= 0 at
- * all points.
- */
-double_multi_arr* _generate_random_function(double stdev, double start, double interval,
-				   double step, double resolution)
-{
-    if (step <= 0 || resolution <= 0 || !interval_valid(start, start + interval))
-	return NULL;
-    
-    gauss_vector* V = gen_gaussian_vector_uniform(stdev, start, interval, step);
-    double_multi_arr* func = gauss_transform(V, start, start + interval, resolution);
-
-    double min = find_min_value(func->data[1], func->lengths[1]);
-    double shift = 0;
-    if (min <= 0){
-    	shift = -min;
-    }
-    
-    func->data[1] = add_to_arr(func->data[1], func->lengths[1], shift);
-    free_gauss_vector(V);
-    
-    return func;
 }
 
 /*
@@ -536,10 +496,7 @@ char* select_output_file(char* cur_out, char* param_out)
 	outfile = cur_out;
     }
     
-    printf("Will output to %s\n", outfile);
-
     return outfile;
-        
 }
 
 /* Helper method to run a nonhomogeneous process for a specific length
@@ -585,11 +542,11 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
 	free(bin_counts);
     }
     if (outswitch == 3){
-	char *tmp = malloc(strlen(outfile) + 4); // space for extra chars and null terminator
-	sprintf(tmp, "%s_ev", outfile);
+	char *tmp = malloc(strlen(outfile) + 4 + strlen(".dat")); // space for extra chars and null terminator
+	sprintf(tmp, "%s_ev%s", outfile, ".dat");
 	double_to_file(tmp, "w", *eptr, size);
 	
-	sprintf(tmp, "%s_ad", outfile);
+	sprintf(tmp, "%s_ad%s", outfile, ".dat");
 
 	mult_double_to_file(tmp, "w", *eptr, *lptr, size);
 

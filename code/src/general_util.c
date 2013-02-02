@@ -214,14 +214,30 @@ int create_default_param_file(char* filename)
 	return -1;
     }
 
+//    fprintf(fp, "%s\n%s %s\n\n", "", "",);
+
     // i/o files and stuff
     fprintf(fp, "%s\n\n", "# Inline comments are not supported!");
     // data output
     put_section_header(fp, "data output");
     fprintf(fp, "%s\n%s %s\n\n", "# file to which generator outputs data","outfile", 
 	    DEFAULT_OUTFILE);
-    fprintf(fp, "%s\n%s %s\n\n", "# file to which gaussian generator outputs data","gauss_outfile", 
-	    DEFAULT_GAUSS_GEN_OUT);
+    fprintf(fp, "%s\n%s %s\n\n", "# file to which gaussian generator outputs data",
+	    "gauss_outfile", DEFAULT_GAUSS_GEN_OUT);
+    fprintf(fp, "%s\n%s %s\n\n", "# Files to which functions generated"\
+	    " using gaussians are output. \n# File for gaussians in their raw "\
+	    "form (xpos stdev weight).", "gauss_func_outfile_raw", DEFAULT_RAW_FUNC_OUTFILE);
+    fprintf(fp, "%s\n%s %s\n\n", "# File for gaussians in their summed form.",
+	    "gauss_func_outfile", DEFAULT_FUNC_OUTFILE);
+    fprintf(fp, "%s\n%s %s\n\n", "# File for gaussians generated from event data",
+	    "gauss_event_func_outfile", DEFAULT_GAUSS_EVENT_FUNC_OUTFILE);
+    fprintf(fp, "%s\n%s %s\n\n", "# File for gaussians generated from event data in raw form",
+	    "gauss_event_func_outfile_raw", DEFAULT_GAUSS_EVENT_RAW_FUNC_OUTFILE);
+    fprintf(fp, "%s\n%s %s\n\n", "# This is appended to filenames when outputting"\
+	    " multiple randomly generated\n# functions.", "func_gen_ext", DEFAULT_FUNCTION_EXT);
+    fprintf(fp, "%s\n%s %s\n\n", "# this will be appended to the output file for each separate"	\
+	    " stream. The stream\n# number will be added at the end.", "stream_ext",
+	    DEFAULT_EXTENSION);
     fprintf(fp, "%s\n%s %s\n\n", "# Estimators output data to this file if no "\
 	    "output file is specified for the\n# estimator being used", "est_outfile",
 	    DEFAULT_EST_OUTFILE);
@@ -232,9 +248,6 @@ int create_default_param_file(char* filename)
     fprintf(fp, "%s %s\n", "# base_output", DEFAULT_BASE_OUT);
     fprintf(fp, "%s\n%s %s\n\n", "# File to output gaussian estimate data to.", 
 	    "gauss_est_out", DEFAULT_GAUSS_EST_OUT);
-    fprintf(fp, "%s\n%s %s\n\n", "# this will be appended to the output file for each separate"\
-	    " stream. The stream\n# number will be added at the end.", "stream_ext",
-	    DEFAULT_EXTENSION);
     fprintf(fp, "%s\n%s %d\n\n", "# define the verbosity of output to data files.\n"\
 	    "# 0 output only event data for each run\n# 1 output event times and lambda"\
 	    " values for each run\n# 2 output event time and lambda values for each run,"\

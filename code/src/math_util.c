@@ -425,6 +425,31 @@ double_multi_arr* gauss_transform(gauss_vector* G, double start, double end, dou
     return ret;
 }
 
+/*
+ * Returns a gaussian transform which is shifted so that all points are >= 0
+ */
+double_multi_arr* shifted_transform(gauss_vector* V, double start, double interval,
+				   double step, double resolution)
+{
+    if (step <= 0 || resolution <= 0 || !interval_valid(start, start + interval))
+	return NULL;
+    
+    double_multi_arr* func = gauss_transform(V, start, start + interval, resolution);
+
+    double min = find_min_value(func->data[1], func->lengths[1]);
+    double shift = 0;
+    if (min <= 0){
+    	shift = -min;
+    }
+
+    double* rep = add_to_arr(func->data[1], func->lengths[1], shift);
+    free(func->data[1]);
+    func->data[1] = rep;
+    free_gauss_vector(V);
+    
+    return func;
+}
+
 double** kernel_density(double* events, int len, double start, double end, double bandwidth, double resolution)
 {
     double current = start;
@@ -471,7 +496,6 @@ double* random_vector(int len)
     
     for (i = 0; i < len; ++i) {
 	V[i] = gsl_ran_ugaussian(r);
-	printf("weight is %lf\n", V[i]);
     }
 
     return V;
@@ -506,7 +530,6 @@ double* weight_vector(double weight, int len)
 gauss_vector* gen_gaussian_vector_uniform(double stdev, double start, double interval_time, double step)
 {
     double end = start + interval_time;
-    printf("%lf %lf %lf %lf\n", stdev, start, interval_time, step);
     if (!interval_valid(start, end) || step <= 0 || stdev <= 0)
 	return NULL;
     

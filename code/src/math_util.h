@@ -42,6 +42,8 @@ double gaussian_contribution_at_point(double x, gaussian* g, double weight);
 double** gaussian_contribution(gaussian* g, double start, double end, double step, double weight);
 double sum_gaussians_at_point(double x, gauss_vector* G);
 double_multi_arr* gauss_transform(gauss_vector* G, double start, double end, double resolution);
+double_multi_arr* shifted_transform(gauss_vector* V, double start, double interval,
+				    double step, double resolution);
 double* random_vector(int len);
 double* weight_vector(double weight, int len);
 gauss_vector* gen_gaussian_vector_uniform(double stdev, double start, double interval_time, double step);

@@ -2,20 +2,25 @@
 #define _DEFPARAMS_H
 
 // output
-#define DEFAULT_OUTFILE "output.dat"
-#define DEFAULT_EST_OUTFILE "est_out.dat"
-#define DEFAULT_OLS_OUT "ols_out.dat"
-#define DEFAULT_IWLS_OUT "iwls_out.dat"
-#define DEFAULT_PC_OUT "pc_out.dat"
-#define DEFAULT_BASE_OUT "base_out.dat"
-#define DEFAULT_GAUSS_GEN_OUT "gauss_out.dat"
-#define DEFAULT_GAUSS_EST_OUT "gauss_est_out.dat"
+#define DEFAULT_OUTFILE "output"
+#define DEFAULT_EST_OUTFILE "est_out"
+#define DEFAULT_FUNC_OUTFILE "random_function"
+#define DEFAULT_RAW_FUNC_OUTFILE "random_function_raw"
+#define DEFAULT_GAUSS_EVENT_FUNC_OUTFILE "gauss_stream_function"
+#define DEFAULT_GAUSS_EVENT_RAW_FUNC_OUTFILE "gauss_stream_function_raw"
+#define DEFAULT_OLS_OUT "ols_out"
+#define DEFAULT_IWLS_OUT "iwls_out"
+#define DEFAULT_PC_OUT "pc_out"
+#define DEFAULT_BASE_OUT "base_out"
+#define DEFAULT_GAUSS_GEN_OUT "gauss_out"
+#define DEFAULT_GAUSS_EST_OUT "gauss_est_out"
 
 // input
-#define DEFAULT_INFILE "output.dat_stream_0_ev"
+#define DEFAULT_INFILE "output_stream_0_ev.dat"
 
 // Default parameters for generation
 #define DEFAULT_EXTENSION "_stream_"
+#define DEFAULT_FUNCTION_EXT "_func_"
 #define DEFAULT_VERBOSITY 3
 #define DEFAULT_START 0
 #define DEFAULT_NRUNS 1
