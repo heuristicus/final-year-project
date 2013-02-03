@@ -40,7 +40,7 @@ est_arr* _estimate_OLS(char* infile, char* outfile, double start_time, double en
 			int num_subintervals);
 est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double end_time,
 			 int num_subintervals, int iterations);
-void _estimate_gaussian(char* infile, char* outfile, double start,
+double_multi_arr* _estimate_gaussian(char* infile, char* outfile, double start,
 			double interval_length, double stdev, double resolution);
 
 double** get_subintervals(double start_time, double end_time, int num_subintervals);

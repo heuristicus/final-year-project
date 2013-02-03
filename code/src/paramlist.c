@@ -38,7 +38,7 @@ paramlist* add(paramlist *head, char *param, char *value)
 
     strcpy(pname, param);
     strcpy(pval, value);
-    
+
     new->par = pname;
     new->val = pval;
     new->next = head;
@@ -95,7 +95,7 @@ char* get_string_param(paramlist* head, char* param_name)
     
     if ((ret = get_param(head, param_name)) == NULL)
 	return NULL;
-    
+
     return ret->val;
 }
 

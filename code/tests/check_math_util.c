@@ -222,8 +222,8 @@ END_TEST
 
 START_TEST(test_random_vector)
 {
-    fail_unless(random_vector(0) == NULL, "Zero length non-null");
-    fail_unless(random_vector(-1) == NULL, "Negative length non-null");
+    fail_unless(random_vector(0, 1) == NULL, "Zero length non-null");
+    fail_unless(random_vector(-1, 1) == NULL, "Negative length non-null");
 }
 END_TEST
 
@@ -333,10 +333,10 @@ END_TEST
 START_TEST(test_gen_gaussian_vector_uniform)
 {
     // invalid intervals and step
-    gauss_vector* a = gen_gaussian_vector_uniform(3, 10, 0, 2);
-    gauss_vector* b = gen_gaussian_vector_uniform(3, -10, 0, 2);
-    gauss_vector* c = gen_gaussian_vector_uniform(3, 0, 10, -2);
-    gauss_vector* d = gen_gaussian_vector_uniform(3, 0, 10, 0);
+    gauss_vector* a = gen_gaussian_vector_uniform(3, 10, 0, 2, 1);
+    gauss_vector* b = gen_gaussian_vector_uniform(3, -10, 0, 2, 1);
+    gauss_vector* c = gen_gaussian_vector_uniform(3, 0, 10, -2, 1);
+    gauss_vector* d = gen_gaussian_vector_uniform(3, 0, 10, 0, 1);
 
     fail_unless(a == NULL, "Invalid interval non-null return");
     fail_unless(b == NULL, "Negative interval non-null return");
@@ -344,7 +344,7 @@ START_TEST(test_gen_gaussian_vector_uniform)
     fail_unless(d == NULL, "Zero step non-null return");
 
     // Interval which results in a range that is evenly divisible by the number of gaussians
-    gauss_vector* res = gen_gaussian_vector_uniform(3, 0, 10, 2);
+    gauss_vector* res = gen_gaussian_vector_uniform(3, 0, 10, 2, 1);
     fail_unless(res->len == 6, "Length of vector not expected value");
      
     double expected1[] = {0, 2, 4, 6, 8, 10};
@@ -357,7 +357,7 @@ START_TEST(test_gen_gaussian_vector_uniform)
     }
 
     // Interval which results in a range not evenly divisible by the number of gaussians
-    gauss_vector* res2 = gen_gaussian_vector_uniform(3, 0, 10, 3);
+    gauss_vector* res2 = gen_gaussian_vector_uniform(3, 0, 10, 3, 1);
     fail_unless(res2->len == 4, "Vector length differs from expected");
     
     double expected2[] = {0, 3, 6, 9};
@@ -375,11 +375,11 @@ END_TEST
 START_TEST(test_gen_gaussian_vector_from_array)
 {
     double points[] = {1.2, 2.4, 2.5, 2.9, 4.0};
-    gauss_vector* a = gen_gaussian_vector_from_array(NULL, 5, 3);
-    gauss_vector* b = gen_gaussian_vector_from_array(points, 0, 3);
-    gauss_vector* c = gen_gaussian_vector_from_array(points, -1, 2);
-    gauss_vector* d = gen_gaussian_vector_from_array(points, 5, -1);
-    gauss_vector* e = gen_gaussian_vector_from_array(points, 5, 0);
+    gauss_vector* a = gen_gaussian_vector_from_array(NULL, 5, 3, 1, 0);
+    gauss_vector* b = gen_gaussian_vector_from_array(points, 0, 3, 1, 0);
+    gauss_vector* c = gen_gaussian_vector_from_array(points, -1, 2, 1, 0);
+    gauss_vector* d = gen_gaussian_vector_from_array(points, 5, -1, 1, 0);
+    gauss_vector* e = gen_gaussian_vector_from_array(points, 5, 0, 1, 0);
     
     fail_unless(a == NULL, "Null points return non-null");
     fail_unless(b == NULL, "Zero length non-null return");
@@ -387,7 +387,7 @@ START_TEST(test_gen_gaussian_vector_from_array)
     fail_unless(d == NULL, "Negative stdev non-null return");
     fail_unless(e == NULL, "Zero stdev non-null return");
 
-    gauss_vector* G = gen_gaussian_vector_from_array(points, sizeof(points)/sizeof(double), 3);
+    gauss_vector* G = gen_gaussian_vector_from_array(points, sizeof(points)/sizeof(double), 3, 1, 0);
 
     fail_unless(G->len == sizeof(points)/sizeof(double));
     

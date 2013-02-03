@@ -482,7 +482,7 @@ double gaussian_kernel(double x, double mean, double stdev)
 /*
  * Generates a vector of specified length with each point p ~ N(0,1)
  */
-double* random_vector(int len)
+double* random_vector(int len, double multiplier)
 {
     if (len <= 0)
 	return NULL;
@@ -494,7 +494,7 @@ double* random_vector(int len)
     int i;
     
     for (i = 0; i < len; ++i) {
-	V[i] = gsl_ran_ugaussian(r);
+	V[i] = gsl_ran_ugaussian(r) * multiplier;
     }
 
     return V;
@@ -526,7 +526,9 @@ double* weight_vector(double weight, int len)
  * of the interval. Returns a null pointer if the interval is invalid or the 
  * step or stdev are <= 0
  */
-gauss_vector* gen_gaussian_vector_uniform(double stdev, double start, double interval_time, double step)
+gauss_vector* gen_gaussian_vector_uniform(double stdev, double start,
+					  double interval_time, double step,
+					  double multiplier)
 {
     double end = start + interval_time;
     if (!interval_valid(start, end) || step <= 0 || stdev <= 0)
@@ -537,7 +539,7 @@ gauss_vector* gen_gaussian_vector_uniform(double stdev, double start, double int
     int num = interval_time/step + 1;
 
     G->gaussians = malloc(sizeof(gaussian*) * num);
-    G->w = random_vector(num);
+    G->w = random_vector(num, multiplier);
     G->len = num;
     double current;
     
@@ -553,9 +555,12 @@ gauss_vector* gen_gaussian_vector_uniform(double stdev, double start, double int
 /*
  * Generates a vector of gaussians whose means are centred on the values
  * in the given array and have the specified standard deviation. Returns null if
- * the stdev or len <= 0, or a null pointer is passed in.
+ * the stdev or len <= 0, or a null pointer is passed in. The random_weights
+ * parameter specifies whether to use randomised weights or not. Anything other
+ * than 0 will use randomised weights, 0 initialises the vector with all 1s
  */
-gauss_vector* gen_gaussian_vector_from_array(double* means, int len, double stdev)
+gauss_vector* gen_gaussian_vector_from_array(double* means, int len, double stdev,
+					     double multiplier, int random_weights)
 {
     if (stdev <= 0 || len <= 0 || means == NULL)
 	return NULL;
@@ -563,7 +568,10 @@ gauss_vector* gen_gaussian_vector_from_array(double* means, int len, double stde
     gauss_vector* G = malloc(sizeof(gauss_vector));
 
     G->gaussians = malloc(sizeof(gaussian*) * len);
-    G->w = weight_vector(1, len);
+    if (random_weights == 0)
+	G->w = weight_vector(1, len);
+    else
+	G->w = random_vector(len, multiplier);
     G->len = len;
 
     int i;
@@ -651,4 +659,21 @@ double find_max_value(double* data, int len)
 	
     }
     return max;
+}
+
+double* multiply_arr(double* data, int len, double multiplier)
+{
+    if (data == NULL || len <= 0){
+	return NULL;
+    }
+    
+    double* new = malloc(len * sizeof(double));
+    
+    int i;
+    
+    for (i = 0; i < len; ++i) {
+	new[i] = data[i] * multiplier;
+    }
+
+    return new;
 }

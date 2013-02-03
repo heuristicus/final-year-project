@@ -220,10 +220,10 @@ int create_default_param_file(char* filename)
     fprintf(fp, "%s\n\n", "# Inline comments are not supported!");
     // data output
     put_section_header(fp, "data output");
-    fprintf(fp, "%s\n%s %s\n\n", "# file to which generator outputs data","outfile", 
-	    DEFAULT_OUTFILE);
-    fprintf(fp, "%s\n%s %s\n\n", "# file to which gaussian generator outputs data",
-	    "gauss_outfile", DEFAULT_GAUSS_GEN_OUT);
+    fprintf(fp, "%s\n%s %s\n\n", "# file to which generator outputs generated event "\
+	    "data","outfile", DEFAULT_OUTFILE);
+//    fprintf(fp, "%s\n%s %s\n\n", "# file to which gaussian generator outputs data",
+//	    "gauss_outfile", DEFAULT_GAUSS_GEN_OUT);
     fprintf(fp, "%s\n%s %s\n\n", "# Files to which functions generated"\
 	    " using gaussians are output. \n# File for gaussians in their raw "\
 	    "form (xpos stdev weight).", "gauss_func_outfile_raw", DEFAULT_RAW_FUNC_OUTFILE);
@@ -247,16 +247,18 @@ int create_default_param_file(char* filename)
     fprintf(fp, "%s %s\n", "# pc_output", DEFAULT_PC_OUT);
     fprintf(fp, "%s %s\n", "# base_output", DEFAULT_BASE_OUT);
     fprintf(fp, "%s\n%s %s\n\n", "# File to output gaussian estimate data to.", 
-	    "gauss_est_out", DEFAULT_GAUSS_EST_OUT);
+	    "gauss_est_outfile", DEFAULT_GAUSS_EST_OUT);
     fprintf(fp, "%s\n%s %d\n\n", "# define the verbosity of output to data files.\n"\
-	    "# 0 output only event data for each run\n# 1 output event times and lambda"\
-	    " values for each run\n# 2 output event time and lambda values for each run,"\
-	    " as well as midpoints and\n# bin counts, to a single file\n# 3 output the above, "\
-	    "but also save a file with only event data in it (all data\n# is saved as {filename}"\
-	    "_ad, events as {filename}_ev)", "verbosity", DEFAULT_VERBOSITY);
+	    "# 0 output only event data for each run\n# 1 output event times and"\
+	    " lambda values for each run\n# 2 output event time and lambda values"\
+	    " for each run, as well as midpoints and\n# bin counts, to a single"\
+	    " file\n# 3 output the above, but also save a file with only event"\
+	    " data in it (all data\n# is saved as {filename}_ad, events as "\
+	    "{filename}_ev)", "verbosity", DEFAULT_VERBOSITY);
     // data input
     put_section_header(fp, "data input");
-    fprintf(fp, "%s\n%s %s\n\n", "# Input file used for estimation", "infile", DEFAULT_INFILE);
+    fprintf(fp, "%s\n%s %s\n\n", "# Default input file used for estimation",
+	    "infile", DEFAULT_INFILE);
     // generator parameters
     put_section_header(fp, "generation parameters");
     fprintf(fp, "%s %d\n", "start_time", DEFAULT_START);
@@ -265,22 +267,32 @@ int create_default_param_file(char* filename)
     fprintf(fp, "%s %d\n", "lambda", DEFAULT_LAMBDA);
     fprintf(fp, "%s %d\n", "interval_time", DEFAULT_INTERVAL);
     fprintf(fp, "%s %d\n\n", "seed", DEFAULT_SEED);
-    fprintf(fp, "%s\n%s %s\n", "# expression parameters\n# The equation must contain the "\
-	    "variable 't'. The value of the variable will be set by\n# the program. Do not"\
-	    " set it here.", "expression", DEFAULT_EXPRESSION);
+    fprintf(fp, "%s\n%s %s\n", "# expression parameters\n# The equation must"\
+	    " contain the variable 't'. The value of the variable will be set"\
+	    " by\n# the program. Do not set it here.", "expression",
+	    DEFAULT_EXPRESSION);
     fprintf(fp, "%s %d\n", "a", DEFAULT_A);
     fprintf(fp, "%s %d\n", "b", DEFAULT_B);
     fprintf(fp, "%s %.10lf\n\n", "alpha", DEFAULT_ALPHA);
     // gaussian parameters
-    fprintf(fp, "%s\n%s %lf\n\n", "# Gaussian generator\n# Standard deviation to apply "\
-	    "to generated gaussians", "gauss_stdev", DEFAULT_STDEV);
-    fprintf(fp, "%s\n%s %lf\n\n", "# Specifies the distance on the x-axis between each gaussian "\
+    fprintf(fp, "%s\n%s %lf\n\n", "# Gaussian generator\n# Standard deviation to"\
+	    " apply to generated gaussians", "gauss_stdev", DEFAULT_STDEV);
+    fprintf(fp, "%s\n%s %lf\n\n", "# Specifies the distance on the x-axis between"\
+	    " each gaussian "						\
 	    "when generating.", "gauss_generation_step", DEFAULT_GEN_STEP);
-    fprintf(fp, "%s\n%s %lf\n\n", "# Specifies the distance between points at which the gaussian"\
-	    " is sampled when summing\n# or outputting data. A high value for this will result"\
-	    " in fast computation but loss\n# of detail, and a low value will give more granularity"\
-	    " but summing gaussians will take longer. ","gauss_resolution", DEFAULT_GAUSS_RESOLUTION);
+    fprintf(fp, "%s\n%s %lf\n\n", "# Specifies the distance between points at"\
+	    " which the gaussian is sampled when summing\n# or outputting data."\
+	    " A high value for this will result in fast computation but loss\n#"\
+	    " of detail, and a low value will give more granularity but summing"\
+	    " gaussians will take longer. ","gauss_resolution",
+	    DEFAULT_GAUSS_RESOLUTION);
     fprintf(fp, "%s %d\n", "num_gaussians", DEFAULT_GAUSSIANS);
+    fprintf(fp, "%s\n%s %lf\n\n", "# Multiplier to apply to weights of gaussians when"\
+	    " generating random functions.\n# The standard gaussian weight is ~"\
+	    " N(0,1). The standard functions have on average\n# vary between -5"\
+	    " and 5, which may not be appropriate. Multiplying the weight\n# "\
+	    "values gives a greater range of values but preserves the shape of"\
+	    " the function.", "gauss_func_multiplier", DEFAULT_GAUSS_MULTIPLIER);
     // estimator parameters
     put_section_header(fp, "estimator parameters");
     fprintf(fp, "%s\n%s %s\n\n", "# specifies the type of estimator to use. Options are"\

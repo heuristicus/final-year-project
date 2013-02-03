@@ -166,13 +166,20 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile, int ns
     }
 
     if (outfile == NULL){
-	outfile = get_string_param(params, "gauss_outfile");
+	outfile = get_string_param(params, "outfile");
     }
     
     if (infile == NULL){
-	G = gen_gaussian_vector_uniform(stdev, start, interval, step);
+	double multiplier = get_double_param(params, "gauss_func_multiplier");
+	if (multiplier == 0){
+	    printf("WARNING: Multiplier for function generation is zero! Your functions" \
+		   " will probably be completely flat!\n");
+	}
+	G = gen_gaussian_vector_uniform(stdev, start, interval, step, multiplier);
+	printf("No input file specified. Generating random function.\n");
     } else {
 	G = read_gauss_vector(infile);
+	printf("Reading from %s.\n", infile);
     }
 
     double_multi_arr* T = gauss_transform(G, start, start+interval, resolution);
@@ -186,7 +193,7 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile, int ns
     char* out = malloc(strlen(outfile) + strlen(stream_ext) + 5 + strlen(".dat"));
 
     for (i = 0; i < nstreams; ++i) {
-	sprintf(out, "%s%s%d%s", outfile, stream_ext, i, ".dat");
+	sprintf(out, "%s%s%d.dat", outfile, stream_ext, i);
     	double_multi_arr* stream = nonhom_from_gaussian(G, lambda, start, interval, time_delta[i], -min);
 	output_double_multi_arr(out, "w", stream);
 	free_double_multi_arr(stream);
@@ -256,7 +263,8 @@ double_multi_arr* nonhom_from_gaussian(gauss_vector* G, double lambda,
  * 0 outputs the discrete transform, which gives the value of the function at evenly
  * spaced points along the x-axis.
  */
-void generate_gaussian_data(char* paramfile, char* infile, char* outfile, int number, int output_type)
+void generate_gaussian_data(char* paramfile, char* infile, char* outfile,
+			    int number, int output_type)
 {
     paramlist* params = get_parameters(paramfile);
     
@@ -265,6 +273,12 @@ void generate_gaussian_data(char* paramfile, char* infile, char* outfile, int nu
     double interval = get_double_param(params, "interval_time");
     double step = get_double_param(params, "gauss_generation_step");
     double resolution = get_double_param(params, "gauss_resolution");
+    double multiplier = get_double_param(params, "gauss_func_multiplier");
+
+    if (multiplier == 0){
+	printf("WARNING: Multiplier for function generation is zero! Your functions"\
+	       " will probably be completely flat!\n");
+    }
     
     if (outfile == NULL){
 	if (infile == NULL){
@@ -289,6 +303,8 @@ void generate_gaussian_data(char* paramfile, char* infile, char* outfile, int nu
 	}
     }
 
+    printf("Reading from %s.\n", infile);
+
     int i;
 
     char* out = malloc(strlen(outfile) + 5 + strlen(".dat"));
@@ -296,11 +312,16 @@ void generate_gaussian_data(char* paramfile, char* infile, char* outfile, int nu
     for (i = 0; i < number; ++i) {
 	sprintf(out, "%s_%d.dat", outfile, i);
 	gauss_vector* G = _generate_gaussian(infile, stdev, start, interval, 
-					     step, resolution);
+					     step, resolution, multiplier);
+	
+	double* wts = G->w;
+	G->w = multiply_arr(wts, G->len, multiplier);
+	free(wts);
+
 	if (output_type == 0){
 	    output_gaussian_vector(out, "w", G);
 	} else {
-	    // Need to apply something to normalise when you have input file. Dividing buy the
+	    // Need to apply something to normalise when you have input file. Dividing by the
 	    // stdev is ok, but not good enough.
 	    double_multi_arr* func = shifted_transform(G, start, interval, step, resolution);
     	    output_double_multi_arr(out, "w", func);
@@ -324,17 +345,18 @@ void generate_gaussian_data(char* paramfile, char* infile, char* outfile, int nu
  * Generate a set of weighted gaussians. If an input file is provided, data points
  * are assumed to provide the means for gaussians.
  */
-gauss_vector* _generate_gaussian(char* infile, double stdev, double start, double interval, 
-			 double gen_step, double resolution)
+gauss_vector* _generate_gaussian(char* infile, double stdev, double start,
+				 double interval, double gen_step, 
+				 double resolution, double multiplier)
 {
     double* means = NULL;
     gauss_vector* G;
     
     if (infile == NULL){
-	G = gen_gaussian_vector_uniform(stdev, start, start + interval, gen_step);
+	G = gen_gaussian_vector_uniform(stdev, start, start + interval, gen_step, multiplier);
     } else {
 	means = get_event_data_all(infile);
-	G = gen_gaussian_vector_from_array(means + 1, means[0] - 1, stdev);
+	G = gen_gaussian_vector_from_array(means + 1, means[0] - 1, stdev, multiplier, 1);
 	free(means);
     }
 
@@ -549,7 +571,7 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
     }
     if (outswitch == 3){
 	char *tmp = malloc(strlen(outfile) + 4 + strlen(".dat")); // space for extra chars and null terminator
-	sprintf(tmp, "%s_ev%s", outfile, ".dat");
+	sprintf(tmp, "%s%s", outfile, ".dat");
 	double_to_file(tmp, "w", *eptr, size);
 	
 	sprintf(tmp, "%s_ad%s", outfile, ".dat");

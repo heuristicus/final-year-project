@@ -39,22 +39,29 @@ double* get_intercept_and_gradient(double a_x, double a_y, double b_x, double b_
 
 gaussian* make_gaussian(double mean, double stdev);
 double gaussian_contribution_at_point(double x, gaussian* g, double weight);
-double** gaussian_contribution(gaussian* g, double start, double end, double step, double weight);
+double** gaussian_contribution(gaussian* g, double start, double end,
+			       double step, double weight);
 double sum_gaussians_at_point(double x, gauss_vector* G);
-double_multi_arr* gauss_transform(gauss_vector* G, double start, double end, double resolution);
+double_multi_arr* gauss_transform(gauss_vector* G, double start, double end,
+				  double resolution);
 double_multi_arr* shifted_transform(gauss_vector* V, double start, double interval,
 				    double step, double resolution);
-double* random_vector(int len);
+double* random_vector(int len, double multiplier);
 double* weight_vector(double weight, int len);
-gauss_vector* gen_gaussian_vector_uniform(double stdev, double start, double interval_time, double step);
-gauss_vector* gen_gaussian_vector_from_array(double* means, int len, double stdev);
+gauss_vector* gen_gaussian_vector_uniform(double stdev, double start,
+					  double interval_time, double step,
+					  double multiplier);
+gauss_vector* gen_gaussian_vector_from_array(double* means, int len, double stdev,
+					     double multiplier, int random_weights);
 double find_min_value(double* data, int len);
 double* add_to_arr(double* data, int len, double add);
-double** kernel_density(double* events, int len, double start, double end, double bandwidth, double resolution);
+double** kernel_density(double* events, int len, double start, double end,
+			double bandwidth, double resolution);
 double kernel_density_at_point(double* events, int len, int x, double bandwidth);
 double gaussian_kernel(double x, double mean, double stdev);
 int find_min_value_int(int* data, int len);
 double find_max_value(double* data, int len);
+double* multiply_arr(double* data, int len, double multiplier);
 
 #endif
 

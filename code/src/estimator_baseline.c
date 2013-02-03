@@ -6,13 +6,6 @@ double** recalculate_expressions(double* breakpoint_vector, double* function_val
 double* get_func_vals_at_breakpoints(est_data** pieces, int max_breakpoints);
 est_arr* recalculate_estimates(double* breakpoint_vector, double* function_values, int len);
 
-/* int main(int argc, char *argv[]) */
-/* { */
-    
-/*     baseline_estimate(argv[1], argv[2], 0, 100); */
-/*     return 0; */
-/* } */
-
 /*
  * Helper function for baseline estimator. Extracts parameters from the parameter list and
  * passes them to the estimator.
@@ -50,11 +43,14 @@ est_arr* _estimate_baseline(char *event_file, char *output_file, double interval
 
     print_estimates(pieces);
     
-    int i, len = pieces->len;
+    int len = pieces->len;
 
+#ifdef VERBOSE
+    int i;
     for (i = 0; i < len; ++i) {
 	printf("original function %d: a %lf, b %lf\n", i, pieces->estimates[i]->est_a, pieces->estimates[i]->est_b);
     }
+#endif
 
     
     double *breakpoint_vector = get_breakpoint_vector(pieces->estimates, len);
@@ -103,10 +99,14 @@ double* get_breakpoint_vector(est_data** pieces, int num_breakpoints)
     int i;
     
     for (i = 0; i < num_breakpoints && pieces[i] != NULL; ++i) {
+#ifdef VERBOSE
 	printf("pieces %d %lf\n", i, pieces[i]->start);
+#endif
     	breakpoints[i] = pieces[i]->start;
     }
+#ifdef VERBOSE
     printf("pieces %d %lf\n", i, pieces[i - 1]->end);
+#endif
     breakpoints[i] = pieces[i - 1]->end; // add the end of the interval
     return breakpoints;
 }
@@ -177,7 +177,10 @@ est_arr* recalculate_estimates(double* breakpoint_vector, double* function_value
 	/* printf("breakpoint %lf, function %lf\n", breakpoint_vector[i], function_values[i]); */
 	/* printf("start point %lf, end point %lf\n", breakpoint_vector[i], breakpoint_vector[i+1]); */
 	/* printf("start func %lf, end func %lf\n", function_values[i], function_values[i+1]); */
+
+#ifdef VERBOSE
 	printf("function %d starts at (%.2lf, %.2lf) and ends at (%.2lf, %.2lf)\n", i, breakpoint_vector[i], function_values[i],  breakpoint_vector[i+1], function_values[i+1]);
+#endif
 	double *tmp = get_intercept_and_gradient(breakpoint_vector[i], function_values[i],  breakpoint_vector[i+1], function_values[i+1]);
 	est_data *this_interval = malloc(sizeof(est_data));
 	this_interval->est_a = tmp[0];
@@ -187,7 +190,9 @@ est_arr* recalculate_estimates(double* breakpoint_vector, double* function_value
 
 	new_est[i] = this_interval;
 	free(tmp);
+#ifdef VERBOSE
 	printf("new a %lf, new b %lf, start %lf, end %lf\n", new_est[i]->est_a, new_est[i]->est_b, new_est[i]->start, new_est[i]->end);
+#endif
     }
 
     est_arr *newarr = malloc(sizeof(est_arr));

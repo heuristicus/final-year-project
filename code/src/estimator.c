@@ -25,7 +25,10 @@ est_arr* estimate(char* paramfile, char* infile, char* outfile, char* estimator_
 	infile = get_string_param(params, "infile");
     }
     if (outfile == NULL){
-	outfile = get_string_param(params, "est_outfile");
+	if (strcmp(estimator_type, "gauss") == 0)
+	    outfile = get_string_param(params, "gauss_est_outfile");
+	else 
+	    outfile = get_string_param(params, "est_outfile");
     }
 
     if (infile == NULL || outfile == NULL){
@@ -34,7 +37,7 @@ est_arr* estimate(char* paramfile, char* infile, char* outfile, char* estimator_
 	exit(1);
     }
     printf("outputting to %s\n", outfile);
-    
+    printf("infile is %s\n", infile);
     if (strcmp("ols", estimator_type) == 0){
 	result = run_ols(params, infile, outfile);
     } else if (strcmp("iwls", estimator_type) == 0){

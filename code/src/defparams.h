@@ -16,7 +16,7 @@
 #define DEFAULT_GAUSS_EST_OUT "gauss_est_out"
 
 // input
-#define DEFAULT_INFILE "output_stream_0_ev.dat"
+#define DEFAULT_INFILE "output_stream_0.dat"
 
 // Default parameters for generation
 #define DEFAULT_EXTENSION "_stream_"
@@ -37,6 +37,7 @@
 #define DEFAULT_STDEV 10.0
 #define DEFAULT_GEN_STEP 10.0
 #define DEFAULT_GAUSS_RESOLUTION 0.5
+#define DEFAULT_GAUSS_MULTIPLIER 5.0
 #define DEFAULT_GAUSSIANS 40
 
 // Default parameters for estimators
@@ -48,7 +49,7 @@
 #define DEFAULT_MIN_INTERVAL_PROP 0.1
 #define DEFAULT_PMF_THRESHOLD 0.02
 #define DEFAULT_PMF_SUM_THRESHOLD 0.85
-#define DEFAULT_GAUSS_EST_STDEV 0.5
-#define DEFAULT_GAUSS_EST_RESOLUTION 0.1
+#define DEFAULT_GAUSS_EST_STDEV 5.0
+#define DEFAULT_GAUSS_EST_RESOLUTION 0.3
 
 #endif

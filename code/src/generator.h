@@ -29,12 +29,15 @@ void run_events_nonhom(muParserHandle_t hparser, double lambda, double time_delt
 void run_time_nstreams(muParserHandle_t hparser, double lambda, double runtime,
 		       double *time_delta, int nstreams, char *outfile, int outswitch);
 void generate(char *paramfile, char *outfile, int nruns);
-gauss_vector* _generate_gaussian(char* infile, double stdev, double start, double interval,
-			 double gen_step, double resolution);
+gauss_vector* _generate_gaussian(char* infile, double stdev, double start,
+				 double interval, double gen_step,
+				 double resolution, double multiplier);
 double_multi_arr* nonhom_from_gaussian(gauss_vector* G, double lambda, 
-				       double start, double interval, double time_delta, double shift);
-void generate_from_gaussian(char* paramfile, char* outfile, char* infile, int nstreams);
-
-void generate_gaussian_data(char* paramfile, char* infile, char* outfile, int number, int output_type);
+				       double start, double interval,
+				       double time_delta, double shift);
+void generate_from_gaussian(char* paramfile, char* outfile, char* infile,
+			    int nstreams);
+void generate_gaussian_data(char* paramfile, char* infile, char* outfile,
+			    int number, int output_type);
 
 #endif

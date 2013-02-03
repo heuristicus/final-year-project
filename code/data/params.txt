@@ -3,11 +3,8 @@
 ################################################################################
 #                                  data output                                 #
 ################################################################################
-# file to which generator outputs data
+# file to which generator outputs generated event data
 outfile output
-
-# file to which gaussian generator outputs data
-gauss_outfile gauss_out
 
 # Files to which functions generated using gaussians are output. 
 # File for gaussians in their raw form (xpos stdev weight).
@@ -40,7 +37,7 @@ est_outfile est_out
 # pc_output pc_out
 # base_output base_out
 # File to output gaussian estimate data to.
-gauss_est_out gauss_est_out
+gauss_est_outfile gauss_est_out
 
 # define the verbosity of output to data files.
 # 0 output only event data for each run
@@ -54,8 +51,8 @@ verbosity 3
 ################################################################################
 #                                   data input                                 #
 ################################################################################
-# Input file used for estimation
-infile output_stream_0_ev.dat
+# Default input file used for estimation
+infile output_stream_0.dat
 
 ################################################################################
 #                             generation parameters                            #
@@ -88,6 +85,12 @@ gauss_generation_step 10.000000
 gauss_resolution 0.500000
 
 num_gaussians 40
+# Multiplier to apply to weights of gaussians when generating random functions.
+# The standard gaussian weight is ~ N(0,1). The standard functions have on average
+# vary between -5 and 5, which may not be appropriate. Multiplying the weight
+# values gives a greater range of values but preserves the shape of the function.
+gauss_func_multiplier 5.000000
+
 ################################################################################
 #                              estimator parameters                            #
 ################################################################################
@@ -147,7 +150,7 @@ pc_pmf_sum_threshold 0.850000
 base_iwls_iterations 3
 base_iwls_subintervals 5
 base_max_extension 15.000000
-base_max_breakpoints 5
+base_max_breakpoints 7
 base_min_interval_proportion 0.100000
 base_pmf_threshold 0.020000
 base_pmf_sum_threshold 0.850000
@@ -156,9 +159,9 @@ base_pmf_sum_threshold 0.850000
 #                              gaussian parameters                             #
 ################################################################################
 # Standard deviation to apply to gaussian kernels used to estimate functions
-gauss_est_stdev 0.500000
+gauss_est_stdev 5.000000
 
 # Specify resolution of kernels used to estimate gaussians. A small value will
 # give higher precision but take longer
-gauss_est_resolution 0.100000
+gauss_est_resolution 0.300000
 

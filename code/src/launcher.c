@@ -157,6 +157,7 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* infile
 	    multi_estimate(paramfile, infile, outfile, estimator_type, args->nstreams);
 	} else {
 	    printf("estimating single stream\n");
+	    // mess with outfile here to output it nicely.
 	    estimate(paramfile, infile, outfile, estimator_type);
 	}
     } else if (args->exp == 1){
@@ -187,34 +188,42 @@ void multi_estimate(char* paramfile, char* infile, char* outfile, char* estimato
 
 void multi_est_gauss(paramlist* params, char* infile, char* outfile, int nstreams)
 {
-    char* fname = get_string_param(params, "outfile");
-    char* pref = get_string_param(params, "stream_ext");
-//    char* tmp = NULL;
-//    double* time_delta = NULL;
+    char* fname = get_string_param(params, "outfile"); // default generator output filename
+    char* pref = get_string_param(params, "stream_ext"); // default extension
+    
+    if (outfile == NULL){
+	outfile = get_string_param(params, "gauss_est_outfile");
+    }
 	    
     if (fname == NULL || pref == NULL){
 	printf("You must include the parameters \"outfile\" and \"stream_ext\" in"\
 	       " your parameter file.\n");
 	exit(1);
+    } else if (outfile == NULL){
+	printf("You must include the parameter \"gauss_est_outfile\" in your"\
+	       " parameter file, or specify the output file with the -o switch.\n");
+	exit(1);
     }
 
     printf("running estimator %s for %d streams\n", "gauss", nstreams);
-    char* infname = malloc(strlen(fname) + strlen(pref) + 3);
-    char* outname = malloc(10);
+    char* infname = malloc(strlen(fname) + strlen(pref) + strlen(".dat") + 5);
+    char* outname = malloc(strlen(outfile) + strlen(".dat") + 5);
     int i;
     
     for (i = 0; i < nstreams; ++i) {
-	sprintf(infname, "%s%s%d_ev", fname, pref, i);
-	sprintf(outname, "%s%d", "gaussout", i);
+	sprintf(infname, "%s%s%d.dat", fname, pref, i);
+	sprintf(outname, "%s_%d.dat", outfile, i);
 	estimate_gaussian(params, infname, outname);
     }
+    free(infname);
+    free(outname);
 }
 
 void multi_est_default(char* paramfile, char* infile, char* outfile, char* estimator_type, int nstreams)
 {
     paramlist* params = get_parameters(paramfile);
-    char* fname = get_string_param(params, "outfile");
-    char* pref = get_string_param(params, "stream_ext");
+    char* fname = get_string_param(params, "outfile"); // default generator output filename
+    char* pref = get_string_param(params, "stream_ext"); // default extension
     char* tmp = NULL;
     double* time_delta = NULL;
 	    
@@ -224,14 +233,18 @@ void multi_est_default(char* paramfile, char* infile, char* outfile, char* estim
 	exit(1);
     }
 
-    char* infname = malloc(strlen(fname) + strlen(pref) + 3);
+    char* infname = malloc(strlen(fname) + strlen(pref) + strlen(".dat") + 5);
+    // output individual estimates as well.
+    char* stream_out = malloc(strlen(fname) + strlen(pref) + strlen("_est.dat") + 5);
     printf("running estimator %s for %d streams\n", estimator_type, nstreams);
 
     est_arr** allstreams = malloc(nstreams * sizeof(est_arr*));
+
     int i;
     for (i = 0; i < nstreams; ++i) {
-	sprintf(infname, "%s%s%d_ev", fname, pref, i);
-	allstreams[i] = estimate(paramfile, infname, outfile, estimator_type);
+	sprintf(infname, "%s%s%d.dat", fname, pref, i);
+	sprintf(stream_out, "%s%s%d_est.dat", fname, pref, i);
+	allstreams[i] = estimate(paramfile, infname, stream_out, estimator_type);
     }
 	    
     /* Find time delay here*/
@@ -262,6 +275,8 @@ void multi_est_default(char* paramfile, char* infile, char* outfile, char* estim
     output_estimates(outfile, combined->estimates, combined->len);
     free_est_arr(combined);
     free_list(params);
+    free(infname);
+    free(stream_out);
 }
 
 launcher_args* make_arg_struct()

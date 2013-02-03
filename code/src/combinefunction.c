@@ -29,18 +29,34 @@ est_arr* combine_function(est_arr** estimates, double* time_delay, double interv
      * where the least delayed function ends (interval_time - max_delay).
      */
     for (time = max_delay; time < interval_time - max_delay; ++time) {
+#ifdef VERBOSE
 	printf("time is %d\n", time);
+#endif
 	double total = 0;
 	for (estimate_num = 0; estimate_num < num_estimates; ++estimate_num) {
+#ifdef VERBOSE
 	    printf("time delay %lf\n", time_delay[estimate_num]);
+#endif
 	    total += estimate_at_point(estimates[estimate_num], time - time_delay[estimate_num]);
+#ifdef VERBOSE
 	    printf("total is %lf\n", total);
+#endif
 	}
 	fprintf(fp, "%d %lf\n", time, total/num_estimates);
     }
 
     fclose(fp);
     
+    return NULL;
+}
+
+/*
+ * Combines a set of vectors of gaussians into a single set of values representing
+ * the average value of the sums of the gaussians. Samples are taken with the 
+ * given resolution
+ */
+double_arr* combine_gauss_vectors(gauss_vector** V, int num)
+{
     return NULL;
 }
 

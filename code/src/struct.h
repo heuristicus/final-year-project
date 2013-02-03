@@ -38,6 +38,11 @@ struct paramlist
 };
 typedef struct paramlist paramlist;
 
+typedef struct
+{
+    double* data;
+    int len;
+} double_arr;
 
 typedef struct
 {
