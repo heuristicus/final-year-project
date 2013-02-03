@@ -128,6 +128,242 @@ void generate(char *paramfile, char *outfile, int nruns)
 }
 
 /*
+ * Generates an event stream by using a random function provided by a set of 
+ * gaussians. The gaussians are expected as input in raw form from the infile.
+ * If no input is provided, a random function will be generated and events will
+ * be generated from that.
+ */
+void generate_from_gaussian(char* paramfile, char* outfile, char* infile, int nstreams)
+{
+    gauss_vector* G;
+    paramlist* params = get_parameters(paramfile);
+
+    double stdev = get_double_param(params, "gauss_stdev");
+    double start = get_double_param(params, "start_time");
+    double interval = get_double_param(params, "interval_time");
+    double step = get_double_param(params, "gauss_generation_step");
+    double resolution = get_double_param(params, "gauss_resolution");
+    char* stream_ext = get_string_param(params, "stream_ext");
+    
+    double* time_delta;
+    char* tmp;
+    int tdlen;
+    int i;
+    
+    if ((tmp = get_string_param(params, "timedelta")) != NULL){
+	char** vals = string_split(tmp, ',');
+	tdlen = atoi(vals[0]) - 1;
+	time_delta = malloc(tdlen * sizeof(double));
+	
+	for (i = 0; i < tdlen; ++i) {
+	    time_delta[i] = atof(vals[i + 1]);
+	}
+
+	free_pointer_arr((void**) vals, atoi(vals[0]));
+    } else {
+	printf("no timedelta provided.\n");
+	exit(1);
+    }
+
+    if (outfile == NULL){
+	outfile = get_string_param(params, "outfile");
+    }
+    
+    if (infile == NULL){
+	double multiplier = get_double_param(params, "gauss_func_multiplier");
+	if (multiplier == 0){
+	    printf("WARNING: Multiplier for function generation is zero! Your functions" \
+		   " will probably be completely flat!\n");
+	}
+	G = gen_gaussian_vector_uniform(stdev, start, interval, step, multiplier);
+	printf("No input file specified. Generating random function.\n");
+    } else {
+	G = read_gauss_vector(infile);
+	printf("Reading from %s.\n", infile);
+    }
+
+    double_multi_arr* T = gauss_transform(G, start, start+interval, resolution);
+    
+    double max = find_max_value(T->data[1], T->lengths[1]);
+    double min = find_min_value(T->data[1], T->lengths[1]);
+    double lambda = ceil(-min + max);
+//    output_gauss_transform("gen_transform", "w", T->data, -min, T->lengths[1], 1);
+//    output_gaussian_contributions("gen_gauss" , "w", G, start, start + interval, resolution, 1);
+
+    char* out = malloc(strlen(outfile) + strlen(stream_ext) + 5 + strlen(".dat"));
+
+    for (i = 0; i < nstreams; ++i) {
+	sprintf(out, "%s%s%d.dat", outfile, stream_ext, i);
+    	double_multi_arr* stream = nonhom_from_gaussian(G, lambda, start, interval, time_delta[i], -min);
+	output_double_multi_arr(out, "w", stream);
+	free_double_multi_arr(stream);
+    }
+
+    free_gauss_vector(G);
+    free_double_multi_arr(T);
+    free(time_delta);
+    free_list(params);
+    free(out);
+}
+
+/*
+ * Generates a stream of events using a nonhomogeneous poisson process
+ * with the fuction specified by a linear combination of gaussians as the
+ * generating function.
+ */
+double_multi_arr* nonhom_from_gaussian(gauss_vector* G, double lambda, 
+				       double start, double interval, double time_delta, double shift)
+{
+    init_rand(0.0);
+            
+    double base_time = start;
+    double shifted_time = time_delta + start;
+    double end = start + interval;
+    double rand, non_hom_lambda, hom_out;
+    int i = 0, arr_max = DEFAULT_ARR_SIZE;
+    double_multi_arr* ret = malloc(sizeof(double_multi_arr));
+    ret->data = malloc(2 * sizeof(double*));
+    ret->data[0] = malloc(arr_max * sizeof(double));
+    ret->data[1] = malloc(arr_max * sizeof(double));
+    ret->len = 2;
+    ret->lengths = malloc(2 * sizeof(int));
+    
+    while (base_time < end){
+	hom_out = homogeneous_time(lambda);
+	base_time += hom_out;
+	shifted_time += hom_out;
+	non_hom_lambda = sum_gaussians_at_point(shifted_time, G) + shift;
+	if ((rand = get_uniform_rand()) <= non_hom_lambda / lambda){
+	    if (i >= arr_max){
+		ret->data[0] = realloc(ret->data[0], i * 2 * sizeof(double));
+		ret->data[1] = realloc(ret->data[1], i * 2 * sizeof(double));
+		if (!ret->data[0] || !ret->data[1]){
+		    printf("Memory reallocation for arrays failed during generation. Exiting.\n");
+		    exit(1);
+		}
+		arr_max = i * 2;
+	    }
+	    ret->data[0][i] = base_time;
+	    ret->data[1][i] = non_hom_lambda;
+	    ++i;
+	}
+    }
+
+    ret->lengths[0] = ret->lengths[1] = i;
+
+    return ret;
+}
+
+/*
+ * Generates gaussian data of the type specified. If an input file is provided, 
+ * the assumed 1-dimensional data provides the means for unweighted gaussians 
+ * with the given standard deviation. If no input file is specified, then gaussians
+ * are generated uniformly over the interval specified in the parameter file.
+ * A value of 1 outputs raw gaussians, which can be used to generate event streams. 
+ * 0 outputs the discrete transform, which gives the value of the function at evenly
+ * spaced points along the x-axis.
+ */
+void generate_gaussian_data(char* paramfile, char* infile, char* outfile,
+			    int number, int output_type)
+{
+    paramlist* params = get_parameters(paramfile);
+    
+    double stdev = get_double_param(params, "gauss_stdev");
+    double start = get_double_param(params, "start_time");
+    double interval = get_double_param(params, "interval_time");
+    double step = get_double_param(params, "gauss_generation_step");
+    double resolution = get_double_param(params, "gauss_resolution");
+    double multiplier = get_double_param(params, "gauss_func_multiplier");
+
+    if (multiplier == 0){
+	printf("WARNING: Multiplier for function generation is zero! Your functions"\
+	       " will probably be completely flat!\n");
+    }
+    
+    if (outfile == NULL){
+	if (infile == NULL){
+	    if (output_type == 0) {
+		printf("Outputting raw uniformly spaced gaussians.\n");
+		outfile = get_string_param(params, "gauss_func_outfile_raw");
+	    } else {
+		printf("Outputting discrete transform of uniformly spaced"\
+		       " gaussians.\n");
+		outfile = get_string_param(params, "gauss_func_outfile");
+	    }
+	} else {
+	    if (output_type == 0) {
+		printf("Outputting raw gaussians with means centred on data "\
+		       "from file.\n");
+		outfile = get_string_param(params, "gauss_event_func_outfile_raw");
+	    } else {
+		printf("Outputting discrete transform of gaussians with means"\
+		       " centred on data from file.\n");
+		outfile = get_string_param(params, "gauss_event_func_outfile");
+	    }
+	}
+    }
+
+    printf("Reading from %s.\n", infile);
+
+    int i;
+
+    char* out = malloc(strlen(outfile) + 5 + strlen(".dat"));
+
+    for (i = 0; i < number; ++i) {
+	sprintf(out, "%s_%d.dat", outfile, i);
+	gauss_vector* G = _generate_gaussian(infile, stdev, start, interval, 
+					     step, resolution, multiplier);
+	
+	double* wts = G->w;
+	G->w = multiply_arr(wts, G->len, multiplier);
+	free(wts);
+
+	if (output_type == 0){
+	    output_gaussian_vector(out, "w", G);
+	} else {
+	    // Need to apply something to normalise when you have input file. Dividing by the
+	    // stdev is ok, but not good enough.
+	    double_multi_arr* func = shifted_transform(G, start, interval, step, resolution);
+    	    output_double_multi_arr(out, "w", func);
+    	    free_double_multi_arr(func);
+	    if (output_type == 2){
+	    	char* c_out = malloc(strlen(outfile) + strlen("_contrib") + strlen(".dat") + 5);
+	    	sprintf(c_out, "%s_%d_contrib.dat", outfile, i);
+	    	output_gaussian_contributions(c_out, "w", G, start, start + interval, resolution, 1);
+	    	free(c_out);
+	    }
+	}
+	free_gauss_vector(G);
+	printf("Output to %s.\n", out);
+    }
+
+    free(out);
+    free_list(params);
+}
+
+/*
+ * Generate a set of weighted gaussians. If an input file is provided, data points
+ * are assumed to provide the means for gaussians.
+ */
+gauss_vector* _generate_gaussian(char* infile, double stdev, double start,
+				 double interval, double gen_step, 
+				 double resolution, double multiplier)
+{
+    double* means = NULL;
+    gauss_vector* G;
+    
+    if (infile == NULL){
+	G = gen_gaussian_vector_uniform(stdev, start, start + interval, gen_step, multiplier);
+    } else {
+	means = get_event_data_all(infile);
+	G = gen_gaussian_vector_from_array(means + 1, means[0] - 1, stdev, multiplier, 1);
+	free(means);
+    }
+
+    return G;
+}
+
+/*
  * Check the parsed equation to ensure that there are values for each
  * variable specified in the parameter file, and that a variable t is
  * present in the equation.
@@ -242,30 +478,30 @@ void on_error(muParserHandle_t hparser)
  * or just the event times.
  * *IMPORTANT* The value of lambda MUST exceed the maximum value of the function! *IMPORTANT*
  */
-void run_time_nstreams(muParserHandle_t hparser, double lambda, double end_time, double *time_delta, int nstreams, char *outfile, int outswitch)
+void run_time_nstreams(muParserHandle_t hparser, double lambda, double end_time,
+		       double *time_delta, int nstreams, char *outfile, int outswitch)
 {
     int i;
-            
+    char *out = malloc(strlen(outfile) + strlen("_stream_n") + 10);
     for (i = 0; i < nstreams; ++i){
 	printf("Generating event stream %d\n", i);
-	char *out = malloc(strlen(outfile) + strlen("_stream_n") + 10);
 	sprintf(out, "%s_stream_%d", outfile, i); // save each stream to a separate file
 	run_time_nonhom(hparser, lambda, time_delta[i], 0, end_time, out, outswitch);
-	free(out);
     }
-
+    free(out);
 }
 
 /*
- * Selects an output file. Will prompt user if there is a file specified in both the command line
- * and in the parameter file.
+ * Selects an output file. Will prompt user if there is a file specified in both
+ * the command line and in the parameter file.
  */
 char* select_output_file(char* cur_out, char* param_out)
 {
     char* outfile;
     
     if (param_out == NULL && cur_out == NULL){
-	printf("No parameter for the output file found in the parameters file or command line arguments. Auto-generating...\n");
+	printf("No parameter for the output file found in the parameters file "\
+	       "or command line arguments. Auto-generating...\n");
 	outfile = generate_outfile();
 	generated_outfile = 1;
     } else if (param_out != NULL && cur_out != NULL){
@@ -288,10 +524,7 @@ char* select_output_file(char* cur_out, char* param_out)
 	outfile = cur_out;
     }
     
-    printf("Will output to %s\n", outfile);
-
     return outfile;
-        
 }
 
 /* Helper method to run a nonhomogeneous process for a specific length
@@ -299,7 +532,8 @@ char* select_output_file(char* cur_out, char* param_out)
  * The outswitch parameter determines what data will be output to the file.
  * 
  */
-void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta, double start_time, double end_time, char *outfile, int outswitch)
+void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
+		     double start_time, double end_time, char *outfile, int outswitch)
 {
     double *et = malloc(DEFAULT_ARR_SIZE * sizeof(double));
     double *lv = malloc(DEFAULT_ARR_SIZE * sizeof(double));
@@ -307,7 +541,8 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
     double **eptr = &et;
     double **lptr = &lv;
 
-    int size = run_to_time_non_homogeneous(hparser, lambda, time_delta, start_time, end_time, eptr, lptr, DEFAULT_ARR_SIZE);
+    int size = run_to_time_non_homogeneous(hparser, lambda, time_delta, start_time,\
+					   end_time, eptr, lptr, DEFAULT_ARR_SIZE);
 
     if (outswitch == 0) // Outputs only event data - this is what the real data will be like.
 	double_to_file(outfile, "w", *eptr, size);
@@ -335,11 +570,11 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
 	free(bin_counts);
     }
     if (outswitch == 3){
-	char *tmp = malloc(strlen(outfile) + 4); // space for extra chars and null terminator
-	sprintf(tmp, "%s_ev", outfile);
+	char *tmp = malloc(strlen(outfile) + 4 + strlen(".dat")); // space for extra chars and null terminator
+	sprintf(tmp, "%s%s", outfile, ".dat");
 	double_to_file(tmp, "w", *eptr, size);
 	
-	sprintf(tmp, "%s_ad", outfile);
+	sprintf(tmp, "%s_ad%s", outfile, ".dat");
 
 	mult_double_to_file(tmp, "w", *eptr, *lptr, size);
 
@@ -375,7 +610,8 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
  * Puts event times into the array passed in the parameters. 
  * Puts a -1 in the array location after the last event
  */
-void generate_event_times_homogenous(double lambda, double time, int max_events, double *event_times)
+void generate_event_times_homogenous(double lambda, double time, int max_events,
+				     double *event_times)
 {
     init_rand(0.0);
         
@@ -402,7 +638,10 @@ void generate_event_times_homogenous(double lambda, double time, int max_events,
  * Returns the final array location in which there is something 
  * stored.
  */
-int run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda, double time_delta, double start_time, double end_time, double **event_times, double **lambda_vals, int arr_len)
+int run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda, 
+				double time_delta, double start_time, 
+				double end_time, double **event_times, 
+				double **lambda_vals, int arr_len)
 {
     init_rand(0.0);
             
@@ -419,7 +658,7 @@ int run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda, double 
 	shifted_time += hom_out;
 	non_hom_lambda = mupEval(hparser);
 	//printf("%lf %lf\n", time, non_hom_lambda);//more granularity on lambda values // get this into output file
-	if ((rand = drand48()) <= non_hom_lambda / lambda){
+	if ((rand = get_uniform_rand()) <= non_hom_lambda / lambda){
 	    // Number of events may exceed the number of array locations initally assigned
 	    // so may need to reallocate memory to store more.
 	    if (i >= arr_max){
@@ -451,7 +690,8 @@ int run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda, double 
  * and prints output data to a file. The outswitch parameter determines whether
  * all data will be output to the file, or just the event times.
  */
-void run_events_nonhom(muParserHandle_t hparser, double lambda, double start_time, int events, char *outfile, int outswitch)
+void run_events_nonhom(muParserHandle_t hparser, double lambda, double start_time,
+		       int events, char *outfile, int outswitch)
 {
     double *et = malloc(events * sizeof(double));
     double *lv = malloc(events * sizeof(double));
@@ -466,7 +706,9 @@ void run_events_nonhom(muParserHandle_t hparser, double lambda, double start_tim
  * will be populated with the time of an event and the result of 
  * evaluating lambda(t) at that time.
  */
-void run_to_event_limit_non_homogeneous(muParserHandle_t hparser, double lambda, double t_delta, int max_events, double *event_times, double *lambda_vals)
+void run_to_event_limit_non_homogeneous(muParserHandle_t hparser, double lambda, 
+					double t_delta, int max_events, 
+					double *event_times, double *lambda_vals)
 {
     init_rand(0.0);
     
@@ -482,7 +724,7 @@ void run_to_event_limit_non_homogeneous(muParserHandle_t hparser, double lambda,
 	func_in += hom_out;
 	non_hom_lambda = mupEval(hparser);
 	//printf("%lf %lf\n", run_time, non_hom_lambda);//more granularity on lambda values // get into the output file
-	if ((rand = drand48()) <= non_hom_lambda / lambda){
+	if ((rand = get_uniform_rand()) <= non_hom_lambda / lambda){
 	    event_times[i] = run_time;
 	    lambda_vals[i] = non_hom_lambda;
 	    ++i;
@@ -505,7 +747,8 @@ void run_to_event_limit_non_homogeneous(muParserHandle_t hparser, double lambda,
  * Puts event times into the array passed in the parameters. 
  * Puts a -1 in the array location after the last event
  */
-void generate_event_times_homogeneous(double lambda, double time, int max_events, double *event_times)
+void generate_event_times_homogeneous(double lambda, double time,
+				      int max_events, double *event_times)
 {
     init_rand(0.0);
         
@@ -525,5 +768,5 @@ void generate_event_times_homogeneous(double lambda, double time, int max_events
 /* knuth method. Generates time to next event in a homogeneous poisson process. */
 double homogeneous_time(double lambda)
 {
-    return -log(drand48()) / lambda;
+    return -log(get_uniform_rand()) / lambda;
 }

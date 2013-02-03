@@ -10,6 +10,7 @@ static char *pc_params[] = {"start_time", "interval_time", "pc_iwls_iterations",
 			    "pc_iwls_subintervals", "pc_max_extension", "pc_max_breakpoints"};
 static char *base_params[] = {"start_time", "interval_time", "base_iwls_iterations", 
 			      "base_iwls_subintervals", "base_max_extension", "base_max_breakpoints"};
+static char *gauss_params[] = {"start_time", "interval_time", "gauss_stdev", "gauss_resolution"};
 
 /*
  * Runs the specified estimator using the provided parameter and output files. Performs
@@ -24,7 +25,10 @@ est_arr* estimate(char* paramfile, char* infile, char* outfile, char* estimator_
 	infile = get_string_param(params, "infile");
     }
     if (outfile == NULL){
-	outfile = get_string_param(params, "est_outfile");
+	if (strcmp(estimator_type, "gauss") == 0)
+	    outfile = get_string_param(params, "gauss_est_outfile");
+	else 
+	    outfile = get_string_param(params, "est_outfile");
     }
 
     if (infile == NULL || outfile == NULL){
@@ -33,7 +37,7 @@ est_arr* estimate(char* paramfile, char* infile, char* outfile, char* estimator_
 	exit(1);
     }
     printf("outputting to %s\n", outfile);
-    
+    printf("infile is %s\n", infile);
     if (strcmp("ols", estimator_type) == 0){
 	result = run_ols(params, infile, outfile);
     } else if (strcmp("iwls", estimator_type) == 0){
@@ -42,6 +46,8 @@ est_arr* estimate(char* paramfile, char* infile, char* outfile, char* estimator_
 	result = run_pc(params, infile, outfile);
     } else if (strcmp("base", estimator_type) == 0){
 	result = run_base(params, infile, outfile);
+    } else if (strcmp("gauss", estimator_type) == 0){
+	run_gauss(params, infile, outfile);
     } else {
 	printf(EST_TYPE_ERROR, estimator_type);
     }
@@ -109,6 +115,21 @@ est_arr* run_base(paramlist* params, char* infile, char* outfile)
 			   base_params, sizeof(base_params)/sizeof(char*));
 	exit(1);
     }
+}
+
+
+double** run_gauss(paramlist* params, char* infile, char* outfile)
+{
+    if (has_required_params(params, gauss_params, sizeof(gauss_params)/sizeof(char*))){
+	estimate_gaussian(params, infile, outfile);
+    } else {
+	print_string_array("Some parameters required for gaussian estimates are missing. " \
+			   "Ensure that your parameter file contains the following entries and try again.",
+			   gauss_params, sizeof(gauss_params)/sizeof(char*));
+	exit(1);
+    }
+
+    return NULL;
 }
 
 /*

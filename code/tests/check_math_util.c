@@ -206,6 +206,270 @@ START_TEST (test_get_midpoint)
 }
 END_TEST
 
+START_TEST(test_make_gaussian)
+{
+    gaussian* g = make_gaussian(2, 3);
+    gaussian* h = make_gaussian(2, 0);
+    gaussian* i = make_gaussian(2, -1);
+    
+    fail_unless(g->mean == 2, NULL);
+    fail_unless(g->stdev == 3, NULL);
+    
+    fail_unless(h == NULL, "Zero stdev non-null");
+    fail_unless(i == NULL, "Negative stdev non-null");
+}
+END_TEST
+
+START_TEST(test_random_vector)
+{
+    fail_unless(random_vector(0, 1) == NULL, "Zero length non-null");
+    fail_unless(random_vector(-1, 1) == NULL, "Negative length non-null");
+}
+END_TEST
+
+START_TEST(test_gaussian_contribution_at_point)
+{
+    gaussian* g = make_gaussian(2, 3);
+    
+    fail_unless(gaussian_contribution_at_point(2, g, 1) == 1, NULL);
+    
+    const double res_1 = 0.89483931681;
+    
+    fail_unless(gaussian_contribution_at_point(1, g, 1) - res_1 < 0.0000001, NULL);
+    
+}
+END_TEST
+
+START_TEST(test_sum_gaussians_at_point)
+{
+    gaussian* g1 = make_gaussian(2, 3);
+    gaussian* g2 = make_gaussian(1, 3);
+    gauss_vector* G = malloc(sizeof(gauss_vector));
+    gaussian** gs = malloc(2 * sizeof(gaussian*));
+    gs[0] = g1;
+    gs[1] = g2;
+        
+    G->gaussians = gs;
+    G->len = 2;
+    G->w = malloc(2 * sizeof(double));
+    G->w[0] = 1;
+    G->w[1] = 1;
+
+    double res = 1.89483931681;
+
+    fail_unless(sum_gaussians_at_point(1, G) - res < 0.0000001, "Return does not match expected value.");
+    fail_unless(sum_gaussians_at_point(3, G) - res < 0.0000001, "Return does not match expected value.");
+    fail_unless(sum_gaussians_at_point(3, NULL) == 0, "Null pointer returns nonzero");
+}
+END_TEST
+
+START_TEST(test_gaussian_contribution)
+{
+    gaussian* g = make_gaussian(3, 3);
+    
+    double** res = gaussian_contribution(g, 0, 6, 1, 1);
+
+    double** a = gaussian_contribution(g, 0, 0, 1, 1);
+    double** b = gaussian_contribution(g, 0, -1, 1, 1);
+    double** c = gaussian_contribution(g, 0, 6, -1, 1);
+    double** d = gaussian_contribution(g, 0, 6, 0, 1);
+    double** e = gaussian_contribution(NULL, 0, 6, 1, 1);
+
+    fail_unless(a == NULL, "Invalid interval not null");
+    fail_unless(b == NULL, "Negative interval not null");
+    fail_unless(c == NULL, "Negative step not null");
+    fail_unless(d == NULL, "Zero step not null");
+    fail_unless(e == NULL, "Null pointer return non-null");
+
+    const double correct[] = {0.367879441, 0.641180388, 0.984839316, 1.0, 0.984839316, 0.641180388, 0.367879441};
+
+    int i;
+    
+    for (i = 0; i < 7; ++i) {
+	fail_unless(res[0][i] == i, "Expected position of contribution check does not match.");
+	fail_unless(res[1][i] - correct[i] < 0.0000001, "Contribution at point does not match expected contribution.");
+    }
+}
+END_TEST
+
+START_TEST(test_gauss_transform)
+{
+    gaussian* g1 = make_gaussian(2, 3);
+    gaussian* g2 = make_gaussian(3, 3);
+    gauss_vector* G = malloc(sizeof(gauss_vector));
+    gaussian** gs = malloc(2 * sizeof(gaussian*));
+    gs[0] = g1;
+    gs[1] = g2;
+        
+    G->gaussians = gs;
+    G->len = 2;
+    G->w = malloc(2 * sizeof(double));
+    G->w[0] = 1;
+    G->w[1] = 1;
+
+    const double correct[] = {1.009059829, 1.536019705, 1.894839316, 1.894839316, 1.536019705, 1.009059829};
+
+    double_multi_arr* res = gauss_transform(G, 0, 6, 1);
+    
+    int i;
+    
+    for (i = 0; i < 6; ++i) {
+	fail_unless(res->data[0][i] == i, "Data gathering point does not match expected.");
+	fail_unless(res->data[1][i] - correct[i] < 0.0000001, "Transform at point does not match expected value.");
+    }
+
+    double_multi_arr* zerostep = gauss_transform(G, 0, 6, 0);
+    double_multi_arr* negstep = gauss_transform(G, 0, 6, -1);
+    double_multi_arr* zeroint = gauss_transform(G, 0, 0, -1);
+    double_multi_arr* negint = gauss_transform(G, -4, 0, -1);
+    
+    fail_unless(zerostep == NULL, "Zero step size non-null return");
+    fail_unless(negstep == NULL, "Negative step size non-null return");
+    fail_unless(zeroint == NULL, "Zero interval non-null return");
+    fail_unless(negint == NULL, "Negative interval non-null return");
+}
+END_TEST
+
+START_TEST(test_gen_gaussian_vector_uniform)
+{
+    // invalid intervals and step
+    gauss_vector* a = gen_gaussian_vector_uniform(3, 10, 0, 2, 1);
+    gauss_vector* b = gen_gaussian_vector_uniform(3, -10, 0, 2, 1);
+    gauss_vector* c = gen_gaussian_vector_uniform(3, 0, 10, -2, 1);
+    gauss_vector* d = gen_gaussian_vector_uniform(3, 0, 10, 0, 1);
+
+    fail_unless(a == NULL, "Invalid interval non-null return");
+    fail_unless(b == NULL, "Negative interval non-null return");
+    fail_unless(c == NULL, "Negative step non-null return");
+    fail_unless(d == NULL, "Zero step non-null return");
+
+    // Interval which results in a range that is evenly divisible by the number of gaussians
+    gauss_vector* res = gen_gaussian_vector_uniform(3, 0, 10, 2, 1);
+    fail_unless(res->len == 6, "Length of vector not expected value");
+     
+    double expected1[] = {0, 2, 4, 6, 8, 10};
+
+    int i;
+    
+    for (i = 0; i < res->len; ++i){
+	fail_unless(res->gaussians[i]->mean == expected1[i], "Given mean differs from expected");
+	fail_unless(res->gaussians[i]->stdev == 3, "Stdev differs from expected");
+    }
+
+    // Interval which results in a range not evenly divisible by the number of gaussians
+    gauss_vector* res2 = gen_gaussian_vector_uniform(3, 0, 10, 3, 1);
+    fail_unless(res2->len == 4, "Vector length differs from expected");
+    
+    double expected2[] = {0, 3, 6, 9};
+    
+    for (i = 0; i < res2->len; ++i){
+	printf("mean %lf\n", res2->gaussians[i]->mean);
+	fail_unless(res2->gaussians[i]->mean == expected2[i], "Given mean differs from expected");
+	fail_unless(res2->gaussians[i]->stdev == 3, "Stdev differs from expected.");
+    }
+
+
+}
+END_TEST
+
+START_TEST(test_gen_gaussian_vector_from_array)
+{
+    double points[] = {1.2, 2.4, 2.5, 2.9, 4.0};
+    gauss_vector* a = gen_gaussian_vector_from_array(NULL, 5, 3, 1, 0);
+    gauss_vector* b = gen_gaussian_vector_from_array(points, 0, 3, 1, 0);
+    gauss_vector* c = gen_gaussian_vector_from_array(points, -1, 2, 1, 0);
+    gauss_vector* d = gen_gaussian_vector_from_array(points, 5, -1, 1, 0);
+    gauss_vector* e = gen_gaussian_vector_from_array(points, 5, 0, 1, 0);
+    
+    fail_unless(a == NULL, "Null points return non-null");
+    fail_unless(b == NULL, "Zero length non-null return");
+    fail_unless(c == NULL, "Negative length non-null return");
+    fail_unless(d == NULL, "Negative stdev non-null return");
+    fail_unless(e == NULL, "Zero stdev non-null return");
+
+    gauss_vector* G = gen_gaussian_vector_from_array(points, sizeof(points)/sizeof(double), 3, 1, 0);
+
+    fail_unless(G->len == sizeof(points)/sizeof(double));
+    
+    int i;
+    
+    for (i = 0; i < G->len; ++i) {
+	printf("mean %lf\n", G->gaussians[i]->mean);
+	fail_unless(G->gaussians[i]->mean == points[i], "Given mean differs from expected");
+	fail_unless(G->gaussians[i]->stdev == 3, "Stdev differs from expected");
+    }
+}
+END_TEST
+
+START_TEST(test_find_min_value)
+{
+    double data[] = {1,2,3,4,5,6};
+    double data1[] = {-153, -123, -222, -414, 34551};
+    double data2[] = {13,313,444,555};
+
+    printf("%lf min\n", find_min_value(data, 6));
+    double diff = abs(find_min_value(data, 6) - 1.0);
+    printf("diff is %.20lf\n", diff);
+    double diff1 = abs(find_min_value(data1, 5) - -414.0);
+    double diff2 = abs(find_min_value(data2, 4) - 13.0);
+        
+    fail_unless(diff >= 0 && diff < 0.000001, NULL);
+    fail_unless(diff1 >= 0 && diff1 < 0.000001, NULL);
+    fail_unless(diff2 >= 0 && diff2 < 0.000001, NULL);
+
+    fail_unless(find_min_value(NULL, 5) == 0, NULL);
+    fail_unless(find_min_value(data1, -1) == 0, NULL);
+    fail_unless(find_min_value(data1, 0) == 0, NULL);
+}
+END_TEST
+
+START_TEST(test_add_to_arr);
+{
+    double data[] = {10, 10, 10};
+    double data1[] = {0, 0, 0};
+    double data2[] = {-5, -2, -1};
+
+    double* ret = add_to_arr(data, 3, 5);
+    double* ret1 = add_to_arr(data1, 3, 10);
+    double* ret2 = add_to_arr(data2, 3, 5);
+    
+    double correct[] = {15, 15, 15};
+    double correct1[] = {10, 10, 10};
+    double correct2[] = {0, 3, 4};
+    
+    int i;
+    
+    for (i = 0; i < 3; ++i) {
+	double diff = abs(correct[i] - ret[i]);
+	double diff1 = abs(correct1[i] - ret1[i]);
+	double diff2 = abs(correct2[i] - ret2[i]);
+	
+	fail_unless(diff >= 0 && diff < 0.000001, NULL);
+	fail_unless(diff1 >= 0 && diff1 < 0.000001, NULL);
+	fail_unless(diff2 >= 0 && diff2 < 0.000001, NULL);
+    }
+
+}
+END_TEST
+
+START_TEST(test_weight_vector)
+{
+    double* data = weight_vector(2.5, 5);
+    double* data1 = weight_vector(-1.0, 5);
+    
+    int i;
+    
+    for (i = 0; i < 5; ++i) {
+	fail_unless(data[i] == 2.5);
+	fail_unless(data1[i] == -1.0);
+    }
+
+
+    fail_unless(weight_vector(1, -1) == NULL, NULL);
+    fail_unless(weight_vector(1, 0) == NULL, NULL);
+}
+END_TEST
+
 Suite* math_util_suite(void)
 {
     Suite *s = suite_create("math_util");
@@ -223,6 +487,18 @@ Suite* math_util_suite(void)
     tcase_add_test(tc_core, test_get_intercept_and_gradient);
     tcase_add_test(tc_core, test_evaluate_function);
     tcase_add_test(tc_core, test_get_midpoint);
+    tcase_add_test(tc_core, test_make_gaussian);
+    tcase_add_test(tc_core, test_random_vector);
+    tcase_add_test(tc_core, test_gaussian_contribution_at_point);
+    tcase_add_test(tc_core, test_gaussian_contribution);
+    tcase_add_test(tc_core, test_sum_gaussians_at_point);
+    tcase_add_test(tc_core, test_gauss_transform);
+    tcase_add_test(tc_core, test_gen_gaussian_vector_uniform);
+    tcase_add_test(tc_core, test_gen_gaussian_vector_from_array);
+    tcase_add_test(tc_core, test_find_min_value);
+    tcase_add_test(tc_core, test_add_to_arr);
+    tcase_add_test(tc_core, test_weight_vector);
+    
     suite_add_tcase(s, tc_core);
 
     return s;

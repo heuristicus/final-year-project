@@ -3,7 +3,13 @@
 
 #include "paramlist.h"
 #include "estimator.h"
+#include "math_util.h"
 #include "general_util.h"
+#include <string.h>
+#include <time.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -17,11 +23,18 @@ char* select_output_file(char* cur_out, char* param_out);
 void arr_to_file(char* filename, void* arr, int len, char* format_string);
 void double_to_file(char* filename, char* mode, double* arr, int len);
 void int_to_file(char* filename, char* mode, int* arr, int len);
-void double_mult_dim_to_file(char* filename, char* mode, double_mult_arr* arr);
+void double_mult_dim_to_file(char* filename, char* mode, double_multi_arr* arr);
 double* get_event_data_interval(double start_time, double end_time, char* filename);
 double* get_event_data_all(char* filename);
 void int_dbl_to_file(char* filename, char* mode, double* arr1, int* arr2, int len);
 void estimate_to_file(char* filename, est_data* estimate, char* mode);
-void output_estimates(char* filename, est_data* *estimates, int len);
+void output_estimates(char* filename, est_data** estimates, int len);
+void output_gauss_transform(char* filename, char* mode, double** T, double shift,
+			    int len, double normaliser);
+void output_gaussian_contributions(char* filename, char* mode, gauss_vector* G, double start,
+				   double end, double resolution, int apply_weight);
+void output_gaussian_vector(char* filename, char* mode, gauss_vector* V);
+gauss_vector* read_gauss_vector(char* filename);
+void output_double_multi_arr(char* filename, char* mode, double_multi_arr* arr);
 
 #endif

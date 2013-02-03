@@ -26,12 +26,18 @@ START_TEST (test_add)
     // Check that adding the previously given variable does not modify the list
     fail_unless(b == add(b, "node2", "again"), NULL);
     fail_unless(length(b) == 2, NULL);
-
-    paramlist* c = init_list("node1", "1");
-    fail_unless(add(c, "node1", "2") == c, NULL);
-    fail_unless(length(c) == 1, NULL);
 }
 END_TEST
+
+START_TEST(test_add_exit)
+{
+    // Try adding a parameter with the same name but different value. Should exit.
+    paramlist* c = init_list("node1", "1");
+    add(c, "node1", "2");
+}
+END_TEST
+
+
 
 START_TEST (test_get_string_param)
 {
@@ -86,6 +92,7 @@ Suite* paramlist_suite(void)
     tcase_add_test(tc_core, test_get_string_param);
     tcase_add_test(tc_core, test_len);
     tcase_add_test(tc_core, test_get_param);
+    tcase_add_exit_test(tc_core, test_add_exit, 1);
     
     suite_add_tcase(s, tc_core);
     return s;

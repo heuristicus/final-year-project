@@ -214,12 +214,30 @@ int create_default_param_file(char* filename)
 	return -1;
     }
 
+//    fprintf(fp, "%s\n%s %s\n\n", "", "",);
+
     // i/o files and stuff
     fprintf(fp, "%s\n\n", "# Inline comments are not supported!");
     // data output
     put_section_header(fp, "data output");
-    fprintf(fp, "%s\n%s %s\n\n", "# file to which generator outputs data","outfile", 
-	    DEFAULT_OUTFILE);
+    fprintf(fp, "%s\n%s %s\n\n", "# file to which generator outputs generated event "\
+	    "data","outfile", DEFAULT_OUTFILE);
+//    fprintf(fp, "%s\n%s %s\n\n", "# file to which gaussian generator outputs data",
+//	    "gauss_outfile", DEFAULT_GAUSS_GEN_OUT);
+    fprintf(fp, "%s\n%s %s\n\n", "# Files to which functions generated"\
+	    " using gaussians are output. \n# File for gaussians in their raw "\
+	    "form (xpos stdev weight).", "gauss_func_outfile_raw", DEFAULT_RAW_FUNC_OUTFILE);
+    fprintf(fp, "%s\n%s %s\n\n", "# File for gaussians in their summed form.",
+	    "gauss_func_outfile", DEFAULT_FUNC_OUTFILE);
+    fprintf(fp, "%s\n%s %s\n\n", "# File for gaussians generated from event data",
+	    "gauss_event_func_outfile", DEFAULT_GAUSS_EVENT_FUNC_OUTFILE);
+    fprintf(fp, "%s\n%s %s\n\n", "# File for gaussians generated from event data in raw form",
+	    "gauss_event_func_outfile_raw", DEFAULT_GAUSS_EVENT_RAW_FUNC_OUTFILE);
+    fprintf(fp, "%s\n%s %s\n\n", "# This is appended to filenames when outputting"\
+	    " multiple randomly generated\n# functions.", "func_gen_ext", DEFAULT_FUNCTION_EXT);
+    fprintf(fp, "%s\n%s %s\n\n", "# this will be appended to the output file for each separate"	\
+	    " stream. The stream\n# number will be added at the end.", "stream_ext",
+	    DEFAULT_EXTENSION);
     fprintf(fp, "%s\n%s %s\n\n", "# Estimators output data to this file if no "\
 	    "output file is specified for the\n# estimator being used", "est_outfile",
 	    DEFAULT_EST_OUTFILE);
@@ -227,23 +245,24 @@ int create_default_param_file(char* filename)
 	    "# ols_output", DEFAULT_OLS_OUT);
     fprintf(fp, "%s %s\n", "# iwls_output", DEFAULT_IWLS_OUT);
     fprintf(fp, "%s %s\n", "# pc_output", DEFAULT_PC_OUT);
-    fprintf(fp, "%s %s\n\n", "# base_output", DEFAULT_BASE_OUT);
-    fprintf(fp, "%s\n%s %s\n\n", "# this will be appended to the output file for each separate"\
-	    " stream. The stream\n# number will be added at the end.", "stream_ext",
-	    DEFAULT_EXTENSION);
     fprintf(fp, "%s\n%s %lf\n\n", "# Used to determine the granularity of data in"\
 	    " output files. With a step of 1,\n# data in interval [0,5] is gathered"\
 	    " at 0, 1, 2, 3, 4 and 5 along the axis.", "output_step",
 	    DEFAULT_STEP);
-    fprintf(fp, "%s\n%s %d\n\n", "# define the verbosity of output to data files.\n"
-	    "# 0 output only event data for each run\n# 1 output event times and lambda"\
-	    " values for each run\n# 2 output event time and lambda values for each run,"\
-	    " as well as midpoints and\n# bin counts, to a single file\n# 3 output the above, "\
-	    "but also save a file with only event data in it (all data\n# is saved as {filename}"\
-	    "_ad, events as {filename}_ev)", "verbosity", DEFAULT_VERBOSITY);
+    fprintf(fp, "%s %s\n", "# base_output", DEFAULT_BASE_OUT);
+    fprintf(fp, "%s\n%s %s\n\n", "# File to output gaussian estimate data to.", 
+	    "gauss_est_outfile", DEFAULT_GAUSS_EST_OUT);
+    fprintf(fp, "%s\n%s %d\n\n", "# define the verbosity of output to data files.\n"\
+	    "# 0 output only event data for each run\n# 1 output event times and"\
+	    " lambda values for each run\n# 2 output event time and lambda values"\
+	    " for each run, as well as midpoints and\n# bin counts, to a single"\
+	    " file\n# 3 output the above, but also save a file with only event"\
+	    " data in it (all data\n# is saved as {filename}_ad, events as "\
+	    "{filename}_ev)", "verbosity", DEFAULT_VERBOSITY);
     // data input
     put_section_header(fp, "data input");
-    fprintf(fp, "%s\n%s %s\n\n", "# Input file used for estimation", "infile", DEFAULT_INFILE);
+    fprintf(fp, "%s\n%s %s\n\n", "# Default input file used for estimation",
+	    "infile", DEFAULT_INFILE);
     // generator parameters
     put_section_header(fp, "generation parameters");
     fprintf(fp, "%s %d\n", "start_time", DEFAULT_START);
@@ -252,12 +271,32 @@ int create_default_param_file(char* filename)
     fprintf(fp, "%s %d\n", "lambda", DEFAULT_LAMBDA);
     fprintf(fp, "%s %d\n", "interval_time", DEFAULT_INTERVAL);
     fprintf(fp, "%s %d\n\n", "seed", DEFAULT_SEED);
-    fprintf(fp, "%s\n%s %s\n", "# expression parameters\n# The equation must contain the "\
-	    "variable 't'. The value of the variable will be set by\n# the program. Do not"\
-	    " set it here.", "expression", DEFAULT_EXPRESSION);
+    fprintf(fp, "%s\n%s %s\n", "# expression parameters\n# The equation must"\
+	    " contain the variable 't'. The value of the variable will be set"\
+	    " by\n# the program. Do not set it here.", "expression",
+	    DEFAULT_EXPRESSION);
     fprintf(fp, "%s %d\n", "a", DEFAULT_A);
     fprintf(fp, "%s %d\n", "b", DEFAULT_B);
     fprintf(fp, "%s %.10lf\n\n", "alpha", DEFAULT_ALPHA);
+    // gaussian parameters
+    fprintf(fp, "%s\n%s %lf\n\n", "# Gaussian generator\n# Standard deviation to"\
+	    " apply to generated gaussians", "gauss_stdev", DEFAULT_STDEV);
+    fprintf(fp, "%s\n%s %lf\n\n", "# Specifies the distance on the x-axis between"\
+	    " each gaussian "						\
+	    "when generating.", "gauss_generation_step", DEFAULT_GEN_STEP);
+    fprintf(fp, "%s\n%s %lf\n\n", "# Specifies the distance between points at"\
+	    " which the gaussian is sampled when summing\n# or outputting data."\
+	    " A high value for this will result in fast computation but loss\n#"\
+	    " of detail, and a low value will give more granularity but summing"\
+	    " gaussians will take longer. ","gauss_resolution",
+	    DEFAULT_GAUSS_RESOLUTION);
+    fprintf(fp, "%s %d\n", "num_gaussians", DEFAULT_GAUSSIANS);
+    fprintf(fp, "%s\n%s %lf\n\n", "# Multiplier to apply to weights of gaussians when"\
+	    " generating random functions.\n# The standard gaussian weight is ~"\
+	    " N(0,1). The standard functions have on average\n# vary between -5"\
+	    " and 5, which may not be appropriate. Multiplying the weight\n# "\
+	    "values gives a greater range of values but preserves the shape of"\
+	    " the function.", "gauss_func_multiplier", DEFAULT_GAUSS_MULTIPLIER);
     // estimator parameters
     put_section_header(fp, "estimator parameters");
     fprintf(fp, "%s\n%s %s\n\n", "# specifies the type of estimator to use. Options are"\
@@ -306,8 +345,15 @@ int create_default_param_file(char* filename)
     fprintf(fp, "%s %d\n", "base_max_breakpoints", DEFAULT_MAX_BREAKPOINTS);
     fprintf(fp, "%s %lf\n", "base_min_interval_proportion", DEFAULT_MIN_INTERVAL_PROP);
     fprintf(fp, "%s %lf\n", "base_pmf_threshold", DEFAULT_PMF_THRESHOLD);
-    fprintf(fp, "%s %lf\n", "base_pmf_sum_threshold", DEFAULT_PMF_SUM_THRESHOLD);
-
+    fprintf(fp, "%s %lf\n\n", "base_pmf_sum_threshold", DEFAULT_PMF_SUM_THRESHOLD);
+    // gaussian
+    put_section_header(fp, "gaussian parameters");
+    fprintf(fp, "%s\n%s %lf\n\n", "# Standard deviation to apply to gaussian"\
+	    " kernels used to estimate functions","gauss_est_stdev",
+	    DEFAULT_GAUSS_EST_STDEV);
+    fprintf(fp, "%s\n%s %lf\n\n", "# Specify resolution of kernels used to estimate"\
+	    " gaussians. A small value will\n# give higher precision but take longer"
+	    ,"gauss_est_resolution", DEFAULT_GAUSS_EST_RESOLUTION);
     fclose(fp);
 
     printf("done\n");
@@ -350,4 +396,46 @@ void put_section_header(FILE* fp, char* heading)
     }
     
     fputc('\n', fp);
+}
+
+/*
+ * Prints a gaussian vector
+ */
+void print_gauss_vector(gauss_vector* G)
+{
+    int i;
+    
+    for (i = 0; i < G->len; ++i) {
+	printf("%d: mu = %.5lf, stdev = %.5lf, wt = %.5lf\n", i, 
+	       G->gaussians[i]->mean, G->gaussians[i]->stdev, G->w[i]);
+    }
+}
+
+/*
+ * Frees memory allocated to a gaussian vector
+ */
+void free_gauss_vector(gauss_vector* G)
+{
+    free(G->w);
+    int i;
+    
+    for (i = 0; i < G->len; ++i) {
+	free(G->gaussians[i]);
+    }
+
+    free(G->gaussians);
+    free(G);
+}
+
+void free_double_multi_arr(double_multi_arr* arr)
+{
+    int i;
+    
+    for (i = 0; i < arr->len; ++i) {
+	free(arr->data[i]);
+    }
+
+    free(arr->lengths);
+    free(arr->data);
+    free(arr);
 }

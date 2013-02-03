@@ -1,37 +1,10 @@
 #include "file_util.h"
-#include "general_util.h"
-#include <string.h>
-#include <time.h>
-#include <sys/time.h>
-#include <unistd.h>
-#include <ctype.h>
 
 #define MAX_DATE_LENGTH 32
 #define MAX_PARAM_STRING_LENGTH 500
 #define MAX_LINE_LENGTH 100
 #define DEFAULT_ARR_SIZE 100
 #define PARAM_SEPARATOR " "
-
-/* int main(int argc, char *argv[]) */
-/* { */
-/*     /\* paramlist *p; *\/ */
-    
-/*     /\* p = get_parameters("params.txt"); *\/ */
-        
-/*     /\* print_list(p); *\/ */
-/*     /\* free_list(p); *\/ */
-
-/*     double *events = get_event_data_interval(25.0, 50, argv[1]); */
-    
-/*     int i; */
-    
-/*     for (i = 0; i < (int) events[0]; ++i) { */
-/* 	printf("%lf\n", events[i]); */
-/*     } */
-
-
-/*     return 0; */
-/* } */
 
 /* 
  * Creates a filename to use for data output with the format:
@@ -296,26 +269,6 @@ void double_to_file(char *filename, char *mode, double *arr, int len)
     fclose(fp);
 }
 
-void double_mult_dim_to_file(char* filename, char* mode, double_mult_arr* arr)
-{
-    FILE *fp;
-    
-    if ((fp = fopen(filename, mode)) == NULL){
-	perror("Could not open file.");
-	exit(1);
-    }
-    
-    int i;
-
-    for (i = 0; i < arr->len; ++i){
-	fprintf(fp, "%.15lf, %.15lf\n", arr->data1[i], arr->data2[i]);
-    }
-
-    fprintf(fp, "\n\n");
-
-    fclose(fp);
-}
-
 /*
  * Outputs a series of estimates to separate files.
  */
@@ -323,7 +276,7 @@ void output_estimates(char *filename, est_data **estimates, int len)
 {
     int i;
     //char *f;
-        
+        printf("outing\n");
     for (i = 0; i < len; ++i) {
 	//f = malloc(strlen(filename) + 4);
 	//sprintf(f, "%s_%d", filename, i);
@@ -334,6 +287,7 @@ void output_estimates(char *filename, est_data **estimates, int len)
 	    break;
 	}
 	// Write to file if it's the first run, otherwise append
+	printf("ok\n");
 	estimate_to_file(filename, estimates[i], i > 0 ? "a" : "w");
     }
 }
@@ -383,5 +337,175 @@ void estimate_to_file(char *filename, est_data *estimate, char *mode)
 
     fprintf(fp, "\n\n");
     
+    fclose(fp);
+}
+
+/*
+ * Outputs a 2d array created by the gaussian transform function to a file. The 
+ * zeroth index contains the point on the x-axis, and the first contains the 
+ * total contribution of gaussians at that point. The mode of addition to the file
+ * is specified by the mode parameter. The data will be shifted along the y-axis
+ * according to the shift parameter. The contribution at each point can be normalised
+ * by providing a normalising constant.
+ */
+void output_gauss_transform(char* filename, char* mode, double** T, double shift,
+			    int len, double normaliser)
+{
+    FILE* fp;
+    
+    if (normaliser == 0){
+	printf("Received normalising constant of 0. Setting to 1.\n");
+	normaliser = 1;
+    }
+    
+    printf("Outputting gauss transform to %s.\n", filename);
+
+    if ((fp = fopen(filename, mode)) == NULL){
+	perror("Could not open file");
+	return;
+    }
+
+    int i;
+
+    for (i = 0; i < len; ++i) {
+	fprintf(fp, "%lf %lf\n", T[0][i], (T[1][i] + shift)/normaliser);
+    }
+
+    if (fclose(fp)){
+	printf("error closing\n");
+    }
+}
+
+/*
+ * Outputs the given vector of gaussians to a file. The apply_weight nparameter
+ * specifies whether the weights in the vector should be applied or if the 
+ * gaussians should be output in their raw form - a non-zero value applies them.
+ * The contribution of gaussians is checked in the interval [start, end], with the
+ * given resolution
+ */
+void output_gaussian_contributions(char* filename, char* mode, gauss_vector* G, double start,
+				   double end, double resolution, int apply_weight)
+{
+    if (!interval_valid(start, end)){
+	printf("Invalid interval [%lf, %lf] when outputting gaussians to %s.\n",
+	       start, end, filename);
+	return;
+    }
+
+    FILE *fp = fopen(filename, mode);
+
+    int i;
+    double current;
+    
+    for (i = 0; i < G->len; ++i) {
+	for (current = start; current <= end; current += resolution) {
+	    if (apply_weight){
+		fprintf(fp, "%lf %lf\n", current, gaussian_contribution_at_point(current, G->gaussians[i], G->w[i]));
+	    } else {
+		fprintf(fp, "%lf %lf\n", current, gaussian_contribution_at_point(current, G->gaussians[i], 1));
+	    }
+	    
+	}
+	fprintf(fp, "\n\n");
+    }
+
+    fclose(fp);
+}
+
+/*
+ * Writes a vector of gaussians to file. Data looks like
+ * xpos stdev weight
+ */
+void output_gaussian_vector(char* filename, char* mode, gauss_vector* V)
+{
+    int i;
+    FILE *fp = fopen(filename, mode);
+    
+    for (i = 0; i < V->len; ++i) {
+	fprintf(fp, "%lf %lf %lf\n", V->gaussians[i]->mean, V->gaussians[i]->stdev, V->w[i]);
+    }
+
+    fclose(fp);
+}
+
+/*
+ * Reads data in structured in the following way into a vector of gaussians
+ * xpos stdev weight
+ */
+gauss_vector* read_gauss_vector(char* filename)
+{
+    gauss_vector* ret = malloc(sizeof(gauss_vector));
+    
+    int memsize = DEFAULT_ARR_SIZE;
+    
+    gaussian** G = malloc(sizeof(gaussian*) * memsize);
+    double* wts = malloc(sizeof(double) * memsize);
+    
+    FILE *fp = fopen(filename, "r");
+    int i = 0;
+    
+    char *line = malloc(MAX_PARAM_STRING_LENGTH * sizeof(char));
+
+    double st, wt, mu;
+    
+    while ((line = fgets(line, MAX_PARAM_STRING_LENGTH, fp)) != NULL){
+	int res = sscanf(line, "%lf %lf %lf", &mu, &st, &wt);
+	if (res != 3){
+	    printf("Error while reading gaussians data from %s. Make sure that"\
+		   " the file is in the format \"xpos stdev weight\" and try"\
+		   " again.\n", filename);
+	    return NULL;
+	} else {
+	    gaussian* g = malloc(sizeof(gaussian));
+	    g->mean = mu;
+	    g->stdev = st;
+	    wts[i] = wt;
+	    G[i] = g;
+	    printf("%lf %lf %lf\n", G[i]->mean, G[i]->stdev, wts[i]);
+	}
+	i++;
+	if (i > memsize){
+	    memsize *= 2;
+	    G = realloc(G, sizeof(gaussian*) * memsize);
+	    wts = realloc(wts, sizeof(double) * memsize);
+	}
+    }
+
+    
+    ret->gaussians = G;
+    ret->len = i;
+    ret->w = wts;
+
+    printf("out %lf %lf %lf\n", ret->gaussians[0]->mean, ret->gaussians[0]->stdev, ret->w[0]);
+    // realloc to get the correct memory size.
+    G = realloc(G, sizeof(gaussian*) * i);
+    wts = realloc(wts, sizeof(double) * i);
+
+    fclose(fp);
+
+    printf("%lf %lf %lf\n", ret->gaussians[0]->mean, ret->gaussians[0]->stdev, ret->w[0]);
+
+    return ret;
+}
+
+void output_double_multi_arr(char* filename, char* mode, double_multi_arr* arr)
+{
+    int minlen = find_min_value_int(arr->lengths, arr->len);
+    FILE *fp = fopen(filename, mode);
+    int i, j;
+    
+    printf("Outputting to %s.\n", filename);
+    
+    for (i = 0; i < minlen; ++i) {
+	for (j = 0; j < arr->len; ++j) {
+	    if (j + 1 == arr->len){
+		fprintf(fp, "%lf\n", arr->data[j][i]);
+	    } else {
+		fprintf(fp, "%lf ", arr->data[j][i]);
+	    }
+	}
+    }
+    fprintf(fp, "\n\n");
+
     fclose(fp);
 }

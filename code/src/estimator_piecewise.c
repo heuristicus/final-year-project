@@ -1,8 +1,4 @@
 #include "estimator.h"
-#include "file_util.h"
-#include "math_util.h"
-#include "general_util.h"
-#include <string.h>
 
 double extend_estimate(char *event_file, est_data *interval_estimate, double start_time,
 		       double max_extension, double subinterval_time, double pmf_threshold);
@@ -12,17 +8,6 @@ int pmf_check(double *midpoints, int *bindata, double a, double b, int num_subin
 int pmf_threshold_check(double *pmfs, int len, double threshold);
 int pmf_cumulative_check(double *pmfs, int len, int limit, double threshold);
 int pmf_consecutive_check(double *pmfs, int len, int limit, double threshold);
-
-
-
-/* int main(int argc, char *argv[]) */
-/* { */
-/*     double **piece = piecewise_estimate(argv[1], argv[2], 0, 100, 5, 3, 10, 15); */
-    
-/*     free_pointer_arr((void**)piece, 5); */
-                
-/*     return 0; */
-/* } */
 
 /*
  * Helper function for the piecewise estimator. Takes parameters out of a parameter list and 
@@ -39,7 +24,6 @@ est_arr* estimate_piecewise(paramlist* params, char *event_file, char *output_fi
     double min_interval_proportion = get_double_param(params, "pc_min_interval_proportion");
     double pmf_threshold = get_double_param(params, "pc_pmf_threshold");
     double pmf_sum_threshold = get_double_param(params, "pc_pmf_sum_threshold");
-    
     
     return _estimate_piecewise(event_file, output_file, start, end, iterations, 
 			       subint, breakpoints, max_extension, min_interval_proportion,
@@ -72,6 +56,7 @@ est_arr* _estimate_piecewise(char* event_file, char* output_file,
 	default_interval_length = interval_end - interval_start;
     else 
 	default_interval_length = (interval_end - interval_start) / max_breakpoints;
+    printf("default interval length %lf\n", default_interval_length);
     // start time and end time of the subinterval
     double start_time = interval_start;
     double end_time = interval_start + default_interval_length;
@@ -101,7 +86,9 @@ est_arr* _estimate_piecewise(char* event_file, char* output_file,
 	interval_estimate_array = _estimate_IWLS(event_file, NULL, start_time, end_time,
 					   IWLS_subintervals, IWLS_iterations);
 	interval_estimate = interval_estimate_array->estimates[0];
+#ifdef VERBOSE
 	printf("%lf, %lf, %lf, %lf\n", interval_estimate->start, interval_estimate->end, interval_estimate->est_a, interval_estimate->est_b);
+#endif
 	/* 
 	 * Don't bother extending the line if we are at the end of the overall interval,
 	 * or if we are estimating the last line segment.
@@ -154,12 +141,15 @@ double extend_estimate(char *event_file, est_data *interval_estimate, double sta
         
     double *events = get_event_data_interval(start_time, start_time + max_extension,
 					     event_file);
+
     double *lastevents = NULL;
         
     for (i = 0; i < 5; ++i) {
 	double end_time = start_time + max_extension / (i + 1);	
 
+#ifdef VERBOSE
 	printf("checking interval [%lf, %lf]\n", start_time, end_time);
+#endif
 
 	if (lastevents != NULL){
 	    events = get_event_subinterval(lastevents, start_time, end_time);
@@ -190,7 +180,9 @@ double extend_estimate(char *event_file, est_data *interval_estimate, double sta
 	    break;
 	}
 
+#ifdef VERBOSE
 	printf("Could not extend estimate to end time %lf\n", end_time);
+#endif
 	lastevents = events;
     }
 
@@ -211,9 +203,12 @@ int pmf_check(double *midpoints, int *bindata, double a, double b, int num_subin
 {
     double *pmfs = interval_pmf(bindata, midpoints, num_subintervals, a, b);
 
+
+#ifdef VERBOSE
     double sum = sum_double_arr(pmfs, num_subintervals);
     printf("Cumulative probability: %lf\n", sum);
     printf("Mean probability: %lf\n", sum/num_subintervals);
+#endif
 
     int ret = pmf_threshold_check(pmfs, num_subintervals, threshold);
 
@@ -309,8 +304,7 @@ int pmf_consecutive_check(double *pmfs, int len, int limit, double threshold)
 
 /*
  * Calculates the poisson probability mass function for each bin count.
- * The function passed in should return the value of lambda at a given
- * point in time. This only works for functions which are of the form 
+ * This only works for functions which are of the form 
  * lambda = a + b * x
  * The probabilities in the array returned by this function do not sum
  * to one, because each subinterval has a PMF of its own, and we are taking
@@ -326,9 +320,12 @@ double* interval_pmf(int *counts, double *midpoints, int len, double a, double b
 	// lambda can't go below zero
 	lambda = lambda < 0 ? 0 : lambda;
 		
-	pmf[i] = poisson_PMF(lambda, counts[i]);
+	pmf[i] = gsl_ran_poisson_pdf(counts[i], lambda);
+
+#ifdef VERBOSE
 	printf("time: %lf, lambda: %lf, bin count %d, pmf %lf\n", midpoints[i],
 	       lambda, counts[i], pmf[i]);
+#endif
     }
 
     return pmf;

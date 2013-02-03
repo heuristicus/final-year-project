@@ -4,14 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "struct.h"
 
-struct paramlist 
-{
-    char *par;
-    char *val;
-    struct paramlist *next;
-};
-typedef struct paramlist paramlist;
 paramlist *init_list(char *param, char *val);
 paramlist *add(paramlist *head, char *pname, char *pval);
 void print_list(paramlist *head);

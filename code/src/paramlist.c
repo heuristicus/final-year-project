@@ -23,9 +23,9 @@ paramlist* add(paramlist *head, char *param, char *value)
     // error if the same param is passed in with different values.
     paramlist* c = get_param(head, param);
     if (c != NULL && strcmp(c->par, param) == 0 && strcmp(c->val, value) != 0){
-	printf("WARNING: There are two parameters with the same name but different values."\
-	       " The latter parameter has been ignored. Check your param file.\n");
-	return head;
+	printf("WARNING: There are two parameters with the same name (%s) "\
+	       "but different values. Please check your param file.\n", param);
+	exit(1);
     }
     if (c != NULL && strcmp(c->val, value) == 0){
 	printf("WARNING: Duplicate parameter detected.\n");
@@ -38,7 +38,7 @@ paramlist* add(paramlist *head, char *param, char *value)
 
     strcpy(pname, param);
     strcpy(pval, value);
-    
+
     new->par = pname;
     new->val = pval;
     new->next = head;
@@ -95,7 +95,7 @@ char* get_string_param(paramlist* head, char* param_name)
     
     if ((ret = get_param(head, param_name)) == NULL)
 	return NULL;
-    
+
     return ret->val;
 }
 

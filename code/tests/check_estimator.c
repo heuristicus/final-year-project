@@ -1,4 +1,5 @@
 #include "tests.h"
+#include "estimator.h"
 #include "paramlist.h"
 
 START_TEST(test_has_required_params)
