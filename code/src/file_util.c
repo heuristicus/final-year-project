@@ -9,10 +9,10 @@
 /* 
  * Creates a filename to use for data output with the format:
  * prefix_dd-mm-yyyy_hr:min:sec_usec.dat
+ * the usec parameters specifies whether to add nanoseconds (0 is no)
  */
-char* generate_outfile()
+char* generate_outfile(char* prefix, int usec)
 {
-    char* prefix = "output_poisson";
     char* datetime = malloc(MAX_DATE_LENGTH * sizeof(char));
     char* fname = malloc((MAX_DATE_LENGTH + strlen(prefix)) * sizeof(char));
     time_t timer = time(NULL);
@@ -22,8 +22,12 @@ char* generate_outfile()
 
     strftime(datetime, MAX_DATE_LENGTH, "%d-%m-%Y_%H:%M:%S", localtime(&timer));
     
-    sprintf(fname, "%s_%s_%d.dat", prefix, datetime, (int) t.tv_usec);
-
+    if (usec){
+	sprintf(fname, "%s_%s_%d.dat", prefix, datetime, (int) t.tv_usec);
+    } else {
+	sprintf(fname, "%s_%s.dat", prefix, datetime);
+    }
+    
     free(datetime);
     
     return fname;
@@ -66,11 +70,22 @@ paramlist* get_parameters(char* filename)
 	param = strtok(line, " ");
 	value = strtok(NULL, "\n");
 	
-	if (plist == NULL)
-	    plist = init_list(param, value);
-	else
-	    plist = add(plist, param, value);
+	if (plist == NULL) {
 
+	    if (value == NULL){
+		printf("No value found for %s.\n", param);
+		plist = init_list(param, "<empty>");
+	    } else {
+		plist = init_list(param, value);	
+	    }
+	} else {
+	    if (value == NULL){
+		printf("No value found for %s.\n", param);
+		plist = add(plist, param, "<empty>");
+	    } else {
+		plist = add(plist, param, value);
+	    }
+	}
     }
         
     free(lp);
@@ -152,18 +167,20 @@ double* get_event_data_all(char *filename)
 /*
  * Checks whether a line received from the parameter file is valid.
  */
-int valid_param(char *pname)
+int valid_param(char* pname)
 {
     int spacecount;
     
     for (spacecount = 0; *pname != '\0'; ++pname){
 	// 10 is the backspace character - seems to come up from time to time
-	if ((32 < *pname && 126 > *pname) || *pname == 10)
+	if ((32 < *pname && 126 > *pname) || *pname == 10) {
 	    continue;
-	else if (*pname == 32)
+	} else if (*pname == ' '){
 	    spacecount++;
-	else
-	    printf("invalid char %d\n", *pname);
+	} else {
+	    printf("invalid char %c\n", *pname);
+	    return 0;
+	}
 	
 	if (spacecount > 1)
 	    return 0;
@@ -173,7 +190,6 @@ int valid_param(char *pname)
 	return 0;
     
     return 1;
-    
 }
 
 /*
@@ -508,4 +524,30 @@ void output_double_multi_arr(char* filename, char* mode, double_multi_arr* arr)
     fprintf(fp, "\n\n");
 
     fclose(fp);
+}
+
+/*
+ * Creates a file with the filename specified in the directory given. If the
+ * directory does not exist it is created. If all goes well, returns zero, 
+ * else returns -1. The directory is created with read, write and execute 
+ * permissions for the user.
+ */
+int create_file_in_dir(char* filename, char* dirname)
+{
+    int r = mkdir(dirname, S_IRWXU);
+    
+    if (r == 0 || errno == EEXIST){
+	char* fullpath = malloc(strlen(filename) + strlen(dirname) + 1);
+	sprintf(fullpath, "%s/%s", dirname, filename);
+	int file = open(fullpath, O_CREAT | O_EXCL, S_IRWXU | S_IROTH | S_IRGRP);
+	
+	if (file == -1)
+	    return -1;
+	else
+	    close(file);
+	
+	return 0;
+    }
+
+    return -1;
 }

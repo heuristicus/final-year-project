@@ -2,13 +2,14 @@
 #include "paramlist.h"
 #include "general_util.h"
 #include "file_util.h"
+#include "general_util.h"
 
-static char *ols_params[] = {"start_time", "interval_time", "ols_subintervals"};
-static char *iwls_params[] = {"iwls_iterations", "start_time", 
+static char* ols_params[] = {"start_time", "interval_time", "ols_subintervals"};
+static char* iwls_params[] = {"iwls_iterations", "start_time", 
 			      "interval_time", "iwls_subintervals"};
-static char *pc_params[] = {"start_time", "interval_time", "pc_iwls_iterations", 
+static char* pc_params[] = {"start_time", "interval_time", "pc_iwls_iterations", 
 			    "pc_iwls_subintervals", "pc_max_extension", "pc_max_breakpoints"};
-static char *base_params[] = {"start_time", "interval_time", "base_iwls_iterations", 
+static char* base_params[] = {"start_time", "interval_time", "base_iwls_iterations", 
 			      "base_iwls_subintervals", "base_max_extension", "base_max_breakpoints"};
 static char *gauss_params[] = {"start_time", "interval_time", "gauss_stdev", "gauss_resolution"};
 
@@ -116,7 +117,6 @@ est_arr* run_base(paramlist* params, char* infile, char* outfile)
 	exit(1);
     }
 }
-
 
 double** run_gauss(paramlist* params, char* infile, char* outfile)
 {

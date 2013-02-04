@@ -18,21 +18,27 @@ void free_pointer_arr(void **arr, int length)
     free(arr);
 }
 
-/*
- * Splits a string on a separator. The return array will have the number
- * of elements in the array in its first location.
- */
-char** string_split(char *string, char separator)
+void free_string_arr(string_arr* arr)
 {
+    free_pointer_arr((void**) arr->data, arr->len);
+}
+
+/*
+ * Splits a string on a separator.
+ */
+string_arr* string_split(char* string, char separator)
+{
+    if (string == NULL)
+	return NULL;
+    
     char *dup = strdup(string);
     char *ref = dup; // so we can free later
     
-    // Array size will be stored in the first array location
     char **split = malloc(DEF_ARR_SIZE * sizeof(char*));
     
     int max_size = DEF_ARR_SIZE;
     int len = 0;
-    int size = 1;
+    int size = 0;
     int exit = 0;
     
     while (!exit){
@@ -58,10 +64,11 @@ char** string_split(char *string, char separator)
     free(ref);
         
     split = realloc(split, size * sizeof(char*)); // save memory
-    split[0] = malloc(20); // size is maximum of 20 chars long (probably overkill)
-    snprintf(split[0], 20, "%d", size);
-    
-    return split;
+    string_arr* ret = malloc(sizeof(string_arr));
+    ret->data = split;
+    ret->len = size;
+        
+    return ret;
 }
 
 void print_int_arr(int *arr, int len)
@@ -202,7 +209,28 @@ void print_string_array(char* message, char** array, int len)
 }
 
 /*
+ * Checks that the paramlist provided contains parameters with names corresponding to the
+ * strings provided in the required_params array. Returns 1 if the parameters are present,
+ * 0 otherwise.
+ */
+int has_required_params(paramlist* params, char** required_params, int len)
+{
+    int i;
+    int ok = 1;
+    
+    for (i = 0; i < len; ++i) {
+	if (get_param(params, required_params[i]) == NULL){
+	    printf("Missing parameter: %s\n", required_params[i]);
+	    ok = 0;
+	}
+    }
+
+    return ok;
+}
+
+/*
  * Creates a parameter file with default parameters and comments.
+ * Returns 1 if the file could not be opened, 0 if successful
  */
 int create_default_param_file(char* filename)
 {
@@ -211,7 +239,7 @@ int create_default_param_file(char* filename)
 
     if (fp == NULL){
 	perror("Could not open file");
-	return -1;
+	return 1;
     }
 
 //    fprintf(fp, "%s\n%s %s\n\n", "", "",);
@@ -266,7 +294,7 @@ int create_default_param_file(char* filename)
     // generator parameters
     put_section_header(fp, "generation parameters");
     fprintf(fp, "%s %d\n", "start_time", DEFAULT_START);
-    fprintf(fp, "%s %d\n", "nruns", DEFAULT_NRUNS);
+    fprintf(fp, "%s %d\n", "nstreams", DEFAULT_NSTREAMS);
     fprintf(fp, "%s %s\n", "timedelta", DEFAULT_TIMEDELTA);
     fprintf(fp, "%s %d\n", "lambda", DEFAULT_LAMBDA);
     fprintf(fp, "%s %d\n", "interval_time", DEFAULT_INTERVAL);
@@ -438,4 +466,23 @@ void free_double_multi_arr(double_multi_arr* arr)
     free(arr->lengths);
     free(arr->data);
     free(arr);
+}
+
+/*
+ * Checks whether all parameters specified in the checklist are present
+ * in the given parameter list.
+ */
+int has_missing_parameters(string_arr* checklist, paramlist* params)
+{
+    int i;
+    int missing = 0;
+
+    for (i = 0; i < checklist->len; ++i) {
+	if (get_param(params, checklist->data[i]) == NULL){
+	    printf("Missing %s\n", checklist->data[i]);
+	    missing = 1;
+	}
+    }
+
+    return missing;
 }

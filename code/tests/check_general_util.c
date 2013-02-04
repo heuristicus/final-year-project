@@ -7,38 +7,40 @@
 
 START_TEST (test_string_split)
 {
-    char** res1 = string_split("hello,test,testing,ing", ',');
-    fail_unless(atoi(res1[0]) == 5, NULL);
-    fail_unless(strcmp(res1[1], "hello") == 0, NULL); 
-    fail_unless(strcmp(res1[2], "test") == 0, NULL);
-    fail_unless(strcmp(res1[3], "testing") == 0, NULL);
-    fail_unless(strcmp(res1[4], "ing") == 0, NULL);
+    string_arr* res1 = string_split("hello,test,testing,ing", ',');
+    fail_unless(res1->len == 4);
+    fail_unless(strcmp(res1->data[0], "hello") == 0, NULL); 
+    fail_unless(strcmp(res1->data[1], "test") == 0, NULL);
+    fail_unless(strcmp(res1->data[2], "testing") == 0, NULL);
+    fail_unless(strcmp(res1->data[3], "ing") == 0, NULL);
     
     // Empty string
-    char** res2 = string_split("", ',');
-    fail_unless(atoi(res2[0]) == 2, NULL);
-    fail_unless(strcmp(res2[1], "") == 0, NULL);
+    string_arr* res2 = string_split("", ',');
+    fail_unless(res2->len == 1);
+    fail_unless(strcmp(res2->data[0], "") == 0, NULL);
 
     // Whitespace string
-    char** res3 = string_split("     ", ',');
-    fail_unless(atoi(res3[0]) == 2, NULL);
-    fail_unless(strcmp(res3[1], "     ") == 0, NULL);
+    string_arr* res3 = string_split("     ", ',');
+    fail_unless(res3->len == 1, NULL);
+    fail_unless(strcmp(res3->data[0], "     ") == 0, NULL);
     
     // String of only separators
-    char** res4 = string_split(",,,", ',');
-    fail_unless(atoi(res4[0]) == 5, NULL);
-    fail_unless(strcmp(res4[1], "") == 0, NULL);
-    fail_unless(strcmp(res4[2], "") == 0, NULL);
-    fail_unless(strcmp(res4[3], "") == 0, NULL);
-    fail_unless(strcmp(res4[4], "") == 0, NULL);
+    string_arr* res4 = string_split(",,,", ',');
+    fail_unless(res4->len == 4, NULL);
+    fail_unless(strcmp(res4->data[0], "") == 0, NULL);
+    fail_unless(strcmp(res4->data[1], "") == 0, NULL);
+    fail_unless(strcmp(res4->data[2], "") == 0, NULL);
+    fail_unless(strcmp(res4->data[3], "") == 0, NULL);
 
     // alphabetic separator
-    char** res5 = string_split("thisziszaztest", 'z');
-    fail_unless(atoi(res5[0]) == 5, NULL);
-    fail_unless(strcmp(res5[1], "this") == 0, NULL);
-    fail_unless(strcmp(res5[2], "is") == 0, NULL);
-    fail_unless(strcmp(res5[3], "a") == 0, NULL);
-    fail_unless(strcmp(res5[4], "test") == 0, NULL);
+    string_arr* res5 = string_split("thisziszaztest", 'z');
+    fail_unless(res5->len == 4, NULL);
+    fail_unless(strcmp(res5->data[0], "this") == 0, NULL);
+    fail_unless(strcmp(res5->data[1], "is") == 0, NULL);
+    fail_unless(strcmp(res5->data[2], "a") == 0, NULL);
+    fail_unless(strcmp(res5->data[3], "test") == 0, NULL);
+
+    fail_unless(string_split(NULL, ',') == NULL, NULL);
 }
 END_TEST
 

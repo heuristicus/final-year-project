@@ -85,7 +85,7 @@
 2013-01-31  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* file_util.c: Extremely weird bug where crash occurs on fclose discovered.
-	Not sure how to solve yet. Functions to read and write gaussians with 
+	Not sure how to solve yet. Functions to read and write gaussians with
 	mean, stdev and weight representation, along with tests.
 
 	* struct.h: Header file for structs to prevent interdependencies causing
@@ -113,6 +113,40 @@
 	* general_util.c: Parameters for gaussians added to default file generation.
 
 	* file_util.c: Gauss transform output can be shifted along the y axis.
+
+2013-01-29  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* file_util.c: Wondering whether to allow parameters without
+	values specified. Makes having to specify loads of parameters
+	in the experiment paramfile unnecessary if you just want to run
+	experiments on one part of the system.
+
+	* experimenter.c: Function to parse parameters from a string of
+	comma separated values. If the string contains a range indicator
+	(...), then it will revert to the function to calculate the range.
+	Experimenter structure changed. Requires parameters to be defined
+	for all the parts of the system you want to experiment with. Checks
+	whether these parameters exist in the paramfile. Still a work in
+	progress.
+
+	* general_util.c: Function to check whether parameters in a string
+	array are present in a paramlist.
+
+2013-01-28  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* general_util.c: Modified split_string function and its tests.
+
+	* experimenter.c: Completed range parsing functions, with tests.
+	Experimenter now takes two parameter files to read - one to read
+	default parameters, and one for its own use. Checks that some required
+	parameters are present.
+
+	* exp_param.txt: Added some parameters that make sense to use.
+
+	* check_file_util.c: Test for create file function.
+
+	* file_util.c: Added function for creating files within directories.
+	Fixed crash when parameter in paramfile does not have a value.
 
 2013-01-27  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
@@ -200,6 +234,13 @@
 
 2013-01-13  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
+	* paramlist.c: Added functions for setting the value of parameters in the list.
+
+	* file_util.c: Modified file generator to take parameters.
+
+	* generator.c: Added helper function to extract parameters from a parameter
+	file.
+
 	* estimator_piecewise.c: Fixed bug with estimation data from the first
 	subinterval not being output to file. Minimum length of interval now in
 	place for piecewise estimate. Affects the baseline estimator as well.
@@ -207,7 +248,8 @@
 	* defparams.h: New header file containing default parameters for estimators
 	and generator.
 
-	* general_util.c: Added a function for generating a default parameter file.
+	* general_util.c: Added a function for generating a default parameter file,
+	moved in function for checking parameters in a list.
 
 2013-01-11  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 

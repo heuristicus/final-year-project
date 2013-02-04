@@ -2,6 +2,7 @@
 #define _LAUNCHER_H
 
 #include "estimator.h"
+#include "experimenter.h"
 #include "generator.h"
 #include "general_util.h"
 #include "combinefunction.h"
@@ -53,14 +54,14 @@
     "containing event data.\n\n"								\
     "\t -o, --outfile\n"						\
     "\t\t Data will be output to this file.\n\n"			\
-    "\t -p, --paramfile\n"						\
-    "\t\t The file containing parameters to use. This can be used to specify a "\
-    "large number of options.\n\n"
+    "\t -p or --paramfile\n"						\
+    "\t\t Specify the parameter file in which to find default parameters when experimenting."
 #define VERSION "poissonstream alpha v0.5"
 #define BUGREPORT "Report bugs to mxs968@cs.bham.ac.uk"
 
-void run_requested_operations(launcher_args* args, char* paramfile, char* infile,
-			      char* outfile, char* estimator_type, char* generator_type);
+void run_requested_operations(launcher_args* args, char* paramfile, char* extra_paramfile,
+			      char* infile, char* outfile, char* estimator_type,
+			      char* generator_type);
 int exists_in_arr(char** arr, int len, char* name);
 void multi_estimate(char* paramfile, char* infile, char* outfile, char* estimator_type, int nstreams);
 void multi_est_gauss(paramlist* params, char* infile, char* outfile, int nstreams);

@@ -7,11 +7,14 @@
 #include "general_util.h"
 #include <string.h>
 #include <time.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
+#include <fcntl.h>
 
 void standard_out(char filename, void* arr1, void* arr2, int len, char* arrtype);
 void mult_double_to_file(char* filename, char* mode, double* arr1, double* arr2, int len);
@@ -36,5 +39,6 @@ void output_gaussian_contributions(char* filename, char* mode, gauss_vector* G, 
 void output_gaussian_vector(char* filename, char* mode, gauss_vector* V);
 gauss_vector* read_gauss_vector(char* filename);
 void output_double_multi_arr(char* filename, char* mode, double_multi_arr* arr);
+int create_file_in_dir(char* filename, char* dirname);
 
 #endif

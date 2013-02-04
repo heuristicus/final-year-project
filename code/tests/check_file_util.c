@@ -28,8 +28,6 @@ START_TEST (test_get_event_data_all)
 	//printf("%lf %lf\n", data[i], file[i + 1]);
 	fail_unless(data[i] == file[i + 1], NULL);
     }
-
-    
 }
 END_TEST
 
@@ -77,12 +75,31 @@ START_TEST (test_valid_param)
     fail_unless(valid_param(" __test1 test") == 0, NULL);
     fail_unless(valid_param("testing  twospace") == 0, NULL);
     fail_unless(valid_param("testingtab\ttab") == 0, NULL);
-        
-    fail_unless(valid_param("!\"£$%^&*() chars") == 1, NULL);
+    fail_unless(valid_param("!\"£$%^&*() chars") == 0, NULL);
     fail_unless(valid_param("test one") == 1, NULL);
     fail_unless(valid_param("test_two two") == 1, NULL);
     fail_unless(valid_param("test3 53,22") == 1, NULL);
+}
+END_TEST
 
+START_TEST(test_create_file_in_dir)
+{
+    create_file_in_dir("blah", "bb");
+    create_file_in_dir("blah2", "bb");
+
+    fail_unless(create_file_in_dir("blah", "bb") == -1, NULL);
+
+    int x = open("bb/blah", O_CREAT | O_EXCL, S_IRWXU | S_IROTH | S_IRGRP);
+
+    fail_unless(errno == EEXIST, NULL);
+    
+    int y = open("bb/blah", O_CREAT | O_EXCL, S_IRWXU | S_IROTH | S_IRGRP);
+
+    fail_unless(errno == EEXIST, NULL);
+
+    unlink("bb/blah2");
+    unlink("bb/blah");
+    rmdir("bb");
 }
 END_TEST
 
@@ -145,6 +162,7 @@ START_TEST(test_read_gauss_vector)
     fail_unless(G->gaussians[1]->mean == 4, NULL);
     fail_unless(G->gaussians[1]->stdev == 2, NULL);
     fail_unless(G->w[1] == 3.5, NULL);
+    unlink("files/gauss_out");
 }
 END_TEST
 
@@ -201,6 +219,7 @@ START_TEST(test_output_double_multi_arr)
     fail_unless(one == 3 && two == 6 && three == 9, NULL);
 
     fclose(fp);
+    unlink("files/multi_arr");
 }
 END_TEST
 
@@ -215,7 +234,8 @@ Suite* file_util_suite(void)
     tcase_add_test(tc_core, test_output_gaussian_vector);
     tcase_add_test(tc_core, test_read_gauss_vector);    
     tcase_add_test(tc_core, test_output_double_multi_arr);
-    
+    tcase_add_test(tc_core, test_create_file_in_dir);
+        
     suite_add_tcase(s, tc_core);
 
     return s;

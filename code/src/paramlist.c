@@ -1,4 +1,7 @@
 #include "paramlist.h"
+#include "general_util.h"
+
+#define MAX_VALUE_LENGTH 30
 
 /* initialises the list and returns a pointer to the start of the list */
 paramlist* init_list(char *param, char *val)
@@ -100,6 +103,63 @@ char* get_string_param(paramlist* head, char* param_name)
 }
 
 /*
+ * Set the value of a string parameter to the given value. If the parameter does
+ * not exist, 1 is returned.
+ */
+int set_string_param(paramlist* head, char* param_name, char* new_value)
+{
+    paramlist* data;
+    
+    if ((data = get_param(head, param_name)) == NULL){
+	return 1;
+    }
+    
+    data->val = new_value;
+
+    return 0;
+}
+
+/*
+ * Set the value of a double parameter to the given value. If the parameter does
+ * not exist, 1 is returned.
+ */
+int set_double_param(paramlist* head, char* param_name, double new_value)
+{
+    paramlist* data;
+    
+    if ((data = get_param(head, param_name)) == NULL){
+	return 1;
+    }
+
+    char* tmp = malloc(MAX_VALUE_LENGTH);
+    snprintf(tmp, MAX_VALUE_LENGTH, "%lf", new_value);
+
+    data->val = tmp;
+
+    return 0;
+}
+
+/*
+ * Set the value of an integer parameter to the given value. If the parameter does
+ * not exist, 1 is returned.
+ */
+int set_int_param(paramlist* head, char* param_name, int new_value)
+{
+    paramlist* data;
+    
+    if ((data = get_param(head, param_name)) == NULL){
+	return 1;
+    }
+
+    char* tmp = malloc(MAX_VALUE_LENGTH);
+    snprintf(tmp, MAX_VALUE_LENGTH, "%d", new_value);
+    
+    data->val = tmp;
+
+    return 0;
+}
+
+/*
  * Gets the pointer to the struct whose name is the given string.
  * Returns null if there is no such struct.
  */
@@ -141,3 +201,4 @@ int length(paramlist* head)
     
     return len;
 }
+

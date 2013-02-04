@@ -10,6 +10,7 @@ static struct option opts[] =
 	{"estimator", required_argument, 0, 'a'},
 	{"infile",  required_argument, 0, 'i'},
 	{"outfile",  required_argument, 0, 'o'},
+	{"paramfile",  required_argument, 0, 'p'},
 	{"defparam", required_argument, 0, 'd'},
 	{"nstreams",    required_argument, 0, 'n'},
 	{"outtype",    required_argument, 0, 't'},
@@ -24,6 +25,7 @@ int main(int argc, char *argv[])
     
     launcher_args* args = make_arg_struct();
     char* paramfile = NULL;
+    char* extra_paramfile = NULL;
     char* outfile = NULL;
     char* infile = NULL;
     char* estimator_type = NULL;
@@ -83,6 +85,9 @@ int main(int argc, char *argv[])
 	case 't': // specify output type when generating random functions
 	    args->writing = atoi(optarg);
 	    break;
+	case 'p':
+	    extra_paramfile = strdup(optarg);
+	    break;
     	case 'x':
     	    args->exp = 1;
     	    paramfile = strdup(optarg);
@@ -100,11 +105,13 @@ int main(int argc, char *argv[])
 	}
     }
 
-    run_requested_operations(args, paramfile, infile, outfile, estimator_type, generator_type);
+
+    run_requested_operations(args, paramfile, extra_paramfile, infile, outfile, estimator_type, generator_type);
 
     free(estimator_type);
     free(generator_type);
     free(paramfile);
+    free(extra_paramfile);
     free(infile);
     free(outfile);
     free(args);
@@ -112,8 +119,9 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-void run_requested_operations(launcher_args* args, char* paramfile, char* infile, 
-			      char* outfile, char* estimator_type, char* generator_type)
+void run_requested_operations(launcher_args* args, char* paramfile, char* extra_paramfile,
+			      char* infile, char* outfile, char* estimator_type, 
+			      char* generator_type)
 {
     if (args->gen == 1){
 	if (paramfile == NULL){
@@ -159,9 +167,15 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* infile
 	}
     } else if (args->exp == 1){
 	printf("experimenting\n");
+	if (extra_paramfile == NULL){
+	    printf("You need to specify the file from which to read default parameters."\
+		   " Use the -p switch to do so.\n");
+	    exit(1);
+	}
+	run_experiments(paramfile, extra_paramfile);
     } else {
-	printf("No action specified. You can run either an estimator, a generator or experiments by using "\
-	       "the -e, -g or -x switches respectively.\n");
+	printf("No action specified. You can run either an estimator, a generator or"\
+	       " experiments by using the -e, -g or -x switches respectively.\n");
     }
 }
 
@@ -251,15 +265,15 @@ void multi_est_default(char* paramfile, char* infile, char* outfile, char* estim
 	    
     /* Find time delay here*/
     if ((tmp = get_string_param(params, "timedelta")) != NULL){
-	char **vals = string_split(tmp, ',');
-	int tdlen = atoi(vals[0]) - 1;
+	string_arr* vals = string_split(tmp, ',');
+	int tdlen = vals->len;
 	time_delta = malloc((tdlen + 1) * sizeof(double));
 	
 	for (i = 1; i < tdlen + 1; ++i) {
-	    time_delta[i - 1] = atof(vals[i]);
+	    time_delta[i - 1] = atof(vals->data[i]);
 	}
 
-	free_pointer_arr((void**) vals, atoi(vals[0]));
+	free_string_arr(vals);
     } else {
 	printf("You must specify the time delay between each stream. "\
 	       "Add something like \"timedelta 0,10,20\" to your parameter file\n");
