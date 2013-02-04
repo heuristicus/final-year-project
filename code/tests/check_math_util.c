@@ -470,6 +470,57 @@ START_TEST(test_weight_vector)
 }
 END_TEST
 
+START_TEST(test_find_min_value_int)
+{
+    int data1[] = {1,2,3,4,5};
+    int data2[] = {0,-1,-5,-7};
+
+    fail_unless(find_min_value_int(data1, sizeof(data1)/sizeof(int)) == 1, NULL);
+    fail_unless(find_min_value_int(data2, sizeof(data2)/sizeof(int)) == -7, NULL);
+        
+    fail_unless(find_min_value_int(NULL, 1) == 0, NULL);
+    fail_unless(find_min_value_int(data1, 0) == 0, NULL);
+    fail_unless(find_min_value_int(data1, -1) == 0, NULL);
+}
+END_TEST
+
+START_TEST(test_find_max_value)
+{
+    double data1[] = {3.5, 5.12,1351.3215,515125};
+    double data2[] = {-2341,-12315,-15252,-1515};
+
+    fail_unless(find_max_value(data1, sizeof(data1)/sizeof(double)) == 515125, NULL);
+    fail_unless(find_max_value(data2, sizeof(data2)/sizeof(double)) == -1515, NULL);
+
+    fail_unless(find_max_value(data1, -1) == 0, NULL);
+    fail_unless(find_max_value(data1, 0) == 0, NULL);
+    fail_unless(find_max_value(NULL, 1) == 0, NULL);
+}
+END_TEST
+
+START_TEST(test_multiply_arr)
+{
+    double data1[] = {1, 2, 3, 4, 5, 6};
+    double data2[] = {2,4,6,8,10,12};
+
+    double* res1 = multiply_arr(data1, sizeof(data1)/sizeof(double), 2);
+    double* res2 = multiply_arr(data2, sizeof(data2)/sizeof(double), 0.5);
+    double correct1[] = {2,4,6,8,10,12};
+    double correct2[] = {1,2,3,4,5,6};
+    
+    int i;
+    
+    for (i = 0; i < sizeof(data1)/sizeof(double); ++i) {
+	fail_unless(res1[i] == correct1[i], NULL);
+	fail_unless(res2[i] == correct2[i], NULL);
+    }
+    
+    fail_unless(multiply_arr(NULL, 1, 1) == NULL, NULL);
+    fail_unless(multiply_arr(data1, 0, 1) == NULL, NULL);
+    fail_unless(multiply_arr(data1, -1, 1) == NULL, NULL);
+}
+END_TEST
+
 Suite* math_util_suite(void)
 {
     Suite *s = suite_create("math_util");
@@ -498,7 +549,9 @@ Suite* math_util_suite(void)
     tcase_add_test(tc_core, test_find_min_value);
     tcase_add_test(tc_core, test_add_to_arr);
     tcase_add_test(tc_core, test_weight_vector);
-    
+    tcase_add_test(tc_core, test_find_min_value_int);
+    tcase_add_test(tc_core, test_find_max_value);
+
     suite_add_tcase(s, tc_core);
 
     return s;

@@ -180,6 +180,27 @@ START_TEST(test_output_double_multi_arr)
     ck->len = l;
     
     output_double_multi_arr("files/multi_arr", "w", ck);
+
+    FILE *fp = fopen("files/multi_arr", "r");
+    
+    char* line = malloc(100);
+    
+    double one, two, three;
+
+    line = fgets(line, 100, fp);
+    int t = sscanf(line, "%lf %lf %lf", &one, &two, &three);
+    fail_unless(one == 1 && two == 4 && three == 7, NULL);
+    
+    line = fgets(line, 100, fp);
+    t = sscanf(line, "%lf %lf %lf", &one, &two, &three);
+    fail_unless(one == 2 && two == 5 && three == 8, NULL);
+    
+    
+    line = fgets(line, 100, fp);
+    t = sscanf(line, "%lf %lf %lf", &one, &two, &three);
+    fail_unless(one == 3 && two == 6 && three == 9, NULL);
+
+    fclose(fp);
 }
 END_TEST
 

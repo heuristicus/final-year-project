@@ -1,3 +1,28 @@
+Alpha 0.5: (04/02/13)
+
++ Random functions can be generated. These functions are constructed by summing
+  sets of weighted gaussians. Use
+  `launcher -g params.txt -r`
+  to generate a random function in its raw form, or 
+  `launcher -g params.txt -r -t 2`
+  to output the sum of the gaussians in the interval, and the value of each gaussian
+  used to construct the function.
++ Event streams can be generated from these random functions with
+  `launcher -g params.txt -f rand`
+  To use this it is necessary to first generate gaussians in their raw form using
+  `launcher -g params.txt -r`
++ A basic kernel density estimator is avaliable. Use
+  `launcher -e params.txt -a gauss`
+  for an estimate. The normalisation on estimates is not correctly applied in this
+  build.
++ The parameter file now has additional parameters to configure the generation of
+  gaussians. Generate a default file with
+  `launcher -d params.txt`
++ The GMP library is no longer used. The functionality that required it is now
+  provided by the GNU Scientific Library (GSL)
+
+--------------------------------------------------------------------------------
+
 Alpha 0.4.1: (27/01/13)
 
 + Hotfix for missing header file
