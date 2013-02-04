@@ -13,8 +13,8 @@ This will output some useful information about switches that you can use.
 
 # Required libraries
 To compile, you will need muParser (http://muparser.beltoforion.de/), the
-GNU Multiple Precision Arithmetic Library, gmp (http://gmplib.org/), and check
+GNU Scientific Library, gsl (http://www.gnu.org/software/gsl), and check
 (http://check.sourceforge.net/). If you are running Ubuntu or some other apt-based
 system, you should be able to install the required libraries using:
 
-`apt-get install check libgmp-dev libmuparser-dev`
+`apt-get install check libgsl0-dev libmuparser-dev`

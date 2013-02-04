@@ -1,25 +1,17 @@
 #include "math_util.h"
-#include "general_util.h"
 
 //#define DEBUG
 #define ZERO_EPSILON 0.000000000000000001
 
+
 int rand_initialised = 0;
+gsl_rng* r;
 
-/* int main(int argc, char *argv[]) */
-/* { */
-
-/*     double lambda = atof(argv[1]); */
-/*     int i; */
-    
-/*     for (i = 1; i < 100; ++i) { */
-/* 	printf("probability of %d events given lambda %lf: %.15lf\n", i, lambda, poisson_PMF(lambda, i)); */
-/*     } */
-    
-/*     return 0; */
-    
-/* } */
-
+// Cleanup any allocated memory.
+void cleanup()
+{
+    gsl_rng_free(r);
+}
 
 /*
  * Recursive factorial function.
@@ -84,52 +76,46 @@ int* sum_events_in_interval(double *event_times, int num_events, double start_ti
     return bins;
 }
 
+
+/*
+ * Initialise the random number generator.
+ */
 void init_rand(double seed)
 {
     if (! rand_initialised) {
 	if (seed == 0.0)
 	    seed = time(NULL);
+	
 
-	srand48(seed);
+	gsl_rng_env_setup();
+
+	r = gsl_rng_alloc(gsl_rng_rand48);
+	gsl_rng_set(r, seed);
 	printf("Seed for this run: %lf\n", seed);
 
 	rand_initialised = 1;
+	atexit(cleanup); // make sure we free the random number generator on exit
     }
 }
 
 /*
- * From "The Art of Computer Programming", Vol.3. Generates a gaussian random
- * value with mean of 0 and standard deviation of 1. http://c-faq.com/lib/gaussian.html
+ * Gets the random number generator that is currently in use.
  */
-double rand_gauss()
+double get_uniform_rand()
 {
-
-    if(!rand_initialised)
+    if (!rand_initialised)
 	init_rand(0.0);
-        
-    static double V1, V2, S;
-    static int phase = 0;
-    double X;
 
-    if(phase == 0) {
-	do {
-	    double U1 = (double)rand() / RAND_MAX;
-	    double U2 = (double)rand() / RAND_MAX;
-
-	    V1 = 2 * U1 - 1;
-	    V2 = 2 * U2 - 1;
-	    S = V1 * V1 + V2 * V2;
-	} while(S >= 1 || S == 0);
-
-	X = V1 * sqrt(-2 * log(S) / S);
-    } else
-	X = V2 * sqrt(-2 * log(S) / S);
-
-    phase = 1 - phase;
-
-    return X;
+    return gsl_rng_uniform(r);
 }
 
+double get_rand_gaussian()
+{
+    if (!rand_initialised)
+	init_rand(0.0);
+
+    return gsl_ran_ugaussian(r);
+}
 
 /*
  * Gets noise based on a poisson distribution centred around the mean
@@ -138,9 +124,7 @@ double rand_gauss()
  */
 double get_poisson_noise(double mean)
 {
-
     return get_gaussian_noise(mean, mean);
-    
 }
 
 /*
@@ -148,8 +132,10 @@ double get_poisson_noise(double mean)
  */
 double get_gaussian_noise(double mean, double std_dev)
 {
-    return (rand_gauss() * std_dev) + mean;
-    
+    if (!rand_initialised)
+	init_rand(0.0);
+
+    return (get_rand_gaussian() * std_dev) + mean;
 }
 
 /*
@@ -272,54 +258,6 @@ int sum_int_arr(int *arr, int len)
 }
 
 /*
- * Probability mass function for poisson random variables.
- */
-double poisson_PMF(double lambda, int k)
-{
-    mpf_t res;
-
-    mpf_t top;
-    mpf_t lk;
-    mpf_t el;
-    mpf_t kfacf;
-    mpz_t kfacz;
-        
-    mpz_init(kfacz); // integer factorial
-    
-    mpf_init(top);
-    mpf_init(lk);
-    mpf_init(el);
-    mpf_init(kfacf); // float storage for factorial
-    mpf_init(res);
-                    
-    // This could cause problems if k is too large
-    mpf_set_d(lk, pow(lambda, k));
-    mpf_set_d(el, pow(M_E, -lambda));
-    mpf_mul(top, lk, el);
-
-    //gmp_printf("pow(lambda, k) * pow(e, -lambda) = %Ff\n", top);
-
-    mpz_fac_ui(kfacz, k);
-    
-    mpf_set_z(kfacf, kfacz);
-
-    //gmp_printf("%d factorial = %Ff\n", k, kfacf);
-        
-    mpf_div(res, top, kfacf);
-
-    double result = mpf_get_d(res);
-
-    mpf_clear(kfacf);
-    mpf_clear(res);
-    mpf_clear(top);
-    mpf_clear(lk);
-    mpf_clear(el);
-    mpz_clear(kfacz);
-        
-    return result;
-}
-
-/*
  * Calculates the gradient of a line given two points on the line.
  */
 double get_gradient(double a_x, double a_y, double b_x, double b_y)
@@ -377,4 +315,365 @@ double get_midpoint(double a, double b)
 	return a + diff/2;
     else
 	return b + diff/2;
+}
+
+
+
+/*
+ * Creates a gaussian with the given mean and standard deviation. Returns NULL if
+ * the standard deviation is <= 0.
+ */
+gaussian* make_gaussian(double mean, double stdev)
+{
+    if (stdev <= 0)
+	return NULL;
+
+    gaussian* g = malloc(sizeof(gaussian));
+    
+    g->mean = mean;
+    g->stdev = stdev;
+    
+    return g;
+}
+
+/*
+ * Calculates the contribution of the specified gaussian at the given point.
+ * The weight specified is applied to the gaussian.
+ */
+double gaussian_contribution_at_point(double x, gaussian* g, double weight)
+{
+    if (weight == 0)
+	return 0;
+
+    return weight * exp(-pow(x - g->mean, 2)/pow(g->stdev, 2));
+}
+
+/*
+ * Calculates the contribution of the given gaussian in the interval [start, end]
+ * with the specified step between each contribution check.
+ */
+double** gaussian_contribution(gaussian* g, double start, double end, double step, double weight)
+{
+    if (!interval_valid(start, end) || g == NULL || step <= 0)
+	return NULL;
+    
+    int len = (end - start)/step;
+    int i;
+    double current;
+    double** cont = malloc(2 * sizeof(double*));
+    cont[0] = malloc(len * sizeof(double));
+    cont[1] = malloc(len * sizeof(double));
+
+    for (i = 0, current = start; current <= end && i <= len; current+= step, ++i) {
+	cont[0][i] = current;
+	cont[1][i] = gaussian_contribution_at_point(current, g, weight);
+    }
+
+    return cont;
+}
+
+/*
+ * Calculates the contribution of gaussians in the given vector at the given
+ * point along the x-axis.
+ */
+double sum_gaussians_at_point(double x, gauss_vector* G)
+{
+    if (G == NULL)
+	return 0;
+    
+    int i;
+    double sum = 0;
+
+    for (i = 0; i < G->len; ++i) {
+	sum += gaussian_contribution_at_point(x, G->gaussians[i], G->w[i]);
+    }
+    return sum;
+}
+
+/*
+ * Performs a discrete gaussian transform on the given vector of gaussians, in the
+ * interval [start, end], with the given data resolution. Returns a 2-d
+ * vector of the values and points at which the values were sampled.
+ */
+double_multi_arr* gauss_transform(gauss_vector* G, double start, double end, double resolution)
+{
+    if (!interval_valid(start, end) || resolution <= 0 || G == NULL)
+	return NULL;
+
+    double current;
+    int i;
+    double_multi_arr* ret = malloc(sizeof(double_multi_arr));
+    ret->len = 2;
+    ret->lengths = malloc(sizeof(int) * ret->len);
+    
+    double** T = malloc(2 * sizeof(double*));
+    
+    int memsize = ((end - start)/resolution) + 1;
+    
+    T[0] = malloc(sizeof(double) * memsize);
+    T[1] = malloc(sizeof(double) * memsize);
+    ret->lengths[0] = memsize;
+    ret->lengths[1] = memsize;
+    
+    for (i = 0, current = start; current <= end && i < memsize; current += resolution, i++) {
+	T[0][i] = current;
+	T[1][i] = sum_gaussians_at_point(current, G);
+    }
+
+    ret->data = T;
+    
+    return ret;
+}
+
+/*
+ * Returns a gaussian transform which is shifted so that all points are >= 0
+ */
+double_multi_arr* shifted_transform(gauss_vector* V, double start, double interval,
+				   double step, double resolution)
+{
+    if (step <= 0 || resolution <= 0 || !interval_valid(start, start + interval))
+	return NULL;
+    
+    double_multi_arr* func = gauss_transform(V, start, start + interval, resolution);
+
+    double min = find_min_value(func->data[1], func->lengths[1]);
+    double shift = 0;
+    if (min <= 0){
+    	shift = -min;
+    }
+
+    double* rep = add_to_arr(func->data[1], func->lengths[1], shift);
+    free(func->data[1]);
+    func->data[1] = rep;
+    
+    return func;
+}
+
+double** kernel_density(double* events, int len, double start, double end, double bandwidth, double resolution)
+{
+    double current = start;
+    
+    while (current <= end){
+	printf("kernel density at %lf is %lf\n", current, kernel_density_at_point(events, len, current, bandwidth));
+	current += resolution;
+    }
+
+    return NULL;
+}
+
+double kernel_density_at_point(double* events, int len, int x, double bandwidth)
+{
+    int i;
+    double sum = 0;    
+
+    for (i = 0; i < len; ++i) {
+	sum = (1/(len * bandwidth)) * gaussian_kernel((x - events[i])/bandwidth, x, bandwidth);
+    }
+    
+    return sum;
+}
+
+double gaussian_kernel(double x, double mean, double stdev)
+{
+    return exp(-pow(x - mean, 2)/(2 * pow(stdev, 2)));
+//    return (1/sqrt(2 * M_PI)) * exp((-1/2) * pow(x, 2));
+}
+
+/*
+ * Generates a vector of specified length with each point p ~ N(0,1)
+ */
+double* random_vector(int len, double multiplier)
+{
+    if (len <= 0)
+	return NULL;
+
+    init_rand(0.0);
+    
+    double* V = malloc(len * sizeof(double));
+    
+    int i;
+    
+    for (i = 0; i < len; ++i) {
+	V[i] = gsl_ran_ugaussian(r) * multiplier;
+    }
+
+    return V;
+}
+
+/*
+ * Generate a vector of length len, with all values set to the specified 
+ * weight.
+ */
+double* weight_vector(double weight, int len)
+{
+    if (len <= 0)
+	return NULL;
+    
+    double* V = malloc(len * sizeof(double));
+    
+    int i;
+    
+    for (i = 0; i < len; ++i) {
+	V[i] = weight;
+    }
+
+    return V;
+}
+
+/*
+ * Generates gaussians with the given stdev spaced according to the step parameter
+ * within the interval [start, start + interval_time]. A gaussian is always placed at the start
+ * of the interval. Returns a null pointer if the interval is invalid or the 
+ * step or stdev are <= 0
+ */
+gauss_vector* gen_gaussian_vector_uniform(double stdev, double start,
+					  double interval_time, double step,
+					  double multiplier)
+{
+    double end = start + interval_time;
+    if (!interval_valid(start, end) || step <= 0 || stdev <= 0)
+	return NULL;
+    
+    gauss_vector* G = malloc(sizeof(gauss_vector));
+    
+    int num = interval_time/step + 1;
+
+    G->gaussians = malloc(sizeof(gaussian*) * num);
+    G->w = random_vector(num, multiplier);
+    G->len = num;
+    double current;
+    
+    int i;
+    
+    for (i = 0, current = start; current <= end; ++i, current += step) {
+	G->gaussians[i] = make_gaussian(current, stdev);
+    }
+
+    return G;
+}
+
+/*
+ * Generates a vector of gaussians whose means are centred on the values
+ * in the given array and have the specified standard deviation. Returns null if
+ * the stdev or len <= 0, or a null pointer is passed in. The random_weights
+ * parameter specifies whether to use randomised weights or not. Anything other
+ * than 0 will use randomised weights, 0 initialises the vector with all 1s
+ */
+gauss_vector* gen_gaussian_vector_from_array(double* means, int len, double stdev,
+					     double multiplier, int random_weights)
+{
+    if (stdev <= 0 || len <= 0 || means == NULL)
+	return NULL;
+    
+    gauss_vector* G = malloc(sizeof(gauss_vector));
+
+    G->gaussians = malloc(sizeof(gaussian*) * len);
+    if (random_weights == 0)
+	G->w = weight_vector(1, len);
+    else
+	G->w = random_vector(len, multiplier);
+    G->len = len;
+
+    int i;
+
+    for (i = 0; i < len; ++i) {
+	G->gaussians[i] = make_gaussian(means[i], stdev);
+    }
+    
+    return G;
+}
+
+/*
+ * Adds the specified value to all elements in the array. This is non-destructive.
+ */
+double* add_to_arr(double* data, int len, double add)
+{
+    if (data == NULL || len <= 0){
+	return NULL;
+    }
+    
+    double* new = malloc(len * sizeof(double));
+    
+    int i;
+    
+    for (i = 0; i < len; ++i) {
+	new[i] = data[i] + add;
+    }
+
+    return new;
+}
+
+/*
+ * Finds the minimum value in a double array. Zero can be returned either if it
+ * is the minimum value, if the data is NULL, or if the length is invalid
+ */
+double find_min_value(double* data, int len)
+{
+    if (data == NULL || len <= 0){
+	return 0;
+    }
+    
+    int i;
+    double min = INFINITY;
+    
+    for (i = 0; i < len; ++i) {
+	if (data[i] < min){
+	    min = data[i];
+	}
+	
+    }
+    return min;
+}
+
+int find_min_value_int(int* data, int len)
+{
+        if (data == NULL || len <= 0){
+	return 0;
+    }
+    
+    int i;
+    int min = INT_MAX;
+    
+    for (i = 0; i < len; ++i) {
+	if (data[i] < min){
+	    min = data[i];
+	}
+	
+    }
+    return min;
+}
+
+double find_max_value(double* data, int len)
+{
+    if (data == NULL || len <= 0){
+	return 0;
+    }
+    
+    int i;
+    double max = -INFINITY;
+    
+    for (i = 0; i < len; ++i) {
+	if (data[i] > max){
+	    max = data[i];
+	}
+	
+    }
+    return max;
+}
+
+double* multiply_arr(double* data, int len, double multiplier)
+{
+    if (data == NULL || len <= 0){
+	return NULL;
+    }
+    
+    double* new = malloc(len * sizeof(double));
+    
+    int i;
+    
+    for (i = 0; i < len; ++i) {
+	new[i] = data[i] * multiplier;
+    }
+
+    return new;
 }

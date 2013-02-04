@@ -2,25 +2,7 @@
 #define _GEN_UTIL_H
 
 #include "estimator.h"
-
-typedef struct
-{
-    double* data;
-    int len;
-} double_arr;
-
-typedef struct
-{
-    int* data;
-    int len;
-} int_arr;
-
-typedef struct
-{
-    double* data1;
-    double* data2;
-    int len;
-} double_mult_arr;
+#include "struct.h"
 
 void free_pointer_arr(void** arr, int length);
 char** string_split(char* string, char separator);
@@ -33,5 +15,8 @@ void free_est_arr(est_arr* estimates);
 void print_string_array(char* message, char** array, int len);
 int create_default_param_file(char* filename);
 void put_section_header(FILE* fp, char* heading);
+void print_gauss_vector(gauss_vector* G);
+void free_gauss_vector(gauss_vector* G);
+void free_double_multi_arr(double_multi_arr* arr);
 
 #endif
