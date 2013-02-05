@@ -1,3 +1,27 @@
+2013-02-05  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* general_util.c, defparams.h: Added parameters to the files to allow
+	for dynamic calculation of the standard deviation based on the step
+	between gaussians and a parameter alpha. Specifying the standard deviation
+	normally is also possible. The simple_stdev parameter decides which is used.
+	Parameters for gaussian generator output modified. One parameter for generating
+	from stream data, one for generating from a uniform distribution of gaussians.
+	Files are output with strings appended to show what they contain.
+
+	* generator.c: Improved output file handling. Multiple files are output
+	depending on the parameter provided to the gaussian generator. Fixed erroneous
+	time delta extraction.
+
+2013-02-04  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* develop: Merged gaussians branch as it had pretty much all the intended
+	functionality and was working relatively well. Need to move on.
+	Also merged the experiment harness branch. Was getting too far behind and
+	there were structural changes in both that and the gaussian branch that
+	had some minor conflicts - better to merge now than to risk things getting
+	even more disparate and difficult to merge later on. Development of the
+	experiment harness put on hold for now.
+
 2013-02-03  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* estimator_baseline.c: Discovered crashes, but not sure of the cause.

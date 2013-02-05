@@ -5,9 +5,7 @@
 #define DEFAULT_OUTFILE "output"
 #define DEFAULT_EST_OUTFILE "est_out"
 #define DEFAULT_FUNC_OUTFILE "random_function"
-#define DEFAULT_RAW_FUNC_OUTFILE "random_function_raw"
-#define DEFAULT_GAUSS_EVENT_FUNC_OUTFILE "gauss_stream_function"
-#define DEFAULT_GAUSS_EVENT_RAW_FUNC_OUTFILE "gauss_stream_function_raw"
+#define DEFAULT_STREAM_FUNC_OUTFILE "gauss_stream_function"
 #define DEFAULT_OLS_OUT "ols_out"
 #define DEFAULT_IWLS_OUT "iwls_out"
 #define DEFAULT_PC_OUT "pc_out"
@@ -40,6 +38,8 @@
 #define DEFAULT_GAUSS_RESOLUTION 0.5
 #define DEFAULT_GAUSS_MULTIPLIER 5.0
 #define DEFAULT_GAUSSIANS 40
+#define DEFAULT_STDEV_ALPHA 3.0
+#define DEFAULT_SIMPLE_STDEV "yes"
 
 // Default parameters for estimators
 #define DEFAULT_ESTIMATOR "base"

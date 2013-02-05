@@ -250,19 +250,17 @@ int create_default_param_file(char* filename)
     put_section_header(fp, "data output");
     fprintf(fp, "%s\n%s %s\n\n", "# file to which generator outputs generated event "\
 	    "data","outfile", DEFAULT_OUTFILE);
-//    fprintf(fp, "%s\n%s %s\n\n", "# file to which gaussian generator outputs data",
-//	    "gauss_outfile", DEFAULT_GAUSS_GEN_OUT);
-    fprintf(fp, "%s\n%s %s\n\n", "# Files to which functions generated"\
-	    " using gaussians are output. \n# File for gaussians in their raw "\
-	    "form (xpos stdev weight).", "gauss_func_outfile_raw", DEFAULT_RAW_FUNC_OUTFILE);
-    fprintf(fp, "%s\n%s %s\n\n", "# File for gaussians in their summed form.",
-	    "gauss_func_outfile", DEFAULT_FUNC_OUTFILE);
-    fprintf(fp, "%s\n%s %s\n\n", "# File for gaussians generated from event data",
-	    "gauss_event_func_outfile", DEFAULT_GAUSS_EVENT_FUNC_OUTFILE);
-    fprintf(fp, "%s\n%s %s\n\n", "# File for gaussians generated from event data in raw form",
-	    "gauss_event_func_outfile_raw", DEFAULT_GAUSS_EVENT_RAW_FUNC_OUTFILE);
-    fprintf(fp, "%s\n%s %s\n\n", "# This is appended to filenames when outputting"\
-	    " multiple randomly generated\n# functions.", "func_gen_ext", DEFAULT_FUNCTION_EXT);
+    fprintf(fp, "%s\n%s %s\n\n", "# Files to which functions generated using"\
+	    " gaussians are output. \n# File for gaussians in their raw form"\
+	    " (xpos stdev weight). Additional files may\n# be generated when"\
+	    " generating functions with gaussians - these files will have\n"\
+	    "# \"_sum\" and \"_contrib\" appended to the end of the value provided below.",
+	    "function_outfile", DEFAULT_FUNC_OUTFILE);
+    fprintf(fp, "%s\n%s %s\n\n", "# File for gaussians generated from event data."\
+	    " Additional files may be generated\n# depending on the switches"\
+	    " provided to the program. These files will have \"_sum\"\n# and"\
+	    " \"_contrib\" appended to the value provided below.",
+	    "stream_function_outfile", DEFAULT_STREAM_FUNC_OUTFILE);
     fprintf(fp, "%s\n%s %s\n\n", "# this will be appended to the output file for each separate"	\
 	    " stream. The stream\n# number will be added at the end.", "stream_ext",
 	    DEFAULT_EXTENSION);
@@ -309,16 +307,26 @@ int create_default_param_file(char* filename)
     // gaussian parameters
     fprintf(fp, "%s\n%s %lf\n\n", "# Gaussian generator\n# Standard deviation to"\
 	    " apply to generated gaussians", "gauss_stdev", DEFAULT_STDEV);
-    fprintf(fp, "%s\n%s %lf\n\n", "# Specifies the distance on the x-axis between"\
-	    " each gaussian "						\
-	    "when generating.", "gauss_generation_step", DEFAULT_GEN_STEP);
+        fprintf(fp, "%s\n%s %s\n\n", "# Specifies whether to disregard the standard"\
+	    " deviation specified above and\n# instead calculate the standard"\
+	    " deviation to apply based on the function\n# \\alpha * \\Delta t. "\
+	    "This allows the standard deviation to be specified as\n# a function"\
+	    " of the step between the kernels. A yes value will use the above\n"\
+	    "# standard deviation.", "simple_stdev", DEFAULT_SIMPLE_STDEV);
+    fprintf(fp, "%s\n%s %lf\n\n", "# Specifies the alpha parameter which is used"\
+	    " to calculate the standard deviation of\n# kernels when generating"\
+	    " functions from gaussians. Used when simple_stdev is set to no. The "\
+	    "value of this parameter is multiplied with the gauss_generation_step"\
+	    " parameter to calculate the standard deviation.",
+	    "stdev_alpha", DEFAULT_STDEV_ALPHA);
+    fprintf(fp, "%s\n%s %lf\n\n", "# Specifies the distance on the x-axis between" \
+	    " each gaussian when generating.", "gauss_generation_step", DEFAULT_GEN_STEP);
     fprintf(fp, "%s\n%s %lf\n\n", "# Specifies the distance between points at"\
 	    " which the gaussian is sampled when summing\n# or outputting data."\
 	    " A high value for this will result in fast computation but loss\n#"\
 	    " of detail, and a low value will give more granularity but summing"\
 	    " gaussians will take longer. ","gauss_resolution",
 	    DEFAULT_GAUSS_RESOLUTION);
-    fprintf(fp, "%s %d\n", "num_gaussians", DEFAULT_GAUSSIANS);
     fprintf(fp, "%s\n%s %lf\n\n", "# Multiplier to apply to weights of gaussians when"\
 	    " generating random functions.\n# The standard gaussian weight is ~"\
 	    " N(0,1). The standard functions have on average\n# vary between -5"\

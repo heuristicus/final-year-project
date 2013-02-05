@@ -7,21 +7,15 @@
 outfile output
 
 # Files to which functions generated using gaussians are output. 
-# File for gaussians in their raw form (xpos stdev weight).
-gauss_func_outfile_raw random_function_raw
+# File for gaussians in their raw form (xpos stdev weight). Additional files may
+# be generated when generating functions with gaussians - these files will have
+# "_sum" and "_contrib" appended to the end of the value provided below.
+function_outfile random_function
 
-# File for gaussians in their summed form.
-gauss_func_outfile random_function
-
-# File for gaussians generated from event data
-gauss_event_func_outfile gauss_stream_function
-
-# File for gaussians generated from event data in raw form
-gauss_event_func_outfile_raw gauss_stream_function_raw
-
-# This is appended to filenames when outputting multiple randomly generated
-# functions.
-func_gen_ext _func_
+# File for gaussians generated from event data. Additional files may be generated
+# depending on the switches provided to the program. These files will have "_sum"
+# and "_contrib" appended to the value provided below.
+stream_function_outfile gauss_stream_function
 
 # this will be appended to the output file for each separate stream. The stream
 # number will be added at the end.
@@ -88,7 +82,17 @@ gauss_generation_step 10.000000
 # of detail, and a low value will give more granularity but summing gaussians will take longer. 
 gauss_resolution 0.500000
 
-num_gaussians 40
+# Specifies whether to disregard the standard deviation specified above and
+# instead calculate the standard deviation to apply based on the function
+# \alpha * \Delta t. This allows the standard deviation to be specified as
+# a function of the step between the kernels. A yes value will use the above
+# standard deviation.
+simple_stdev yes
+
+# Specifies the alpha parameter which is used to calculate the standard deviation of
+# kernels when generating functions from gaussians. Used when simple_stdev is set to no.
+stdev_alpha 3.000000
+
 # Multiplier to apply to weights of gaussians when generating random functions.
 # The standard gaussian weight is ~ N(0,1). The standard functions have on average
 # vary between -5 and 5, which may not be appropriate. Multiplying the weight

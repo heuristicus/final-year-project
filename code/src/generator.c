@@ -54,12 +54,12 @@ void generate(char* paramfile, char* outfile, int nstreams)
     string_arr* vals = string_split(tdelta, ',');
     
     time_delta->len = vals->len;
-    time_delta->data = malloc((time_delta->len + 1) * sizeof(double));
+    time_delta->data = malloc((time_delta->len) * sizeof(double));
 
     int i;
     
-    for (i = 1; i < time_delta->len; ++i) {
-	time_delta->data[i - 1] = atof(vals->data[i]);
+    for (i = 0; i < time_delta->len; ++i) {
+	time_delta->data[i] = atof(vals->data[i]);
     }
     free_string_arr(vals);
 
@@ -148,10 +148,10 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile, int ns
     string_arr* vals = string_split(tdelta, ',');
     
     time_delta->len = vals->len;
-    time_delta->data = malloc((time_delta->len + 1) * sizeof(double));
+    time_delta->data = malloc((time_delta->len) * sizeof(double));
 
-    for (i = 1; i < time_delta->len; ++i) {
-	time_delta->data[i - 1] = atof(vals->data[i]);
+    for (i = 0; i < time_delta->len; ++i) {
+	time_delta->data[i] = atof(vals->data[i]);
     }
     free_string_arr(vals);
 
@@ -206,6 +206,7 @@ double_multi_arr* nonhom_from_gaussian(gauss_vector* G, double lambda,
 {
     init_rand(0.0);
             
+    printf("time delta is %lf\n", time_delta);
     double base_time = start;
     double shifted_time = time_delta + start;
     double end = start + interval;
@@ -248,48 +249,69 @@ double_multi_arr* nonhom_from_gaussian(gauss_vector* G, double lambda,
  * Generates gaussian data of the type specified. If an input file is provided, 
  * the assumed 1-dimensional data provides the means for unweighted gaussians 
  * with the given standard deviation. If no input file is specified, then gaussians
- * are generated uniformly over the interval specified in the parameter file.
- * A value of 1 outputs raw gaussians, which can be used to generate event streams. 
- * 0 outputs the discrete transform, which gives the value of the function at evenly
- * spaced points along the x-axis.
+ * are generated uniformly over the interval specified in the parameter file. The 
+ * output type specifies what data to output about the generated data. You will always
+ * get the gaussians in their raw form, with a value of 0, and any increase on that will
+ * generate more files.
+ * A value of 0 outputs raw gaussians, which can be used to generate event streams. 
+ * 1 outputs the discrete transform, which gives the value of the function at evenly
+ * spaced points along the x-axis. 2 outputs the contribution of each individual gaussian
+ * used to create the function to file.
  */
 void generate_gaussian_data(char* paramfile, char* infile, char* outfile,
 			    int number, int output_type)
 {
     paramlist* params = get_parameters(paramfile);
     
-    double stdev = get_double_param(params, "gauss_stdev");
+    double stdev = -1, alpha = -1;
     double start = get_double_param(params, "start_time");
     double interval = get_double_param(params, "interval_time");
     double step = get_double_param(params, "gauss_generation_step");
     double resolution = get_double_param(params, "gauss_resolution");
     double multiplier = get_double_param(params, "gauss_func_multiplier");
 
+    if (strcmp(get_string_param(params, "simple_stdev"), "no") == 0){
+	alpha = get_double_param(params, "stdev_alpha");
+	if (alpha == -1){
+	    printf("You have not specified the alpha to use to calculate the"\
+		   " standard deviation. Add \"stdev_alpha\" to your parameter"\
+		   " file.\n");
+	    free_list(params);
+	    exit(1);
+	} else {
+	    stdev = alpha * step;
+	    printf("Gaussians will have standard deviation  %lf * %lf (%lf).\n",
+		   alpha, step, alpha * step);
+	}
+    } else {
+	stdev = get_double_param(params, "gauss_stdev");
+	if (stdev == -1){
+	    printf("You have not specified the standard devation for the gaussians"\
+		   " used to generate functions. Please add \"gauss_stdev\" to your"\
+		   " parameter file.\n");
+	    free_list(params);
+	    exit(1);
+	}
+    }
+    
     if (multiplier == 0){
 	printf("WARNING: Multiplier for function generation is zero! Your functions"\
 	       " will probably be completely flat!\n");
     }
     
     if (outfile == NULL){
-	if (infile == NULL){
-	    if (output_type == 0) {
-		printf("Outputting raw uniformly spaced gaussians.\n");
-		outfile = get_string_param(params, "gauss_func_outfile_raw");
-	    } else {
-		printf("Outputting discrete transform of uniformly spaced"\
-		       " gaussians.\n");
-		outfile = get_string_param(params, "gauss_func_outfile");
-	    }
-	} else {
-	    if (output_type == 0) {
-		printf("Outputting raw gaussians with means centred on data "\
-		       "from file.\n");
-		outfile = get_string_param(params, "gauss_event_func_outfile_raw");
-	    } else {
-		printf("Outputting discrete transform of gaussians with means"\
-		       " centred on data from file.\n");
-		outfile = get_string_param(params, "gauss_event_func_outfile");
-	    }
+    	if (infile == NULL){
+	    outfile = get_string_param(params, "function_outfile");
+    	} else {
+	    outfile = get_string_param(params, "stream_function_outfile");
+	}
+	if (outfile == NULL){
+	    printf("No file to output to could be found. Please define function"\
+		   "_outfile or stream_outfile in your parameter file, or provide"\
+		   " one using the -o switch. Default parameter files can be"\
+		   " created using the -d switch.\n");
+	    free_list(params);
+	    exit(1);
 	}
     }
 
@@ -297,7 +319,8 @@ void generate_gaussian_data(char* paramfile, char* infile, char* outfile,
 
     int i;
 
-    char* out = malloc(strlen(outfile) + 5 + strlen(".dat"));
+    // Allocate enough memory for the output filename so that we can reuse it
+    char* out = malloc(strlen(outfile) + 5 + strlen(".dat") + strlen("_contrib"));
 
     for (i = 0; i < number; ++i) {
 	sprintf(out, "%s_%d.dat", outfile, i);
@@ -308,23 +331,27 @@ void generate_gaussian_data(char* paramfile, char* infile, char* outfile,
 	G->w = multiply_arr(wts, G->len, multiplier);
 	free(wts);
 
-	if (output_type == 0){
+	if (output_type >= 0){
 	    output_gaussian_vector(out, "w", G);
-	} else {
+	    printf("Raw gaussian data output to %s. Use this file if you wish"\
+		   " to generate event streams.\n", out);
+	}
+	if (output_type >= 1){
 	    // Need to apply something to normalise when you have input file. Dividing by the
 	    // stdev is ok, but not good enough.
+	    sprintf(out, "%s_%d_sum.dat", outfile, i);
 	    double_multi_arr* func = shifted_transform(G, start, interval, step, resolution);
     	    output_double_multi_arr(out, "w", func);
     	    free_double_multi_arr(func);
-	    if (output_type == 2){
-	    	char* c_out = malloc(strlen(outfile) + strlen("_contrib") + strlen(".dat") + 5);
-	    	sprintf(c_out, "%s_%d_contrib.dat", outfile, i);
-	    	output_gaussian_contributions(c_out, "w", G, start, start + interval, resolution, 1);
-	    	free(c_out);
-	    }
+	    printf("Gaussian sum output to %s.\n", out);
 	}
+	if (output_type >= 2){
+	    sprintf(out, "%s_%d_contrib.dat", outfile, i);
+	    output_gaussian_contributions(out, "w", G, start, start + interval, resolution, 1);
+	    printf("Individual gaussian contributions output to %s.\n", out);
+}	
+
 	free_gauss_vector(G);
-	printf("Output to %s.\n", out);
     }
 
     free(out);
