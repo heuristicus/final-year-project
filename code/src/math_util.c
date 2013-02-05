@@ -345,7 +345,8 @@ double gaussian_contribution_at_point(double x, gaussian* g, double weight)
     if (weight == 0)
 	return 0;
 
-    return weight * exp(-pow(x - g->mean, 2)/pow(g->stdev, 2));
+    return weight * exp(-pow(x - g->mean, 2)/(2 * pow(g->stdev, 2)));
+//    return weight * exp(-pow(x - g->mean, 2)/pow(g->stdev, 2));
 }
 
 /*
@@ -449,35 +450,35 @@ double_multi_arr* shifted_transform(gauss_vector* V, double start, double interv
     return func;
 }
 
-double** kernel_density(double* events, int len, double start, double end, double bandwidth, double resolution)
-{
-    double current = start;
+/* double** kernel_density(double* events, int len, double start, double end, double bandwidth, double resolution) */
+/* { */
+/*     double current = start; */
     
-    while (current <= end){
-	printf("kernel density at %lf is %lf\n", current, kernel_density_at_point(events, len, current, bandwidth));
-	current += resolution;
-    }
+/*     while (current <= end){ */
+/* 	printf("kernel density at %lf is %lf\n", current, kernel_density_at_point(events, len, current, bandwidth)); */
+/* 	current += resolution; */
+/*     } */
 
-    return NULL;
-}
+/*     return NULL; */
+/* } */
 
-double kernel_density_at_point(double* events, int len, int x, double bandwidth)
-{
-    int i;
-    double sum = 0;    
+/* double kernel_density_at_point(double* events, int len, int x, double bandwidth) */
+/* { */
+/*     int i; */
+/*     double sum = 0;     */
 
-    for (i = 0; i < len; ++i) {
-	sum = (1/(len * bandwidth)) * gaussian_kernel((x - events[i])/bandwidth, x, bandwidth);
-    }
+/*     for (i = 0; i < len; ++i) { */
+/* 	sum = (1/(len * bandwidth)) * gaussian_kernel((x - events[i])/bandwidth, x, bandwidth); */
+/*     } */
     
-    return sum;
-}
+/*     return sum; */
+/* } */
 
-double gaussian_kernel(double x, double mean, double stdev)
-{
-    return exp(-pow(x - mean, 2)/(2 * pow(stdev, 2)));
-//    return (1/sqrt(2 * M_PI)) * exp((-1/2) * pow(x, 2));
-}
+/* double gaussian_kernel(double x, double mean, double stdev) */
+/* { */
+/*     return exp(-pow(x - mean, 2)/(2 * pow(stdev, 2))); */
+/* //    return (1/sqrt(2 * M_PI)) * exp((-1/2) * pow(x, 2)); */
+/* } */
 
 /*
  * Generates a vector of specified length with each point p ~ N(0,1)
@@ -677,3 +678,29 @@ double* multiply_arr(double* data, int len, double multiplier)
 
     return new;
 }
+
+/*
+ * Calculates the sum of poisson probability density functions in the interval
+ * [start, end] with the given resolution and the given delay applied to f2.
+ */
+/* double total_function_pdf(gauss_vector* f1, gauss_vector* f2, double start, double end, */
+/* 			  double resolution, double delay) */
+/* { */
+/*     if (f1 == NULL || f2 == NULL || !interval_valid(start, end) || resolution <= 0) */
+/* 	return -1; */
+    
+/*     double current = start; */
+/*     double sum = 0; */
+/*     int i = 0; */
+        
+/*     while(current <= end){ */
+/* 	sum += poisson_pdf_at_point(f1, f2, current, delay); */
+/* 	current += resolution; */
+/* 	++i; */
+/*     } */
+
+/*     return sum; */
+/* } */
+
+/* double poisson_pdf_at_point() */
+
