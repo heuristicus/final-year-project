@@ -61,39 +61,3 @@ double_arr* combine_gauss_vectors(gauss_vector** V, int num)
 {
     return NULL;
 }
-
-/*
- * calculates the value of the estimate at a given point in time.
- */
-double estimate_at_point(est_arr* estimate, double time)
-{
-    est_data* idata = data_at_point(estimate, time);
-
-    if (idata == NULL)
-	return 0;
-    
-    return idata->est_a + idata->est_b * time;
-}
-
-/*
- * Returns the data from the given estimate that can be used to calculate
- * the function value at the specified time.
- */
-est_data* data_at_point(est_arr* estimate, double check_time)
-{
-    if (estimate == NULL)
-	return NULL;
-    
-    est_data* current = NULL;
-    est_data* ret = NULL;
-        
-    int i;
-    
-    for (i = 0; i < estimate->len; ++i) {
-	current = estimate->estimates[i];
-	if (current->start <= check_time && check_time <= current->end){
-	    ret = current;
-	}
-    }
-    return ret;
-}

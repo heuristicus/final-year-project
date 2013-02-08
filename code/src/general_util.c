@@ -247,7 +247,7 @@ int create_default_param_file(char* filename)
     // i/o files and stuff
     fprintf(fp, "%s\n\n", "# Inline comments are not supported!");
     // data output
-    put_section_header(fp, "data output");
+    put_section_header(fp, "Data Output");
     fprintf(fp, "%s\n%s %s\n\n", "# file to which generator outputs generated event "\
 	    "data","outfile", DEFAULT_OUTFILE);
 //    fprintf(fp, "%s\n%s %s\n\n", "# file to which gaussian generator outputs data",
@@ -288,11 +288,11 @@ int create_default_param_file(char* filename)
 	    " data in it (all data\n# is saved as {filename}_ad, events as "\
 	    "{filename}_ev)", "verbosity", DEFAULT_VERBOSITY);
     // data input
-    put_section_header(fp, "data input");
+    put_section_header(fp, "Data Input");
     fprintf(fp, "%s\n%s %s\n\n", "# Default input file used for estimation",
 	    "infile", DEFAULT_INFILE);
     // generator parameters
-    put_section_header(fp, "generation parameters");
+    put_section_header(fp, "Generation Parameters");
     fprintf(fp, "%s %d\n", "start_time", DEFAULT_START);
     fprintf(fp, "%s %d\n", "nstreams", DEFAULT_NSTREAMS);
     fprintf(fp, "%s %s\n", "timedelta", DEFAULT_TIMEDELTA);
@@ -326,18 +326,18 @@ int create_default_param_file(char* filename)
 	    "values gives a greater range of values but preserves the shape of"\
 	    " the function.", "gauss_func_multiplier", DEFAULT_GAUSS_MULTIPLIER);
     // estimator parameters
-    put_section_header(fp, "estimator parameters");
+    put_section_header(fp, "Estimator Parameters");
     fprintf(fp, "%s\n%s %s\n\n", "# specifies the type of estimator to use. Options are"\
 	    " ols, iwls, piecewise, baseline", "est_type", DEFAULT_ESTIMATOR);
     put_section_header(fp, "ols parameters");
     fprintf(fp, "%s %d\n\n", "ols_subintervals", DEFAULT_SUBINTERVALS);
     // iwls
-    put_section_header(fp, "iwls parameters");
+    put_section_header(fp, "IWLS Estimator Parameters");
     fprintf(fp, "%s %d\n", "iwls_iterations", DEFAULT_IWLS_ITERATIONS);
     fprintf(fp, "%s %d\n\n", "iwls_subintervals", DEFAULT_SUBINTERVALS);
 
     // piecewise
-    put_section_header(fp, "piecewise parameters");
+    put_section_header(fp, "Piecewise Estimator Parameters");
     fprintf(fp, "%s\n%s %d\n\n", "# Number of times to iterate the IWLS estimator. Recommended"\
 	    " value is between 2 and 5.", "pc_iwls_iterations",DEFAULT_IWLS_ITERATIONS);
     fprintf(fp, "%s\n%s %d\n\n", "# Number of subintervals to use for the IWLS estimator."\
@@ -366,7 +366,7 @@ int create_default_param_file(char* filename)
 	    " functions. Used when summing\n# the probability density functions at each point.", 
 	    "pc_pmf_sum_threshold", DEFAULT_PMF_SUM_THRESHOLD);
     // baseline
-    put_section_header(fp, "baseline parameters");
+    put_section_header(fp, "Baseline Estimator Parameters");
     fprintf(fp, "%s %d\n", "base_iwls_iterations", DEFAULT_IWLS_ITERATIONS);
     fprintf(fp, "%s %d\n", "base_iwls_subintervals", DEFAULT_SUBINTERVALS);
     fprintf(fp, "%s %lf\n", "base_max_extension", DEFAULT_MAX_EXTENSION);
@@ -375,13 +375,50 @@ int create_default_param_file(char* filename)
     fprintf(fp, "%s %lf\n", "base_pmf_threshold", DEFAULT_PMF_THRESHOLD);
     fprintf(fp, "%s %lf\n\n", "base_pmf_sum_threshold", DEFAULT_PMF_SUM_THRESHOLD);
     // gaussian
-    put_section_header(fp, "gaussian parameters");
+    put_section_header(fp, "Gaussian Estimator Parameters");
     fprintf(fp, "%s\n%s %lf\n\n", "# Standard deviation to apply to gaussian"\
 	    " kernels used to estimate functions","gauss_est_stdev",
 	    DEFAULT_GAUSS_EST_STDEV);
     fprintf(fp, "%s\n%s %lf\n\n", "# Specify resolution of kernels used to estimate"\
 	    " gaussians. A small value will\n# give higher precision but take longer"
 	    ,"gauss_est_resolution", DEFAULT_GAUSS_EST_RESOLUTION);
+    put_section_header(fp, "Time Delta Estimator Parameters");
+    fprintf(fp, "%s\n%s %s\n\n", "# Whether to estimate the time delay. If"\
+	    " this is set to no, the timedelta will be\n# read from the"\
+	    " parameter file and used to combine functions if multiple streams\n"\
+	    "# are being estimated.", "estimate_delta", DEFAULT_DO_DELTA_EST);
+    fprintf(fp, "%s\n%s %s\n\n", "# Method to use to estimate the time delay."\
+	    " Set to either pdf or area. The pdf\n# method uses the probability"\
+	    " density function to calculate likelihood of two\n# streams sharing"\
+	    " the same underlying functions, given the bin counts from the\n"\
+	    "# event stream. The time delay is the point at which the sum of"\
+	    " the probability\n# density functions across the whole space is"\
+	    " highest. The area method is\n# simpler, estimating the delay"\
+	    " based on the area between the curves of two\n# functions. The"\
+	    " point at which the area is smallest is most likely the actual\n"\
+	    "# time delay.", "delta_est_method", DEFAULT_DELTA_EST_METHOD);
+    fprintf(fp, "%s\n%s %lf\n\n", "# This parameter is used to define the step"\
+	    " taken when finding estimates. In the\n# case of the area method,"\
+	    " a sample of the area is taken at uniform intervals\n# according to"\
+	    " this value, and in the case of the pdf method, the points at which\n"\
+	    "# the value of the pdf is calculated. A smaller value may provide"\
+	    " more accurate\n# estimates, but the calculation will take longer.",
+	    "delta_est_resolution", DEFAULT_DELTA_EST_RESOLUTION);
+    fprintf(fp, "%s\n%s %lf\n\n", "# This parameter defines the step by which the"\
+	    " guess at the value of delta increases.\n# The value of delta starts"\
+	    " at a negative value and moves towards a positive value\n# in steps"\
+	    " of this value. A low value will provide more granularity on data,"\
+	    " but it\n# will take longer to find an estimate.", "delta_est_step",
+	    DEFAULT_DELTA_EST_STEP);
+    fprintf(fp, "%s\n%s %lf\n\n", "# The estimator will check delta values of"\
+	    " between + and - this value. A lower value\n# will mean that the"\
+	    " estimation is quicker, but may result in the true delta not being\n"\
+	    "# found if it is not within the range provided. The program starts"\
+	    " at the negative\n# of the value and moves through until it reaches"\
+	    " the positive.", "delta_est_max_delta", DEFAULT_MAX_DELTA);
+
+//    fprintf(fp, "%s\n%s %s\n\n", "", "", );
+    
     fclose(fp);
 
     printf("done\n");
@@ -485,4 +522,40 @@ int has_missing_parameters(string_arr* checklist, paramlist* params)
     }
 
     return missing;
+}
+
+/*
+ * calculates the value of the estimate at a given point in time.
+ */
+double estimate_at_point(est_arr* estimate, double time)
+{
+    est_data* idata = data_at_point(estimate, time);
+
+    if (idata == NULL)
+	return 0;
+    
+    return idata->est_a + idata->est_b * time;
+}
+
+/*
+ * Returns the data from the given estimate that can be used to calculate
+ * the function value at the specified time.
+ */
+est_data* data_at_point(est_arr* estimate, double check_time)
+{
+    if (estimate == NULL)
+	return NULL;
+    
+    est_data* current = NULL;
+    est_data* ret = NULL;
+        
+    int i;
+    
+    for (i = 0; i < estimate->len; ++i) {
+	current = estimate->estimates[i];
+	if (current->start <= check_time && check_time <= current->end){
+	    ret = current;
+	}
+    }
+    return ret;
 }

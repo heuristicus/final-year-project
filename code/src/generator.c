@@ -148,12 +148,19 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile, int ns
     string_arr* vals = string_split(tdelta, ',');
     
     time_delta->len = vals->len;
-    time_delta->data = malloc((time_delta->len + 1) * sizeof(double));
+    time_delta->data = malloc((time_delta->len) * sizeof(double));
 
-    for (i = 1; i < time_delta->len; ++i) {
-	time_delta->data[i - 1] = atof(vals->data[i]);
+    for (i = 0; i < time_delta->len; ++i) {
+	time_delta->data[i] = atof(vals->data[i]);
     }
     free_string_arr(vals);
+
+    if (time_delta->len < nstreams){
+	printf("You have not specified time delta values between all streams.\n"\
+	       "Specified: %d, required: %d.\nPlease add values to the timedelta"\
+	       " parameter in your parameter file.\n", time_delta->len, nstreams);
+	exit(1);
+    }
 
     if (outfile == NULL){
 	outfile = get_string_param(params, "outfile");
@@ -205,7 +212,7 @@ double_multi_arr* nonhom_from_gaussian(gauss_vector* G, double lambda,
 				       double start, double interval, double time_delta, double shift)
 {
     init_rand(0.0);
-            
+
     double base_time = start;
     double shifted_time = time_delta + start;
     double end = start + interval;

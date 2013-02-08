@@ -1,3 +1,28 @@
+2013-02-08  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* launcher.c: Estimates delta according to parameters in the paramfile.
+	Perhaps a good idea to add another switch to the launcher to specify whether
+	or not to estimate it? Seems a little different to the main estimators, so
+	it's probably fine to keep it in the parameter file.
+
+	* combinefunction.c: Moved functions for finding the value of an estimate
+	at a given point to general_util as it is useful in other places as well.
+
+	* general_util.c: Parameters for time delta estimation added to
+	default parameter file. estimate_timedelta specifies whether to
+	estimate delta or just take it from the paramfile. timedelta_est_method
+	specifies which method of estimation to use. Parameters for specifying
+	the step, resolution and max delta for delta estimation. Modified some
+	of the default parameters for the baseline estimator so it performs
+	better by default.
+
+	* estimator_delta.c: Function for estimating the time delta
+	based on the area between two curves. Works for data from both the
+	gaussian and baseline estimators. Single function for both which requires
+	the conversion to a void pointer. This is so that there is less code
+	duplication - there is essentially only one function that has to change
+	in each of the sub-functions.
+
 2013-02-03  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* estimator_baseline.c: Discovered crashes, but not sure of the cause.

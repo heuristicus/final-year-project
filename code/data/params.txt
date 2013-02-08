@@ -1,7 +1,7 @@
 # Inline comments are not supported!
 
 ################################################################################
-#                                  data output                                 #
+#                                  Data Output                                 #
 ################################################################################
 # file to which generator outputs generated event data
 outfile output
@@ -53,17 +53,17 @@ gauss_est_outfile gauss_est_out
 verbosity 3
 
 ################################################################################
-#                                   data input                                 #
+#                                   Data Input                                 #
 ################################################################################
 # Default input file used for estimation
 infile output_stream_0.dat
 
 ################################################################################
-#                             generation parameters                            #
+#                             Generation Parameters                            #
 ################################################################################
 start_time 0
 nstreams 1
-timedelta 0.0,10.0
+timedelta 0.0,10.0,20.0
 lambda 1000
 interval_time 100
 seed 0
@@ -96,7 +96,7 @@ num_gaussians 40
 gauss_func_multiplier 5.000000
 
 ################################################################################
-#                              estimator parameters                            #
+#                              Estimator Parameters                            #
 ################################################################################
 # specifies the type of estimator to use. Options are ols, iwls, piecewise, baseline
 est_type base
@@ -107,13 +107,13 @@ est_type base
 ols_subintervals 5
 
 ################################################################################
-#                                iwls parameters                               #
+#                           IWLS Estimator Parameters                          #
 ################################################################################
 iwls_iterations 3
 iwls_subintervals 5
 
 ################################################################################
-#                              piecewise parameters                            #
+#                         Piecewise Estimator Parameters                       #
 ################################################################################
 # Number of times to iterate the IWLS estimator. Recommended value is between 2 and 5.
 pc_iwls_iterations 3
@@ -131,36 +131,36 @@ pc_max_extension 15.000000
 # use at most this number of lines to estimate the underlying function. If extensions
 # succeed or the data is quite linear, fewer subintervals will be required to make a
 # good estimate, so the actual number of breakpoints in the estimate may be lower.
-pc_max_breakpoints 5
+pc_max_breakpoints 10
 
 # Proportion of the interval time that the minimum possible subinterval length should
 # be. Very short subintervals often result in very bad estimates, especially if the
 # data has large variations.
-pc_min_interval_proportion 0.100000
+pc_min_interval_proportion 0.010000
 
 # Threshold at which to reject an extension attempt. This threshold limits the value
 # of the probability density function calculated at each point on the extended line,
 # checking how likely is it that the point is actually part of the data set. A lower
 # value means that extension will be continued even if the probability is very low.
-pc_pmf_threshold 0.020000
+pc_pmf_threshold 0.050000
 
 # A different threshold for summation of probability density functions. Used when summing
 # the probability density functions at each point.
 pc_pmf_sum_threshold 0.850000
 
 ################################################################################
-#                              baseline parameters                             #
+#                         Baseline Estimator Parameters                        #
 ################################################################################
 base_iwls_iterations 3
 base_iwls_subintervals 5
 base_max_extension 15.000000
-base_max_breakpoints 5
-base_min_interval_proportion 0.100000
-base_pmf_threshold 0.020000
+base_max_breakpoints 10
+base_min_interval_proportion 0.010000
+base_pmf_threshold 0.050000
 base_pmf_sum_threshold 0.850000
 
 ################################################################################
-#                              gaussian parameters                             #
+#                         Gaussian Estimator Parameters                        #
 ################################################################################
 # Standard deviation to apply to gaussian kernels used to estimate functions
 gauss_est_stdev 5.000000
@@ -168,4 +168,41 @@ gauss_est_stdev 5.000000
 # Specify resolution of kernels used to estimate gaussians. A small value will
 # give higher precision but take longer
 gauss_est_resolution 0.300000
+
+################################################################################
+#                        Time Delta Estimator Parameters                       #
+################################################################################
+# Whether to estimate the time delay. If this is set to no, the timedelta will be
+# read from the parameter file and used to combine functions if multiple streams
+# are being estimated.
+estimate_delta no
+
+# Method to use to estimate the time delay. Set to either pdf or area. The pdf
+# method uses the probability density function to calculate likelihood of two
+# streams sharing the same underlying functions, given the bin counts from the
+# event stream. The time delay is the point at which the sum of the probability
+# density functions across the whole space is highest. The area method is
+# simpler, estimating the delay based on the area between the curves of two
+# functions. The point at which the area is smallest is most likely the actual
+# time delay.
+delta_est_method area
+
+# This parameter is used to define the step taken when finding estimates. In the
+# case of the area method, a sample of the area is taken at uniform intervals
+# according to this value, and in the case of the pdf method, the points at which
+# the value of the pdf is calculated. A smaller value may provide more accurate
+# estimates, but the calculation will take longer.
+delta_est_resolution 5.000000
+
+# This parameter defines the step by which the guess at the value of delta increases.
+# The value of delta starts at a negative value and moves towards a positive value
+# in steps of this value. A low value will provide more granularity on data, but it
+# will take longer to find an estimate.
+delta_est_step 2.000000
+
+# The estimator will check delta values of between + and - this value. A lower value
+# will mean that the estimation is quicker, but may result in the true delta not being
+# found if it is not within the range provided. The program starts at the negative
+# of the value and moves through until it reaches the positive.
+delta_est_max_delta 40.000000
 
