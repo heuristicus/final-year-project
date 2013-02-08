@@ -231,12 +231,14 @@ START_TEST(test_gaussian_contribution_at_point)
 {
     gaussian* g = make_gaussian(2, 3);
     
-    fail_unless(gaussian_contribution_at_point(2, g, 1) == 1, NULL);
+    fail_unless(epsck(gaussian_contribution_at_point(2, g, 1), 1) == 1, NULL);
     
-    const double res_1 = 0.89483931681;
-    
-    fail_unless(gaussian_contribution_at_point(1, g, 1) - res_1 < 0.0000001, NULL);
-    
+    const double res1 = 0.945959468;
+    const double res2 = 0.800737402;
+
+    fail_unless(epsck(gaussian_contribution_at_point(1, g, 1), res1) == 1, NULL);
+    fail_unless(epsck(gaussian_contribution_at_point(3, g, 1), res1) == 1, NULL);
+    fail_unless(epsck(gaussian_contribution_at_point(0, g, 1), res2) == 1, NULL);
 }
 END_TEST
 
@@ -255,10 +257,11 @@ START_TEST(test_sum_gaussians_at_point)
     G->w[0] = 1;
     G->w[1] = 1;
 
-    double res = 1.89483931681;
+    double res = 1.945959468;
+    double res2 = 1.746696871;
 
-    fail_unless(sum_gaussians_at_point(1, G) - res < 0.0000001, "Return does not match expected value.");
-    fail_unless(sum_gaussians_at_point(3, G) - res < 0.0000001, "Return does not match expected value.");
+    fail_unless(epsck(sum_gaussians_at_point(1, G), res), "Return does not match expected value.");
+    fail_unless(epsck(sum_gaussians_at_point(2, G), res), "Return does not match expected value.");
     fail_unless(sum_gaussians_at_point(3, NULL) == 0, "Null pointer returns nonzero");
 }
 END_TEST
@@ -281,13 +284,13 @@ START_TEST(test_gaussian_contribution)
     fail_unless(d == NULL, "Zero step not null");
     fail_unless(e == NULL, "Null pointer return non-null");
 
-    const double correct[] = {0.367879441, 0.641180388, 0.984839316, 1.0, 0.984839316, 0.641180388, 0.367879441};
+    const double correct[] = {0.606530659, 0.800737402, 0.945959468, 1.0, 0.945959468, 0.800737402, 0.606530659};
 
     int i;
     
     for (i = 0; i < 7; ++i) {
 	fail_unless(res[0][i] == i, "Expected position of contribution check does not match.");
-	fail_unless(res[1][i] - correct[i] < 0.0000001, "Contribution at point does not match expected contribution.");
+	fail_unless(epsck(res[1][i], correct[i]) == 1, "Contribution at point does not match expected contribution.");
     }
 }
 END_TEST
@@ -307,26 +310,28 @@ START_TEST(test_gauss_transform)
     G->w[0] = 1;
     G->w[1] = 1;
 
-    const double correct[] = {1.009059829, 1.536019705, 1.894839316, 1.894839316, 1.536019705, 1.009059829};
+    const double correct[] = {1.407268061, 1.746696871, 1.945959468, 
+			      1.945959468, 1.746696871, 1.407268061, 1.017642949};
 
     double_multi_arr* res = gauss_transform(G, 0, 6, 1);
     
     int i;
     
-    for (i = 0; i < 6; ++i) {
+    for (i = 0; i < res->lengths[0]; ++i) {
 	fail_unless(res->data[0][i] == i, "Data gathering point does not match expected.");
-	fail_unless(res->data[1][i] - correct[i] < 0.0000001, "Transform at point does not match expected value.");
+	fail_unless(epsck(res->data[1][i], correct[i]) == 1, "Transform at point does not match expected value.");
+	printf("resdata %lf\n", res->data[1][i]);
     }
 
     double_multi_arr* zerostep = gauss_transform(G, 0, 6, 0);
     double_multi_arr* negstep = gauss_transform(G, 0, 6, -1);
-    double_multi_arr* zeroint = gauss_transform(G, 0, 0, -1);
-    double_multi_arr* negint = gauss_transform(G, -4, 0, -1);
+    double_multi_arr* zeroint = gauss_transform(G, 0, 0, 1);
+    double_multi_arr* negint = gauss_transform(G, -4, 0, 1);
     
     fail_unless(zerostep == NULL, "Zero step size non-null return");
     fail_unless(negstep == NULL, "Negative step size non-null return");
     fail_unless(zeroint == NULL, "Zero interval non-null return");
-    fail_unless(negint == NULL, "Negative interval non-null return");
+    fail_unless(negint != NULL, "Negative interval null return");
 }
 END_TEST
 
@@ -407,15 +412,9 @@ START_TEST(test_find_min_value)
     double data1[] = {-153, -123, -222, -414, 34551};
     double data2[] = {13,313,444,555};
 
-    printf("%lf min\n", find_min_value(data, 6));
-    double diff = abs(find_min_value(data, 6) - 1.0);
-    printf("diff is %.20lf\n", diff);
-    double diff1 = abs(find_min_value(data1, 5) - -414.0);
-    double diff2 = abs(find_min_value(data2, 4) - 13.0);
-        
-    fail_unless(diff >= 0 && diff < 0.000001, NULL);
-    fail_unless(diff1 >= 0 && diff1 < 0.000001, NULL);
-    fail_unless(diff2 >= 0 && diff2 < 0.000001, NULL);
+    fail_unless(epsck(find_min_value(data, 6), 1), NULL);
+    fail_unless(epsck(find_min_value(data1, 5), -414.0), NULL);
+    fail_unless(epsck(find_min_value(data2, 4), 13.0), NULL);
 
     fail_unless(find_min_value(NULL, 5) == 0, NULL);
     fail_unless(find_min_value(data1, -1) == 0, NULL);
@@ -440,13 +439,9 @@ START_TEST(test_add_to_arr);
     int i;
     
     for (i = 0; i < 3; ++i) {
-	double diff = abs(correct[i] - ret[i]);
-	double diff1 = abs(correct1[i] - ret1[i]);
-	double diff2 = abs(correct2[i] - ret2[i]);
-	
-	fail_unless(diff >= 0 && diff < 0.000001, NULL);
-	fail_unless(diff1 >= 0 && diff1 < 0.000001, NULL);
-	fail_unless(diff2 >= 0 && diff2 < 0.000001, NULL);
+	fail_unless(epsck(correct[i], ret[i]), NULL);
+	fail_unless(epsck(correct1[i], ret1[i]), NULL);
+	fail_unless(epsck(correct2[i], ret2[i]), NULL);
     }
 
 }

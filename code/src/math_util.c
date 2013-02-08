@@ -345,7 +345,7 @@ double gaussian_contribution_at_point(double x, gaussian* g, double weight)
     if (weight == 0)
 	return 0;
 
-    return weight * exp(-pow(x - g->mean, 2)/pow(g->stdev, 2));
+    return weight * exp(-pow(x - g->mean, 2)/(2 * pow(g->stdev, 2)));
 }
 
 /*
@@ -354,7 +354,8 @@ double gaussian_contribution_at_point(double x, gaussian* g, double weight)
  */
 double** gaussian_contribution(gaussian* g, double start, double end, double step, double weight)
 {
-    if (!interval_valid(start, end) || g == NULL || step <= 0)
+    printf("contrib %lf %lf\n", start, end);
+    if (g == NULL || step <= 0 || start >= end)
 	return NULL;
     
     int len = (end - start)/step;
@@ -397,7 +398,7 @@ double sum_gaussians_at_point(double x, gauss_vector* G)
  */
 double_multi_arr* gauss_transform(gauss_vector* G, double start, double end, double resolution)
 {
-    if (!interval_valid(start, end) || resolution <= 0 || G == NULL)
+    if (start >= end || resolution <= 0 || G == NULL)
 	return NULL;
 
     double current;
@@ -426,12 +427,13 @@ double_multi_arr* gauss_transform(gauss_vector* G, double start, double end, dou
 }
 
 /*
- * Returns a gaussian transform which is shifted so that all points are >= 0
+ * Returns a gaussian transform which is shifted so that all points are >= 0 on the
+ * y axis
  */
 double_multi_arr* shifted_transform(gauss_vector* V, double start, double interval,
 				   double step, double resolution)
 {
-    if (step <= 0 || resolution <= 0 || !interval_valid(start, start + interval))
+    if (step <= 0 || resolution <= 0 || start >= start + interval)
 	return NULL;
     
     double_multi_arr* func = gauss_transform(V, start, start + interval, resolution);
@@ -531,7 +533,7 @@ gauss_vector* gen_gaussian_vector_uniform(double stdev, double start,
 					  double multiplier)
 {
     double end = start + interval_time;
-    if (!interval_valid(start, end) || step <= 0 || stdev <= 0)
+    if (start >= end || step <= 0 || stdev <= 0)
 	return NULL;
     
     gauss_vector* G = malloc(sizeof(gauss_vector));

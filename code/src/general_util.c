@@ -234,7 +234,19 @@ int has_required_params(paramlist* params, char** required_params, int len)
  */
 int create_default_param_file(char* filename)
 {
-    printf("Writing default parameter file to %s...", filename);
+    printf("Writing default parameter file to %s...\n", filename);
+    
+    if (file_exists(filename)){
+	printf("The file already exists. Overwrite? (y(es) or n(o))\n");
+	char read = getchar();
+	if (read == 'y'){
+	    printf("Overwriting...");
+	} else {
+	    printf("Aborted.\n");
+	    exit(1);
+	}
+    }
+
     FILE* fp = fopen(filename, "w");
 
     if (fp == NULL){
@@ -315,9 +327,9 @@ int create_default_param_file(char* filename)
 	    "# standard deviation.", "simple_stdev", DEFAULT_SIMPLE_STDEV);
     fprintf(fp, "%s\n%s %lf\n\n", "# Specifies the alpha parameter which is used"\
 	    " to calculate the standard deviation of\n# kernels when generating"\
-	    " functions from gaussians. Used when simple_stdev is set to no. The "\
+	    " functions from gaussians. Used when simple_stdev is set to no.\n# The "\
 	    "value of this parameter is multiplied with the gauss_generation_step"\
-	    " parameter to calculate the standard deviation.",
+	    " parameter\n# to calculate the standard deviation.",
 	    "stdev_alpha", DEFAULT_STDEV_ALPHA);
     fprintf(fp, "%s\n%s %lf\n\n", "# Specifies the distance on the x-axis between" \
 	    " each gaussian when generating.", "gauss_generation_step", DEFAULT_GEN_STEP);

@@ -40,5 +40,6 @@ void output_gaussian_vector(char* filename, char* mode, gauss_vector* V);
 gauss_vector* read_gauss_vector(char* filename);
 void output_double_multi_arr(char* filename, char* mode, double_multi_arr* arr);
 int create_file_in_dir(char* filename, char* dirname);
+int file_exists(char* filename);
 
 #endif

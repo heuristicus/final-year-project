@@ -1,3 +1,15 @@
+2013-02-08  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* check_math_util.c: Tests modified to use new double checking function,
+	updated for new gaussian calculation (which was wrong).
+
+	* testmain.h: Added function for checking the equivalence of doubles.
+
+2013-02-06  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* general_util.c: Passing a file which already exists to default parameter
+	creation asks whether to overwrite.
+
 2013-02-05  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* general_util.c, defparams.h: Added parameters to the files to allow

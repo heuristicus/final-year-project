@@ -74,14 +74,6 @@ alpha 0.1000000000
 # Standard deviation to apply to generated gaussians
 gauss_stdev 10.000000
 
-# Specifies the distance on the x-axis between each gaussian when generating.
-gauss_generation_step 10.000000
-
-# Specifies the distance between points at which the gaussian is sampled when summing
-# or outputting data. A high value for this will result in fast computation but loss
-# of detail, and a low value will give more granularity but summing gaussians will take longer. 
-gauss_resolution 0.500000
-
 # Specifies whether to disregard the standard deviation specified above and
 # instead calculate the standard deviation to apply based on the function
 # \alpha * \Delta t. This allows the standard deviation to be specified as
@@ -91,13 +83,23 @@ simple_stdev yes
 
 # Specifies the alpha parameter which is used to calculate the standard deviation of
 # kernels when generating functions from gaussians. Used when simple_stdev is set to no.
-stdev_alpha 3.000000
+# The value of this parameter is multiplied with the gauss_generation_step parameter
+# to calculate the standard deviation.
+stdev_alpha 4
+
+# Specifies the distance on the x-axis between each gaussian when generating.
+gauss_generation_step 5
+
+# Specifies the distance between points at which the gaussian is sampled when summing
+# or outputting data. A high value for this will result in fast computation but loss
+# of detail, and a low value will give more granularity but summing gaussians will take longer. 
+gauss_resolution 0.500000
 
 # Multiplier to apply to weights of gaussians when generating random functions.
 # The standard gaussian weight is ~ N(0,1). The standard functions have on average
 # vary between -5 and 5, which may not be appropriate. Multiplying the weight
 # values gives a greater range of values but preserves the shape of the function.
-gauss_func_multiplier 5.000000
+gauss_func_multiplier 2.00000
 
 ################################################################################
 #                              estimator parameters                            #
@@ -135,7 +137,7 @@ pc_max_extension 15.000000
 # use at most this number of lines to estimate the underlying function. If extensions
 # succeed or the data is quite linear, fewer subintervals will be required to make a
 # good estimate, so the actual number of breakpoints in the estimate may be lower.
-pc_max_breakpoints 5
+pc_max_breakpoints 15
 
 # Proportion of the interval time that the minimum possible subinterval length should
 # be. Very short subintervals often result in very bad estimates, especially if the
@@ -156,11 +158,11 @@ pc_pmf_sum_threshold 0.850000
 #                              baseline parameters                             #
 ################################################################################
 base_iwls_iterations 3
-base_iwls_subintervals 5
+base_iwls_subintervals 7
 base_max_extension 15.000000
-base_max_breakpoints 5
-base_min_interval_proportion 0.100000
-base_pmf_threshold 0.020000
+base_max_breakpoints 12
+base_min_interval_proportion 0.0800000
+base_pmf_threshold 0.060000
 base_pmf_sum_threshold 0.850000
 
 ################################################################################

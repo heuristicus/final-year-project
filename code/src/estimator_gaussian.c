@@ -34,7 +34,7 @@ double_multi_arr* _estimate_gaussian(char* infile, char* outfile, double start,
     	shift = -min;
     }
     
-    output_gauss_transform(outfile, "w", T->data, shift, T->lengths[0], stdev);
+    output_gauss_transform(outfile, "w", T->data, shift, T->lengths[0], stdev + 6);
     output_gaussian_contributions("contrib", "w", G, start, start + interval_length, resolution, 0);
     /* mult_double_to_file("kdetest", "w", T[0], T[1], interval_length/resolution); */
 

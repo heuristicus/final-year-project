@@ -177,8 +177,6 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile, int ns
     double max = find_max_value(T->data[1], T->lengths[1]);
     double min = find_min_value(T->data[1], T->lengths[1]);
     double lambda = ceil(-min + max);
-//    output_gauss_transform("gen_transform", "w", T->data, -min, T->lengths[1], 1);
-//    output_gaussian_contributions("gen_gauss" , "w", G, start, start + interval, resolution, 1);
 
     char* out = malloc(strlen(outfile) + strlen(stream_ext) + 5 + strlen(".dat"));
 
@@ -206,7 +204,6 @@ double_multi_arr* nonhom_from_gaussian(gauss_vector* G, double lambda,
 {
     init_rand(0.0);
             
-    printf("time delta is %lf\n", time_delta);
     double base_time = start;
     double shifted_time = time_delta + start;
     double end = start + interval;
@@ -338,7 +335,7 @@ void generate_gaussian_data(char* paramfile, char* infile, char* outfile,
 	}
 	if (output_type >= 1){
 	    // Need to apply something to normalise when you have input file. Dividing by the
-	    // stdev is ok, but not good enough.
+	    // stdev is ok, but not good enough. Is this really necessary?
 	    sprintf(out, "%s_%d_sum.dat", outfile, i);
 	    double_multi_arr* func = shifted_transform(G, start, interval, step, resolution);
     	    output_double_multi_arr(out, "w", func);
@@ -349,8 +346,7 @@ void generate_gaussian_data(char* paramfile, char* infile, char* outfile,
 	    sprintf(out, "%s_%d_contrib.dat", outfile, i);
 	    output_gaussian_contributions(out, "w", G, start, start + interval, resolution, 1);
 	    printf("Individual gaussian contributions output to %s.\n", out);
-}	
-
+	}
 	free_gauss_vector(G);
     }
 

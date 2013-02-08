@@ -402,11 +402,11 @@ void output_gauss_transform(char* filename, char* mode, double** T, double shift
 void output_gaussian_contributions(char* filename, char* mode, gauss_vector* G, double start,
 				   double end, double resolution, int apply_weight)
 {
-    if (!interval_valid(start, end)){
-	printf("Invalid interval [%lf, %lf] when outputting gaussians to %s.\n",
-	       start, end, filename);
-	return;
-    }
+    /* if (!interval_valid(start, end)){ */
+    /* 	printf("Invalid interval [%lf, %lf] when outputting gaussians to %s.\n", */
+    /* 	       start, end, filename); */
+    /* 	return; */
+    /* } */
 
     FILE *fp = fopen(filename, mode);
 
@@ -550,4 +550,15 @@ int create_file_in_dir(char* filename, char* dirname)
     }
 
     return -1;
+}
+
+/*
+ * Checks whether a file exists. 1 if it does, 0 if not.
+ */
+int file_exists(char* filename)
+{
+    if (access(filename, F_OK) != -1)
+	return 1;
+    else
+	return 0;
 }
