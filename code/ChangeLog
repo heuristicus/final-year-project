@@ -1,5 +1,13 @@
 2013-02-08  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
+	* paramlist.c: New function to extract a list of double parameters separated
+	by commas (with no spaces).
+
+	* launcher.c, generator.c: Time delta extraction changed to use new function
+	in paramlist.
+
+	* combinefunction.c: Function now takes a double_arr struct.
+
 	* check_math_util.c: Tests modified to use new double checking function,
 	updated for new gaussian calculation (which was wrong).
 

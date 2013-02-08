@@ -45,7 +45,11 @@ START_TEST(test_combine_functions)
     comb[0] = a;
     comb[1] = b;
 
-    double time_delay[] = {0, 1};
+    
+    double tddata[] = {0, 1};
+    double_arr* time_delay = malloc(sizeof(double_arr));
+    time_delay->len = 2;
+    time_delay->data = tddata;
     
     double_multi_arr* res = combine_functions(comb, time_delay, 6, 2, 1);
     int i;
@@ -53,7 +57,7 @@ START_TEST(test_combine_functions)
     double correct[] = {6.5, 6.5, 7.5, 10, 10};
     
     for (i = 0; i < sizeof(correct)/sizeof(double); ++i) {
-	fail_unless(res->data[0][i] == i + time_delay[1], "Expected and given sample points do not match");
+	fail_unless(res->data[0][i] == i + time_delay->data[1], "Expected and given sample points do not match");
 	fail_unless(res->data[1][i] == correct[i], "Received combination does not match.");
     }
 

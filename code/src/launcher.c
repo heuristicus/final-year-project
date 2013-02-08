@@ -240,8 +240,7 @@ void multi_est_default(char* paramfile, char* infile, char* outfile, char* estim
     if (step <= 0)
 	step = DEFAULT_STEP;
 
-    char* tmp = NULL;
-    double* time_delta = NULL;
+    double_arr* time_delta = NULL;
 	    
     if (fname == NULL || pref == NULL){
 	printf("You must include the parameters \"outfile\" and \"stream_ext\" in"\
@@ -264,17 +263,9 @@ void multi_est_default(char* paramfile, char* infile, char* outfile, char* estim
     }
 	    
     /* Find time delay here*/
-    if ((tmp = get_string_param(params, "timedelta")) != NULL){
-	string_arr* vals = string_split(tmp, ',');
-	int tdlen = vals->len;
-	time_delta = malloc((tdlen + 1) * sizeof(double));
-	
-	for (i = 1; i < tdlen + 1; ++i) {
-	    time_delta[i - 1] = atof(vals->data[i]);
-	}
 
-	free_string_arr(vals);
-    } else {
+    // remove this once time delta is found automatically?
+    if ((time_delta = get_double_list_param(params, "timedelta")) == NULL){
 	printf("You must specify the time delay between each stream. "\
 	       "Add something like \"timedelta 0,10,20\" to your parameter file\n");
 	exit(1);

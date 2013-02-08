@@ -83,6 +83,26 @@ START_TEST (test_len)
 }
 END_TEST
 
+START_TEST(test_get_double_list_param)
+{
+    paramlist* a = init_list("dlist", "1.2,2.4,4.5,5.6");
+    double_arr* res = get_double_list_param(a, "dlist");
+    
+    int i;
+
+    double correct[] = {1.2,2.4,4.5,5.6};
+    
+    fail_unless(res->len == 4);
+    
+    for (i = 0; i < 4; ++i) {
+	fail_unless(epsck(res->data[i], correct[i]), NULL);
+    }
+
+    fail_unless(get_double_list_param(a, "noexist") == NULL, NULL);
+    fail_unless(get_double_list_param(NULL, "none") == NULL, NULL);
+}
+END_TEST
+
 Suite* paramlist_suite(void)
 {
     Suite* s = suite_create("paramlist");
@@ -93,6 +113,7 @@ Suite* paramlist_suite(void)
     tcase_add_test(tc_core, test_len);
     tcase_add_test(tc_core, test_get_param);
     tcase_add_exit_test(tc_core, test_add_exit, 1);
+    tcase_add_test(tc_core, test_get_double_list_param);
     
     suite_add_tcase(s, tc_core);
     return s;

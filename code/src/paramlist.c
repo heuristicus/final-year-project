@@ -103,6 +103,33 @@ char* get_string_param(paramlist* head, char* param_name)
 }
 
 /*
+ * Gets a parameter which is a list of doubles separated by commas,
+ * with no spaces.
+ */
+double_arr* get_double_list_param(paramlist* head, char* param_name)
+{
+    double_arr* res = malloc(sizeof(double_arr*));
+    char* retrieved;
+    
+    if (head == NULL || (retrieved = get_string_param(head, param_name)) == NULL)
+	return NULL;
+
+    string_arr* vals = string_split(retrieved, ',');
+    
+    res->len = vals->len;
+    res->data = malloc((res->len) * sizeof(double));
+
+    int i;
+    
+    for (i = 0; i < res->len; ++i) {
+	res->data[i] = atof(vals->data[i]);
+    }
+    free_string_arr(vals);
+
+    return res;
+}
+
+/*
  * Set the value of a string parameter to the given value. If the parameter does
  * not exist, 1 is returned.
  */

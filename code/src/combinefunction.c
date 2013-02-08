@@ -5,7 +5,7 @@
  * Takes an array of function estimates from different streams, and the
  * time delay between each. The average value of these functions is taken.
  */
-double_multi_arr* combine_functions(est_arr** estimates, double* time_delay, 
+double_multi_arr* combine_functions(est_arr** estimates, double_arr* time_delay, 
 			   double interval_time, int num_estimates, double step)
 {
     if (estimates == NULL || time_delay == NULL || step <= 0 || num_estimates <= 0 ||
@@ -19,7 +19,7 @@ double_multi_arr* combine_functions(est_arr** estimates, double* time_delay,
     int i;
 
     for (i = 0; i < num_estimates; ++i) {
-	max_delay = time_delay[i] > max_delay ? time_delay[i] : max_delay;
+	max_delay = time_delay->data[i] > max_delay ? time_delay->data[i] : max_delay;
     }
 
     double_multi_arr* combination = malloc(sizeof(double_multi_arr));
@@ -43,7 +43,7 @@ double_multi_arr* combine_functions(est_arr** estimates, double* time_delay,
     for (i = 0, time = max_delay; time <= interval_time - max_delay; time += step, ++i) {
 	double total = 0;
 	for (estimate_num = 0; estimate_num < num_estimates; ++estimate_num) {
-	    total += estimate_at_point(estimates[estimate_num], time - time_delay[estimate_num]);
+	    total += estimate_at_point(estimates[estimate_num], time - time_delay->data[estimate_num]);
 	}
 	combination->data[0][i] = time;
 	combination->data[1][i] = total/num_estimates;

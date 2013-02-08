@@ -47,22 +47,7 @@ void generate(char* paramfile, char* outfile, int nstreams)
 	nstreams = get_int_param(params, "nstreams");
     double lambda = get_double_param(params, "lambda");
     double interval_time = get_double_param(params, "interval_time");
-    char* tdelta = get_string_param(params, "timedelta");
-    double_arr* time_delta = malloc(sizeof(double_arr*));
-    
-    // extract data from the timedelta parameter
-    string_arr* vals = string_split(tdelta, ',');
-    
-    time_delta->len = vals->len;
-    time_delta->data = malloc((time_delta->len) * sizeof(double));
-
-    int i;
-    
-    for (i = 0; i < time_delta->len; ++i) {
-	time_delta->data[i] = atof(vals->data[i]);
-    }
-    free_string_arr(vals);
-
+    double_arr* time_delta = get_double_list_param(params, "timedelta");
     int output_verbosity = get_int_param(params, "verbosity");
     char* expression = get_string_param(params, "expression");
 
@@ -142,18 +127,7 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile, int ns
     
     int i;
 
-    char* tdelta = get_string_param(params, "timedelta");
-    double_arr* time_delta = malloc(sizeof(double_arr*));
-    
-    string_arr* vals = string_split(tdelta, ',');
-    
-    time_delta->len = vals->len;
-    time_delta->data = malloc((time_delta->len) * sizeof(double));
-
-    for (i = 0; i < time_delta->len; ++i) {
-	time_delta->data[i] = atof(vals->data[i]);
-    }
-    free_string_arr(vals);
+    double_arr* time_delta = get_double_list_param(params, "timedelta");
 
     if (outfile == NULL){
 	outfile = get_string_param(params, "outfile");
