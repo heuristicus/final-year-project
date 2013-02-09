@@ -62,7 +62,7 @@ gauss_vector* _n_estimate_gaussian(char* infile, char* outfile, double start,
     gauss_vector* G = gen_gaussian_vector_from_array(ev + 1, ev[0] - 1, stdev, 1, 0);
 
     double_multi_arr* T = gauss_transform(G, start, start + interval_length, 0.5);
-    output_gauss_transform(outfile, "w", T->data, 0, T->lengths[0], stdev);
+    output_gauss_transform(outfile, "w", T->data, 0, T->lengths[0], 1);
     
     return G;
 }

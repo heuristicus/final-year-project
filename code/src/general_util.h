@@ -22,5 +22,6 @@ void free_string_arr(string_arr* arr);
 int has_missing_parameters(string_arr* checklist, paramlist* params);
 est_data* data_at_point(est_arr* estimate, double check_time);
 double estimate_at_point(est_arr* estimate, double time);
+double_multi_arr* init_multi_array(int num_arrays, int array_length);
 
 #endif

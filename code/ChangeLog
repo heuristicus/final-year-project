@@ -1,3 +1,18 @@
+2013-02-09  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* estimator_delta.c: Untested prototype of the pmf estimator implemented.
+
+	* launcher.c: Function combination for gaussians added to the multiple estimate
+	process. pmf method now able to be used.
+
+	* general_util.c: Function for initialising double_multi_arr structs so that
+	code is cleaner.
+
+	* combinefunction.c: Function for combining gaussians. Takes a set of gauss
+	vectors and finds their average. This should probably be done on non-normalised
+	gaussians which can be normalised when being output to file, or once the
+	normalisation constant has been estimated.
+
 2013-02-08  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* launcher.c: Estimates delta according to parameters in the paramfile.

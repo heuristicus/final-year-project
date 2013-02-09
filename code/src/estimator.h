@@ -53,6 +53,8 @@ double area_at_point_gauss(gauss_vector* f1, gauss_vector* f2, double x, double 
 double area_at_point_base(est_arr* f1, est_arr* f2, double x, double delay);
 double estimate_delay_area(void* f1, void* f2, double max_delay,double resolution,
 			   double step, char* type);
+double estimate_delay_pmf(void* f1, void* f2, double_arr* events, double max_delay,
+			  double resolution, double step, char* type);
 double total_area_estimate(void* f1, void* f2, double start,
 			   double end, double resolution, double delay, char* type);
 

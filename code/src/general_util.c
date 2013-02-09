@@ -492,6 +492,9 @@ void free_gauss_vector(gauss_vector* G)
     free(G);
 }
 
+/*
+ * Free memory allocated to a double_multi_arr
+ */
 void free_double_multi_arr(double_multi_arr* arr)
 {
     int i;
@@ -525,7 +528,7 @@ int has_missing_parameters(string_arr* checklist, paramlist* params)
 }
 
 /*
- * calculates the value of the estimate at a given point in time.
+ * calculates the value of an estimate at a given point in time.
  */
 double estimate_at_point(est_arr* estimate, double time)
 {
@@ -558,4 +561,25 @@ est_data* data_at_point(est_arr* estimate, double check_time)
 	}
     }
     return ret;
+}
+
+/*
+ * Initialises a double_multi_arr struct which contains num_arrays arrays,
+ * each having the same length, array_length.
+ */
+double_multi_arr* init_multi_array(int num_arrays, int array_length)
+{
+    double_multi_arr* res = malloc(sizeof(double_multi_arr));
+    res->len = num_arrays;
+    res->lengths = malloc(sizeof(int) * num_arrays);
+    res->data = malloc(sizeof(double*) * num_arrays);
+    
+    int i;
+    
+    for (i = 0; i < num_arrays; ++i) {
+	res->data[i] = malloc(array_length * sizeof(double));
+	res->lengths[i] = array_length;
+    }
+
+    return res;
 }

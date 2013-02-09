@@ -10,9 +10,38 @@
  * compared. A high resolution will take longer, but the estimate will be more
  * accurate.
  */
-double estimate_delay_pdf(void* f1, void* f2, double max_delay, double resolution,
-			  char* type)
+double estimate_delay_pmf(void* f1, void* f2, double_arr* events, double max_delay,
+			  double resolution, double step, char* type)
 {
+    // guess at a time delay
+    double best_guess = 0;
+    double best_value = INFINITY;
+    double guess = 0;
+
+    double start = -max_delay, end = max_delay;
+    double current = start;
+    
+    FILE *fp = fopen("delaycheck_pmf", "w");
+
+    while (current <= end){
+	fprintf(fp, "%lf %lf\n", current, guess);
+	if (guess < best_value){
+	    printf("New value %lf is less than old %lf. guess updated to %lf\n", guess, best_value, current);
+	    best_value = guess;
+	    best_guess = current;
+	} else {
+	    printf("New value %lf is larger than old %lf. guess remains at %lf\n", guess, best_value, best_guess);
+	}
+	current += step;
+    }
+
+    fclose(fp);
+
+    return -best_guess;
+    // combine the two functions as if it were the real result
+    // find log(pmf) at points along x and sum them
+    // find the delay where the log(pmf) is maximised
+
     return 0;
 }
 
