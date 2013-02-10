@@ -488,9 +488,11 @@ START_TEST(test_find_max_value)
 {
     double data1[] = {3.5, 5.12,1351.3215,515125};
     double data2[] = {-2341,-12315,-15252,-1515};
+    double data3[] = {-20};
 
     fail_unless(find_max_value(data1, sizeof(data1)/sizeof(double)) == 515125, NULL);
     fail_unless(find_max_value(data2, sizeof(data2)/sizeof(double)) == -1515, NULL);
+    fail_unless(find_max_value(data3, sizeof(data3)/sizeof(double)) == -20, NULL);
 
     fail_unless(find_max_value(data1, -1) == 0, NULL);
     fail_unless(find_max_value(data1, 0) == 0, NULL);
@@ -551,6 +553,7 @@ Suite* math_util_suite(void)
     tcase_add_test(tc_core, test_weight_vector);
     tcase_add_test(tc_core, test_find_min_value_int);
     tcase_add_test(tc_core, test_find_max_value);
+    tcase_add_test(tc_core, test_multiply_arr);
 
     suite_add_tcase(s, tc_core);
 

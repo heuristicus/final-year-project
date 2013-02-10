@@ -57,6 +57,9 @@ double estimate_delay_pmf(void* f1, void* f2, double_arr* events, double max_del
 			  double resolution, double step, char* type);
 double total_area_estimate(void* f1, void* f2, double start,
 			   double end, double resolution, double delay, char* type);
+double find_normaliser(void* f1, double_arr* events, double interval_start,
+		       double interval_end, double check_start, double check_limit,
+		       double step, int subintervals, char* type);
 
 /* double total_area_estimate_base(est_arr* f1, est_arr* f2, double start, */
 /* 				double end, double resolution, double delay); */

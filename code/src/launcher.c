@@ -249,7 +249,7 @@ void multi_est_gauss(paramlist* params, char* infile, char* outfile, int nstream
 	sprintf(infname, "%s%s%d.dat", fname, pref, 0);
 	double* events = get_event_data_all(infname);
 	double_arr* ev = malloc(sizeof(double_arr));
-	ev->len = events[0];
+	ev->len = events[0] - 1;
 	ev->data = events + 1;
 	
 	for (i = 0; i < nstreams - 1; ++i) {
@@ -289,10 +289,11 @@ void multi_est_gauss(paramlist* params, char* infile, char* outfile, int nstream
 
     }
 
-    /* double_multi_arr* comb =  */combine_gauss_vectors(estimates, delays, 0, 100, step, nstreams);
+
+    double_multi_arr* comb = combine_gauss_vectors(estimates, delays, 0, 100, step, nstreams);
     // get an overall function estimate
     
-//    output_double_multi_arr("gausscomb", "w", comb);
+    output_double_multi_arr("gausscomb", "w", comb);
     
     free(infname);
     free(outname);
@@ -312,7 +313,8 @@ void multi_est_default(char* paramfile, char* infile, char* outfile, char* estim
 	step = DEFAULT_STEP;
 
     char* tmp = NULL;
-    double* time_delta = NULL;
+    double* time_delay = NULL;
+    double_arr* time_delta = NULL;
 	    
     if (fname == NULL || pref == NULL){
 	printf("You must include the parameters \"outfile\" and \"stream_ext\" in"\
@@ -349,7 +351,7 @@ void multi_est_default(char* paramfile, char* infile, char* outfile, char* estim
 	sprintf(infname, "%s%s%d.dat", fname, pref, 0);
 	double* events = get_event_data_all(infname);
 	double_arr* ev = malloc(sizeof(double_arr));
-	ev->len = events[0];
+	ev->len = events[0] - 1;
 	ev->data = events + 1;
 
 	for (i = 0; i < nstreams - 1; ++i) {
@@ -370,13 +372,15 @@ void multi_est_default(char* paramfile, char* infile, char* outfile, char* estim
 	if ((tmp = get_string_param(params, "timedelta")) != NULL){
 	    string_arr* vals = string_split(tmp, ',');
 	    int tdlen = vals->len;
-	    time_delta = malloc((tdlen) * sizeof(double));
+	    time_delay = malloc((tdlen) * sizeof(double));
 	
 	    for (i = 0; i < tdlen; ++i) {
-		time_delta[i] = atof(vals->data[i]);
+		time_delay[i] = atof(vals->data[i]);
 	    }
 
 	    free_string_arr(vals);
+	    time_delta->len = tdlen;
+	    time_delta->data = time_delay;
 	} else {
 	    printf("You must specify the time delay between each stream. "\
 		   "Add something like \"timedelta 0,10,20\" to your parameter file\n");
@@ -391,7 +395,7 @@ void multi_est_default(char* paramfile, char* infile, char* outfile, char* estim
 	exit(1);
     }
 
-    double_multi_arr* combined = combine_functions(allstreams, time_delta, interval_time, nstreams, step);
+    double_multi_arr* combined = combine_functions(allstreams, time_delta, interval_time, step, nstreams);
     output_double_multi_arr(outfile, "w", combined);
 
     free_list(params);

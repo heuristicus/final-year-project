@@ -377,8 +377,9 @@ int create_default_param_file(char* filename)
     // gaussian
     put_section_header(fp, "Gaussian Estimator Parameters");
     fprintf(fp, "%s\n%s %lf\n\n", "# Standard deviation to apply to gaussian"\
-	    " kernels used to estimate functions","gauss_est_stdev",
-	    DEFAULT_GAUSS_EST_STDEV);
+	    " kernels used to estimate functions\n# Changing this value will"\
+	    " change the normalisation constant required to get\n# the"\
+	    " correct function estimate.","gauss_est_stdev",DEFAULT_GAUSS_EST_STDEV);
     fprintf(fp, "%s\n%s %lf\n\n", "# Specify resolution of kernels used to estimate"\
 	    " gaussians. A small value will\n# give higher precision but take longer"
 	    ,"gauss_est_resolution", DEFAULT_GAUSS_EST_RESOLUTION);
@@ -541,6 +542,25 @@ double estimate_at_point(est_arr* estimate, double time)
 }
 
 /*
+ * Finds the value of the given estimate at all points in the given array.
+ */
+double_arr* estimate_at_points(est_arr* estimate, double* points, int len)
+{
+    if (estimate == NULL || points == NULL || len <= 0)
+	return NULL;
+
+    double_arr* r = init_double_arr(len);
+    
+    int i;
+
+    for (i = 0; i < len; ++i) {
+	r->data[i] = estimate_at_point(estimate, points[i]);
+    }
+
+    return r;
+}
+
+/*
  * Returns the data from the given estimate that can be used to calculate
  * the function value at the specified time.
  */
@@ -569,6 +589,9 @@ est_data* data_at_point(est_arr* estimate, double check_time)
  */
 double_multi_arr* init_multi_array(int num_arrays, int array_length)
 {
+    if (array_length <= 0 || num_arrays <= 0)
+	return NULL;
+
     double_multi_arr* res = malloc(sizeof(double_multi_arr));
     res->len = num_arrays;
     res->lengths = malloc(sizeof(int) * num_arrays);
@@ -582,4 +605,19 @@ double_multi_arr* init_multi_array(int num_arrays, int array_length)
     }
 
     return res;
+}
+
+/*
+ * Initialises a double_arr struct with an array of the given length
+ */
+double_arr* init_double_arr(int len)
+{
+    if (len <= 0)
+	return NULL;
+
+    double_arr* r = malloc(sizeof(double_arr));
+    r->len = len;
+    r->data = malloc(sizeof(double) * r->len);
+    
+    return r;
 }

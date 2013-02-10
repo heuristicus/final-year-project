@@ -1,6 +1,5 @@
 #include "math_util.h"
 
-//#define DEBUG
 #define ZERO_EPSILON 0.000000000000000001
 
 
@@ -48,8 +47,7 @@ int* sum_events_in_interval(double *event_times, int num_events, double start_ti
     double subinterval_time = (end_time - start_time) / num_subintervals;
 
     int *bins = calloc(num_subintervals, sizeof(int));
-    
-    for (; i < num_events; ++i){
+     for (; i < num_events; ++i){
 	for (; event_times[i] < start_time; i++); // get to the start of the interval that we are checking.
 		
 	// Just in case we go over the end of the array that we receive. This shouldn't really happen
@@ -59,14 +57,14 @@ int* sum_events_in_interval(double *event_times, int num_events, double start_ti
 	}
 
 	while (event_times[i] > (start_time + (subinterval_time * (current_interval + 1)))) {
-#ifdef DEBUG
+#ifdef VERBOSE
 	    printf("event time: %lf, end of interval: %lf\n", event_times[i], start_time + (subinterval_time * (current_interval + 1)));
 	    printf("%lf is greater than %lf, interval time: %lf, interval incremented to %d\n", event_times[i], start_time + (subinterval_time * (current_interval + 1)), subinterval_time, current_interval + 1);
 #endif
 	    current_interval++;
 	}
 
-#ifdef DEBUG
+#ifdef VERBOSE
 	printf("current time: %lf, interval end: %lf. Adding to loc %d\n", event_times[i], start_time + (subinterval_time * (current_interval + 1)), current_interval);
 #endif
 
@@ -346,7 +344,6 @@ double gaussian_contribution_at_point(double x, gaussian* g, double weight)
 	return 0;
 
     return weight * exp(-pow(x - g->mean, 2)/(2 * pow(g->stdev, 2)));
-//    return weight * exp(-pow(x - g->mean, 2)/pow(g->stdev, 2));
 }
 
 /*
@@ -680,27 +677,88 @@ double* multiply_arr(double* data, int len, double multiplier)
 }
 
 /*
- * Calculates the sum of poisson probability density functions in the interval
- * [start, end] with the given resolution and the given delay applied to f2.
+ * Computes the log of the probability mass function at each 
  */
-/* double total_function_pdf(gauss_vector* f1, gauss_vector* f2, double start, double end, */
-/* 			  double resolution, double delay) */
-/* { */
-/*     if (f1 == NULL || f2 == NULL || !interval_valid(start, end) || resolution <= 0) */
-/* 	return -1; */
+double sum_log_pmfs(int* counts, double* lambdas, double normaliser, int len)
+{
+    if (counts == NULL || lambdas == NULL || normaliser == 0 || len <= 0)
+	return -INFINITY;
     
-/*     double current = start; */
-/*     double sum = 0; */
-/*     int i = 0; */
-        
-/*     while(current <= end){ */
-/* 	sum += poisson_pdf_at_point(f1, f2, current, delay); */
-/* 	current += resolution; */
-/* 	++i; */
-/*     } */
+    int i;
+    double sum = 0;
+    double res;
+    
+    for (i = 0; i < len; ++i) {
+	res = log(gsl_ran_poisson_pdf(counts[i], lambdas[i] / normaliser));
+	sum += res;
+	//printf("count %d, normalised lambda %lf, pmf %lf, sum now %lf\n", counts[i], lambdas[i]/normaliser, res, sum);
+    }
 
-/*     return sum; */
-/* } */
+    return sum;
+}
 
-/* double poisson_pdf_at_point() */
+/*
+ * Computes the sum of values in the interval [start, end]. Each value in the times array
+ * should correspond to a value in the values array. All values in the value array are divided
+ * by the normaliser provided.
+ */
+double sum_array_interval(double* times, double* values, double start, double end, double normaliser, int len)
+{
+    if (times == NULL || values == NULL || end <= start || len <= 0)
+	return -INFINITY;
+    
+    printf("start %lf end %lf\n", start, end);
 
+    int i;
+    double current, sum = 0;
+    
+    for (i = 0, current = times[0]; current <= end && i < len; ++i, current = times[i]) {
+	//printf("at %d, current time is %lf, value is %lf\n", i, current, values[i]/normaliser);
+	if (current < start)
+	    continue;
+	sum += values[i];
+    }
+
+    return sum / normaliser;
+}
+
+/*
+ * Sums the given gaussian vector at all points provided in the array.
+ */
+double_arr* sum_gaussians_at_points(gauss_vector* G, double* points, int len)
+{
+    if (G == NULL || points == NULL || len <= 0)
+	return NULL;
+
+    double_arr* ret = init_double_arr(len);
+
+    int i;
+
+    for (i = 0; i < len; ++i) {
+	ret->data[i] = sum_gaussians_at_point(points[i], G);
+    }
+    
+    return ret;
+}
+
+/*
+ * Finds the largest positive or negative value in the given array.
+ */
+double largest_value_in_arr(double* data, int len)
+{
+    if (data == NULL || len <= 0){
+	return 0;
+    }
+    
+    int i;
+    double max = -INFINITY;
+    
+    for (i = 0; i < len; ++i) {
+	
+	if (fabs(data[i]) > max){
+	    max = fabs(data[i]);
+	}
+	
+    }
+    return max;
+}

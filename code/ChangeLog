@@ -1,3 +1,33 @@
+2013-02-10  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* math_util.c: Function for finding the sum of the log of probability mass
+	functions, which takes a normalisation constant. Takes an array of counts
+	and an array of lambda values and finds the pmf for each, summing as it goes.
+	The normalisation constant ensures that the lambda values correspond to the
+	bin counts so that a true value can be found. Function for summing values
+	in a specified interval given time values and data values. Function for
+	summing gaussians at the specified points by passing an array of desired
+	sample points. Function to find the largest value in the array, positive or
+	negative.
+
+	* general_util.c: Functions for initialising array structs with specified
+	lengths, function for finding a series of values from an est_arr struct.
+
+	* estimator_delta.c: Prototype of pmf estimator improved and almost working.
+	Function combination needs to be completed to a satisfactory level before it
+	can be finished. Implemented a function to find the normalisation constant
+	required to get gaussians to correspond to differing numbers of bins when
+	doing the delta estimation. The normalisation constant required depends on the
+	standard deviation of the gaussians used to estimate the function.
+
+	* combinefunction.c: Fixed function combination. Required an array containing
+	a delay for the first function as well, but since that is taken as a base with
+	no delay, it is unneeded. The function now takes an array containing delays
+	between the base and subsequent functions. This will lead to the function
+	combination breaking when the time delta is read from the parameter file, as
+	there the base time is specified as zero. Changing the value in the parameter
+	file also affects the generator. Decide which one is better and fix this!
+
 2013-02-09  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* estimator_delta.c: Untested prototype of the pmf estimator implemented.

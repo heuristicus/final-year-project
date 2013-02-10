@@ -1,7 +1,5 @@
 #include "estimator.h"
 
-//#define DEBUG
-
 static double* initialise_weights(int num_subintervals);
 static double a_estimate(double alpha, double interval_time, int num_subintervals);
 static double b_estimate(double beta, double interval_time, int num_subintervals);
@@ -79,7 +77,7 @@ est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double e
     
     int i, loop;
     
-#ifdef DEBUG
+#ifdef VERBOSE
     for (i = 0; i < num_subintervals; ++i){
     	printf("%lf - (%lf/%lf) -  %lf: %d\n", intervals[i][0], midpoints[i], intervals[i][1], intervals[i][2], bin_counts[i]);
     }
@@ -89,7 +87,7 @@ est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double e
     
     for (loop = 0; loop < iterations; ++loop){
 	
-#ifdef DEBUG
+#ifdef VERBOSE
 	if (lambda){
 	    for (i = 0; i < num_subintervals; ++i) {
 		printf("Random variable %d is %lf\n", i, lambda[i]);
@@ -155,7 +153,7 @@ est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double e
     
 	weight_estimate(weights, lambda, num_subintervals);
 
-#ifdef DEBUG
+#ifdef VERBOSE
 	for (i = 0; i < num_subintervals; ++i) {
 	    printf("New lambda estimate for random variable %d: %lf\n", i, lambda[i]);
 	}
@@ -320,7 +318,7 @@ static double beta_estimate(double* weights, double* midpoints, int* bin_counts,
 	squarediffsum += weights[i] * pow(midpoints[i] - mean_x, 2);
     }
 
-#ifdef DEBUG
+#ifdef VERBOSE
     printf("xdiff %lf, sqdiff %lf\n", xdiffsum, squarediffsum);
 #endif
 
