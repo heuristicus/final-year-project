@@ -677,7 +677,7 @@ double* multiply_arr(double* data, int len, double multiplier)
 }
 
 /*
- * Computes the log of the probability mass function at each 
+ * Computes the log of the probability mass function for each count-lambda pair.
  */
 double sum_log_pmfs(int* counts, double* lambdas, double normaliser, int len)
 {
@@ -691,7 +691,7 @@ double sum_log_pmfs(int* counts, double* lambdas, double normaliser, int len)
     for (i = 0; i < len; ++i) {
 	res = log(gsl_ran_poisson_pdf(counts[i], lambdas[i] / normaliser));
 	sum += res;
-	//printf("count %d, normalised lambda %lf, pmf %lf, sum now %lf\n", counts[i], lambdas[i]/normaliser, res, sum);
+	printf("count %d, normalised lambda %lf, pmf %lf, sum now %lf\n", counts[i], lambdas[i]/normaliser, res, sum);
     }
 
     return sum;
@@ -707,7 +707,7 @@ double sum_array_interval(double* times, double* values, double start, double en
     if (times == NULL || values == NULL || end <= start || len <= 0)
 	return -INFINITY;
     
-    printf("start %lf end %lf\n", start, end);
+//    printf("start %lf end %lf\n", start, end);
 
     int i;
     double current, sum = 0;

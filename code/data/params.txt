@@ -165,7 +165,7 @@ base_pmf_sum_threshold 0.850000
 # Standard deviation to apply to gaussian kernels used to estimate functions.
 # Changing this value will change the normalisation constant required to get
 # the gaussians to estimate the function correctly.
-gauss_est_stdev 3.000000
+gauss_est_stdev 5.000000
 
 # Specify resolution of kernels used to estimate gaussians. A small value will
 # give higher precision but take longer
@@ -200,11 +200,11 @@ delta_est_resolution 5.000000
 # The value of delta starts at a negative value and moves towards a positive value
 # in steps of this value. A low value will provide more granularity on data, but it
 # will take longer to find an estimate.
-delta_est_step 5.000000
+delta_est_step 1.000000
 
 # The estimator will check delta values of between + and - this value. A lower value
 # will mean that the estimation is quicker, but may result in the true delta not being
 # found if it is not within the range provided. The program starts at the negative
 # of the value and moves through until it reaches the positive.
-delta_est_max_delta 15
+delta_est_max_delta 25
 

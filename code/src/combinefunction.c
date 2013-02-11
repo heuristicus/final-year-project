@@ -14,6 +14,7 @@
 double_multi_arr* combine_functions(est_arr** estimates, double_arr* time_delay, 
 				    double interval_time, double step, int num_estimates)
 {
+//    printf("estimates %p, time delay %p, interval_time %lf, step %lf, num estimates %d\n", estimates, time_delay, interval_time, step, num_estimates);
     if (estimates == NULL || time_delay == NULL || step <= 0 || num_estimates <= 0 ||
 	interval_time <= 0)
 	return NULL;
@@ -22,6 +23,8 @@ double_multi_arr* combine_functions(est_arr** estimates, double_arr* time_delay,
     int estimate_num;
     double max_delay = largest_value_in_arr(time_delay->data, num_estimates);
     double end = interval_time - max_delay;
+
+    printf("Combining function between %lf and %lf.\n", time, end);
 
     // need to fix this to work with combinations at any point and
     // any interval. This currently only works for stuff which starts
@@ -41,12 +44,7 @@ double_multi_arr* combine_functions(est_arr** estimates, double_arr* time_delay,
     for (i = 0, time = max_delay; time <= end; time += step, ++i) {
 	double total = 0;
 	for (estimate_num = 0; estimate_num < num_estimates; ++estimate_num) {
-	    if (estimate_num == 0)
-		// The first vector is used as a base - no delay, so just use the current time.
-		total += estimate_at_point(estimates[estimate_num], time);
-	    else
-		// For subsequent vectors, we shift the time by the delay
-		total += estimate_at_point(estimates[estimate_num], time - time_delay->data[estimate_num - 1]);
+		total += estimate_at_point(estimates[estimate_num], time - time_delay->data[estimate_num]);
 	}
 	combination->data[0][i] = time;
 	combination->data[1][i] = total/num_estimates;
@@ -68,10 +66,11 @@ double_multi_arr* combine_functions(est_arr** estimates, double_arr* time_delay,
 double_multi_arr* combine_gauss_vectors(gauss_vector** V, double_arr* time_delay,
 					double start, double interval_time, double step, int num_vectors)
 {
-    printf("start %lf, time %lf, step %lf, nvec %d\n", start, interval_time, step, num_vectors);
-    printf("time delay for function 0 is %lf\n", time_delay->data[0]);
+//    printf("start %lf, time %lf, step %lf, nvec %d\n", start, interval_time, step, num_vectors);
+//    printf("time delay for function 0 is %lf, 1 is %lf\n", time_delay->data[0], time_delay->data[1]);
 
-    double max_delay = largest_value_in_arr(time_delay->data, num_vectors - 1);
+    double max_delay = largest_value_in_arr(time_delay->data, num_vectors);
+//    printf("max delay %lf\n", max_delay);
     int memsize = (int)(interval_time - start - 2 * max_delay) / step + 1;
 //    printf("memsize is %d\n", memsize);
     double_multi_arr* res = init_multi_array(2, memsize);
@@ -83,12 +82,7 @@ double_multi_arr* combine_gauss_vectors(gauss_vector** V, double_arr* time_delay
 //	printf("current is %lf\n", current);
 	sum = 0;
 	for (vector_num = 0; vector_num < num_vectors; ++vector_num) {
-	    if (vector_num == 0) 
-		// The first vector is used as a base - no delay, so just use the current time.
-		sum += sum_gaussians_at_point(current, V[vector_num]);
-	    else 
-		// For subsequent vectors, we shift the time by the delay
-		sum += sum_gaussians_at_point(current - time_delay->data[vector_num - 1], V[vector_num]);
+		sum += sum_gaussians_at_point(current - time_delay->data[vector_num], V[vector_num]);
 //	    printf("summing vector %d at %lf\n", vector_num, current - time_delay->data[vector_num]);
 //	    printf("sum is now %lf\n", sum);
 	}
@@ -155,15 +149,15 @@ double_multi_arr* combine_functions_all(est_arr** estimates, double_arr* time_de
 double_multi_arr* combine_gauss_vectors_all(gauss_vector** V, double_arr* time_delay,
 					double start, double interval_time, double step, int num_vectors)
 {
-    printf("start %lf, time %lf, step %lf, nvec %d\n", start, interval_time, step, num_vectors);
-    printf("time delay for function 0 is %lf\n", time_delay->data[0]);
+//    printf("start %lf, time %lf, step %lf, nvec %d\n", start, interval_time, step, num_vectors);
+//    printf("time delay for function 0 is %lf\n", time_delay->data[0]);
 
     int memsize = (int)(interval_time / step + 1);
 //    printf("memsize is %d\n", memsize);
     double_multi_arr* res = init_multi_array(2, memsize);
     
     double current = start, end = start + interval_time, sum;
-    printf("Combining function between %lf and %lf.\n", current, end);
+//    printf("Combining function between %lf and %lf.\n", current, end);
     int i, vector_num;
     for (i = 0; current <= end; ++i, current += step) {
 //	printf("current is %lf\n", current);

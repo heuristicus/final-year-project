@@ -1,3 +1,28 @@
+2013-02-11  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* estimate_delta.c: More progress on the pmf estimator. Looping over the
+	different delay values again, as the underlying logic seems to work reasonably
+	well. Need to work out how to get the pmfs to come out correctly for different
+	interval lengths, as the estimates are not as good as expected. Calculating only
+	based on the interval in which functions overlaps seems like a good idea, but
+	if this is to be implemented it needs to be normalised somehow, which is
+	probably quite difficult. Delays with shorter overlaps always come out with the
+	highest pmf because there are fewer elements to sum. Maybe incur some fixed
+	penalty for points at which the combined function is zero? Perhaps using more
+	than 10 intervals would work better.
+
+	* combinefunctions.c: Expected structure of time delay matches the current
+	scheme. Minor fix where the gauss vector function would not find the correct
+	maximum delay value if it was in the last array position.
+
+	* launcher.c: Fixed time delay arrays to match the scheme. Decided to use
+	a value to represent the delay of each individual stream rather than delays
+	between streams. The delays will still be relative to the first function, but
+	there will be n delay values rather than n-1 as was the case previously. This
+	makes things more compatible with the generator setup. The two multi-estimate
+	functions duplicate a lot of code. Should put them together to make things
+	cleaner.
+
 2013-02-10  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* math_util.c: Function for finding the sum of the log of probability mass
