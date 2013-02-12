@@ -1,3 +1,14 @@
+2013-02-12  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* general_util.c, defparams.h: Added parameters for delta estimation to
+	default file. Added comments to some existing parameters. More headings
+	in the file, as well as some more separation for delta estimation parameters.
+	Each of the area and pmf methods has its own start and interval times and
+	resolutions. Also added separate start and interval times for estimation and
+	generation. Not sure if all places where this is used have been found.
+
+	* estimate_delta.c: Functions now use parameters from parameter file.
+
 2013-02-11  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* estimate_delta.c: More progress on the pmf estimator. Looping over the

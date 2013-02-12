@@ -269,12 +269,7 @@ void multi_est_gauss(paramlist* params, char* infile, char* outfile, int nstream
 
     // find time delay
     if (strcmp(est_delta, "yes") == 0){
-	double max_delta = get_double_param(params, "delta_est_max_delta");
-	double delta_step = get_double_param(params, "delta_est_step");
-	double delta_resolution = get_double_param(params, "delta_est_resolution");
 	char* delta_method = get_string_param(params, "delta_est_method");
-	printf("Estimating delta. Max delta: %lf, Step: %lf, Resolution: %lf\n",
-	       max_delta, delta_step, delta_resolution);
 	delays = malloc(sizeof(double_arr));
 	double* d = malloc(sizeof(double) * (nstreams));
 
@@ -294,11 +289,11 @@ void multi_est_gauss(paramlist* params, char* infile, char* outfile, int nstream
 	for (i = 1; i < nstreams; ++i) {
 	    printf("getting delay estimate\n");
 	    if (strcmp(delta_method, "area") == 0){
-		d[i] = estimate_delay_area((void*)estimates[0], (void*)estimates[i],
-					   max_delta, delta_resolution, delta_step, "gauss");
+		d[i] = estimate_delay_area(params, (void*)estimates[0],
+					   (void*)estimates[i], "gauss");
 	    } else if (strcmp(delta_method, "pmf") == 0){
-		d[i] = estimate_delay_pmf((void*)estimates[0], (void*)estimates[i],
-					  ev, max_delta, delta_resolution, delta_step, "gauss");
+		d[i] = estimate_delay_pmf(params, infname, ev, (void*)estimates[0],
+					  (void*)estimates[i], "gauss");
 	    }
 	}
 
@@ -339,7 +334,6 @@ void multi_est_gauss(paramlist* params, char* infile, char* outfile, int nstream
     free(outname);
     
 }
-
 
 void multi_est_default(char* paramfile, char* infile, char* outfile, char* estimator_type, int nstreams)
 {
@@ -401,11 +395,11 @@ void multi_est_default(char* paramfile, char* infile, char* outfile, char* estim
 	for (i = 1; i < nstreams; ++i) {
 	    printf("Estimating delta for stream 0 and stream %d\n", i);
 	    if (strcmp(delta_method, "area") == 0){
-		d[i] = estimate_delay_area((void*)allstreams[0], (void*)allstreams[i],
-					   max_delta, delta_resolution, delta_step, "base");
+		d[i] = estimate_delay_area(params, (void*)allstreams[0], (void*)allstreams[i],
+					   "base");
 	    } else if (strcmp(delta_method, "pmf") == 0){
-		d[i] = estimate_delay_pmf((void*)allstreams[0], (void*)allstreams[i],
-					  ev, max_delta, delta_resolution, delta_step, "base");
+		d[i] = estimate_delay_pmf(params, infname, ev, (void*)allstreams[0], (void*)allstreams[i],
+					  "base");
 	    }
 	}
 

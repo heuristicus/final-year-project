@@ -11,17 +11,49 @@
  * compared. A high resolution will take longer, but the estimate will be more
  * accurate.
  */
-double estimate_delay_pmf(void* f1, void* f2, double_arr* events, double max_delay,
-			  double resolution, double step, char* type)
+double estimate_delay_pmf(paramlist* params, char* infile, double_arr* events, void* f1,
+			  void* f2, char* type)
 {
-    // guess at a time delay
-    double best_guess = -INFINITY;
-    double best_value = -INFINITY;
+    // Always work on two streams
+    int num_streams = 2;
+    // Resolution when combining functions
+    double combine_step = get_double_param(params, "delta_est_pmf_resolution");
+     // Start of the interval used when combining the functions
+    double combine_start = get_double_param(params, "delta_est_combine_start");
+    // Length of the interval when combining functions
+    double combine_interval = get_double_param(params, "delta_est_combine_interval");
+    double combine_end = combine_start + combine_interval;
+    // Start value for finding the normalisation constant
+    double normaliser_start = get_double_param(params, "normaliser_est_initial");
+    // Maximum value to allow the normalisation function to look at
+    double normaliser_end = get_double_param(params, "normaliser_est_max");
+    // Increase the normalisation constant value by this each iteration
+    double normaliser_step = get_double_param(params, "normaliser_est_step");
+    // Number of subintervals to use when checking normalisation
+    int normaliser_subintervals = get_int_param(params, "normaliser_est_subintervals");
+    // Number of bins into which we split the event data
+    int num_bins = get_int_param(params, "delta_est_num_bins");
+    double max_delay = get_double_param(params, "delta_est_max_delta");
+    double step = get_double_param(params, "delta_est_step");
 
-    double start_delta = -max_delay, end_delta = max_delay;
+    double bin_length = (combine_end - combine_start)/num_bins;
+    double start_delta = -max_delay, end_delta = max_delay; // 
 //    double start_delta = 0;
     double current_delta = start_delta;
-    void** store = NULL;
+    
+    printf("Estimating delay with pmf method.\n Combine step %lf, Combine interval"\
+	   " [%lf %lf], Normaliser interval [%lf %lf],\n Normaliser step %lf,"\
+	   " Normaliser subintervals %d, Bins %d, Max delay %lf, Step %lf\n",
+	   combine_step, combine_start, combine_end, normaliser_start, normaliser_end,
+	   normaliser_step, normaliser_subintervals, num_bins, max_delay, step);
+
+    // Set the initial values for our estimate
+    double best_delta = -INFINITY;
+    double best_value = -INFINITY;
+    
+    // We don't know which type we will get, so use a void pointer to store
+    // it and cast later.
+    void** store = NULL; 
 
     if (strcmp(type, "gauss") == 0){
 	store = malloc(sizeof(gauss_vector*) * 2);
@@ -33,17 +65,6 @@ double estimate_delay_pmf(void* f1, void* f2, double_arr* events, double max_del
 	store[1] = (est_arr*)f2;
     }
 
-    int num_streams = 2;
-    double combine_step = 1;
-    double combine_start = 0;
-    double combine_interval = 100; // should vary according to the delay?
-    double combine_end = combine_start + combine_interval;
-    double normaliser_start = 1;
-    double normaliser_end = 20;
-    double normaliser_step = 1;
-    int normaliser_subintervals = 100;
-    int bin_subintervals = 10;
-    double bin_length = (combine_end - combine_start)/bin_subintervals;
     double_arr* time_delay = init_double_arr(2);
     time_delay->data[0] = 0;
     double_multi_arr* combined = NULL;
@@ -55,14 +76,14 @@ double estimate_delay_pmf(void* f1, void* f2, double_arr* events, double max_del
     printf("Normaliser is %lf\n", normaliser);
     
     int* bin_counts = sum_events_in_interval(events->data, events->len, combine_start,
-					     combine_end, bin_subintervals);
+					     combine_end, num_bins);
     double* midpoints = get_interval_midpoints(combine_start, combine_end,
-					       bin_subintervals);
-    double* lambda_sums = malloc(sizeof(double) * bin_subintervals);
+					       num_bins);
+    double* lambda_sums = malloc(sizeof(double) * num_bins);
     
     FILE *fp = fopen("bins", "w");
     int i;
-    for (i = 0; i < bin_subintervals; ++i) {
+    for (i = 0; i < num_bins; ++i) {
 	//	printf("bin %d [%d, %d] has %d events\n", i, i * bin_length, (i + 1) * bin_length, bin_counts[i]);
 	fprintf(fp, "%lf %d\n", midpoints[i], bin_counts[i]);
     }
@@ -100,7 +121,7 @@ double estimate_delay_pmf(void* f1, void* f2, double_arr* events, double max_del
 	    exit(1);
 	}
 
-	for (i = 0; i < bin_subintervals; ++i) {
+	for (i = 0; i < num_bins; ++i) {
 	    // find the sum of lambda values for each subinterval
 //	    printf("bin count %d: %d\n", i, bin_counts[i]);
 //	    printf("subinterval start %lf, subinterval end %lf\n", i * bin_length, (i + 1) * bin_length);
@@ -112,24 +133,25 @@ double estimate_delay_pmf(void* f1, void* f2, double_arr* events, double max_del
 
 	FILE *fp1 = fopen("lsums", "w");
 	
-	for (i = 0; i < bin_subintervals; ++i) {
+	for (i = 0; i < num_bins; ++i) {
 	    fprintf(fp1, "%lf %lf\n", midpoints[i], lambda_sums[i]);
 	}
 	fclose(fp1);
 	
-	int skip_bins = (int) current_delta/bin_length;
+	/* int skip_bins = (int) current_delta/bin_length; */
 
-	printf("number of bins that need to be skipped %d\n", skip_bins);
+	/* printf("number of bins that need to be skipped %d\n", skip_bins); */
 
-	double total = sum_log_pmfs(bin_counts + skip_bins, lambda_sums + skip_bins, 1, bin_subintervals - 2 * skip_bins);
+//	double total = sum_log_pmfs(bin_counts + skip_bins, lambda_sums + skip_bins, 1, num_bins - 2 * skip_bins);
+	double total = sum_log_pmfs(bin_counts, lambda_sums, 1, num_bins);
 	fprintf(fp2, "%lf %lf\n", current_delta, total);
 	printf("pmf sum is %lf\n", total);
 	if (total > best_value){
 	    best_value = total;
-	    best_guess = current_delta;
+	    best_delta = current_delta;
 	}
 
-	printf("best guess is %lf at time %lf\n\n", best_value, best_guess);
+	printf("best guess is %lf at time %lf\n\n", best_value, best_delta);
 
 	current_delta += step;
     }
@@ -138,7 +160,7 @@ double estimate_delay_pmf(void* f1, void* f2, double_arr* events, double max_del
 
     output_double_multi_arr("pmf_combined", "w", combined);
 
-    return best_guess;
+    return best_delta;
 }
 
 /*
@@ -158,7 +180,7 @@ double find_normaliser(void* f1, double_arr* events, double interval_start,
 {
     double normaliser = check_start;
     double best = -INFINITY;
-    double best_normaliser = -1;
+    double best_normaliser = -INFINITY;
     
     int* bin_counts = sum_events_in_interval(events->data, events->len, interval_start,
 					     interval_end, subintervals);
@@ -205,10 +227,19 @@ double find_normaliser(void* f1, double_arr* events, double interval_start,
  * is shifted. The value calculated by the function is inverted upon return
  * to give the amount that f2 must be shifted to line it up with f1.
  */
-double estimate_delay_area(void* f1, void* f2, double max_delay, double resolution,
-			   double step, char* type)
+double estimate_delay_area(paramlist* params, void* f1, void* f2, char* type)
 {
-    double best_guess = 0;
+    double max_delay = get_double_param(params, "delta_est_max_delta");
+    double step = get_double_param(params, "delta_est_step");
+    double resolution = get_double_param(params, "delta_est_area_resolution");
+    double comp_start = get_double_param(params, "delta_est_area_start");
+    double comp_end = comp_start + get_double_param(params, "delta_est_area_interval");
+
+    printf("Estimating delay using area method.\n Max delay: %lf, Step %lf,"\
+	   " Resolution %lf, Interval [%lf %lf]\n", max_delay, step, resolution,
+	   comp_start, comp_end);
+
+    double best_delta = 0;
     double best_value = INFINITY;
     double guess;
 
@@ -220,24 +251,24 @@ double estimate_delay_area(void* f1, void* f2, double max_delay, double resoluti
     while (current <= end){
 	if (strcmp(type, "gauss") == 0){
 	    // put these variables into paramfile
-	    guess = total_area_estimate((void*)f1, (void*)f2, 0, 100, resolution, current, "gauss");
+	    guess = total_area_estimate((void*)f1, (void*)f2, comp_start, comp_end, resolution, current, "gauss");
 	} else if (strcmp(type, "base") == 0){
-	    guess = total_area_estimate((void*)f1, (void*)f2, 0, 100, resolution, current, "base");
+	    guess = total_area_estimate((void*)f1, (void*)f2, comp_start, comp_end, resolution, current, "base");
 	}
 	fprintf(fp, "%lf %lf\n", current, guess);
 	if (guess < best_value){
 	    printf("New value %lf is less than old %lf. guess updated to %lf\n", guess, best_value, current);
 	    best_value = guess;
-	    best_guess = current;
+	    best_delta = current;
 	} else {
-	    printf("New value %lf is larger than old %lf. guess remains at %lf\n", guess, best_value, best_guess);
+	    printf("New value %lf is larger than old %lf. guess remains at %lf\n", guess, best_value, best_delta);
 	}
 	current += step;
     }
 
     fclose(fp);
 
-    return -best_guess;
+    return -best_delta;
 }
 
 
@@ -248,7 +279,7 @@ double estimate_delay_area(void* f1, void* f2, double max_delay, double resoluti
  * delay applied to f2. The higher the resolution given, the higher better the
  * estimate will be, but the computation will also take longer.
  */
-double total_area_estimate(void* f1, void* f2, double start,double end,
+double total_area_estimate(void* f1, void* f2, double start, double end,
 			   double resolution, double delay, char* type)
 {
     if (f1 == NULL || f2 == NULL || !interval_valid(start, end) || resolution <= 0)
@@ -305,245 +336,3 @@ double area_at_point_base(est_arr* f1, est_arr* f2, double x, double delay)
 
     return pow(f2val - f1val, 2);
 }
-
-/* /\* */
-/*  * Estimates the time delay of one function with relation to another by finding */
-/*  *  the minimum value of the area between their curves. This is done in a  */
-/*  * discrete manner by guessing a time delay and calculating the value, */
-/*  * and continuing to make guesses until the resulting area goes below */
-/*  * a threshold value. The max_delay parameter specifies the maximum */
-/*  * positive or negative delay to consider when attempting to find an estimate. */
-/*  * The resolution specifies the step between points on the x-axis which are */
-/*  * compared. A high resolution will take longer, but the estimate will be more */
-/*  * accurate. The returned value is the estimate of how much the second function */
-/*  * is shifted. The value calculated by the function is inverted upon return */
-/*  * to give the amount that f2 must be shifted to line it up with f1. */
-/*  *\/ */
-/* double estimate_delay_area_gauss(gauss_vector* f1, gauss_vector* f2,  */
-/* 				 double max_delay, double resolution) */
-/* { */
-/*     double best_guess = 0; */
-/*     double best_value = INFINITY; */
-/*     double guess; */
-
-/*     double start = -max_delay, end = max_delay; */
-/*     double current = start; */
-    
-/*     FILE *fp = fopen("delaycheck", "w"); */
-
-/*     while (current <= end){ */
-/* 	printf("shifting by %lf\n", current); */
-/* 	guess = total_area_estimate_gauss(f1, f2, 0, 100, resolution, current); */
-/* 	fprintf(fp, "%lf %lf\n", current, guess); */
-/* 	if (guess < best_value){ */
-/* 	    printf("New value %lf is less than old %lf. guess updated to %lf\n", guess, best_value, current); */
-/* 	    best_value = guess; */
-/* 	    best_guess = current; */
-/* 	} else { */
-/* 	    printf("New value %lf is larger than old %lf. guess remains at %lf\n", guess, best_value, best_guess); */
-/* 	} */
-/* 	current += 1; // change this to a paramfile value */
-/*     } */
-
-/*     fclose(fp); */
-
-/*     return -best_guess; */
-/* } */
-
-/* double estimate_delay_area_baseline(est_arr* f1, est_arr* f2, */
-/* 				    double max_delay, double resolution) */
-/* { */
-/*     double best_guess = 0; */
-/*     double best_value = INFINITY; */
-/*     double guess; */
-
-/*     double start = -max_delay, end = max_delay; */
-/*     double current = start; */
-    
-/*     FILE *fp = fopen("delaycheck", "w"); */
-
-/*     while (current <= end){ */
-/* 	guess = total_area_estimate_base(f1, f2, 0, 100, resolution, current); */
-/* 	fprintf(fp, "%lf %lf\n", current, guess); */
-/* 	if (guess < best_value){ */
-/* 	    printf("New value %lf is less than old %lf. guess updated to %lf\n", guess, best_value, current); */
-/* 	    best_value = guess; */
-/* 	    best_guess = current; */
-/* 	} else { */
-/* 	    printf("New value %lf is larger than old %lf. guess remains at %lf\n", guess, best_value, best_guess); */
-/* 	} */
-/* 	current += 1; // change this to a paramfile value */
-/*     } */
-
-/*     fclose(fp); */
-
-/*     return -best_guess; */
-/* } */
-
-/* double total_area_estimate_base(est_arr* f1, est_arr* f2, double start, */
-/* 				double end, double resolution, double delay) */
-/* { */
-/*     if (f1 == NULL || f2 == NULL || !interval_valid(start, end) || resolution <= 0) */
-/* 	return -1; */
-
-/*     double current = start; */
-/*     printf("start %lf end %lf delay %lf interval overlap %lf\n", start, end, delay, end - start - fabs(delay)); */
-/*     double sum = 0; */
-/*     int i = 0; */
-
-/*     while(current <= end){ */
-/* 	double pt = area_at_point_base(f1, f2, current, delay); */
-/* 	if (pt != -1){ */
-/* 	    sum += pt; */
-/* 	    ++i; */
-/* 	} */
-/* 	current += resolution; */
-/*     } */
-
-/*     return sum/i; */
-/* } */
-
-
-/*  /\* */
-/*   * Estimates the total area between the curves f1 and f2 in the interval */
-/*   * [start, end], with samples taken at the given resolution and the given */
-/*   * delay applied to f2. The higher the resolution given, the higher better the */
-/*   * estimate will be, but the computation will also take longer. */
-/*   *\/ */
-/* double total_area_estimate_gauss(gauss_vector* f1, gauss_vector* f2, double start, double end, */
-/* 		   double resolution, double delay) */
-/*  { */
-/*      if (f1 == NULL || f2 == NULL || !interval_valid(start, end) || resolution <= 0) */
-/* 	 return -1; */
-
-/*      double current = start; */
-/*      double sum = 0; */
-/*      int i = 0; */
-
-/*      while(current <= end){ */
-/* 	 double pt = area_at_point_gauss(f1, f2, current, delay); */
-/* 	 if (pt != -1){ */
-/* 	     sum += pt; */
-/* 	     ++i; */
-/* 	 } */
-/* 	current += resolution; */
-/*     } */
-
-/*     return sum/i; */
-/* } */
-
-
-/* /\* */
-/*  * Estimates the time delay of one function with relation to another by finding */
-/*  *  the minimum value of the area between their curves. This is done in a  */
-/*  * discrete manner by guessing a time delay and calculating the value, */
-/*  * and continuing to make guesses until the resulting area goes below */
-/*  * a threshold value. The max_delay parameter specifies the maximum */
-/*  * positive or negative delay to consider when attempting to find an estimate. */
-/*  *\/ */
-/* double estimate_delay_discrete_area(double_multi_arr* f1, double_multi_arr* f2, */
-/* 				    double max_delay) */
-/* { */
-/*     double best_guess = 0; */
-/*     double best_value = -INFINITY; */
-/*     double guess; */
-
-/*     double start = -max_delay, end = max_delay; */
-/*     double current = start; */
-    
-/*     while (current <= end){ */
-/* 	printf("shifting by %lf\n", current); */
-/* 	guess = total_area_estimate(f1, f2, current); */
-/* 	if (guess > best_value){ */
-/* 	    best_value = guess; */
-/* 	    best_guess = current; */
-/* 	} */
-/* 	current += 5; // change this to a paramfile value */
-/*     } */
-
-/*     return best_guess; */
-/* } */
-
-
-/* /\* */
-/*  * Estimates the total area between the curves f1 and f2 in the interval */
-/*  * [start, end], with the given delay applied to f2. The given double arrays */
-/*  * are assumed to contain the values of the two functions at the same points */
-/*  * on the x-axis. The area is estimated by summing the differences between the */
-/*  * two function values for each point. The calculation is only done for points */
-/*  * at which both functions have values. */
-/*  *\/ */
-/* double total_area_estimate(double_multi_arr* f1, double_multi_arr* f2, double delay) */
-/* { */
-/*     if (f1 == NULL || f2 == NULL) */
-/* 	return -1; */
-    
-/*     double sum = 0; */
-
-/*     double* shift = add_to_arr(f2->data[0], f2->lengths[0], delay); */
-
-/*     int i; */
-    
-/*     for (i = 0; i < f2->lengths[0]; ++i) { */
-/* 	printf("f1 data %lf, f2 data %lf\n", f1->data[0][i], shift[i]); */
-/*     } */
-
-/*     return sum/i; */
-/* } */
-
-
-    /* double_arr* time_delay = malloc(sizeof(double_arr)); */
-    /* double_multi_arr* combined = NULL; */
-    /* time_delay->len = 1; */
-    /* time_delay->data = malloc(sizeof(double)); */
-    
-    /* FILE *fp = fopen("delaycheck_pmf", "w"); */
-    /* printf("events length %d\n", events->len); */
-    /* double ev_start = 0; */
-    /* double interval_time = 100; */
-    /* double ev_end = ev_start + interval_time; */
-
-    /* printf("ev end is %lf\n", ev_end); */
-    /* int intervals = 100; */
-    /* int* event_sum = sum_events_in_interval(events->data, events->len, ev_start, ev_end, intervals); // put these params in paramfile */
-    /* double* midpoints = get_interval_midpoints(ev_start, ev_end, intervals); // these should be the same as above */
-    /* FILE *fp1 = fopen("counts", "w"); */
-
-    /* int i; */
-    
-    /* for (i = 0; i < intervals; ++i) { */
-    /* 	fprintf(fp1, "%lf %d\n", midpoints[i], event_sum[i]); */
-    /* } */
-
-    /* fclose(fp1); */
-
-    /* while (current <= end){ */
-    /* 	time_delay->data[0] = current; */
-
-    /* 	// need to calculate only times at which the data intersects? */
-    /* 	if (strcmp(type, "gauss") == 0){ */
-    /* 	    printf("gass\n"); */
-    /* 	    combined = combine_gauss_vectors((gauss_vector**)store, time_delay, 0, 100, 5, 2); */
-    /* 	} else if (strcmp(type, "base") == 0){ */
-    /* 	    printf("base\n"); */
-    /* 	    combined = combine_functions((est_arr**)store, time_delay, 100, 5, 2); */
-    /* 	} */
-    /* 	combined->data[1] = multiply_arr(combined->data[1], combined->lengths[1], intervals/interval_time); */
-    /* 	guess = sum_log_pmfs(event_sum, combined->data[1], combined->lengths[1]); */
-    /* 	// compare combined with the estimate bins */
-    /* 	fprintf(fp, "%lf %lf\n", current, guess); */
-    /* 	if (guess < best_value){ */
-    /* 	    printf("New value %lf is less than old %lf. guess updated to %lf\n", guess, best_value, current); */
-    /* 	    best_value = guess; */
-    /* 	    best_guess = current; */
-    /* 	} else { */
-    /* 	    printf("New value %lf is larger than old %lf. guess remains at %lf\n", guess, best_value, best_guess); */
-    /* 	} */
-    /* 	current += step; */
-    /* } */
-
-    /* fclose(fp); */
-
-    /* return -best_guess; */
-
-    /* return 0; */

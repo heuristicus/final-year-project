@@ -51,10 +51,8 @@ gauss_vector* n_estimate_gaussian(paramlist* params, char* infile, char* outfile
 
 double area_at_point_gauss(gauss_vector* f1, gauss_vector* f2, double x, double delay);
 double area_at_point_base(est_arr* f1, est_arr* f2, double x, double delay);
-double estimate_delay_area(void* f1, void* f2, double max_delay,double resolution,
-			   double step, char* type);
-double estimate_delay_pmf(void* f1, void* f2, double_arr* events, double max_delay,
-			  double resolution, double step, char* type);
+double estimate_delay_area(paramlist* params, void* f1, void* f2, char* type);
+double estimate_delay_pmf(paramlist* params, char* infile, double_arr* events, void* f1, void* f2, char* type);
 double total_area_estimate(void* f1, void* f2, double start,
 			   double end, double resolution, double delay, char* type);
 double find_normaliser(void* f1, double_arr* events, double interval_start,

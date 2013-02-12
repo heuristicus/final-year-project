@@ -24,8 +24,8 @@ static void weight_estimate(double* weights, double* lambda, int num_subinterval
 est_arr* estimate_OLS(paramlist* params, char* infile, char* outfile)
 {
     int subint = get_int_param(params, "ols_subintervals");
-    double start = get_int_param(params, "start_time");
-    double end = get_int_param(params, "interval_time") + start;
+    double start = get_int_param(params, "est_start_time");
+    double end = get_int_param(params, "est_interval_time") + start;
 
     return _estimate_OLS(infile, outfile, start, end, subint);
 }
@@ -44,8 +44,8 @@ est_arr* estimate_IWLS(paramlist* params, char* infile, char* outfile)
 {
     int subint = get_int_param(params, "iwls_subintervals");
     int iterations = get_int_param(params, "iwls_iterations");
-    double start = get_double_param(params, "start_time");
-    double end = get_double_param(params, "interval_time") + start;
+    double start = get_double_param(params, "est_start_time");
+    double end = get_double_param(params, "est_interval_time") + start;
 
     return _estimate_IWLS(infile, outfile, start, end, subint, iterations);
 }
