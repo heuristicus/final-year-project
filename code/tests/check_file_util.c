@@ -89,11 +89,11 @@ START_TEST(test_create_file_in_dir)
 
     fail_unless(create_file_in_dir("blah", "bb") == -1, NULL);
 
-    int x = open("bb/blah", O_CREAT | O_EXCL, S_IRWXU | S_IROTH | S_IRGRP);
+    open("bb/blah", O_CREAT | O_EXCL, S_IRWXU | S_IROTH | S_IRGRP);
 
     fail_unless(errno == EEXIST, NULL);
     
-    int y = open("bb/blah", O_CREAT | O_EXCL, S_IRWXU | S_IROTH | S_IRGRP);
+    open("bb/blah", O_CREAT | O_EXCL, S_IRWXU | S_IROTH | S_IRGRP);
 
     fail_unless(errno == EEXIST, NULL);
 
@@ -206,16 +206,16 @@ START_TEST(test_output_double_multi_arr)
     double one, two, three;
 
     line = fgets(line, 100, fp);
-    int t = sscanf(line, "%lf %lf %lf", &one, &two, &three);
+    sscanf(line, "%lf %lf %lf", &one, &two, &three);
     fail_unless(one == 1 && two == 4 && three == 7, NULL);
     
     line = fgets(line, 100, fp);
-    t = sscanf(line, "%lf %lf %lf", &one, &two, &three);
+    sscanf(line, "%lf %lf %lf", &one, &two, &three);
     fail_unless(one == 2 && two == 5 && three == 8, NULL);
     
     
     line = fgets(line, 100, fp);
-    t = sscanf(line, "%lf %lf %lf", &one, &two, &three);
+    sscanf(line, "%lf %lf %lf", &one, &two, &three);
     fail_unless(one == 3 && two == 6 && three == 9, NULL);
 
     fclose(fp);

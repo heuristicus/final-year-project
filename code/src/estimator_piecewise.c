@@ -19,8 +19,8 @@ est_arr* estimate_piecewise(paramlist* params, char *event_file, char *output_fi
     int iterations = get_int_param(params, "pc_iwls_iterations");
     int breakpoints = get_int_param(params, "pc_max_breakpoints");
     double max_extension = get_double_param(params, "pc_max_extension");
-    double start = get_double_param(params, "start_time");
-    double end = get_double_param(params, "interval_time") + start;
+    double start = get_double_param(params, "est_start_time");
+    double end = get_double_param(params, "est_interval_time") + start;
     double min_interval_proportion = get_double_param(params, "pc_min_interval_proportion");
     double pmf_threshold = get_double_param(params, "pc_pmf_threshold");
     double pmf_sum_threshold = get_double_param(params, "pc_pmf_sum_threshold");

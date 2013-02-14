@@ -1,4 +1,138 @@
+2013-02-14  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* estimate_delta.c: Fixed issues where baseline pmf calculations were not being
+	done correctly due to issues with math functions.
+
+	* math_util.c: When summing pmfs, points at which lambda is zero caused -nan
+	to be returned, even if there was only a single point at which there was a zero.
+	This led to bad behaviour, so the calculation is now done with a very small lambda
+	value which should be better than ignoring those values entirely.
+	Array interval summing now sums values in the right-closed interval (start,end]
+
+2013-02-13  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* tests: Fixed some tests which were broken by minor modifications to functions.
+
+	* generator.c: Generation stops if the time exceeds the end time when the
+	homogeneous lambda value is added to the base time. Would previously have
+	a small number of events that exceeded the threshold.
+
+	* estimate_delta.c: Implemented a pmf estimator which sums the pmfs from
+	both streams being compared. Previous version used only one of the streams
+	to check whether the combined function was representative of the bin counts,
+	which was sub-optimal. pmf estimation now gives good results. Area estimator
+	uses normalised start and end points, between which both functions have data
+	at all of the delays that are being attempted. The same applies for the pmf
+	estimator as well.
+
+	* math_util.c: Fixed array interval summing issue which was causing pmf
+	delay estimator to work sub-optimally.
+
+2013-02-12  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* general_util.c, defparams.h: Added parameters for delta estimation to
+	default file. Added comments to some existing parameters. More headings
+	in the file, as well as some more separation for delta estimation parameters.
+	Each of the area and pmf methods has its own start and interval times and
+	resolutions. Also added separate start and interval times for estimation and
+	generation. Not sure if all places where this is used have been found.
+
+	* estimate_delta.c: Functions now use parameters from parameter file.
+
+2013-02-11  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* estimate_delta.c: More progress on the pmf estimator. Looping over the
+	different delay values again, as the underlying logic seems to work reasonably
+	well. Need to work out how to get the pmfs to come out correctly for different
+	interval lengths, as the estimates are not as good as expected. Calculating only
+	based on the interval in which functions overlaps seems like a good idea, but
+	if this is to be implemented it needs to be normalised somehow, which is
+	probably quite difficult. Delays with shorter overlaps always come out with the
+	highest pmf because there are fewer elements to sum. Maybe incur some fixed
+	penalty for points at which the combined function is zero? Perhaps using more
+	than 10 intervals would work better.
+
+	* combinefunctions.c: Expected structure of time delay matches the current
+	scheme. Minor fix where the gauss vector function would not find the correct
+	maximum delay value if it was in the last array position.
+
+	* launcher.c: Fixed time delay arrays to match the scheme. Decided to use
+	a value to represent the delay of each individual stream rather than delays
+	between streams. The delays will still be relative to the first function, but
+	there will be n delay values rather than n-1 as was the case previously. This
+	makes things more compatible with the generator setup. The two multi-estimate
+	functions duplicate a lot of code. Should put them together to make things
+	cleaner.
+
+2013-02-10  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* math_util.c: Function for finding the sum of the log of probability mass
+	functions, which takes a normalisation constant. Takes an array of counts
+	and an array of lambda values and finds the pmf for each, summing as it goes.
+	The normalisation constant ensures that the lambda values correspond to the
+	bin counts so that a true value can be found. Function for summing values
+	in a specified interval given time values and data values. Function for
+	summing gaussians at the specified points by passing an array of desired
+	sample points. Function to find the largest value in the array, positive or
+	negative.
+
+	* general_util.c: Functions for initialising array structs with specified
+	lengths, function for finding a series of values from an est_arr struct.
+
+	* estimator_delta.c: Prototype of pmf estimator improved and almost working.
+	Function combination needs to be completed to a satisfactory level before it
+	can be finished. Implemented a function to find the normalisation constant
+	required to get gaussians to correspond to differing numbers of bins when
+	doing the delta estimation. The normalisation constant required depends on the
+	standard deviation of the gaussians used to estimate the function.
+
+	* combinefunction.c: Fixed function combination. Required an array containing
+	a delay for the first function as well, but since that is taken as a base with
+	no delay, it is unneeded. The function now takes an array containing delays
+	between the base and subsequent functions. This will lead to the function
+	combination breaking when the time delta is read from the parameter file, as
+	there the base time is specified as zero. Changing the value in the parameter
+	file also affects the generator. Decide which one is better and fix this!
+
+2013-02-09  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* estimator_delta.c: Untested prototype of the pmf estimator implemented.
+
+	* launcher.c: Function combination for gaussians added to the multiple estimate
+	process. pmf method now able to be used.
+
+	* general_util.c: Function for initialising double_multi_arr structs so that
+	code is cleaner.
+
+	* combinefunction.c: Function for combining gaussians. Takes a set of gauss
+	vectors and finds their average. This should probably be done on non-normalised
+	gaussians which can be normalised when being output to file, or once the
+	normalisation constant has been estimated.
+
 2013-02-08  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* launcher.c: Estimates delta according to parameters in the paramfile.
+	Perhaps a good idea to add another switch to the launcher to specify whether
+	or not to estimate it? Seems a little different to the main estimators, so
+	it's probably fine to keep it in the parameter file.
+
+	* combinefunction.c: Moved functions for finding the value of an estimate
+	at a given point to general_util as it is useful in other places as well.
+
+	* general_util.c: Parameters for time delta estimation added to
+	default parameter file. estimate_timedelta specifies whether to
+	estimate delta or just take it from the paramfile. timedelta_est_method
+	specifies which method of estimation to use. Parameters for specifying
+	the step, resolution and max delta for delta estimation. Modified some
+	of the default parameters for the baseline estimator so it performs
+	better by default.
+
+	* estimator_delta.c: Function for estimating the time delta
+	based on the area between two curves. Works for data from both the
+	gaussian and baseline estimators. Single function for both which requires
+	the conversion to a void pointer. This is so that there is less code
+	duplication - there is essentially only one function that has to change
+	in each of the sub-functions.
 
 	* paramlist.c: New function to extract a list of double parameters separated
 	by commas (with no spaces).
@@ -41,6 +175,7 @@
 	had some minor conflicts - better to merge now than to risk things getting
 	even more disparate and difficult to merge later on. Development of the
 	experiment harness put on hold for now.
+
 
 2013-02-03  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 

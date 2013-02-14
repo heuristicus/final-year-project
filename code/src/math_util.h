@@ -62,6 +62,10 @@ double gaussian_kernel(double x, double mean, double stdev);
 int find_min_value_int(int* data, int len);
 double find_max_value(double* data, int len);
 double* multiply_arr(double* data, int len, double multiplier);
+double sum_log_pmfs(int* bin_counts, double* lambdas, double normaliser, int len);
+double sum_array_interval(double* times, double* values, double start, double end, double normaliser, int len);
+double_arr* sum_gaussians_at_points(gauss_vector* G, double* points, int len);
+double largest_value_in_arr(double* arr, int len);
 
 #endif
 

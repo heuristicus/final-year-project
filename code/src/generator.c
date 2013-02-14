@@ -129,6 +129,13 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile, int ns
 
     double_arr* time_delta = get_double_list_param(params, "timedelta");
 
+    if (time_delta->len < nstreams){
+	printf("You have not specified time delta values between all streams.\n"\
+	       "Specified: %d, required: %d.\nPlease add values to the timedelta"\
+	       " parameter in your parameter file.\n", time_delta->len, nstreams);
+	exit(1);
+    }
+
     if (outfile == NULL){
 	outfile = get_string_param(params, "outfile");
     }
@@ -177,7 +184,7 @@ double_multi_arr* nonhom_from_gaussian(gauss_vector* G, double lambda,
 				       double start, double interval, double time_delta, double shift)
 {
     init_rand(0.0);
-            
+
     double base_time = start;
     double shifted_time = time_delta + start;
     double end = start + interval;
@@ -193,6 +200,8 @@ double_multi_arr* nonhom_from_gaussian(gauss_vector* G, double lambda,
     while (base_time < end){
 	hom_out = homogeneous_time(lambda);
 	base_time += hom_out;
+	if (base_time >= end)
+	    break;
 	shifted_time += hom_out;
 	non_hom_lambda = sum_gaussians_at_point(shifted_time, G) + shift;
 	if ((rand = get_uniform_rand()) <= non_hom_lambda / lambda){
@@ -642,6 +651,8 @@ int run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda,
     while (base_time < end_time){
 	hom_out = homogeneous_time(lambda);
 	base_time += hom_out;
+	if (base_time >= end_time)
+	    break;
 	shifted_time += hom_out;
 	non_hom_lambda = mupEval(hparser);
 	//printf("%lf %lf\n", time, non_hom_lambda);//more granularity on lambda values // get this into output file

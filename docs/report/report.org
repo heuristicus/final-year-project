@@ -59,3 +59,11 @@ with minimum interval length applied.
 * experimentation on simulated data
 * experimentation on real-world data
 * conclusions
+* install
+  muparser
+  *download package
+  * run ./configure --prefix=/usr
+    make && make install (may require sudo)
+    this installs muparser so that headers can be found in /usr/include
+    
+    sudo apt-get install libgsl0-dev check 

@@ -16,8 +16,8 @@ est_arr* estimate_baseline(paramlist* params, char *event_file, char *output_fil
     int iterations = get_int_param(params, "base_iwls_iterations");
     int breakpoints = get_int_param(params, "base_max_breakpoints");
     double max_extension = get_double_param(params, "base_max_extension");
-    double start = get_double_param(params, "start_time");
-    double end = get_double_param(params, "interval_time") + start;
+    double start = get_double_param(params, "est_start_time");
+    double end = get_double_param(params, "est_interval_time") + start;
     double min_interval_proportion = get_double_param(params, "base_min_interval_proportion");
     double pmf_threshold = get_double_param(params, "base_pmf_threshold");
     double pmf_sum_threshold = get_double_param(params, "base_pmf_sum_threshold");

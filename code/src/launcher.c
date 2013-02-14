@@ -201,6 +201,9 @@ void multi_est_gauss(paramlist* params, char* infile, char* outfile, int nstream
 {
     char* fname = get_string_param(params, "outfile"); // default generator output filename
     char* pref = get_string_param(params, "stream_ext"); // default extension
+    char* est_delta = get_string_param(params, "estimate_delta");
+    double step = get_double_param(params, "output_step");
+    double_arr* delays = NULL;// Will be used to store time delays
     
     if (outfile == NULL){
 	outfile = get_string_param(params, "gauss_est_outfile");
@@ -220,14 +223,81 @@ void multi_est_gauss(paramlist* params, char* infile, char* outfile, int nstream
     char* infname = malloc(strlen(fname) + strlen(pref) + strlen(".dat") + 5);
     char* outname = malloc(strlen(outfile) + strlen(".dat") + 5);
     int i;
+
+    gauss_vector** estimates = malloc(sizeof(gauss_vector*) * nstreams);
     
     for (i = 0; i < nstreams; ++i) {
 	sprintf(infname, "%s%s%d.dat", fname, pref, i);
 	sprintf(outname, "%s_%d.dat", outfile, i);
-	estimate_gaussian(params, infname, outname);
+	estimates[i] = n_estimate_gaussian(params, infname, outname);
     }
+
+    // find time delay
+    if (strcmp(est_delta, "yes") == 0){
+	char* delta_method = get_string_param(params, "delta_est_method");
+	delays = malloc(sizeof(double_arr));
+	double* d = malloc(sizeof(double) * (nstreams));
+
+	delays->data = d;
+	delays->len = nstreams;
+
+	sprintf(infname, "%s%s%d.dat", fname, pref, 0);
+	double* events = get_event_data_all(infname);
+	double_arr* ev = malloc(sizeof(double_arr));
+	ev->len = events[0] - 1;
+	ev->data = events + 1;
+	// The delay estimates take the first function as a base, so we assume that
+	// it has no delay - the delays of the other functions will be calculated
+	// relative to this.
+	d[0] = 0;
+	
+	for (i = 1; i < nstreams; ++i) {
+	    printf("getting delay estimate\n");
+	    if (strcmp(delta_method, "area") == 0){
+		d[i] = estimate_delay_area(params, (void*)estimates[0],
+					   (void*)estimates[i], "gauss");
+	    } else if (strcmp(delta_method, "pmf") == 0){
+		d[i] = estimate_delay_pmf(params, (void*)estimates[0],
+					  (void*)estimates[i], "gauss");
+	    }
+	}
+
+	for (i = 0; i < delays->len; ++i) {
+	    printf("Delay for stream %d: %lf\n", i, delays->data[i]);
+	}
+    } else {
+	char* tmp;
+	double* time_delta;
+	if ((tmp = get_string_param(params, "timedelta")) != NULL){
+	    string_arr* vals = string_split(tmp, ',');
+	    int tdlen = vals->len;
+	    time_delta = malloc((tdlen) * sizeof(double));
+	
+	    for (i = 0; i < tdlen; ++i) {
+		time_delta[i] = atof(vals->data[i]);
+	    }
+
+	    free_string_arr(vals);
+	    delays = malloc(sizeof(double_arr));
+	    delays->data = time_delta;
+	    delays->len = tdlen;
+	} else {
+	    printf("You must provide values for the timedelta parameter or allow estimation"\
+		   " of the values by setting estimate_delta to yes.\n");
+	    exit(1);
+	}
+
+    }
+
+
+    double_multi_arr* comb = combine_gauss_vectors(estimates, delays, 0, 100, step, nstreams);
+    // get an overall function estimate
+    
+    output_double_multi_arr("gausscomb", "w", comb);
+    
     free(infname);
     free(outname);
+    
 }
 
 void multi_est_default(char* paramfile, char* infile, char* outfile, char* estimator_type, int nstreams)
@@ -236,7 +306,10 @@ void multi_est_default(char* paramfile, char* infile, char* outfile, char* estim
 
     char* fname = get_string_param(params, "outfile"); // default generator output filename
     char* pref = get_string_param(params, "stream_ext"); // default extension
-    double step = get_double_param(params, "output_sample_step");
+    double step = get_double_param(params, "output_step");
+    char* est_delta = get_string_param(params, "estimate_delta");
+    double start = get_double_param(params, "est_start_time");
+    double_arr* delays = NULL;// Will be used to store time delays
     if (step <= 0)
 	step = DEFAULT_STEP;
 
@@ -249,7 +322,6 @@ void multi_est_default(char* paramfile, char* infile, char* outfile, char* estim
     }
 
     char* infname = malloc(strlen(fname) + strlen(pref) + strlen(".dat") + 5);
-    // output individual estimates as well.
     char* stream_out = malloc(strlen(fname) + strlen(pref) + strlen("_est.dat") + 5);
     printf("running estimator %s for %d streams\n", estimator_type, nstreams);
 
@@ -257,18 +329,54 @@ void multi_est_default(char* paramfile, char* infile, char* outfile, char* estim
 
     int i;
     for (i = 0; i < nstreams; ++i) {
-	sprintf(infname, "%s%s%d_ev", fname, pref, i);
+	sprintf(infname, "%s%s%d.dat", fname, pref, i);
 	sprintf(stream_out, "%s%s%d_est.dat", fname, pref, i);
 	allstreams[i] = estimate(paramfile, infname, stream_out, estimator_type);
     }
-	    
-    /* Find time delay here*/
+    
+    if (strcmp(est_delta, "yes") == 0){
+	double max_delta = get_double_param(params, "delta_est_max_delta");
+	double delta_step = get_double_param(params, "delta_est_step");
+	double delta_resolution = get_double_param(params, "delta_est_resolution");
+	char* delta_method = get_string_param(params, "delta_est_method");
+	printf("Estimating delta. Max delta: %lf, Step: %lf, Resolution: %lf\n",
+	       max_delta, delta_step, delta_resolution);
+	delays = malloc(sizeof(double_arr));
+	double* d = malloc(sizeof(double) * (nstreams));
 
-    // remove this once time delta is found automatically?
-    if ((time_delta = get_double_list_param(params, "timedelta")) == NULL){
-	printf("You must specify the time delay between each stream. "\
-	       "Add something like \"timedelta 0,10,20\" to your parameter file\n");
-	exit(1);
+	delays->data = d;
+	delays->len = nstreams;
+
+	sprintf(infname, "%s%s%d.dat", fname, pref, 0);
+	double* events = get_event_data_all(infname);
+	double_arr* ev = malloc(sizeof(double_arr));
+	ev->len = events[0] - 1;
+	ev->data = events + 1;
+	// The delay estimates take the first function as a base, so we assume that
+	// it has no delay - the delays of the other functions will be calculated
+	// relative to this.
+	d[0] = 0;
+
+	for (i = 1; i < nstreams; ++i) {
+	    printf("Estimating delta for stream 0 and stream %d\n", i);
+	    if (strcmp(delta_method, "area") == 0){
+		d[i] = estimate_delay_area(params, (void*)allstreams[0], (void*)allstreams[i],
+					   "base");
+	    } else if (strcmp(delta_method, "pmf") == 0){
+		d[i] = estimate_delay_pmf(params, (void*)allstreams[0], (void*)allstreams[i],
+					  "base");
+	    }
+	}
+
+	for (i = 0; i < delays->len; ++i) {
+	    printf("Delay for stream %d: %lf\n", i, delays->data[i]);
+	}
+    } else {
+	if ((time_delta = get_double_list_param(params, "timedelta")) == NULL){
+	    printf("You must specify the time delay between each stream. "\
+		   "Add something like \"timedelta 0,10,20\" to your parameter file\n");
+	    exit(1);
+	}
     }
     
     double interval_time = 0;
@@ -278,9 +386,9 @@ void multi_est_default(char* paramfile, char* infile, char* outfile, char* estim
 	exit(1);
     }
 
-    double_multi_arr* combined = combine_functions(allstreams, time_delta, interval_time, nstreams, step);
-    output_double_multi_arr(outfile, "w", combined);
-
+    double_multi_arr* combined = combine_functions(allstreams, delays, start, interval_time, step, nstreams);
+    printf("done\n");
+    output_double_multi_arr("basecomb", "w", combined);
     free_list(params);
     free_double_multi_arr(combined);
     free(infname);
@@ -319,3 +427,4 @@ int exists_in_arr(char** arr, int len, char* name)
 
     return 0;
 }
+

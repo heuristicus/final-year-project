@@ -259,7 +259,7 @@ int create_default_param_file(char* filename)
     // i/o files and stuff
     fprintf(fp, "%s\n\n", "# Inline comments are not supported!");
     // data output
-    put_section_header(fp, "data output");
+    put_section_header(fp, "Data Output");
     fprintf(fp, "%s\n%s %s\n\n", "# file to which generator outputs generated event "\
 	    "data","outfile", DEFAULT_OUTFILE);
     fprintf(fp, "%s\n%s %s\n\n", "# Files to which functions generated using"\
@@ -298,17 +298,27 @@ int create_default_param_file(char* filename)
 	    " data in it (all data\n# is saved as {filename}_ad, events as "\
 	    "{filename}_ev)", "verbosity", DEFAULT_VERBOSITY);
     // data input
-    put_section_header(fp, "data input");
+    put_section_header(fp, "Data Input");
     fprintf(fp, "%s\n%s %s\n\n", "# Default input file used for estimation",
 	    "infile", DEFAULT_INFILE);
     // generator parameters
-    put_section_header(fp, "generation parameters");
-    fprintf(fp, "%s %d\n", "start_time", DEFAULT_START);
-    fprintf(fp, "%s %d\n", "nstreams", DEFAULT_NSTREAMS);
-    fprintf(fp, "%s %s\n", "timedelta", DEFAULT_TIMEDELTA);
-    fprintf(fp, "%s %d\n", "lambda", DEFAULT_LAMBDA);
-    fprintf(fp, "%s %d\n", "interval_time", DEFAULT_INTERVAL);
-    fprintf(fp, "%s %d\n\n", "seed", DEFAULT_SEED);
+    put_section_header(fp, "Generation Parameters");
+    fprintf(fp, "%s\n%s %lf\n\n", "# The time at which to start generation.",
+	    "start_time", DEFAULT_START);
+    fprintf(fp, "%s\n%s %d\n\n", "# The number of streams to generate.", "nstreams",
+	    DEFAULT_NSTREAMS);
+    fprintf(fp, "%s\n%s %s\n\n", "# The delay between zero and each stream. If the"\
+	    " delay is greater than zero, then\n# when generating events, instead"\
+	    " of using lambda(t) to generate, lambda(t+delta)\n# is used.",
+	    "timedelta", DEFAULT_TIMEDELTA);
+    fprintf(fp, "%s\n%s %d\n\n", "# The lambda value to use when generating events."\
+	    " This value is used during thinning\n# to calculate whether an event"\
+	    " should be kept. lambda must be > lambda(t) for all\n# times start_time"\
+	    " <= k <= start_time + interval_time ", "lambda", DEFAULT_LAMBDA);
+    fprintf(fp, "%s\n%s %lf\n\n", "# The length of the interval in which events should be"\
+	    " generated.", "interval_time", DEFAULT_INTERVAL);
+    fprintf(fp, "%s\n%s %d\n\n", "# The seed to use when generating events. Currently"\
+	    " unused.", "seed", DEFAULT_SEED);
     fprintf(fp, "%s\n%s %s\n", "# expression parameters\n# The equation must"\
 	    " contain the variable 't'. The value of the variable will be set"\
 	    " by\n# the program. Do not set it here.", "expression",
@@ -317,7 +327,8 @@ int create_default_param_file(char* filename)
     fprintf(fp, "%s %d\n", "b", DEFAULT_B);
     fprintf(fp, "%s %.10lf\n\n", "alpha", DEFAULT_ALPHA);
     // gaussian parameters
-    fprintf(fp, "%s\n%s %lf\n\n", "# Gaussian generator\n# Standard deviation to"\
+    put_section_header(fp, "Gaussian Function Generator");
+    fprintf(fp, "%s\n%s %lf\n\n", "# Standard deviation to"\
 	    " apply to generated gaussians", "gauss_stdev", DEFAULT_STDEV);
         fprintf(fp, "%s\n%s %s\n\n", "# Specifies whether to disregard the standard"\
 	    " deviation specified above and\n# instead calculate the standard"\
@@ -346,18 +357,26 @@ int create_default_param_file(char* filename)
 	    "values gives a greater range of values but preserves the shape of"\
 	    " the function.", "gauss_func_multiplier", DEFAULT_GAUSS_MULTIPLIER);
     // estimator parameters
-    put_section_header(fp, "estimator parameters");
+    put_section_header(fp, "Estimator Parameters");
     fprintf(fp, "%s\n%s %s\n\n", "# specifies the type of estimator to use. Options are"\
 	    " ols, iwls, piecewise, baseline", "est_type", DEFAULT_ESTIMATOR);
+    fprintf(fp, "%s\n%s %lf\n\n", "# Specify the time from which to start the"\
+	    " estimation. In general, this should be\n# the same as the start_time"\
+	    " given above, but it can be used if you only need\n# to estimate a certain"\
+	    " portion of your data.", "est_start_time", DEFAULT_START);
+    fprintf(fp, "%s\n%s %lf\n\n", "# The length of the interval that you want to estimate."\
+	    " The interval estimated\n# will be [est_start_time, est_start_time +"\
+	    " est_interval_time].", "est_interval_time", DEFAULT_INTERVAL);
+    // ols
     put_section_header(fp, "ols parameters");
     fprintf(fp, "%s %d\n\n", "ols_subintervals", DEFAULT_SUBINTERVALS);
     // iwls
-    put_section_header(fp, "iwls parameters");
+    put_section_header(fp, "IWLS Estimator Parameters");
     fprintf(fp, "%s %d\n", "iwls_iterations", DEFAULT_IWLS_ITERATIONS);
     fprintf(fp, "%s %d\n\n", "iwls_subintervals", DEFAULT_SUBINTERVALS);
 
     // piecewise
-    put_section_header(fp, "piecewise parameters");
+    put_section_header(fp, "Piecewise Estimator Parameters");
     fprintf(fp, "%s\n%s %d\n\n", "# Number of times to iterate the IWLS estimator. Recommended"\
 	    " value is between 2 and 5.", "pc_iwls_iterations",DEFAULT_IWLS_ITERATIONS);
     fprintf(fp, "%s\n%s %d\n\n", "# Number of subintervals to use for the IWLS estimator."\
@@ -378,15 +397,15 @@ int create_default_param_file(char* filename)
 	    " bad estimates, especially if the\n# data has large variations.", 
 	    "pc_min_interval_proportion", DEFAULT_MIN_INTERVAL_PROP);
     fprintf(fp, "%s\n%s %lf\n\n", "# Threshold at which to reject an extension attempt. This"\
-	    " threshold limits the value\n# of the probability density function calculated at"\
+	    " threshold limits the value\n# of the probability mass function calculated at"\
 	    " each point on the extended line,\n# checking how likely is it that the point"\
 	    " is actually part of the data set. A lower\n# value means that extension will"\
 	    " be continued even if the probability is very low.", "pc_pmf_threshold", DEFAULT_PMF_THRESHOLD);
-    fprintf(fp, "%s\n%s %lf\n\n", "# A different threshold for summation of probability density"\
-	    " functions. Used when summing\n# the probability density functions at each point.", 
+    fprintf(fp, "%s\n%s %lf\n\n", "# A different threshold for summation of probability mass"\
+	    " functions. Used when summing\n# the probability mass functions at each point.", 
 	    "pc_pmf_sum_threshold", DEFAULT_PMF_SUM_THRESHOLD);
     // baseline
-    put_section_header(fp, "baseline parameters");
+    put_section_header(fp, "Baseline Estimator Parameters");
     fprintf(fp, "%s %d\n", "base_iwls_iterations", DEFAULT_IWLS_ITERATIONS);
     fprintf(fp, "%s %d\n", "base_iwls_subintervals", DEFAULT_SUBINTERVALS);
     fprintf(fp, "%s %lf\n", "base_max_extension", DEFAULT_MAX_EXTENSION);
@@ -395,13 +414,115 @@ int create_default_param_file(char* filename)
     fprintf(fp, "%s %lf\n", "base_pmf_threshold", DEFAULT_PMF_THRESHOLD);
     fprintf(fp, "%s %lf\n\n", "base_pmf_sum_threshold", DEFAULT_PMF_SUM_THRESHOLD);
     // gaussian
-    put_section_header(fp, "gaussian parameters");
+    put_section_header(fp, "Gaussian Estimator Parameters");
     fprintf(fp, "%s\n%s %lf\n\n", "# Standard deviation to apply to gaussian"\
-	    " kernels used to estimate functions","gauss_est_stdev",
-	    DEFAULT_GAUSS_EST_STDEV);
+	    " kernels used to estimate functions\n# Changing this value will"\
+	    " change the normalisation constant required to get\n# the"\
+	    " correct function estimate.","gauss_est_stdev",DEFAULT_GAUSS_EST_STDEV);
     fprintf(fp, "%s\n%s %lf\n\n", "# Specify resolution of kernels used to estimate"\
 	    " gaussians. A small value will\n# give higher precision but take longer"
 	    ,"gauss_est_resolution", DEFAULT_GAUSS_EST_RESOLUTION);
+    put_section_header(fp, "Time Delta Estimator Parameters");
+    fprintf(fp, "%s\n%s %s\n\n", "# Whether to estimate the time delay. If"\
+	    " this is set to no, the timedelta will be\n# read from the"\
+	    " parameter file and used to combine functions if multiple streams\n"\
+	    "# are being estimated.", "estimate_delta", DEFAULT_DO_DELTA_EST);
+    fprintf(fp, "%s\n%s %s\n\n", "# Method to use to estimate the time delay."\
+	    " Set to either pdf or area. The pdf\n# method uses the probability"\
+	    " mass function to calculate likelihood of two\n# streams sharing"\
+	    " the same underlying functions, given the bin counts from the\n"\
+	    "# event stream. The time delay is the point at which the sum of"\
+	    " the probability\n# mass functions across the whole space is"\
+	    " highest. The area method is\n# simpler, estimating the delay"\
+	    " based on the area between the curves of two\n# functions. The"\
+	    " point at which the area is smallest is most likely the actual\n"\
+	    "# time delay.", "delta_est_method", DEFAULT_DELTA_EST_METHOD);
+    fprintf(fp, "%s\n%s %lf\n\n", "# This parameter defines the step by which the"\
+	    " guess at the value of delta increases.\n# The value of delta starts"\
+	    " at a negative value and moves towards a positive value\n# in steps"\
+	    " of this value. A low value will provide more granularity on data,"\
+	    " but it\n# will take longer to find an estimate.", "delta_est_step",
+	    DEFAULT_DELTA_EST_STEP);
+    fprintf(fp, "%s\n%s %lf\n\n", "# The estimator will check delta values of"\
+	    " between + and - this value. A lower value\n# will mean that the"\
+	    " estimation is quicker, but may result in the true delta not being\n"\
+	    "# found if it is not within the range provided. The program starts"\
+	    " at the negative\n# of the value and iterates, increasing by"\
+	    " delta_est_step until it reaches the positive.", "delta_est_max_delta",
+	    DEFAULT_MAX_DELTA);
+    put_section_header(fp, "Area Method");
+    fprintf(fp, "%s\n%s %lf\n\n", "# Point at which to start approximating the"\
+	    " area between functions.", "delta_est_area_start", DEFAULT_START);
+    fprintf(fp, "%s\n%s %lf\n\n", "# Length of the interval to use when approximating"\
+	    " area between functions.", "delta_est_area_interval", DEFAULT_INTERVAL);
+    fprintf(fp, "%s\n%s %lf\n\n", "# This parameter is used to define the step"\
+	    " taken when finding estimates. In the\n# case of the area method,"\
+	    " a sample of the area is taken at uniform intervals\n# according to"\
+	    " this value. A smaller value may provide more accurate\n# estimates,"\
+	    " but the calculation will take longer.","delta_est_area_resolution",
+	    DEFAULT_DELTA_EST_AREA_RESOLUTION);
+    put_section_header(fp, "PMF Method");
+    fprintf(fp, "%s\n%s %lf\n\n", "# Defines the point at which to start combining"\
+	    " functions in the pmf estimator.\n# This should usually be the same"\
+	    " as the interval specified in the generator\n# parameters if you are"\
+	    " using a generated function. It may also be useful for\n# getting"\
+	    " better estimates on functions that vary greatly at some points,\n"\
+	    "# and are smooth at others, removing the large variation from"\
+	    " consideration in\n# the time delta estimation and perhaps improving"\
+	    " the result.", "delta_est_combine_start", DEFAULT_START);
+    fprintf(fp, "%s\n%s %lf\n\n", "# Defines the length of the interval to use"\
+	    " when combining two functions during\n# the pmf delta estimation.",
+	    "delta_est_combine_interval", DEFAULT_INTERVAL);
+    fprintf(fp, "%s\n%s %lf\n\n", "# This parameter is used to define the step"\
+	    " taken when finding estimates.\n# In the case of the pmf method, the"\
+	    " points at which the value of the pmf\n# is calculated depend on this"\
+	    " value. A smaller value may provide more\n# accurate estimates, but"\
+	    " the calculation will take longer.", "delta_est_pmf_resolution",
+	    DEFAULT_DELTA_EST_PMF_RESOLUTION);
+    fprintf(fp, "%s\n%s %d\n\n", "# Defines the number of bins used to split"\
+	    " the interval. If the bin length\n# resulting from this value"\
+	    " differs from the length of time which each lambda\n# represents,"\
+	    " then a normalisation constant is required to find the original\n"\
+	    "# function at its original magnitude. If lambda represents arrivals"\
+	    " per second,\n# then a bin length of 1 second is ideal because then"\
+	    " each bin can be represented\n# with a single value of lambda."\
+	    " Otherwise, it is necessary to sum the lambda\n# values in the bin"\
+	    " interval to see whether the number of events received\n# is close"\
+	    " to the number expected given the value of lambda.", 
+	    "delta_est_num_bins", DEFAULT_DELTA_EST_BINS);
+    // normaliser
+    put_section_header(fp, "Normaliser Parameters");
+    fprintf(fp, "%s\n%s %lf\n\n", "# Defines the initial value checked when finding"\
+	    " the normalisation constant,\n# used to normalise the function so that"\
+	    " it is as close to the original function\n# as possible. This is"\
+	    " necessary when using the gaussian estimation method, because\n# the"\
+	    " value of the function at each point depends on the number of"\
+	    " gaussians, as\n# well as on their standard deviation.",
+	    "normaliser_est_initial", DEFAULT_NORMALISER_INITIAL);
+    fprintf(fp, "%s\n%s %lf\n\n", "# Maximum value to check when finding the "\
+	    "normalisation constant.", "normaliser_est_max", DEFAULT_NORMALISER_MAX);
+    fprintf(fp, "%s\n%s %lf\n\n", "# Value by which to increase the checked value of"\
+	    " the normaliser in each iteration.", "normaliser_est_step",
+	    DEFAULT_NORMALISER_STEP);
+    fprintf(fp, "%s\n%s %d", "# Number of bins into which to split the interval"\
+	    " being estimated into to find the\n# normaliser. Generally, this value"\
+	    " should be equal to the length of the interval\n# being estimated"\
+	    " divided by the time period for which the lambda value applies.\n# For"\
+	    " example, if your lambda represents the number of events per second,"\
+	    " and you\n# have an interval time of 100 seconds, you should use 100"\
+	    " subintervals in order\n# for the number of events counted in each bin"\
+	    " to be of a similar magnitude to the\n# lambda value that the function"\
+	    " estimates should produce if you want to get back\n# a function estimate"\
+	    " that is on the same scale as the generating function. This\n# applies"\
+	    " in particular to estimates with gaussians, where the standard deviation\n"\
+	    "# of the gaussians being used affects the height of the estimated"\
+	    " function at each\n# point.", "normaliser_est_subintervals",
+	    DEFAULT_NORMALISER_SUBINTERVALS);
+    
+
+
+//    fprintf(fp, "%s\n%s %s\n\n", "", "", );
+    
     fclose(fp);
 
     printf("done\n");
@@ -475,6 +596,9 @@ void free_gauss_vector(gauss_vector* G)
     free(G);
 }
 
+/*
+ * Free memory allocated to a double_multi_arr
+ */
 void free_double_multi_arr(double_multi_arr* arr)
 {
     int i;
@@ -505,4 +629,106 @@ int has_missing_parameters(string_arr* checklist, paramlist* params)
     }
 
     return missing;
+}
+
+/*
+ * calculates the value of an estimate at a given point in time.
+ */
+double estimate_at_point(est_arr* estimate, double time)
+{
+    est_data* idata = data_at_point(estimate, time);
+
+    if (idata == NULL)
+	return 0;
+    
+    return idata->est_a + idata->est_b * time;
+}
+
+/*
+ * Finds the value of the given estimate at all points in the given array.
+ */
+double_arr* estimate_at_points(est_arr* estimate, double* points, int len)
+{
+    if (estimate == NULL || points == NULL || len <= 0)
+	return NULL;
+
+    double_arr* r = init_double_arr(len);
+    
+    int i;
+
+    for (i = 0; i < len; ++i) {
+	double est = estimate_at_point(estimate, points[i]);
+	if (est < 0){
+	    printf("WARNING: Estimate at %lf is less than zero! (%lf). Setting to zero.\n", points[i], r->data[i]);
+	    est = 0;
+	}
+	
+	
+	r->data[i] = est;
+//	printf("Estimate at %lf is %lf\n", points[i], r->data[i]);
+    }
+
+    return r;
+}
+
+/*
+ * Returns the data from the given estimate that can be used to calculate
+ * the function value at the specified time.
+ */
+est_data* data_at_point(est_arr* estimate, double check_time)
+{
+    if (estimate == NULL)
+	return NULL;
+    
+    est_data* current = NULL;
+    est_data* ret = NULL;
+        
+    int i;
+
+    for (i = 0; i < estimate->len; ++i) {
+	current = estimate->estimates[i];
+	if (current->start <= check_time && check_time <= current->end){
+	    ret = current;
+	}
+    }
+    return ret;
+}
+
+/*
+ * Initialises a double_multi_arr struct which contains num_arrays arrays,
+ * each having the same length, array_length.
+ */
+double_multi_arr* init_multi_array(int num_arrays, int array_length)
+{
+    if (array_length <= 0 || num_arrays <= 0)
+	return NULL;
+
+    double_multi_arr* res = malloc(sizeof(double_multi_arr));
+    res->len = num_arrays;
+    res->lengths = malloc(sizeof(int) * num_arrays);
+    res->data = malloc(sizeof(double*) * num_arrays);
+    
+    int i;
+    
+    for (i = 0; i < num_arrays; ++i) {
+	res->data[i] = malloc(array_length * sizeof(double));
+	res->lengths[i] = array_length;
+    }
+
+    return res;
+}
+
+/*
+ * Initialises a double_arr struct with an array of the given length
+ */
+double_arr* init_double_arr(int len)
+{
+    if (len <= 0)
+	return NULL;
+
+    double_arr* r = malloc(sizeof(double_arr));
+    r->len = len;
+    r->data = malloc(sizeof(double) * r->len);
+    
+    return r;
 }
