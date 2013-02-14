@@ -697,19 +697,21 @@ double sum_log_pmfs(int* counts, double* lambdas, double normaliser, int len)
 	    res = log(gsl_ran_poisson_pdf(counts[i], lambdas[i] / normaliser));
 	}
 	sum += res;
-//	printf("count %d, normalised lambda %lf, pmf %lf, sum now %lf\n", counts[i], lambdas[i]/normaliser, res, sum);
+//	printf("count %d, normalised lambda %lf, pmf %lf, sum now %lf\n",
+//              counts[i], lambdas[i]/normaliser, res, sum);
     }
 
     return sum;
 }
 
 /*
- * Computes the sum of values in the open interval (start, end). This means that values which
- * fall at exactly start or end are not considered in the sum. Each value in the times array
- * should correspond to a value in the values array. All values in the value array are divided
- * by the normaliser provided.
+ * Computes the sum of values in the left-open, right-closed interval (start, end].
+ * This means that values which fall at exactly start or end are not considered
+ * in the sum. Each value in the times array should correspond to a value in the
+ * values array. All values in the value array are divided by the normaliser provided.
  */
-double sum_array_interval(double* times, double* values, double start, double end, double normaliser, int len)
+double sum_array_interval(double* times, double* values, double start, double end,
+			  double normaliser, int len)
 {
     if (times == NULL || values == NULL || end <= start || len <= 0)
 	return -INFINITY;
@@ -719,7 +721,7 @@ double sum_array_interval(double* times, double* values, double start, double en
     
     for (i = 0, current = times[0]; current < end && i < len; ++i, current = times[i]) {
 //	printf("current is %lf, end is %lf\n", current, end);
-	if (current <= start)
+	if (current < start)
 	    continue;
 	sum += values[i];
     }

@@ -7,6 +7,7 @@
 	to be returned, even if there was only a single point at which there was a zero.
 	This led to bad behaviour, so the calculation is now done with a very small lambda
 	value which should be better than ignoring those values entirely.
+	Array interval summing now sums values in the right-closed interval (start,end]
 
 2013-02-13  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 

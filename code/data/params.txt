@@ -219,7 +219,7 @@ delta_est_method pmf
 # The value of delta starts at a negative value and moves towards a positive value
 # in steps of this value. A low value will provide more granularity on data, but it
 # will take longer to find an estimate.
-delta_est_step 2.000000
+delta_est_step 5.000000
 
 # The estimator will check delta values of between + and - this value. A lower value
 # will mean that the estimation is quicker, but may result in the true delta not being

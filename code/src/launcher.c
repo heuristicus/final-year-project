@@ -197,41 +197,6 @@ void multi_estimate(char* paramfile, char* infile, char* outfile, char* estimato
     }
 }
 
-/* void multi_estimate_2(char* paramfile, char* infile, char* outfile, char* estimator_type, int nstreams) */
-/* { */
-/*     paramlist* params = get_parameters(paramfile); */
-    
-/*     char* fname = get_string_param(params, "outfile"); // default generator output filename */
-/*     char* pref = get_string_param(params, "stream_ext"); // default extension */
-/*     char* est_delta = get_string_param(params, "estimate_delta"); */
-/*     double step = get_double_param(params, "output_step"); */
-/*     double_arr* delays = NULL;// Will be used to store time delays */
-
-/*     int gauss = strcmp(estimator_type, "gauss") == 0; */
-
-/*     if (outfile == NULL){ */
-/* 	if (gauss) */
-/* 	    outfile = get_string_param(params, "gauss_est_outfile"); */
-/* 	else */
-/* 	    outfile = get_string_param(params, "outfile"); */
-/*     } */
-	    
-/*     if (fname == NULL || pref == NULL){ */
-/* 	    printf("You must include the parameters \"outfile\" and \"stream_ext\" in" \ */
-/* 		   " your parameter file.\n"); */
-/* 	exit(1); */
-/*     } else if (outfile == NULL){ */
-/* 	if (gauss) */
-/* 	    printf("You must include the parameter \"gauss_est_outfile\" in your" \ */
-/* 		   " parameter file, or specify the output file with the -o switch.\n"); */
-/* 	else */
-/* 	    printf("You must include the parameter \"gauss_est_outfile\" in your" \ */
-/* 		   " parameter file, or specify the output file with the -o switch.\n"); */
-/* 	exit(1); */
-/*     } */
-
-/* } */
-
 void multi_est_gauss(paramlist* params, char* infile, char* outfile, int nstreams)
 {
     char* fname = get_string_param(params, "outfile"); // default generator output filename
@@ -292,8 +257,6 @@ void multi_est_gauss(paramlist* params, char* infile, char* outfile, int nstream
 		d[i] = estimate_delay_area(params, (void*)estimates[0],
 					   (void*)estimates[i], "gauss");
 	    } else if (strcmp(delta_method, "pmf") == 0){
-		/* d[i] = estimate_delay_pmf(params, infname, ev, (void*)estimates[0], */
-		/* 			  (void*)estimates[i], "gauss"); */
 		d[i] = estimate_delay_pmf(params, (void*)estimates[0],
 					  (void*)estimates[i], "gauss");
 	    }
