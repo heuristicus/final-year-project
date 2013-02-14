@@ -45,9 +45,12 @@ START_TEST(test_combine_functions)
     comb[0] = a;
     comb[1] = b;
 
+    double_arr* td = init_double_arr(2);
     double time_delay[] = {0, 1};
+    td->data = time_delay;
+    td->len = 2;
     
-    double_multi_arr* res = combine_functions(comb, time_delay, 6, 1, 2);
+    double_multi_arr* res = combine_functions(comb, td, 0, 6, 1, 2);
     int i;
 
     double correct[] = {6.5, 6.5, 7.5, 10, 10};
@@ -58,14 +61,14 @@ START_TEST(test_combine_functions)
     }
 
     
-    fail_unless(combine_functions(NULL, time_delay, 6, 1, 2) == NULL, NULL);    
-    fail_unless(combine_functions(comb, NULL, 6, 1, 2) == NULL, NULL);    
-    fail_unless(combine_functions(comb, time_delay, 0, 1, 2) == NULL, NULL);
-    fail_unless(combine_functions(comb, time_delay, 6, 1, 0) == NULL, NULL);
-    fail_unless(combine_functions(comb, time_delay, 6, 0, 2) == NULL, NULL);
-    fail_unless(combine_functions(comb, time_delay, -1, 1, 2) == NULL, NULL);
-    fail_unless(combine_functions(comb, time_delay, 6, 1, -1) == NULL, NULL);
-    fail_unless(combine_functions(comb, time_delay, 6, 0, -1) == NULL, NULL);
+    fail_unless(combine_functions(NULL, td, 0, 6, 1, 2) == NULL, NULL);    
+    fail_unless(combine_functions(comb, NULL, 0, 6, 1, 2) == NULL, NULL);    
+    fail_unless(combine_functions(comb, td, 0, 0, 1, 2) == NULL, NULL);
+    fail_unless(combine_functions(comb, td, 0, 6, 1, 0) == NULL, NULL);
+    fail_unless(combine_functions(comb, td, 0, 6, 0, 2) == NULL, NULL);
+    fail_unless(combine_functions(comb, td, 0, -1, 1, 2) == NULL, NULL);
+    fail_unless(combine_functions(comb, td, 0, 6, 1, -1) == NULL, NULL);
+    fail_unless(combine_functions(comb, td, 0, 6, 0, -1) == NULL, NULL);
 
     free_est_arr(a);
     free_est_arr(b);

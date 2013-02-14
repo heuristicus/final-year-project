@@ -637,7 +637,15 @@ double_arr* estimate_at_points(est_arr* estimate, double* points, int len)
     int i;
 
     for (i = 0; i < len; ++i) {
-	r->data[i] = estimate_at_point(estimate, points[i]);
+	double est = estimate_at_point(estimate, points[i]);
+	if (est < 0){
+	    printf("WARNING: Estimate at %lf is less than zero! (%lf). Setting to zero.\n", points[i], r->data[i]);
+	    est = 0;
+	}
+	
+	
+	r->data[i] = est;
+//	printf("Estimate at %lf is %lf\n", points[i], r->data[i]);
     }
 
     return r;
@@ -656,7 +664,7 @@ est_data* data_at_point(est_arr* estimate, double check_time)
     est_data* ret = NULL;
         
     int i;
-    
+
     for (i = 0; i < estimate->len; ++i) {
 	current = estimate->estimates[i];
 	if (current->start <= check_time && check_time <= current->end){

@@ -1,3 +1,32 @@
+2013-02-14  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* estimate_delta.c: Fixed issues where baseline pmf calculations were not being
+	done correctly due to issues with math functions.
+
+	* math_util.c: When summing pmfs, points at which lambda is zero caused -nan
+	to be returned, even if there was only a single point at which there was a zero.
+	This led to bad behaviour, so the calculation is now done with a very small lambda
+	value which should be better than ignoring those values entirely.
+
+2013-02-13  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* tests: Fixed some tests which were broken by minor modifications to functions.
+
+	* generator.c: Generation stops if the time exceeds the end time when the
+	homogeneous lambda value is added to the base time. Would previously have
+	a small number of events that exceeded the threshold.
+
+	* estimate_delta.c: Implemented a pmf estimator which sums the pmfs from
+	both streams being compared. Previous version used only one of the streams
+	to check whether the combined function was representative of the bin counts,
+	which was sub-optimal. pmf estimation now gives good results. Area estimator
+	uses normalised start and end points, between which both functions have data
+	at all of the delays that are being attempted. The same applies for the pmf
+	estimator as well.
+
+	* math_util.c: Fixed array interval summing issue which was causing pmf
+	delay estimator to work sub-optimally.
+
 2013-02-12  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* general_util.c, defparams.h: Added parameters for delta estimation to

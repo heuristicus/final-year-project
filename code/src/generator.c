@@ -228,6 +228,8 @@ double_multi_arr* nonhom_from_gaussian(gauss_vector* G, double lambda,
     while (base_time < end){
 	hom_out = homogeneous_time(lambda);
 	base_time += hom_out;
+	if (base_time >= end)
+	    break;
 	shifted_time += hom_out;
 	non_hom_lambda = sum_gaussians_at_point(shifted_time, G) + shift;
 	if ((rand = get_uniform_rand()) <= non_hom_lambda / lambda){
@@ -652,6 +654,8 @@ int run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda,
     while (base_time < end_time){
 	hom_out = homogeneous_time(lambda);
 	base_time += hom_out;
+	if (base_time >= end_time)
+	    break;
 	shifted_time += hom_out;
 	non_hom_lambda = mupEval(hparser);
 	//printf("%lf %lf\n", time, non_hom_lambda);//more granularity on lambda values // get this into output file

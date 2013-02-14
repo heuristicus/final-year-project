@@ -523,6 +523,25 @@ START_TEST(test_multiply_arr)
 }
 END_TEST
 
+START_TEST(test_sum_array_interval)
+{
+    double t[] = {0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4};
+    double v[] = {1, 2,   3, 4,   5, 6,   7, 8,   9};
+    
+    double res1 = sum_array_interval(t, v, 0, 1, 1, sizeof(t)/sizeof(double));
+    double res2 = sum_array_interval(t, v, 1, 2, 1, sizeof(t)/sizeof(double));
+    double res3 = sum_array_interval(t, v, 2, 3, 1, sizeof(t)/sizeof(double));
+    double res4 = sum_array_interval(t, v, 3, 4, 1, sizeof(t)/sizeof(double));
+    double res5 = sum_array_interval(t, v, 0, 5, 1, sizeof(t)/sizeof(double));
+
+    fail_unless(res1 == 2, NULL);
+    fail_unless(res2 == 4, NULL);
+    fail_unless(res3 == 6, NULL);
+    fail_unless(res4 == 8, NULL);
+    fail_unless(res5 == 44, NULL);
+}
+END_TEST
+
 Suite* math_util_suite(void)
 {
     Suite *s = suite_create("math_util");
@@ -554,6 +573,7 @@ Suite* math_util_suite(void)
     tcase_add_test(tc_core, test_find_min_value_int);
     tcase_add_test(tc_core, test_find_max_value);
     tcase_add_test(tc_core, test_multiply_arr);
+    tcase_add_test(tc_core, test_sum_array_interval);
 
     suite_add_tcase(s, tc_core);
 

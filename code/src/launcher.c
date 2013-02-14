@@ -292,7 +292,9 @@ void multi_est_gauss(paramlist* params, char* infile, char* outfile, int nstream
 		d[i] = estimate_delay_area(params, (void*)estimates[0],
 					   (void*)estimates[i], "gauss");
 	    } else if (strcmp(delta_method, "pmf") == 0){
-		d[i] = estimate_delay_pmf(params, infname, ev, (void*)estimates[0],
+		/* d[i] = estimate_delay_pmf(params, infname, ev, (void*)estimates[0], */
+		/* 			  (void*)estimates[i], "gauss"); */
+		d[i] = estimate_delay_pmf(params, (void*)estimates[0],
 					  (void*)estimates[i], "gauss");
 	    }
 	}
@@ -343,6 +345,7 @@ void multi_est_default(char* paramfile, char* infile, char* outfile, char* estim
     char* pref = get_string_param(params, "stream_ext"); // default extension
     double step = get_double_param(params, "output_step");
     char* est_delta = get_string_param(params, "estimate_delta");
+    double start = get_double_param(params, "est_start_time");
     double_arr* delays = NULL;// Will be used to store time delays
     if (step <= 0)
 	step = DEFAULT_STEP;
@@ -398,7 +401,7 @@ void multi_est_default(char* paramfile, char* infile, char* outfile, char* estim
 		d[i] = estimate_delay_area(params, (void*)allstreams[0], (void*)allstreams[i],
 					   "base");
 	    } else if (strcmp(delta_method, "pmf") == 0){
-		d[i] = estimate_delay_pmf(params, infname, ev, (void*)allstreams[0], (void*)allstreams[i],
+		d[i] = estimate_delay_pmf(params, (void*)allstreams[0], (void*)allstreams[i],
 					  "base");
 	    }
 	}
@@ -434,7 +437,7 @@ void multi_est_default(char* paramfile, char* infile, char* outfile, char* estim
 	exit(1);
     }
 
-    double_multi_arr* combined = combine_functions(allstreams, delays, interval_time, step, nstreams);
+    double_multi_arr* combined = combine_functions(allstreams, delays, start, interval_time, step, nstreams);
     printf("done\n");
     output_double_multi_arr("basecomb", "w", combined);
     free_list(params);

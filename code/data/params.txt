@@ -203,7 +203,7 @@ gauss_est_resolution 0.300000
 # Whether to estimate the time delay. If this is set to no, the timedelta will be
 # read from the parameter file and used to combine functions if multiple streams
 # are being estimated.
-estimate_delta no
+estimate_delta yes
 
 # Method to use to estimate the time delay. Set to either pdf or area. The pdf
 # method uses the probability mass function to calculate likelihood of two
@@ -213,7 +213,7 @@ estimate_delta no
 # simpler, estimating the delay based on the area between the curves of two
 # functions. The point at which the area is smallest is most likely the actual
 # time delay.
-delta_est_method area
+delta_est_method pmf
 
 # This parameter defines the step by which the guess at the value of delta increases.
 # The value of delta starts at a negative value and moves towards a positive value
@@ -225,7 +225,7 @@ delta_est_step 2.000000
 # will mean that the estimation is quicker, but may result in the true delta not being
 # found if it is not within the range provided. The program starts at the negative
 # of the value and iterates, increasing by delta_est_step until it reaches the positive.
-delta_est_max_delta 40.000000
+delta_est_max_delta 20.000000
 
 ################################################################################
 #                                  Area Method                                 #
