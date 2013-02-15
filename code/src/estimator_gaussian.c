@@ -11,7 +11,6 @@ double_multi_arr* estimate_gaussian(paramlist* params, char* infile, char* outfi
 	outfile = get_string_param(params, "gauss_est_out");
     }
 
-    
    return _estimate_gaussian(infile, outfile, start, interval, stdev, resolution);
 }
 
@@ -25,11 +24,11 @@ double_multi_arr* _estimate_gaussian(char* infile, char* outfile, double start,
     double_multi_arr* T = gauss_transform(G, start, start + interval_length, resolution);
 
 
-/*     double min = find_min_value(T->data[1], T->lengths[1]); */
-/* //    double shift = 0; */
-/*     if (min <= 0){ */
-/*     	shift = -min; */
-/*     } */
+    /* double min = find_min_value(T->data[1], T->lengths[1]); */
+    /* double shift = 0; */
+    /* if (min <= 0){ */
+    /* 	shift = -min; */
+    /* } */
     
     /* output_gauss_transform(outfile, "w", T->data, shift, T->lengths[0], stdev + 6); */
     /* output_gaussian_contributions("contrib", "w", G, start, start + interval_length, resolution, 0); */
@@ -64,6 +63,9 @@ gauss_vector* _n_estimate_gaussian(char* infile, char* outfile, double start,
 
     double_multi_arr* T = gauss_transform(G, start, start + interval_length, 0.5);
     output_gauss_transform(outfile, "w", T->data, 0, T->lengths[0], 1);
+
+    free_double_multi_arr(T);
+    free(ev);
     
     return G;
 }

@@ -262,6 +262,8 @@ START_TEST(test_sum_gaussians_at_point)
 
     fail_unless(epsck(sum_gaussians_at_point(1, G), res), "Return does not match expected value.");
     fail_unless(epsck(sum_gaussians_at_point(2, G), res), "Return does not match expected value.");
+    fail_unless(epsck(sum_gaussians_at_point(3, G), res2), "Return does not match expected value.");
+    fail_unless(epsck(sum_gaussians_at_point(0, G), res2), "Return does not match expected value.");
     fail_unless(sum_gaussians_at_point(3, NULL) == 0, "Null pointer returns nonzero");
 }
 END_TEST
@@ -529,11 +531,59 @@ START_TEST(test_sum_array_interval)
     double res4 = sum_array_interval(t, v, 3, 4, 1, sizeof(t)/sizeof(double));
     double res5 = sum_array_interval(t, v, 0, 5, 1, sizeof(t)/sizeof(double));
 
-    fail_unless(res1 == 2, NULL);
-    fail_unless(res2 == 4, NULL);
-    fail_unless(res3 == 6, NULL);
-    fail_unless(res4 == 8, NULL);
-    fail_unless(res5 == 44, NULL);
+    fail_unless(res1 == 3, NULL);
+    fail_unless(res2 == 7, NULL);
+    fail_unless(res3 == 11, NULL);
+    fail_unless(res4 == 15, NULL);
+    fail_unless(res5 == 45, NULL);
+}
+END_TEST
+
+START_TEST(test_sum_gaussians_at_points)
+{
+    gaussian* g1 = make_gaussian(2, 3);
+    gaussian* g2 = make_gaussian(1, 3);
+    gauss_vector* G = malloc(sizeof(gauss_vector));
+    gaussian** gs = malloc(2 * sizeof(gaussian*));
+    gs[0] = g1;
+    gs[1] = g2;
+        
+    G->gaussians = gs;
+    G->len = 2;
+    G->w = malloc(2 * sizeof(double));
+    G->w[0] = 1;
+    G->w[1] = 1;
+
+    double points[] = {0,1,2,3};
+    double_arr* ret = sum_gaussians_at_points(G, points, sizeof(points)/sizeof(double));
+    double correct[] = {1.746696871, 1.945959468, 1.945959468, 1.746696871};
+    
+    int i;
+    
+    for (i = 0; i < sizeof(points)/sizeof(double); ++i) {
+	fail_unless(epsck(ret->data[i], correct[i]), NULL);
+    }
+
+    fail_unless(sum_gaussians_at_points(G, NULL, 1) == NULL, NULL);
+    fail_unless(sum_gaussians_at_points(NULL, points, 1) == NULL, NULL);
+    fail_unless(sum_gaussians_at_points(G, points, 0) == NULL, NULL);
+}
+END_TEST
+
+START_TEST(test_largest_value_in_arr)
+{
+    double d1[] = {1,2,3,4,5};
+    double d2[] = {-5, 5};
+    double d3[] = {-123123, 123124};
+    double d4[] = {-12, -123, -144};
+
+    fail_unless(largest_value_in_arr(d1, 5) == 5, NULL);
+    fail_unless(largest_value_in_arr(d2, 2) == 5, NULL);
+    fail_unless(largest_value_in_arr(d3, 2) == 123124, NULL);
+    fail_unless(largest_value_in_arr(d4, 3) == 144, NULL);
+
+    fail_unless(largest_value_in_arr(NULL, 2) == 0, NULL);
+    fail_unless(largest_value_in_arr(d2, 0) == 0, NULL);
 }
 END_TEST
 
@@ -569,6 +619,8 @@ Suite* math_util_suite(void)
     tcase_add_test(tc_core, test_find_max_value);
     tcase_add_test(tc_core, test_multiply_arr);
     tcase_add_test(tc_core, test_sum_array_interval);
+    tcase_add_test(tc_core, test_sum_gaussians_at_points);
+    tcase_add_test(tc_core, test_largest_value_in_arr);
 
     suite_add_tcase(s, tc_core);
 

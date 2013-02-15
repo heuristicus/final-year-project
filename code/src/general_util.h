@@ -25,5 +25,6 @@ double estimate_at_point(est_arr* estimate, double time);
 double_arr* estimate_at_points(est_arr* estimate, double* points, int len);
 double_multi_arr* init_multi_array(int num_arrays, int array_length);
 double_arr* init_double_arr(int len);
+void free_double_arr(double_arr* arr);
 
 #endif

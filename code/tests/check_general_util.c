@@ -106,6 +106,110 @@ START_TEST (test_get_event_subinterval)
 }
 END_TEST
 
+START_TEST(test_estimate_at_point)
+{
+    est_arr* a = malloc(sizeof(est_arr));
+
+    a->len = 3;
+    a->estimates = malloc(sizeof(est_data*) * a->len);
+    
+    est_data* e1 = malloc(sizeof(est_data));
+    est_data* e2 = malloc(sizeof(est_data));
+    est_data* e3 = malloc(sizeof(est_data));
+
+    e1->start = 0;
+    e1->end = 10;
+    e1->est_a = 5;
+    e1->est_b = 0;
+
+    e2->start = 10;
+    e2->end = 20;
+    e2->est_a = 10;
+    e2->est_b = 0;
+
+    e3->start = 20;
+    e3->end = 30;
+    e3->est_a = 15;
+    e3->est_b = 0;
+
+    a->estimates[0] = e1;
+    a->estimates[1] = e2;
+    a->estimates[2] = e3;
+
+    double ret1 = estimate_at_point(a, 5);
+    double ret2 = estimate_at_point(a, 15);
+    double ret3 = estimate_at_point(a, 25);
+    double ret4 = estimate_at_point(a, 35);
+    
+    fail_unless(ret1 == 5, NULL);
+    fail_unless(ret2 == 10, NULL);
+    fail_unless(ret3 == 15, NULL);
+    fail_unless(ret4 == 0, NULL);
+
+    free_est_arr(a);
+}
+END_TEST
+
+START_TEST(test_data_at_point)
+{
+    est_arr* a = malloc(sizeof(est_arr));
+
+    a->len = 3;
+    a->estimates = malloc(sizeof(est_data*) * a->len);
+    
+    est_data* e1 = malloc(sizeof(est_data));
+    est_data* e2 = malloc(sizeof(est_data));
+    est_data* e3 = malloc(sizeof(est_data));
+
+    e1->start = 0;
+    e1->end = 10;
+    e1->est_a = 5;
+    e1->est_b = 0;
+
+    e2->start = 10;
+    e2->end = 20;
+    e2->est_a = 10;
+    e2->est_b = 0;
+
+    e3->start = 20;
+    e3->end = 30;
+    e3->est_a = 15;
+    e3->est_b = 0;
+
+    a->estimates[0] = e1;
+    a->estimates[1] = e2;
+    a->estimates[2] = e3;
+    
+    est_data* ret1 = data_at_point(a, 5);
+    est_data* ret2 = data_at_point(a, 15);
+    est_data* ret3 = data_at_point(a, 25);
+    
+    fail_unless(ret1 == e1, NULL);
+    fail_unless(ret2 == e2, NULL);
+    fail_unless(ret3 == e3, NULL);
+    fail_unless(data_at_point(a, 35) == NULL, NULL);
+    
+    fail_unless(data_at_point(NULL, 5) == NULL, NULL);
+    
+    free_est_arr(a);
+}
+END_TEST
+
+START_TEST(test_has_required_params)
+{
+    char* required[] = {"this", "is", "required", "asd"};
+    
+    paramlist* params = init_list("this", "test1");
+    params = add(params, "is", "test2");
+    params = add(params, "required", "test3");
+    params = add(params, "asd", "test4");
+
+    paramlist* badparams = init_list("no", "params");
+    
+    fail_unless(has_required_params(params, required, sizeof(required)/sizeof(char*)) == 1, NULL);
+    fail_unless(has_required_params(badparams, required, sizeof(required)/sizeof(char*)) == 0, NULL);
+}
+END_TEST
 
 Suite* general_util_suite(void)
 {
@@ -114,8 +218,10 @@ Suite* general_util_suite(void)
     tcase_add_test(tc_core, test_string_split);
     tcase_add_test(tc_core, test_interval_valid);
     tcase_add_test(tc_core, test_get_event_subinterval);
+    tcase_add_test(tc_core, test_estimate_at_point);
+    tcase_add_test(tc_core, test_data_at_point);
+    tcase_add_test(tc_core, test_has_required_params);
 
-    
     suite_add_tcase(s, tc_core);
 
     return s;

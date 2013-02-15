@@ -280,14 +280,14 @@ int create_default_param_file(char* filename)
 	    "output file is specified for the\n# estimator being used", "est_outfile",
 	    DEFAULT_EST_OUTFILE);
     fprintf(fp, "%s\n%s %s\n", "# Individual output files for specific estimators.", 
-	    "# ols_output", DEFAULT_OLS_OUT);
-    fprintf(fp, "%s %s\n", "# iwls_output", DEFAULT_IWLS_OUT);
-    fprintf(fp, "%s %s\n", "# pc_output", DEFAULT_PC_OUT);
+	    "# ols_est_output", DEFAULT_OLS_OUT);
+    fprintf(fp, "%s %s\n", "# iwls_est_outfile", DEFAULT_IWLS_OUT);
+    fprintf(fp, "%s %s\n", "# pc_est_outfile", DEFAULT_PC_OUT);
     fprintf(fp, "%s\n%s %lf\n\n", "# Used to determine the granularity of data in"\
 	    " output files. With a step of 1,\n# data in interval [0,5] is gathered"\
 	    " at 0, 1, 2, 3, 4 and 5 along the axis.", "output_step",
 	    DEFAULT_STEP);
-    fprintf(fp, "%s %s\n", "# base_output", DEFAULT_BASE_OUT);
+    fprintf(fp, "%s %s\n", "# base_est_outfile", DEFAULT_BASE_OUT);
     fprintf(fp, "%s\n%s %s\n\n", "# File to output gaussian estimate data to.", 
 	    "gauss_est_outfile", DEFAULT_GAUSS_EST_OUT);
     fprintf(fp, "%s\n%s %d\n\n", "# define the verbosity of output to data files.\n"\
@@ -594,6 +594,15 @@ void free_gauss_vector(gauss_vector* G)
 
     free(G->gaussians);
     free(G);
+}
+
+/*
+ * Free memory allocated to a double_arr
+ */
+void free_double_arr(double_arr* arr)
+{
+    free(arr->data);
+    free(arr);
 }
 
 /*

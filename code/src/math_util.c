@@ -449,36 +449,6 @@ double_multi_arr* shifted_transform(gauss_vector* V, double start, double interv
     return func;
 }
 
-/* double** kernel_density(double* events, int len, double start, double end, double bandwidth, double resolution) */
-/* { */
-/*     double current = start; */
-    
-/*     while (current <= end){ */
-/* 	printf("kernel density at %lf is %lf\n", current, kernel_density_at_point(events, len, current, bandwidth)); */
-/* 	current += resolution; */
-/*     } */
-
-/*     return NULL; */
-/* } */
-
-/* double kernel_density_at_point(double* events, int len, int x, double bandwidth) */
-/* { */
-/*     int i; */
-/*     double sum = 0;     */
-
-/*     for (i = 0; i < len; ++i) { */
-/* 	sum = (1/(len * bandwidth)) * gaussian_kernel((x - events[i])/bandwidth, x, bandwidth); */
-/*     } */
-    
-/*     return sum; */
-/* } */
-
-/* double gaussian_kernel(double x, double mean, double stdev) */
-/* { */
-/*     return exp(-pow(x - mean, 2)/(2 * pow(stdev, 2))); */
-/* //    return (1/sqrt(2 * M_PI)) * exp((-1/2) * pow(x, 2)); */
-/* } */
-
 /*
  * Generates a vector of specified length with each point p ~ N(0,1)
  */
@@ -719,10 +689,10 @@ double sum_array_interval(double* times, double* values, double start, double en
 	return -INFINITY;
     
     int i;
-    double current, sum = 0;
+    double current = times[0], sum = 0;
     
-    for (i = 0, current = times[0]; current < end && i < len; ++i, current = times[i]) {
-//	printf("current is %lf, end is %lf\n", current, end);
+    for (i = 0; current < end && i < len; ++i, current = times[i]) {
+//	printf("current is %lf, end is %lf, i is %d\n", current, end, i);
 	if (current < start)
 	    continue;
 	sum += values[i];
@@ -751,7 +721,8 @@ double_arr* sum_gaussians_at_points(gauss_vector* G, double* points, int len)
 }
 
 /*
- * Finds the largest positive or negative value in the given array.
+ * Finds the largest positive or negative value in the given array. Returns the
+ * absolute value of the largest element.
  */
 double largest_value_in_arr(double* data, int len)
 {

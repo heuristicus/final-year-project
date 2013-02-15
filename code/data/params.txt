@@ -225,7 +225,7 @@ delta_est_method pmf
 # The value of delta starts at a negative value and moves towards a positive value
 # in steps of this value. A low value will provide more granularity on data, but it
 # will take longer to find an estimate.
-delta_est_step 5.000000
+delta_est_step 1.00000
 
 # The estimator will check delta values of between + and - this value. A lower value
 # will mean that the estimation is quicker, but may result in the true delta not being
@@ -277,7 +277,7 @@ delta_est_pmf_resolution 1.000000
 # with a single value of lambda. Otherwise, it is necessary to sum the lambda
 # values in the bin interval to see whether the number of events received
 # is close to the number expected given the value of lambda.
-delta_est_num_bins 50
+delta_est_num_bins 100
 
 ################################################################################
 #                             Normaliser Parameters                            #

@@ -68,6 +68,10 @@ double_multi_arr* combine_gauss_vectors(gauss_vector** V, double_arr* time_delay
 					double start, double interval_time, double step,
 					int num_vectors)
 {
+
+    if (V == NULL || time_delay == NULL || interval_time <= 0 || step <= 0 || num_vectors <= 0)
+	return NULL;
+    
 //    printf("start %lf, time %lf, step %lf, nvec %d\n", start, interval_time, step, num_vectors);
 //    printf("time delay for function 0 is %lf, 1 is %lf\n", time_delay->data[0], time_delay->data[1]);
 

@@ -55,7 +55,7 @@ START_TEST(test_combine_functions)
     double correct[] = {6.5, 6.5, 7.5, 10, 10};
     
     for (i = 0; i < sizeof(correct)/sizeof(double); ++i) {
-	fail_unless(res->data[0][i] == i + time_delay->data[1], "Expected and given sample points do not match");
+	fail_unless(res->data[0][i] == i + td->data[1], "Expected and given sample points do not match");
 	fail_unless(res->data[1][i] == correct[i], "Received combination does not match.");
     }
 
@@ -74,92 +74,51 @@ START_TEST(test_combine_functions)
 }
 END_TEST
 
-START_TEST(test_estimate_at_point)
+START_TEST(test_combine_gauss_vectors)
 {
-    est_arr* a = malloc(sizeof(est_arr));
-
-    a->len = 3;
-    a->estimates = malloc(sizeof(est_data*) * a->len);
+    double means[] = {2, 4, 6};
     
-    est_data* e1 = malloc(sizeof(est_data));
-    est_data* e2 = malloc(sizeof(est_data));
-    est_data* e3 = malloc(sizeof(est_data));
+    gauss_vector* G1 = gen_gaussian_vector_from_array(means, sizeof(means)/sizeof(double), 3, 1, 0);
+    gauss_vector* G2 = gen_gaussian_vector_from_array(means, sizeof(means)/sizeof(double), 3, 1, 0);
 
-    e1->start = 0;
-    e1->end = 10;
-    e1->est_a = 5;
-    e1->est_b = 0;
+    gauss_vector* V[] = {G1, G2};
 
-    e2->start = 10;
-    e2->end = 20;
-    e2->est_a = 10;
-    e2->est_b = 0;
-
-    e3->start = 20;
-    e3->end = 30;
-    e3->est_a = 15;
-    e3->est_b = 0;
-
-    a->estimates[0] = e1;
-    a->estimates[1] = e2;
-    a->estimates[2] = e3;
-
-    double ret1 = estimate_at_point(a, 5);
-    double ret2 = estimate_at_point(a, 15);
-    double ret3 = estimate_at_point(a, 25);
-    double ret4 = estimate_at_point(a, 35);
+    double_arr* delay = init_double_arr(2);
+    double td[] = {0, 0};
+    delay->data = td;
+    double start = 0, interval = 8, step = 1;
     
-    fail_unless(ret1 == 5, NULL);
-    fail_unless(ret2 == 10, NULL);
-    fail_unless(ret3 == 15, NULL);
-    fail_unless(ret4 == 0, NULL);
+    double_multi_arr* comb = combine_gauss_vectors(V, delay, start, interval, step, 2);
 
-    free_est_arr(a);
-}
-END_TEST
-
-START_TEST(test_data_at_point)
-{
-    est_arr* a = malloc(sizeof(est_arr));
-
-    a->len = 3;
-    a->estimates = malloc(sizeof(est_data*) * a->len);
+    // values for mean 2 from 0-8
+    double m2[] = {0.800737402, 0.945959468, 1.0, 0.945959468, 0.800737402,
+		   0.606530659, 0.411112290, 0.249352208, 0.135335283};
+    // values for mean 4 from 0-8
+    double m4[] = {0.411112290, 0.606530659, 0.800737402, 0.945959468, 1.0,
+		   0.945959468, 0.800737402, 0.606530659, 0.411112290};
+    // values for mean 6 from 0-8
+    double m6[] = {0.135335283, 0.249352208, 0.411112290, 0.606530659,
+		   0.800737402, 0.945959468, 1.0, 0.945959468, 0.800737402};
     
-    est_data* e1 = malloc(sizeof(est_data));
-    est_data* e2 = malloc(sizeof(est_data));
-    est_data* e3 = malloc(sizeof(est_data));
 
-    e1->start = 0;
-    e1->end = 10;
-    e1->est_a = 5;
-    e1->est_b = 0;
+    // Since we pass the same gaussian vector twice, the values should come out
+    // as the sum, because we take the average of the sums at each point.
+    
+    double sums[] = {1.347184975, 1.801842335, 2.211849692, 2.498449595, 
+		     2.601474804, 2.498449595, 2.211849692, 1.801842335, 1.347184975};
 
-    e2->start = 10;
-    e2->end = 20;
-    e2->est_a = 10;
-    e2->est_b = 0;
+    int i;
+    
+    for (i = 0; i < (int)((start + interval) / step); ++i) {
+	printf("comb %lf, correct %lf\n", comb->data[1][i], sums[i]);
+	fail_unless(epsck(comb->data[1][i], sums[i]), NULL);
+    }
 
-    e3->start = 20;
-    e3->end = 30;
-    e3->est_a = 15;
-    e3->est_b = 0;
-
-    a->estimates[0] = e1;
-    a->estimates[1] = e2;
-    a->estimates[2] = e3;
-    
-    est_data* ret1 = data_at_point(a, 5);
-    est_data* ret2 = data_at_point(a, 15);
-    est_data* ret3 = data_at_point(a, 25);
-    
-    fail_unless(ret1 == e1, NULL);
-    fail_unless(ret2 == e2, NULL);
-    fail_unless(ret3 == e3, NULL);
-    fail_unless(data_at_point(a, 35) == NULL, NULL);
-    
-    fail_unless(data_at_point(NULL, 5) == NULL, NULL);
-    
-    free_est_arr(a);
+    fail_unless(combine_gauss_vectors(NULL, delay, start, interval, step, 2) == NULL, NULL);
+    fail_unless(combine_gauss_vectors(V, NULL, start, interval, step, 2) == NULL, NULL);
+    fail_unless(combine_gauss_vectors(V, delay, start, 0, step, 2) == NULL, NULL);
+    fail_unless(combine_gauss_vectors(V, delay, start, interval, 0, 2) == NULL, NULL);
+    fail_unless(combine_gauss_vectors(V, delay, start, interval, step, 0) == NULL, NULL);
 }
 END_TEST
 
@@ -169,8 +128,7 @@ Suite* combinefunction_suite(void)
     TCase* tc_core = tcase_create("Core");
 
     tcase_add_test(tc_core, test_combine_functions);
-    tcase_add_test(tc_core, test_estimate_at_point);
-    tcase_add_test(tc_core, test_data_at_point);
+    tcase_add_test(tc_core, test_combine_gauss_vectors);
 
     suite_add_tcase(s, tc_core);
 

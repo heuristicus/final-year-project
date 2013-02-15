@@ -1,3 +1,15 @@
+2013-02-15  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* check_combinefunction.c: Test for combination of gauss vectors.
+
+	* check_math_util.c: Tests for new mathematical functions.
+
+	* estimator_delta.c: Fixed memory leaks and errors.
+
+	* launcher.c: Combined separate multi estimate functions for gauss and baseline
+	estimates into a single one - lots of unnecessary code duplication. Fixed memory
+	leaks and errors.
+
 2013-02-14  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* estimate_delta.c: Fixed issues where baseline pmf calculations were not being

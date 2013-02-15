@@ -164,7 +164,8 @@ double estimate_delay_pmf(paramlist* params, void* f1, void* f2, char* type)
 	    
 	}
 	fclose(fp3);
-
+	free(ls);
+	free(cb);
 
 	int s2_shift = (int)((max_delay - current_delta)/bin_length);
 	printf("s2 shift is %d. Number of bins being checked %d\n", s2_shift, num_bins - 2 * skip_bins);
@@ -195,18 +196,31 @@ double estimate_delay_pmf(paramlist* params, void* f1, void* f2, char* type)
 		fprintf(fp1, "%lf %lf\n", midpoints[i], lambda_sums[i]);
 	    }
 	    fclose(fp1);
+
 	} else {
 	    printf("New value %lf is larger than old %lf. guess remains at %lf\n", total1 + total2, best_value, best_delta);
 	}
 
 	current_delta += step;
+	free_double_multi_arr(combined);
     }
     
     fclose(fp2);
 
     printf("Normaliser is %lf\n", normaliser);
     printf("number of bins that need to be skipped %d\n", skip_bins);
-    output_double_multi_arr("pmf_combined", "w", combined);
+
+    free(events1);
+    free(events2);
+    free(midpoints);
+    free(lambda_sums);
+    free(bin_counts1);
+    free(bin_counts2);
+    free(infname);
+    free(store);
+    free(ev1);
+    free(ev2);
+    free_double_arr(time_delay);
 
     return best_delta;
 }
@@ -258,7 +272,9 @@ double find_normaliser(void* f1, double_arr* events, double interval_start,
 	normaliser += step;
     }
 
-    
+    free(midpoints);
+    free(bin_counts);
+    free_double_arr(function_values);
     return best_normaliser;
 }
 
