@@ -118,18 +118,16 @@ est_arr* run_base(paramlist* params, char* infile, char* outfile)
     }
 }
 
-double** run_gauss(paramlist* params, char* infile, char* outfile)
+double_multi_arr* run_gauss(paramlist* params, char* infile, char* outfile)
 {
     if (has_required_params(params, gauss_params, sizeof(gauss_params)/sizeof(char*))){
-	estimate_gaussian(params, infile, outfile);
+	return estimate_gaussian(params, infile, outfile);
     } else {
 	print_string_array("Some parameters required for gaussian estimates are missing. " \
 			   "Ensure that your parameter file contains the following entries and try again.",
 			   gauss_params, sizeof(gauss_params)/sizeof(char*));
 	exit(1);
     }
-
-    return NULL;
 }
 
 /*

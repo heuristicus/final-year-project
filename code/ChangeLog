@@ -1,3 +1,20 @@
+2013-02-16  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* estimator_delta.c: pmf estimator now takes two double_arr structs containing
+	event data as parameters - this means that files do not have to be read multiple
+	times unnecessarily. Also fixed a bug which would mean that only the same two
+	files would be read regardless of the number of streams.
+
+	* estimator_gaussian.c: Changed structure to reduce code duplication slightly,
+	output files are now generated depending on whether a file name is received
+	or not.
+
+	* math_util.c: Fixed memory leak from gauss_transform function.
+
+	* file_util.c: Fixed memory leak in read_gauss_vector function.
+
+	* general_util.c: Fixed freeing string_arr structs.
+
 2013-02-15  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* check_combinefunction.c: Test for combination of gauss vectors.

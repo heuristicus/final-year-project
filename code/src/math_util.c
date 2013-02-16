@@ -401,26 +401,15 @@ double_multi_arr* gauss_transform(gauss_vector* G, double start, double end, dou
 
     double current;
     int i;
-    double_multi_arr* ret = malloc(sizeof(double_multi_arr));
-    ret->len = 2;
-    ret->lengths = malloc(sizeof(int) * ret->len);
-    
-    double** T = malloc(2 * sizeof(double*));
     
     int memsize = ((end - start)/resolution) + 1;
-    
-    T[0] = malloc(sizeof(double) * memsize);
-    T[1] = malloc(sizeof(double) * memsize);
-    ret->lengths[0] = memsize;
-    ret->lengths[1] = memsize;
+    double_multi_arr* ret = init_multi_array(2, memsize);
     
     for (i = 0, current = start; current <= end && i < memsize; current += resolution, i++) {
-	T[0][i] = current;
-	T[1][i] = sum_gaussians_at_point(current, G);
+	ret->data[0][i] = current;
+	ret->data[1][i] = sum_gaussians_at_point(current, G);
     }
 
-    ret->data = T;
-    
     return ret;
 }
 

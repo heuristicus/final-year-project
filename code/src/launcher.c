@@ -129,10 +129,10 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* extra_
 		   "\"launcher -g [your parameter file]\"\n");
 	    exit(1);
 	} else if (args->rfunc == 1){
-	    // combine rfunc and gauss - they are pretty much the same!
 	    printf("Generating gaussians.\n");
 	    generate_gaussian_data(paramfile, infile, outfile, args->nstreams, args->writing);
 	} else if (generator_type == NULL || strcmp(generator_type, "mup") == 0){
+	    printf("Generating event stream with expression from parameter file.\n");
 	    generate(paramfile, outfile, args->nstreams);
 	} else if (strcmp(generator_type, "rand") == 0){
 	    printf("Generating event stream with random functions.\n");
@@ -157,9 +157,10 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* extra_
 	    }
 	}
 	if (args->nstreams > 1){
+	    printf("Running estimates of multiple (%d) streams.\n", args->nstreams);
 	    multi_estimate(paramfile, infile, outfile, args->nstreams, estimator_type);
 	} else {
-	    printf("estimating single stream\n");
+	    printf("Estimating single stream.\n");
 	    // mess with outfile here to output it nicely.
 	    est_arr* result = estimate(paramfile, infile, outfile, estimator_type);
 	    if (result != NULL)
@@ -222,10 +223,9 @@ void multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, 
     }
 
     printf("running estimator %s for %d streams\n", estimator_type, nstreams);
-    printf("fname %s pref %s outfile %s infile %s\n", fname, pref, outfile, infile);
     
     char* infname = malloc(strlen(fname) + strlen(pref) + strlen(".dat") + 5);
-    char* outname = malloc(strlen(outfile) + strlen(".dat") + 5);
+    char* outname = malloc(strlen(outfile) + strlen(".dat") + strlen("_combined") + 5);
     int i;
 
     void** estimates;
@@ -237,9 +237,9 @@ void multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, 
 
     for (i = 0; i < nstreams; ++i) {
 	sprintf(infname, "%s%s%d.dat", fname, pref, i);
-	sprintf(outname, "%s_%d.dat", outfile, i);
+	sprintf(outname, "%s_%d", outfile, i);
 	if (gauss)
-	    estimates[i] = n_estimate_gaussian(params, infname, outname);
+	    estimates[i] = estimate_gaussian_raw(params, infname, outname);
 	else
 	    estimates[i] = estimate(paramfile, infname, outname, estimator_type);
     }
@@ -253,18 +253,43 @@ void multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, 
 	// relative to this.
 	delays->data[0] = 0;
 
+	// The input file for the base function is used for all delay estimates, so
+	// just read it once.
+	sprintf(infname, "%s%s0.dat", fname, pref);
+	double* bs = get_event_data_all(infname);
+	double_arr* base_stream_events = malloc(sizeof(double_arr));
+	base_stream_events->len = bs[0] - 1;
+	base_stream_events->data = bs + 1;
+
 	for (i = 1; i < nstreams; ++i) {
 	    printf("Estimating delta for stream 0 and stream %d\n", i);
+
+	    // Read sets of events for the two streams from different files.
+	    sprintf(infname, "%s%s%d.dat", fname, pref, i);
+	    double* ev2 = get_event_data_all(infname);
+	    double_arr* f2_events = malloc(sizeof(double_arr));
+	    f2_events->len = ev2[0] - 1;
+	    f2_events->data = ev2 + 1;
+
 	    if (strcmp(delta_method, "area") == 0){
-		    delays->data[i] = estimate_delay_area(params, estimates[0], estimates[i], estimator_type);
+		delays->data[i] = estimate_delay_area(params, estimates[0],
+						      estimates[i], estimator_type);
 	    } else if (strcmp(delta_method, "pmf") == 0){
-		    delays->data[i] = estimate_delay_pmf(params, estimates[0], estimates[i], estimator_type);
+		delays->data[i] = estimate_delay_pmf(params, base_stream_events, f2_events,
+						     estimates[0], estimates[i], estimator_type);
 	    }
+	    
+	    // This data is not reused, so free it
+	    free(ev2);
+	    free(f2_events);
 	}
 
 	for (i = 0; i < delays->len; ++i) {
 	    printf("Delay for stream %d: %lf\n", i, delays->data[i]);
 	}
+
+	free(base_stream_events);
+	free(bs);
     } else {
 	if ((delays = get_double_list_param(params, "timedelta")) == NULL){
 	    printf("You must specify the time delay between each stream. "\
@@ -282,14 +307,14 @@ void multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, 
     }
 
     double_multi_arr* final_estimate = NULL;
-    
+    sprintf(outname, "%s_combined.dat", outfile);
     if (gauss) {
 	final_estimate = combine_gauss_vectors((gauss_vector**)estimates, delays, start, interval_time, step, nstreams);
-	output_double_multi_arr("gausscomb", "w", final_estimate);
     } else {
 	final_estimate = combine_functions((est_arr**)estimates, delays, start, interval_time, step, nstreams);
-	output_double_multi_arr("basecomb", "w", final_estimate);
     }
+
+    output_double_multi_arr(outname, "w", final_estimate);
     
     free(infname);
     free(outname);

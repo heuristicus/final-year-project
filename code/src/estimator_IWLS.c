@@ -173,33 +173,6 @@ est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double e
 
     printf("Final estimates:\na = %lf\nb = %lf\n", a, b);
 
-
-    if (outfile){
-	FILE* fp = fopen(outfile, "w");
-    
-
-	double pos = start_time;
-    
-	while (pos <= end_time){
-	    fprintf(fp, "%lf, %lf\n", pos, a + b * pos);
-	    pos += 1;
-	}
-
-	fprintf(fp, "\n\n");
-        
-	for (i = 0; i < num_subintervals; ++i) {
-	    fprintf(fp, "%lf, %lf, %d, %lf\n", intervals[i][1], a + b * intervals[i][1], bin_counts[i], lambda[i]);
-	}
-
-	fclose(fp);
-    }
-    
-    free_pointer_arr((void**) intervals, num_subintervals);
-    free(bin_counts);
-    free(midpoints);
-    free(lambda);
-    free(weights);
-    
     est_data** data = malloc(sizeof(est_data*));
     est_data* est = malloc(sizeof(est_data));
     
@@ -214,8 +187,21 @@ est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double e
     retval->len = 1;
     retval->estimates = data;
 
+    if (outfile){
+	char* out = malloc(strlen(outfile) + strlen(".dat") + 5);
+	sprintf(out, "%s.dat", outfile);
+	output_estimates(out, retval->estimates, retval->len);
+	free(out);
+    }
+
     print_estimates(retval);
     
+    free_pointer_arr((void**) intervals, num_subintervals);
+    free(bin_counts);
+    free(midpoints);
+    free(lambda);
+    free(weights);
+
 //    printf("%lf, %lf, %lf, %lf\n", retval->estimates[0]->start, retval->estimates[0]->end, retval->estimates[0]->est_a, retval->estimates[0]->est_b);
 
     return retval;

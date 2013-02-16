@@ -108,7 +108,7 @@ char* get_string_param(paramlist* head, char* param_name)
  */
 double_arr* get_double_list_param(paramlist* head, char* param_name)
 {
-    double_arr* res = malloc(sizeof(double_arr*));
+
     char* retrieved;
     
     if (head == NULL || (retrieved = get_string_param(head, param_name)) == NULL)
@@ -116,14 +116,15 @@ double_arr* get_double_list_param(paramlist* head, char* param_name)
 
     string_arr* vals = string_split(retrieved, ',');
     
+    double_arr* res = init_double_arr(vals->len);
     res->len = vals->len;
-    res->data = malloc((res->len) * sizeof(double));
 
     int i;
     
     for (i = 0; i < res->len; ++i) {
 	res->data[i] = atof(vals->data[i]);
     }
+
     free_string_arr(vals);
 
     return res;

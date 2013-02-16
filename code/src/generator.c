@@ -170,7 +170,7 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile, int ns
 
     free_gauss_vector(G);
     free_double_multi_arr(T);
-    free(time_delta);
+    free_double_arr(time_delta);
     free_list(params);
     free(out);
 }

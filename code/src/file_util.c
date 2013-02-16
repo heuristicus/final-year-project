@@ -334,19 +334,19 @@ void estimate_to_file(char *filename, est_data *estimate, char *mode)
         
     while(counter < end){
 	fprintf(fp, "%lf %lf\n", counter, a + counter * b);
-#ifdef DEBUG
+#ifdef VERBOSE3
 	printf("%lf + %lf * %lf = %lf\n", a, counter, b, a + counter * b);
 #endif
 	if (end - counter <= 1){
 	    counter += end - counter;
-#ifdef DEBUG
+#ifdef VERBOSE3
 	    printf("%lf + %lf * %lf = %lf\n", a, counter, b, a + counter * b);
 #endif
 	    fprintf(fp, "%lf %lf\n", counter, a + counter * b);
 	} else {
 	    counter += 1;
 	}
-#ifdef DEBUG
+#ifdef VERBOSE3
 	printf("counter: %lf, end %lf\n", counter, end);
 #endif
     }
@@ -456,11 +456,20 @@ gauss_vector* read_gauss_vector(char* filename)
     
     gaussian** G = malloc(sizeof(gaussian*) * memsize);
     double* wts = malloc(sizeof(double) * memsize);
+
     
+    printf("Reading vector of gaussians from %s\n", filename);
     FILE *fp = fopen(filename, "r");
+
+    if (fp == NULL) {
+	perror("File does not exist");
+	exit(1);
+    }
+    
     int i = 0;
     
-    char *line = malloc(MAX_PARAM_STRING_LENGTH * sizeof(char));
+    char* line = malloc(MAX_PARAM_STRING_LENGTH);
+    char* d = line; // Need to keep a reference to the line pointer to free later
 
     double st, wt, mu;
     
@@ -477,7 +486,9 @@ gauss_vector* read_gauss_vector(char* filename)
 	    g->stdev = st;
 	    wts[i] = wt;
 	    G[i] = g;
-	    printf("%lf %lf %lf\n", G[i]->mean, G[i]->stdev, wts[i]);
+#ifdef VERBOSE
+	    printf("Gaussian %d mean: %lf, stdev: %lf, weight: %lf\n", G[i]->mean, G[i]->stdev, wts[i]);
+#endif
 	}
 	i++;
 	if (i > memsize){
@@ -487,19 +498,12 @@ gauss_vector* read_gauss_vector(char* filename)
 	}
     }
 
-    
-    ret->gaussians = G;
-    ret->len = i;
-    ret->w = wts;
-
-    printf("out %lf %lf %lf\n", ret->gaussians[0]->mean, ret->gaussians[0]->stdev, ret->w[0]);
-    // realloc to get the correct memory size.
-    G = realloc(G, sizeof(gaussian*) * i);
-    wts = realloc(wts, sizeof(double) * i);
-
+    free(d);
     fclose(fp);
-
-    printf("%lf %lf %lf\n", ret->gaussians[0]->mean, ret->gaussians[0]->stdev, ret->w[0]);
+    
+    ret->gaussians = realloc(G, sizeof(gaussian*) * i);
+    ret->len = i;
+    ret->w = realloc(wts, sizeof(double) * i);
 
     return ret;
 }

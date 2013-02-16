@@ -18,7 +18,7 @@ est_arr* run_ols(paramlist* params, char* infile, char* outfile);
 est_arr* run_iwls(paramlist* params, char* infile, char* outfile);
 est_arr* run_pc(paramlist* params, char* infile, char* outfile);
 est_arr* run_base(paramlist* params, char* infile, char* outfile);
-double** run_gauss(paramlist* params, char* infile, char* outfile);
+double_multi_arr* run_gauss(paramlist* params, char* infile, char* outfile);
 
 // Use these rather than the functions below.
 est_arr* estimate_OLS(paramlist* params, char *infile, char *outfile);
@@ -45,34 +45,18 @@ double_multi_arr* _estimate_gaussian(char* infile, char* outfile, double start,
 
 double** get_subintervals(double start_time, double end_time, int num_subintervals);
 void free_pointer_arr(void **arr, int length);
-gauss_vector* _n_estimate_gaussian(char* infile, char* outfile, double start,
-				   double interval_length, double stdev);
-gauss_vector* n_estimate_gaussian(paramlist* params, char* infile, char* outfile);
+gauss_vector* _estimate_gaussian_raw(char* infile, char* outfile, double start,
+				     double interval_length, double stdev, double resolution);
+gauss_vector* estimate_gaussian_raw(paramlist* params, char* infile, char* outfile);
 
 double area_at_point_gauss(gauss_vector* f1, gauss_vector* f2, double x, double delay);
 double area_at_point_base(est_arr* f1, est_arr* f2, double x, double delay);
 double estimate_delay_area(paramlist* params, void* f1, void* f2, char* type);
-//double estimate_delay_pmf(paramlist* params, char* infile, double_arr* events, void* f1, void* f2, char* type);
-double estimate_delay_pmf(paramlist* params, void* f1, void* f2, char* type);
+double estimate_delay_pmf(paramlist* params, double_arr* base_events, double_arr* f2_events, void* f1, void* f2, char* type);
 double total_area_estimate(void* f1, void* f2, double start,
 			   double end, double resolution, double delay, char* type);
 double find_normaliser(void* f1, double_arr* events, double interval_start,
 		       double interval_end, double check_start, double check_limit,
 		       double step, int subintervals, char* type);
-
-/* double total_area_estimate_base(est_arr* f1, est_arr* f2, double start, */
-/* 				double end, double resolution, double delay); */
-/* double total_area_estimate_gauss(gauss_vector* f1, gauss_vector* f2, double start, double end, */
-/* 			   double resolution, double delay); */
-/* double estimate_delay_area_gauss(gauss_vector* f1, gauss_vector* f2, */
-/* 				    double max_delay, double resolution); */
-
-
-/* double estimate_delay_area_baseline(est_arr* f1, est_arr* f2, */
-/* 				    double max_delay, double resolution); */
-
-/* double estimate_delay_discrete_area(double_multi_arr* f1, double_multi_arr* f2, */
-/* 				    double max_delay); */
-/* double total_area_estimate(double_multi_arr* f1, double_multi_arr* f2, double delay); */
 
 #endif

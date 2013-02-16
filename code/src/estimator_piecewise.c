@@ -117,8 +117,12 @@ est_arr* _estimate_piecewise(char* event_file, char* output_file,
 	free_est_arr(interval_estimate_array);
     } while(i <= max_breakpoints && start_time != end_time);
 
-    if (output_file != NULL)
-	output_estimates(output_file, interval_data, i);
+    if (output_file != NULL){
+	char* out = malloc(strlen(output_file) + strlen(".dat") + 5);
+	sprintf(out, "%s.dat", output_file);
+	output_estimates(out, interval_data, i);
+	free(out);
+    }
 
     est_arr* results = malloc(sizeof(est_arr));
     results->len = i;

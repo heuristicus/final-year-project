@@ -21,6 +21,7 @@ void free_pointer_arr(void **arr, int length)
 void free_string_arr(string_arr* arr)
 {
     free_pointer_arr((void**) arr->data, arr->len);
+    free(arr);
 }
 
 /*

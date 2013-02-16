@@ -1,7 +1,24 @@
 #include "estimator.h"
 #include "combinefunction.h"
 
-double estimate_delay_pmf(paramlist* params, void* f1, void* f2, char* type)
+/*
+ * Computes the time delay between two functions f1 and f2. Requires data about the
+ * event streams of which each of the functions is an estimate. f1 is the base function,
+ * if there are more than two functions. This function is taken as the baseline against
+ * which all other functions are compared, and so the time delay will be given relative to
+ * it. The function splits the interval specified in the parameter file into a number of
+ * bins, and calculates the number of events that fall into each bin. To calculate the time delay,
+ * f2 is shifted relative to f1, starting at a negative shift and moving to a positive one.
+ * The process is iterative, and the granularity of the estimate is defined by the step
+ * specified in the parameter file. The estimate of the time delay is the point at which the
+ * sum of the probability mass functions taken at a number of points along the combination of
+ * the base function and the shifted function is minimised. In other words, the shift at
+ * which the bin counts most closely match the lambda values taken from the functions
+ * is the estimate returned. The functions are combined such that for all possible delays
+ * in the range [-max_delay, max_delay], the same amount of data is gathered.
+ */
+double estimate_delay_pmf(paramlist* params, double_arr* base_events, double_arr* f2_events,
+			  void* f1, void* f2, char* type)
 {
     // Always work on two streams
     int num_streams = 2;
@@ -29,26 +46,10 @@ double estimate_delay_pmf(paramlist* params, void* f1, void* f2, char* type)
 	printf("The maximum delay (%lf) cannot exceed the length of the"\
 	       " interval (%lf).\n", max_delay, combine_interval);
     }
-	
 
     double bin_length = (combine_end - combine_start)/num_bins;
-    double start_delta = -max_delay, end_delta = max_delay; // 
+    double start_delta = -max_delay, end_delta = max_delay;
     double current_delta = start_delta;
-    
-    char* fname = get_string_param(params, "outfile"); // default generator output filename
-    char* pref = get_string_param(params, "stream_ext"); // default extension
-    char* infname = malloc(strlen(fname) + strlen(pref) + strlen(".dat") + 5);
-
-    sprintf(infname, "%s%s0.dat", fname, pref);
-    double* events1 = get_event_data_all(infname);
-    double_arr* ev1 = malloc(sizeof(double_arr));
-    ev1->len = events1[0] - 1;
-    ev1->data = events1 + 1;
-    sprintf(infname, "%s%s1.dat", fname, pref);
-    double* events2 = get_event_data_all(infname);
-    double_arr* ev2 = malloc(sizeof(double_arr));
-    ev2->len = events2[0] - 1;
-    ev2->data = events2 + 1;
     
     printf("Estimating delay with pmf method.\n Combine step %lf, Combine interval"\
 	   " [%lf %lf], Normaliser interval [%lf %lf],\n Normaliser step %lf,"\
@@ -80,15 +81,15 @@ double estimate_delay_pmf(paramlist* params, void* f1, void* f2, char* type)
 
     // Find a normalisation constant. This is needed to make the estimated function
     // correctly line up with the original. For baseline estimates, this is usually 1.
-    double normaliser = find_normaliser(f1, ev1, combine_start, combine_end,
+    double normaliser = find_normaliser(f1, base_events, combine_start, combine_end,
 					normaliser_start, normaliser_end,
 					normaliser_step, normaliser_subintervals,
 					type);
 
     // PMF sums will be calculated for both streams.
-    int* bin_counts1 = sum_events_in_interval(ev1->data, ev1->len, combine_start,
+    int* bin_counts1 = sum_events_in_interval(base_events->data, base_events->len, combine_start,
 					     combine_end, num_bins);
-    int* bin_counts2 = sum_events_in_interval(ev2->data, ev2->len, combine_start,
+    int* bin_counts2 = sum_events_in_interval(f2_events->data, f2_events->len, combine_start,
 					     combine_end, num_bins);
 	
     
@@ -144,28 +145,28 @@ double estimate_delay_pmf(paramlist* params, void* f1, void* f2, char* type)
 //	    printf("sum of lambdas in interval %lf\n", lambda_sums[i]);
 	}
 
-	char* cb = malloc(15);
-	sprintf(cb, "cfunc%.0lf", current_delta);
+	/* char* cb = malloc(15); */
+	/* sprintf(cb, "cfunc%.0lf", current_delta); */
 
-	FILE *fp1 = fopen(cb, "w");
+	/* FILE *fp1 = fopen(cb, "w"); */
 
-	for (i = 0; i < combined->lengths[0]; ++i) {
-	    fprintf(fp1, "%lf %lf\n", combined->data[0][i], combined->data[1][i]);
-	}
+	/* for (i = 0; i < combined->lengths[0]; ++i) { */
+	/*     fprintf(fp1, "%lf %lf\n", combined->data[0][i], combined->data[1][i]); */
+	/* } */
 
-	fclose(fp1);
+	/* fclose(fp1); */
 	
-	char* ls = malloc(15);
-	sprintf(ls, "lsums%.0lf", current_delta);
-	FILE *fp3 = fopen(ls, "w");
+	/* char* ls = malloc(15); */
+	/* sprintf(ls, "lsums%.0lf", current_delta); */
+	/* FILE *fp3 = fopen(ls, "w"); */
 	
-	for (i = 0; i < num_bins; ++i) {
-	    fprintf(fp3, "%lf %lf\n", midpoints[i], lambda_sums[i]);
+	/* for (i = 0; i < num_bins; ++i) { */
+	/*     fprintf(fp3, "%lf %lf\n", midpoints[i], lambda_sums[i]); */
 	    
-	}
-	fclose(fp3);
-	free(ls);
-	free(cb);
+	/* } */
+	/* fclose(fp3); */
+	/* free(ls); */
+	/* free(cb); */
 
 	int s2_shift = (int)((max_delay - current_delta)/bin_length);
 	printf("s2 shift is %d. Number of bins being checked %d\n", s2_shift, num_bins - 2 * skip_bins);
@@ -210,16 +211,11 @@ double estimate_delay_pmf(paramlist* params, void* f1, void* f2, char* type)
     printf("Normaliser is %lf\n", normaliser);
     printf("number of bins that need to be skipped %d\n", skip_bins);
 
-    free(events1);
-    free(events2);
     free(midpoints);
     free(lambda_sums);
     free(bin_counts1);
     free(bin_counts2);
-    free(infname);
     free(store);
-    free(ev1);
-    free(ev2);
     free_double_arr(time_delay);
 
     return best_delta;
