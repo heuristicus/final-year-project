@@ -13,7 +13,6 @@
 #define EST_TYPE_ERROR "%s is not a valid estimator. Try -a [ols|iwls|pc|base|gauss].\n"
 
 est_arr* estimate(char* paramfile, char* infile, char* outfile, char* estimator_type);
-int has_required_params(paramlist* params, char** required_params, int len);
 est_arr* run_ols(paramlist* params, char* infile, char* outfile);
 est_arr* run_iwls(paramlist* params, char* infile, char* outfile);
 est_arr* run_pc(paramlist* params, char* infile, char* outfile);
@@ -51,11 +50,22 @@ gauss_vector* estimate_gaussian_raw(paramlist* params, char* infile, char* outfi
 
 double area_at_point_gauss(gauss_vector* f1, gauss_vector* f2, double x, double delay);
 double area_at_point_base(est_arr* f1, est_arr* f2, double x, double delay);
-double estimate_delay_area(paramlist* params, void* f1, void* f2, char* type);
-double estimate_delay_pmf(paramlist* params, double_arr* base_events, double_arr* f2_events, void* f1, void* f2, char* type);
+double estimate_delay_area(paramlist* params, char* outfile, void* f1, void* f2, char* hierarchical,
+			   char* type);
+double _estimate_delay_area(char* outfile, void* f1, void* f2, double comp_start, double comp_end,
+			    double start_delta, double end_delta, double max_delay,
+			    double resolution, double step, char* type);
+double _estimate_delay_pmf(char* outfile, double_arr* base_events, double_arr* f2_events, void* f1, 
+			  void* f2, double combine_start, double combine_interval, 
+			   double combine_step, int num_bins, double start_delta,
+			   double end_delta, double max_delay,double delta_step,
+			   double normaliser, char* type);
+double estimate_delay_pmf(paramlist* params, char* outfile, double_arr* base_events, double_arr* f2_events,
+			  void* f1, void* f2, double normaliser, char* hierarchical, char* type);
 double total_area_estimate(void* f1, void* f2, double start,
 			   double end, double resolution, double delay, char* type);
-double find_normaliser(void* f1, double_arr* events, double interval_start,
+double find_normaliser(paramlist* params, void* f1, double_arr* events, char* type);
+double _find_normaliser(void* f1, double_arr* events, double interval_start,
 		       double interval_end, double check_start, double check_limit,
 		       double step, int subintervals, char* type);
 

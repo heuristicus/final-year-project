@@ -587,6 +587,14 @@ START_TEST(test_largest_value_in_arr)
 }
 END_TEST
 
+START_TEST(test_abs_max)
+{
+    fail_unless(abs_max(-2.5, 1) == 2.5, NULL);
+    fail_unless(abs_max(-200, -150) == 200, NULL);
+    fail_unless(abs_max(1, 2) == 2, NULL);
+}
+END_TEST
+
 Suite* math_util_suite(void)
 {
     Suite *s = suite_create("math_util");
@@ -621,6 +629,7 @@ Suite* math_util_suite(void)
     tcase_add_test(tc_core, test_sum_array_interval);
     tcase_add_test(tc_core, test_sum_gaussians_at_points);
     tcase_add_test(tc_core, test_largest_value_in_arr);
+    tcase_add_test(tc_core, test_abs_max);
 
     suite_add_tcase(s, tc_core);
 

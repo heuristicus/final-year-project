@@ -19,7 +19,7 @@ void print_gauss_vector(gauss_vector* G);
 void free_gauss_vector(gauss_vector* G);
 void free_double_multi_arr(double_multi_arr* arr);
 void free_string_arr(string_arr* arr);
-int has_missing_parameters(string_arr* checklist, paramlist* params);
+int has_required_params(paramlist* params, char** required_params, int len);
 est_data* data_at_point(est_arr* estimate, double check_time);
 double estimate_at_point(est_arr* estimate, double time);
 double_arr* estimate_at_points(est_arr* estimate, double* points, int len);

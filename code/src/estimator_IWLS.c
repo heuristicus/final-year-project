@@ -75,7 +75,7 @@ est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double e
     double* weights = initialise_weights(num_subintervals);
     double* lambda = NULL;
     
-    int i, loop;
+    int loop;
     
 #ifdef VERBOSE
     for (i = 0; i < num_subintervals; ++i){

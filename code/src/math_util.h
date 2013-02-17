@@ -1,3 +1,4 @@
+
 #ifndef _MATHUTIL_H
 #define _MATHUTIL_H
 
@@ -66,6 +67,8 @@ double sum_log_pmfs(int* bin_counts, double* lambdas, double normaliser, int len
 double sum_array_interval(double* times, double* values, double start, double end, double normaliser, int len);
 double_arr* sum_gaussians_at_points(gauss_vector* G, double* points, int len);
 double largest_value_in_arr(double* arr, int len);
+double abs_max(double a, double b);
+int dbl_less_than(double a, double b, double precision);
 
 #endif
 

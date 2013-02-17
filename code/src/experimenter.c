@@ -38,7 +38,7 @@ void run_experiments(char* exp_paramfile, char* def_paramfile)
 	    printf("%s requested. Checking that experimental values are defined.\n", teststr);
 	    string_arr* testparams = string_split(get_string_param(exp_list, paramstr), ',');
 	
-	    if (has_missing_parameters(testparams, exp_list)){
+	    if (!has_required_params(exp_list, testparams->data, testparams->len)){
 		missing = 1;
 	    }
 	}

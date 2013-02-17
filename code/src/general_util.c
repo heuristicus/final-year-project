@@ -423,6 +423,7 @@ int create_default_param_file(char* filename)
     fprintf(fp, "%s\n%s %lf\n\n", "# Specify resolution of kernels used to estimate"\
 	    " gaussians. A small value will\n# give higher precision but take longer"
 	    ,"gauss_est_resolution", DEFAULT_GAUSS_EST_RESOLUTION);
+    // time delta
     put_section_header(fp, "Time Delta Estimator Parameters");
     fprintf(fp, "%s\n%s %s\n\n", "# Whether to estimate the time delay. If"\
 	    " this is set to no, the timedelta will be\n# read from the"\
@@ -438,12 +439,27 @@ int create_default_param_file(char* filename)
 	    " based on the area between the curves of two\n# functions. The"\
 	    " point at which the area is smallest is most likely the actual\n"\
 	    "# time delay.", "delta_est_method", DEFAULT_DELTA_EST_METHOD);
+    fprintf(fp, "%s\n%s %s\n\n", "# If this is set to yes, the time delta"\
+	    " estimation will be performed hierarchically.\n# Initially, a single"\
+	    " pass over the shifts will be done, with the coarse step provided,\n"\
+	    "# and checking between -delta_est_max_delta and delta_est_max_delta."\
+	    " After an initial\n# estimate is found, a second pass, using the"\
+	    " fine step will be done, within the range\n# +/- delta_est_fine_range.",
+	    "delta_est_hierarchical", DEFAULT_DELTA_EST_HIERARCHICAL);
     fprintf(fp, "%s\n%s %lf\n\n", "# This parameter defines the step by which the"\
 	    " guess at the value of delta increases.\n# The value of delta starts"\
 	    " at a negative value and moves towards a positive value\n# in steps"\
 	    " of this value. A low value will provide more granularity on data,"\
-	    " but it\n# will take longer to find an estimate.", "delta_est_step",
+	    " but it\n# will take longer to find an estimate.", "delta_est_step_coarse",
 	    DEFAULT_DELTA_EST_STEP);
+    fprintf(fp, "%s\n%s %lf\n\n", "# Defines the step by which delta increases"\
+	    " when improving the original estimate.", "delta_est_step_fine",
+	    DEFAULT_DELTA_EST_STEP_FINE);
+    fprintf(fp, "%s\n%s %lf\n\n", "# Defines the +/- range in which the second"\
+	    " pass over the shift data will be performed.\n# If the first pass"\
+	    " produces a shift of 2, then if this parameter has a value of 5,\n"\
+	    "# the second pass will go from -3 to 7 using the delta_est_step_"\
+	    "fine step.", "delta_est_fine_range", DEFAULT_DELTA_EST_FINE_RANGE);
     fprintf(fp, "%s\n%s %lf\n\n", "# The estimator will check delta values of"\
 	    " between + and - this value. A lower value\n# will mean that the"\
 	    " estimation is quicker, but may result in the true delta not being\n"\
@@ -451,6 +467,7 @@ int create_default_param_file(char* filename)
 	    " at the negative\n# of the value and iterates, increasing by"\
 	    " delta_est_step until it reaches the positive.", "delta_est_max_delta",
 	    DEFAULT_MAX_DELTA);
+    // area
     put_section_header(fp, "Area Method");
     fprintf(fp, "%s\n%s %lf\n\n", "# Point at which to start approximating the"\
 	    " area between functions.", "delta_est_area_start", DEFAULT_START);
@@ -462,6 +479,7 @@ int create_default_param_file(char* filename)
 	    " this value. A smaller value may provide more accurate\n# estimates,"\
 	    " but the calculation will take longer.","delta_est_area_resolution",
 	    DEFAULT_DELTA_EST_AREA_RESOLUTION);
+    // pmf
     put_section_header(fp, "PMF Method");
     fprintf(fp, "%s\n%s %lf\n\n", "# Defines the point at which to start combining"\
 	    " functions in the pmf estimator.\n# This should usually be the same"\
@@ -620,25 +638,6 @@ void free_double_multi_arr(double_multi_arr* arr)
     free(arr->lengths);
     free(arr->data);
     free(arr);
-}
-
-/*
- * Checks whether all parameters specified in the checklist are present
- * in the given parameter list.
- */
-int has_missing_parameters(string_arr* checklist, paramlist* params)
-{
-    int i;
-    int missing = 0;
-
-    for (i = 0; i < checklist->len; ++i) {
-	if (get_param(params, checklist->data[i]) == NULL){
-	    printf("Missing %s\n", checklist->data[i]);
-	    missing = 1;
-	}
-    }
-
-    return missing;
 }
 
 /*

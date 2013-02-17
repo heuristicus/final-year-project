@@ -1,14 +1,22 @@
 #include "estimator.h"
 
+char *gauss_params[] = {"gauss_est_stdev", "est_start_time", "est_interval_time",
+			"gauss_est_resolution"};
+
 /*
  * Estimates the given set of events using gaussian kernels, returning the
  * gaussian transform of the kernels.
  */
 double_multi_arr* estimate_gaussian(paramlist* params, char* infile, char* outfile)
 {
+    if (!has_required_params(params, gauss_params, sizeof(gauss_params)/sizeof(char*))){
+	printf("Some parameters required to perform gaussian estimation are missing."\
+	       " Ensure you have them in your parameter file.\n");
+	exit(1);
+    }
     double stdev = get_double_param(params, "gauss_est_stdev");
-    double start = get_double_param(params, "start_time");
-    double interval = get_double_param(params, "interval_time");
+    double start = get_double_param(params, "est_start_time");
+    double interval = get_double_param(params, "est_interval_time");
     double resolution = get_double_param(params, "gauss_est_resolution");
 
     gauss_vector* G = _estimate_gaussian_raw(infile, outfile, start, interval, stdev, resolution);
@@ -41,9 +49,15 @@ double_multi_arr* estimate_gaussian(paramlist* params, char* infile, char* outfi
  */
 gauss_vector* estimate_gaussian_raw(paramlist* params, char* infile, char* outfile)
 {
+    if (!has_required_params(params, gauss_params, sizeof(gauss_params)/sizeof(char*))){
+	printf("Some parameters required to perform gaussian estimation are missing."\
+	       " Ensure you have them in your parameter file.\n");
+	exit(1);
+    }
+
     double stdev = get_double_param(params, "gauss_est_stdev");
-    double start = get_double_param(params, "start_time");
-    double interval = get_double_param(params, "interval_time");
+    double start = get_double_param(params, "est_start_time");
+    double interval = get_double_param(params, "est_interval_time");
     double resolution = get_double_param(params, "gauss_est_resolution");
 
     gauss_vector* G = _estimate_gaussian_raw(infile, outfile, start, interval, stdev, resolution);

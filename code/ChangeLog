@@ -1,9 +1,33 @@
+2013-02-17  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* estimator.c, general_util.c: Removed duplicated parameter checking function
+	from estimator and made the one in general util work.
+
+	* estimator_gaussian.c: Estimators check that the parameter list they receive
+	contains the parameters that they require.
+
+	* estimator_delta.c: Restructured delay estimators. Each now has a function which
+	extracts parameters from the parameter file and then calls the main function
+	which does the calculations. Also added the ability to searching for an
+	estimate in a hierarchical fashion, first making a coarse pass over the array
+	and then refining the estimate. Functions now also check to make sure that the
+	parameter list contains the parameters they require. Estimators output relevant
+	data to files with names which make sense.
+
+	* math_util.c: Implemented a function to check whether a double is less than
+	another with a certain precision value. This is now used in the array interval
+	summing function, which should work properly for most cases.
+
 2013-02-16  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* estimator_delta.c: pmf estimator now takes two double_arr structs containing
 	event data as parameters - this means that files do not have to be read multiple
 	times unnecessarily. Also fixed a bug which would mean that only the same two
-	files would be read regardless of the number of streams.
+	files would be read regardless of the number of streams. Normalisation constant
+	function split into two functions to make calling it easier. Also removed the
+	calculation from inside the pmf estimator and made it a parameter. There is no
+	point calculating it multiple times since it will be pretty much the same
+	for all functions generated from gaussians which use the same standard deviation.
 
 	* estimator_gaussian.c: Changed structure to reduce code duplication slightly,
 	output files are now generated depending on whether a file name is received

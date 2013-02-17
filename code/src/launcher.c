@@ -158,7 +158,7 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* extra_
 	}
 	if (args->nstreams > 1){
 	    printf("Running estimates of multiple (%d) streams.\n", args->nstreams);
-	    multi_estimate(paramfile, infile, outfile, args->nstreams, estimator_type);
+	    multi_estimate(paramfile, infile, outfile, args->nstreams, args->writing, estimator_type);
 	} else {
 	    printf("Estimating single stream.\n");
 	    // mess with outfile here to output it nicely.
@@ -186,7 +186,7 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* extra_
  * on each file. Data is then stored and once all estimates have been made the data
  * is combined to make a single estimate.
  */
-void multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, char* estimator_type)
+void multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, int output_switch, char* estimator_type)
 {
     paramlist* params = get_parameters(paramfile);
 
@@ -246,6 +246,7 @@ void multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, 
 
     if (strcmp(est_delta, "yes") == 0){
 	char* delta_method = get_string_param(params, "delta_est_method");
+	char* hierarchical = get_string_param(params, "delta_est_hierarchical");
 	delays = init_double_arr(nstreams);
 
 	// The delay estimates take the first function as a base, so we assume that
@@ -260,23 +261,36 @@ void multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, 
 	double_arr* base_stream_events = malloc(sizeof(double_arr));
 	base_stream_events->len = bs[0] - 1;
 	base_stream_events->data = bs + 1;
+	double normaliser = 1;
+
+	if (strcmp(delta_method, "pmf") == 0 && gauss){
+	    // Find a normaliser to apply to the values of the estimated function.
+	    // In its raw form, the estimated function is not on the same scale as
+	    // the original if the gaussian estimator was used because of the way
+	    // that gaussians are summed.
+	    normaliser = find_normaliser(params, estimates[0], base_stream_events,
+					 estimator_type);
+	}
 
 	for (i = 1; i < nstreams; ++i) {
 	    printf("Estimating delta for stream 0 and stream %d\n", i);
 
 	    // Read sets of events for the two streams from different files.
 	    sprintf(infname, "%s%s%d.dat", fname, pref, i);
+	    sprintf(outname, "%s_%d", outfile, i-1);
 	    double* ev2 = get_event_data_all(infname);
 	    double_arr* f2_events = malloc(sizeof(double_arr));
 	    f2_events->len = ev2[0] - 1;
 	    f2_events->data = ev2 + 1;
 
 	    if (strcmp(delta_method, "area") == 0){
-		delays->data[i] = estimate_delay_area(params, estimates[0],
-						      estimates[i], estimator_type);
+		delays->data[i] = estimate_delay_area(params, outname, estimates[0],
+						      estimates[i], hierarchical, estimator_type);
 	    } else if (strcmp(delta_method, "pmf") == 0){
-		delays->data[i] = estimate_delay_pmf(params, base_stream_events, f2_events,
-						     estimates[0], estimates[i], estimator_type);
+		delays->data[i] = estimate_delay_pmf(params, outname, base_stream_events,
+						       f2_events, estimates[0],
+						       estimates[i], normaliser, 
+						       hierarchical, estimator_type);
 	    }
 	    
 	    // This data is not reused, so free it

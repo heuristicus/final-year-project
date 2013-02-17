@@ -1,6 +1,93 @@
 #include "estimator.h"
 #include "combinefunction.h"
 
+char *pmf_params[] = {"delta_est_pmf_resolution", "delta_est_combine_start",
+		      "delta_est_combine_interval", "delta_est_num_bins",
+		      "delta_est_max_delta", "delta_est_step_coarse"};
+char *hierarchical_params[] = {"delta_est_step_fine", "delta_est_fine_range"};
+char *normaliser_params[] = {"delta_est_combine_start", "delta_est_combine_interval", 
+			     "normaliser_est_initial", "normaliser_est_max",
+			     "normaliser_est_step", "normaliser_est_subintervals"};
+char *area_params[] = {"delta_est_area_resolution", "delta_est_max_delta",
+		       "delta_est_step_coarse", "delta_est_area_start",
+		       "delta_est_area_interval"};
+
+/*
+ * Helper function for pmf delay estimator. Extracts parameters from the paramfile provided and 
+ * passes them on to another function to do the actual computation. Also performs hierarchical
+ * estimates of the delay if the hierarchical parameter is set to yes. This will perform two passes
+ * over the data and attempt to improve an initial coarse estimate with a finer search in a smaller
+ * range.
+ */
+double estimate_delay_pmf(paramlist* params, char* outfile, double_arr* base_events, double_arr* f2_events,
+			  void* f1, void* f2, double normaliser, char* hierarchical, char* type)
+{
+    if (!has_required_params(params, pmf_params, sizeof(pmf_params)/sizeof(char*))) {
+	printf("Some parameters required to perform a PMF estimate" \
+	       " of delay are missing. Ensure you have them in your parameter" \
+	       " file.\n");
+	exit(1);
+    }
+    int hc = strcmp(hierarchical, "yes") == 0;
+    // Resolution when combining functions
+    double combine_step = get_double_param(params, "delta_est_pmf_resolution");
+    // Start of the interval used when combining the functions
+    double combine_start = get_double_param(params, "delta_est_combine_start");
+    // Length of the interval when combining functions
+    double combine_interval = get_double_param(params, "delta_est_combine_interval");
+    // Number of bins into which we split the event data
+    int num_bins = get_int_param(params, "delta_est_num_bins");
+    double max_delay = get_double_param(params, "delta_est_max_delta");
+
+    double delta_step_coarse = get_double_param(params, "delta_est_step_coarse");
+    double delta_step_fine = 0;
+    double fine_range = 0;
+
+    if (hc){
+	if (!has_required_params(params, hierarchical_params,
+				 sizeof(hierarchical_params)/sizeof(char*))){
+	    printf("Some parameters required to perform a hierarchical estimate"\
+		   " of delay are missing. Ensure you have them in your parameter"\
+		   " file.\n");
+	    exit(1);
+	}
+	delta_step_fine = get_double_param(params, "delta_est_step_fine");
+	fine_range = get_double_param(params, "delta_est_fine_range");
+    }
+
+    if (max_delay >= combine_interval){
+	printf("The maximum delay (%lf) cannot exceed the length of the"\
+	       " interval (%lf).\n", max_delay, combine_interval);
+	exit(1);
+    }
+
+    /* printf("Estimating delay with pmf method.\n Combine step %lf, Combine interval"\ */
+    /* 	   " [%lf %lf], Bins %d, Max delay %lf, Step %lf\n", */
+    /* 	   combine_step, combine_start, combine_end, num_bins, max_delay, delta_step_coarse); */
+
+    double result = _estimate_delay_pmf(outfile, base_events, f2_events, f1, f2,
+					combine_start, combine_interval, combine_step,
+					num_bins, -max_delay, max_delay, max_delay,
+					delta_step_coarse, normaliser, type);
+
+    if (hc){
+	printf("Initial result is %lf. Improving estimate using finer step of %lf"\
+	       " in range [%lf, %lf].\n", result, delta_step_fine, result - fine_range,
+	       result + fine_range);
+	double hres = _estimate_delay_pmf(outfile, base_events, f2_events, f1, f2,
+					  combine_start, combine_interval, combine_step,
+					  num_bins, result - fine_range,
+					  result + fine_range, max_delay, delta_step_fine,
+					  normaliser, type);
+	printf("Estimate revised to %lf from %lf.\n", hres, result);
+	result = hres;
+    }
+    
+    return result;
+}
+
+
+
 /*
  * Computes the time delay between two functions f1 and f2. Requires data about the
  * event streams of which each of the functions is an estimate. f1 is the base function,
@@ -17,45 +104,18 @@
  * is the estimate returned. The functions are combined such that for all possible delays
  * in the range [-max_delay, max_delay], the same amount of data is gathered.
  */
-double estimate_delay_pmf(paramlist* params, double_arr* base_events, double_arr* f2_events,
-			  void* f1, void* f2, char* type)
+double _estimate_delay_pmf(char* outfile, double_arr* base_events, double_arr* f2_events, void* f1, 
+			   void* f2, double combine_start, double combine_interval,
+			   double combine_step, int num_bins, double start_delta,
+			   double end_delta, double max_delay, double delta_step, double normaliser,
+			   char* type)
 {
     // Always work on two streams
     int num_streams = 2;
-    // Resolution when combining functions
-    double combine_step = get_double_param(params, "delta_est_pmf_resolution");
-     // Start of the interval used when combining the functions
-    double combine_start = get_double_param(params, "delta_est_combine_start");
-    // Length of the interval when combining functions
-    double combine_interval = get_double_param(params, "delta_est_combine_interval");
     double combine_end = combine_start + combine_interval;
-    // Start value for finding the normalisation constant
-    double normaliser_start = get_double_param(params, "normaliser_est_initial");
-    // Maximum value to allow the normalisation function to look at
-    double normaliser_end = get_double_param(params, "normaliser_est_max");
-    // Increase the normalisation constant value by this each iteration
-    double normaliser_step = get_double_param(params, "normaliser_est_step");
-    // Number of subintervals to use when checking normalisation
-    int normaliser_subintervals = get_int_param(params, "normaliser_est_subintervals");
-    // Number of bins into which we split the event data
-    int num_bins = get_int_param(params, "delta_est_num_bins");
-    double max_delay = get_double_param(params, "delta_est_max_delta");
-    double step = get_double_param(params, "delta_est_step");
-
-    if (max_delay >= combine_interval){
-	printf("The maximum delay (%lf) cannot exceed the length of the"\
-	       " interval (%lf).\n", max_delay, combine_interval);
-    }
 
     double bin_length = (combine_end - combine_start)/num_bins;
-    double start_delta = -max_delay, end_delta = max_delay;
     double current_delta = start_delta;
-    
-    printf("Estimating delay with pmf method.\n Combine step %lf, Combine interval"\
-	   " [%lf %lf], Normaliser interval [%lf %lf],\n Normaliser step %lf,"\
-	   " Normaliser subintervals %d, Bins %d, Max delay %lf, Step %lf\n",
-	   combine_step, combine_start, combine_end, normaliser_start, normaliser_end,
-	   normaliser_step, normaliser_subintervals, num_bins, max_delay, step);
 
     // Set the initial values for our estimate
     double best_delta = -INFINITY;
@@ -63,7 +123,7 @@ double estimate_delay_pmf(paramlist* params, double_arr* base_events, double_arr
     
     // We don't know which type we will get, so use a void pointer to store
     // it and cast later.
-    void** store = NULL; 
+    void** store = NULL;
 
     if (strcmp(type, "gauss") == 0){
 	store = malloc(sizeof(gauss_vector*) * 2);
@@ -75,44 +135,50 @@ double estimate_delay_pmf(paramlist* params, double_arr* base_events, double_arr
 	store[1] = (est_arr*)f2;
     }
 
+    printf("cstart %lf cend %lf cint %lf cstep %lf nbins %d startd %lf endd %lf maxd %lf dstep %lf norm %lf\n", 
+	   combine_start, combine_end, combine_interval, combine_step, num_bins, start_delta, end_delta, max_delay, delta_step, normaliser);
+
     double_arr* time_delay = init_double_arr(2);
     time_delay->data[0] = 0;
     double_multi_arr* combined = NULL;
-
-    // Find a normalisation constant. This is needed to make the estimated function
-    // correctly line up with the original. For baseline estimates, this is usually 1.
-    double normaliser = find_normaliser(f1, base_events, combine_start, combine_end,
-					normaliser_start, normaliser_end,
-					normaliser_step, normaliser_subintervals,
-					type);
 
     // PMF sums will be calculated for both streams.
     int* bin_counts1 = sum_events_in_interval(base_events->data, base_events->len, combine_start,
 					     combine_end, num_bins);
     int* bin_counts2 = sum_events_in_interval(f2_events->data, f2_events->len, combine_start,
 					     combine_end, num_bins);
-	
     
     double* midpoints = get_interval_midpoints(combine_start, combine_end,
 					       num_bins);
     double* lambda_sums = malloc(sizeof(double) * num_bins);
-    
-    FILE *fp = fopen("bins", "w");
     int i;
-    for (i = 0; i < num_bins; ++i) {
-    	//	printf("bin %d [%d, %d] has %d events\n", i, i * bin_length, (i + 1) * bin_length, bin_counts[i]);
-    	/* bin_counts1[i] /= (combine_interval/ num_bins); */
-    	/* bin_counts2[i] /= (combine_interval/num_bins); */
+    FILE *fp2 = NULL;
+    char* lambda_out = NULL;
+    char* out = NULL;
+    if (outfile != NULL) {
+	out = malloc(strlen(outfile) + strlen("_pmf_delay.dat") + 5);
+	lambda_out = malloc(strlen(outfile) + strlen("_pmf_lambda.dat") + 5);
+	sprintf(lambda_out, "%s_pmf_lambdas.dat", outfile);
+	sprintf(out, "%s_pmf_bins.dat", outfile);
+	FILE *fp = fopen(out, "w");
+
+	for (i = 0; i < num_bins; ++i) {
+	    //	printf("bin %d [%d, %d] has %d events\n", i, i * bin_length, (i + 1) * bin_length, bin_counts[i]);
+	    /* bin_counts1[i] /= (combine_interval/ num_bins); */
+	    /* bin_counts2[i] /= (combine_interval/num_bins); */
 	
-    	fprintf(fp, "%lf %d %d\n", midpoints[i], bin_counts1[i], bin_counts2[i]);
+	    fprintf(fp, "%lf %d %d\n", midpoints[i], bin_counts1[i], bin_counts2[i]);
+	}
+
+	fclose(fp);
+	sprintf(out, "%s_pmf_delay.dat", outfile);
+	fp2 = fopen(out, "w");
     }
 
-    fclose(fp);
-
     // How many bins need to be skipped to ensure that only the bins that are present in 
-    int skip_bins = (int) end_delta/bin_length;
+    int skip_bins = (int) max_delay/bin_length;
 
-    FILE *fp2 = fopen("pmf_delay_vals", "w");
+    printf("binlen %lf skipbin %d\n", bin_length, skip_bins);
 
     while (current_delta <= end_delta){
 	// get the combined function with the delay applied
@@ -139,14 +205,15 @@ double estimate_delay_pmf(paramlist* params, double_arr* base_events, double_arr
 	for (i = 0; i < num_bins; ++i) {
 	    // find the sum of lambda values for each subinterval
 //	    printf("subinterval start %lf, subinterval end %lf\n", i * bin_length, (i + 1) * bin_length);
+	    // The lambda sums must be normalised so that they are on the same scale as the bin counts.
 	    lambda_sums[i] = sum_array_interval(combined->data[0], combined->data[1],
 					     i * bin_length, (i + 1) * bin_length,
-						normaliser, combined->lengths[0]);///(combine_interval / num_bins);
+						normaliser, combined->lengths[0]);
 //	    printf("sum of lambdas in interval %lf\n", lambda_sums[i]);
 	}
 
 	/* char* cb = malloc(15); */
-	/* sprintf(cb, "cfunc%.0lf", current_delta); */
+	/* sprintf(cb, "cfunc%lf", current_delta); */
 
 	/* FILE *fp1 = fopen(cb, "w"); */
 
@@ -185,30 +252,33 @@ double estimate_delay_pmf(paramlist* params, double_arr* base_events, double_arr
 //	printf("s2\n");
 	double total2 = sum_log_pmfs(bin_counts2 + s2_shift, lambda_sums + skip_bins, 1, num_bins - 2 * skip_bins);
 //	double total = sum_log_pmfs(bin_counts, lambda_sums, 1, num_bins);
-	fprintf(fp2, "%lf %lf\n", current_delta, total1 + total2);
+	double cumulative = total1 + total2;
+	if (outfile != NULL)
+	    fprintf(fp2, "%lf %lf\n", current_delta, cumulative);
 //	printf("pmf sum is %lf\n", total);
-	if (total1 + total2 > best_value){
-	    printf("New value %lf is less than old %lf. guess updated to %lf\n", total1 + total2, best_value, current_delta);
-	    best_value = total1 + total2;
+	if (cumulative > best_value){
+	    printf("New value %lf is less than old %lf. guess updated to %lf\n", cumulative, best_value, current_delta);
+	    best_value = cumulative;
 	    best_delta = current_delta;
-	    FILE *fp1 = fopen("lsums", "w");
+	    if (outfile != NULL){
+		FILE *fp1 = fopen(lambda_out, "w");
 	
-	    for (i = 0; i < num_bins; ++i) {
-		fprintf(fp1, "%lf %lf\n", midpoints[i], lambda_sums[i]);
+		for (i = 0; i < num_bins; ++i) {
+		    fprintf(fp1, "%lf %lf\n", midpoints[i], lambda_sums[i]);
+		}
+		fclose(fp1);
 	    }
-	    fclose(fp1);
-
+	    
 	} else {
-	    printf("New value %lf is larger than old %lf. guess remains at %lf\n", total1 + total2, best_value, best_delta);
+	    printf("New value %lf is larger than old %lf. guess remains at %lf\n", cumulative, best_value, best_delta);
 	}
 
-	current_delta += step;
+	current_delta += delta_step;
 	free_double_multi_arr(combined);
     }
     
-    fclose(fp2);
 
-    printf("Normaliser is %lf\n", normaliser);
+
     printf("number of bins that need to be skipped %d\n", skip_bins);
 
     free(midpoints);
@@ -216,9 +286,49 @@ double estimate_delay_pmf(paramlist* params, double_arr* base_events, double_arr
     free(bin_counts1);
     free(bin_counts2);
     free(store);
+    if (outfile != NULL){
+	fclose(fp2);
+	free(out);
+	free(lambda_out);
+    }
     free_double_arr(time_delay);
 
     return best_delta;
+}
+
+/*
+ * Helper function for finding the normalisation constant. Extracts parameters from the
+ * parameter file and then calls the sub-function to do the actual calculation.
+ */
+double find_normaliser(paramlist* params, void* f1, double_arr* events, char* type)
+{
+
+    if (!has_required_params(params, normaliser_params,
+			     sizeof(normaliser_params)/sizeof(char*))) {
+	printf("Some parameters required to find a normalisation constant are missing."\
+	       " Ensure you have them in your parameter file.\n");
+	exit(1);
+    }
+
+    double combine_start = get_double_param(params, "delta_est_combine_start");
+    // Length of the interval when combining functions
+    double combine_interval = get_double_param(params, "delta_est_combine_interval");
+    double combine_end = combine_start + combine_interval;
+    // Start value for finding the normalisation constant
+    double normaliser_start = get_double_param(params, "normaliser_est_initial");
+    // Maximum value to allow the normalisation function to look at
+    double normaliser_end = get_double_param(params, "normaliser_est_max");
+    // Increase the normalisation constant value by this each iteration
+    double normaliser_step = get_double_param(params, "normaliser_est_step");
+    // Number of subintervals to use when checking normalisation
+    int normaliser_subintervals = get_int_param(params, "normaliser_est_subintervals");
+
+    // Find a normalisation constant. This is needed to make the estimated function
+    // correctly line up with the original. For baseline estimates, this is usually 1.
+    return _find_normaliser(f1, events, combine_start, combine_end,
+				 normaliser_start, normaliser_end,
+				 normaliser_step, normaliser_subintervals,
+				 type);
 }
 
 /*
@@ -230,9 +340,12 @@ double estimate_delay_pmf(paramlist* params, double_arr* base_events, double_arr
  * to the length of the interval divided by the time steps that lambda represents.
  * This is usually one time step. As an example, if lambda represents the number of 
  * events in one second, and your interval time is 100 seconds, you should use 100
- * intervals.
+ * intervals. A normaliser is required for functions estimated using the gaussian
+ * kernel method due to the way that gaussians are summed. Dividing the values of
+ * the estimated function by the return value of this function will give a function
+ * that is on the same scale as the generating function.
  */
-double find_normaliser(void* f1, double_arr* events, double interval_start,
+double _find_normaliser(void* f1, double_arr* events, double interval_start,
 		       double interval_end, double check_start, double check_limit,
 		       double step, int subintervals, char* type)
 {
@@ -274,6 +387,59 @@ double find_normaliser(void* f1, double_arr* events, double interval_start,
     return best_normaliser;
 }
 
+
+/*
+ * Helper function for the area delay calculation. Extracts parameters from 
+ * the parameter list and then calls the function which does the computation.
+ * Also does hierarchical search if the parameter is set to yes, calling the 
+ * estimation function again to make a finer pass over the data.
+ */
+double estimate_delay_area(paramlist* params, char* outfile, void* f1, void* f2,
+			   char* hierarchical, char* type)
+{
+    if (!has_required_params(params, area_params, sizeof(area_params)/sizeof(char*))){
+	printf("Some parameters required to perform an area estimate of the"\
+	       " time delay are missing. Ensure you have them in your parameter file.\n");
+	exit(1);
+    }
+    int hc = strcmp(hierarchical, "yes") == 0;
+    double max_delay = get_double_param(params, "delta_est_max_delta");
+    double step = get_double_param(params, "delta_est_step_coarse");
+    double resolution = get_double_param(params, "delta_est_area_resolution");
+    double comp_start = get_double_param(params, "delta_est_area_start");
+    double comp_end = comp_start + get_double_param(params, "delta_est_area_interval");
+
+    printf("Estimating delay using area method.\n Max delay: %lf, Step %lf,"\
+	   " Resolution %lf, Interval [%lf %lf]\n", max_delay, step, resolution,
+	   comp_start, comp_end);
+
+    double step_fine = 0;
+    double fine_range = 0;
+    
+    if (hc){
+    	step_fine = get_double_param(params, "delta_est_step_fine");
+    	fine_range = get_double_param(params, "delta_est_fine_range");
+    }
+
+    double result = _estimate_delay_area(outfile, f1, f2, comp_start, comp_end, 
+					 -max_delay, max_delay, max_delay,
+					 resolution, step, type);
+
+    if (hc){
+    	printf("Initial result is %lf. Improving estimate using finer step of %lf" \
+    	       " in range [%lf, %lf].\n", result, step_fine, result - fine_range,
+    	       result + fine_range);
+    	double hres = _estimate_delay_area(outfile, f1, f2, comp_start, comp_end,
+    					   result - fine_range, result + fine_range,
+    					   max_delay, resolution, step_fine, type);
+    	printf("Estimate revised to %lf from %lf.\n", hres, result);
+    	result = hres;
+    }
+    
+    return result;
+
+}
+
 /*
  * Estimates the time delay of one function with relation to another by finding
  *  the minimum value of the area between their curves. This is done in a 
@@ -287,41 +453,33 @@ double find_normaliser(void* f1, double_arr* events, double interval_start,
  * is shifted. The value calculated by the function is inverted upon return
  * to give the amount that f2 must be shifted to line it up with f1.
  */
-double estimate_delay_area(paramlist* params, void* f1, void* f2, char* type)
+double _estimate_delay_area(char* outfile, void* f1, void* f2, double comp_start, double comp_end,
+			    double start_delta, double end_delta, double max_delay,
+			    double resolution, double step, char* type)
 {
-    double max_delay = get_double_param(params, "delta_est_max_delta");
-    double step = get_double_param(params, "delta_est_step");
-    double resolution = get_double_param(params, "delta_est_area_resolution");
-    double comp_start = get_double_param(params, "delta_est_area_start");
-    double comp_end = comp_start + get_double_param(params, "delta_est_area_interval");
-
-    printf("Estimating delay using area method.\n Max delay: %lf, Step %lf,"\
-	   " Resolution %lf, Interval [%lf %lf]\n", max_delay, step, resolution,
-	   comp_start, comp_end);
 
     double best_delta = 0;
     double best_value = INFINITY;
     double guess;
 
-    double start = -max_delay, end = max_delay;
-    double current = start;
+    double current = start_delta;
     double norm_start = comp_start + max_delay, norm_end = comp_end - max_delay;
+    FILE *fp = NULL;
+    char* out = NULL;
+    if (outfile != NULL){
+	out = malloc(strlen(outfile) + strlen("_area_delay.dat") + 5);
+	sprintf(out, "%s_area_delay.dat", outfile);
+	fp = fopen(out, "w");
+    }
 
-    FILE *fp = fopen("area_delay_vals", "w");
-
-    while (current <= end){
-	/* if (strcmp(type, "gauss") == 0){ */
-	/*     // put these variables into paramfile */
-	/*     guess = total_area_estimate((void*)f1, (void*)f2, comp_start, comp_end, resolution, current, "gauss"); */
-	/* } else if (strcmp(type, "base") == 0){ */
-	/*     guess = total_area_estimate((void*)f1, (void*)f2, comp_start, comp_end, resolution, current, "base"); */
-	/* } */
+    while (current <= end_delta){
 	if (strcmp(type, "gauss") == 0){
-           guess = total_area_estimate((void*)f1, (void*)f2, norm_start, norm_end, resolution, current, "gauss");
-       } else if (strcmp(type, "base") == 0){
-           guess = total_area_estimate((void*)f1, (void*)f2, norm_start, norm_end, resolution, current, "base");
-       }
-	fprintf(fp, "%lf %lf\n", current, guess);
+	    guess = total_area_estimate((void*)f1, (void*)f2, norm_start, norm_end, resolution, current, "gauss");
+	} else if (strcmp(type, "base") == 0){
+	    guess = total_area_estimate((void*)f1, (void*)f2, norm_start, norm_end, resolution, current, "base");
+	}
+	if (outfile != NULL)
+	    fprintf(fp, "%lf %lf\n", current, guess);
 	if (guess < best_value){
 	    printf("New value %lf is less than old %lf. guess updated to %lf\n", guess, best_value, current);
 	    best_value = guess;
@@ -332,9 +490,12 @@ double estimate_delay_area(paramlist* params, void* f1, void* f2, char* type)
 	current += step;
     }
 
-    fclose(fp);
-
-    return -best_delta;
+    if (outfile != NULL){
+	fclose(fp);
+	free(out);
+    }
+    
+    return best_delta;
 }
 
 
@@ -382,7 +543,7 @@ double area_at_point_gauss(gauss_vector* f1, gauss_vector* f2, double x, double 
 	return -1;
 
     double f1sum = sum_gaussians_at_point(x, f1);
-    double f2sum = sum_gaussians_at_point(x + delta, f2);
+    double f2sum = sum_gaussians_at_point(x - delta, f2);
 
     return pow(f1sum - f2sum, 2);
 }
@@ -398,7 +559,7 @@ double area_at_point_base(est_arr* f1, est_arr* f2, double x, double delay)
 	return -1;
 
     double f1val = estimate_at_point(f1, x);
-    double f2val = estimate_at_point(f2, x + delay);
+    double f2val = estimate_at_point(f2, x - delay);
 
     return pow(f2val - f1val, 2);
 }

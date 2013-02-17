@@ -677,15 +677,20 @@ double sum_array_interval(double* times, double* values, double start, double en
     if (times == NULL || values == NULL || end <= start || len <= 0)
 	return -INFINITY;
     
+//    printf("summing interval from %lf to %lf, normaliser %lf with len %d\n", start, end, normaliser, len);
+    
     int i;
     double current = times[0], sum = 0;
     
-    for (i = 0; current < end && i < len; ++i, current = times[i]) {
-//	printf("current is %lf, end is %lf, i is %d\n", current, end, i);
-	if (current < start)
+    for (i = 0; dbl_less_than(current, end, 0.0001) && i < len; ++i, current = times[i]) {
+	if (dbl_less_than(current, start, 0.0001))
 	    continue;
+//	printf("current is %.30lf, end is %.30lf, i is %d, value is %lf\n", current, end, i, values[i]);
 	sum += values[i];
     }
+
+    /* printf("sum is %lf\n", sum); */
+    /* printf("normalised sum is %lf\n", sum/normaliser); */
 
     return sum / normaliser;
 }
@@ -730,4 +735,25 @@ double largest_value_in_arr(double* data, int len)
 	
     }
     return max;
+}
+
+/*
+ * Return the absolute value of the parameter with the largest absolute value
+ */
+double abs_max(double a, double b)
+{
+    double br = fabs(b), ar = fabs(a);
+    return ar > br ? ar : br;
+}
+
+/*
+ * Checks whether a is less than b, to some number of decimal places.
+ */
+int dbl_less_than(double a, double b, double precision)
+{
+    double diff = b - a;
+
+    /* printf("diff is %.30lf\n", diff); */
+    /* printf("returning %d\n", diff > precision && diff > 0); */
+    return diff > precision && diff > 0;
 }

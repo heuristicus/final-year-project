@@ -129,22 +129,3 @@ double_multi_arr* run_gauss(paramlist* params, char* infile, char* outfile)
 	exit(1);
     }
 }
-
-/*
- * Checks that the paramlist provided contains parameters with names corresponding to the
- * strings provided in the required_params array.
- */
-int has_required_params(paramlist* params, char** required_params, int len)
-{
-    int i;
-    int ok = 1;
-    
-    for (i = 0; i < len; ++i) {
-	if (get_param(params, required_params[i]) == NULL){
-	    printf("Missing parameter: %s\n", required_params[i]);
-	    ok = 0;
-	}
-    }
-
-    return ok;
-}

@@ -74,6 +74,7 @@ double_multi_arr* combine_gauss_vectors(gauss_vector** V, double_arr* time_delay
     
 //    printf("start %lf, time %lf, step %lf, nvec %d\n", start, interval_time, step, num_vectors);
 //    printf("time delay for function 0 is %lf, 1 is %lf\n", time_delay->data[0], time_delay->data[1]);
+    
 
     double max_delay = largest_value_in_arr(time_delay->data, num_vectors);
 //    printf("max delay %lf\n", max_delay);
@@ -88,9 +89,10 @@ double_multi_arr* combine_gauss_vectors(gauss_vector** V, double_arr* time_delay
 //	printf("current is %lf\n", current);
 	sum = 0;
 	for (vector_num = 0; vector_num < num_vectors; ++vector_num) {
-		sum += sum_gaussians_at_point(current - time_delay->data[vector_num], V[vector_num]);
-//	    printf("summing vector %d at %lf\n", vector_num, current - time_delay->data[vector_num]);
-//	    printf("sum is now %lf\n", sum);
+	    sum += sum_gaussians_at_point(current - time_delay->data[vector_num], V[vector_num]);
+//		printf("summing vector %d at %lf\n", vector_num, current - time_delay->data[vector_num]);
+//		printf("sum is now %lf\n", sum);
+		
 	}
 	res->data[0][i] = current;
 	// must apply the same normalisation that is being applied to the gaussians in the estimate?
