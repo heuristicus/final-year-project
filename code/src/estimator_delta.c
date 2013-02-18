@@ -20,7 +20,7 @@ char *area_params[] = {"delta_est_area_resolution", "delta_est_max_delta",
  * range.
  */
 double estimate_delay_pmf(paramlist* params, char* outfile, double_arr* base_events, double_arr* f2_events,
-			  void* f1, void* f2, double normaliser, char* hierarchical, char* type)
+			  void* f1, void* f2, double normaliser, char* hierarchical, char* type, int output_switch)
 {
     if (!has_required_params(params, pmf_params, sizeof(pmf_params)/sizeof(char*))) {
 	printf("Some parameters required to perform a PMF estimate" \
@@ -68,19 +68,22 @@ double estimate_delay_pmf(paramlist* params, char* outfile, double_arr* base_eve
     double result = _estimate_delay_pmf(outfile, base_events, f2_events, f1, f2,
 					combine_start, combine_interval, combine_step,
 					num_bins, -max_delay, max_delay, max_delay,
-					delta_step_coarse, normaliser, type);
+					delta_step_coarse, normaliser, type, output_switch);
 
     if (hc){
 	printf("Initial result is %lf. Improving estimate using finer step of %lf"\
 	       " in range [%lf, %lf].\n", result, delta_step_fine, result - fine_range,
 	       result + fine_range);
-	double hres = _estimate_delay_pmf(outfile, base_events, f2_events, f1, f2,
+	char* hout = malloc(strlen(outfile) + strlen("_hier") + 5);
+	sprintf(hout, "%s_hier", outfile);
+	double hres = _estimate_delay_pmf(hout, base_events, f2_events, f1, f2,
 					  combine_start, combine_interval, combine_step,
 					  num_bins, result - fine_range,
 					  result + fine_range, max_delay, delta_step_fine,
-					  normaliser, type);
+					  normaliser, type, output_switch);
 	printf("Estimate revised to %lf from %lf.\n", hres, result);
 	result = hres;
+	free(hout);
     }
     
     return result;
@@ -108,7 +111,7 @@ double _estimate_delay_pmf(char* outfile, double_arr* base_events, double_arr* f
 			   void* f2, double combine_start, double combine_interval,
 			   double combine_step, int num_bins, double start_delta,
 			   double end_delta, double max_delay, double delta_step, double normaliser,
-			   char* type)
+			   char* type, int output_switch)
 {
     // Always work on two streams
     int num_streams = 2;
@@ -141,6 +144,7 @@ double _estimate_delay_pmf(char* outfile, double_arr* base_events, double_arr* f
     double_arr* time_delay = init_double_arr(2);
     time_delay->data[0] = 0;
     double_multi_arr* combined = NULL;
+    double_multi_arr* delay_pmfs = init_multi_array(2, (int)((end_delta - start_delta)/delta_step));
 
     // PMF sums will be calculated for both streams.
     int* bin_counts1 = sum_events_in_interval(base_events->data, base_events->len, combine_start,
@@ -151,32 +155,11 @@ double _estimate_delay_pmf(char* outfile, double_arr* base_events, double_arr* f
     double* midpoints = get_interval_midpoints(combine_start, combine_end,
 					       num_bins);
     double* lambda_sums = malloc(sizeof(double) * num_bins);
-    int i;
-    FILE *fp2 = NULL;
-    char* lambda_out = NULL;
-    char* out = NULL;
-    if (outfile != NULL) {
-	out = malloc(strlen(outfile) + strlen("_pmf_delay.dat") + 5);
-	lambda_out = malloc(strlen(outfile) + strlen("_pmf_lambda.dat") + 5);
-	sprintf(lambda_out, "%s_pmf_lambdas.dat", outfile);
-	sprintf(out, "%s_pmf_bins.dat", outfile);
-	FILE *fp = fopen(out, "w");
-
-	for (i = 0; i < num_bins; ++i) {
-	    //	printf("bin %d [%d, %d] has %d events\n", i, i * bin_length, (i + 1) * bin_length, bin_counts[i]);
-	    /* bin_counts1[i] /= (combine_interval/ num_bins); */
-	    /* bin_counts2[i] /= (combine_interval/num_bins); */
-	
-	    fprintf(fp, "%lf %d %d\n", midpoints[i], bin_counts1[i], bin_counts2[i]);
-	}
-
-	fclose(fp);
-	sprintf(out, "%s_pmf_delay.dat", outfile);
-	fp2 = fopen(out, "w");
-    }
+    double* best_lambda_sums = malloc(sizeof(double) * num_bins);
 
     // How many bins need to be skipped to ensure that only the bins that are present in 
     int skip_bins = (int) max_delay/bin_length;
+    int i, j = 0;
 
     printf("binlen %lf skipbin %d\n", bin_length, skip_bins);
 
@@ -206,6 +189,7 @@ double _estimate_delay_pmf(char* outfile, double_arr* base_events, double_arr* f
 	    // find the sum of lambda values for each subinterval
 //	    printf("subinterval start %lf, subinterval end %lf\n", i * bin_length, (i + 1) * bin_length);
 	    // The lambda sums must be normalised so that they are on the same scale as the bin counts.
+	    // Otherwise, the result will be completely useless.
 	    lambda_sums[i] = sum_array_interval(combined->data[0], combined->data[1],
 					     i * bin_length, (i + 1) * bin_length,
 						normaliser, combined->lengths[0]);
@@ -245,54 +229,73 @@ double _estimate_delay_pmf(char* outfile, double_arr* base_events, double_arr* f
 	/* 	   (lambda_sums+skip_bins)[i]); */
 	/* } */
 
-
 //	printf("s1\n");
 	double total1 = sum_log_pmfs(bin_counts1 + skip_bins, lambda_sums + skip_bins, 1, num_bins - 2 * skip_bins);
 	// need to shift bin_counts2 so that the correct intervals line up for the given delay
 //	printf("s2\n");
 	double total2 = sum_log_pmfs(bin_counts2 + s2_shift, lambda_sums + skip_bins, 1, num_bins - 2 * skip_bins);
-//	double total = sum_log_pmfs(bin_counts, lambda_sums, 1, num_bins);
 	double cumulative = total1 + total2;
-	if (outfile != NULL)
-	    fprintf(fp2, "%lf %lf\n", current_delta, cumulative);
+	delay_pmfs->data[0][j] = current_delta;
+	delay_pmfs->data[1][j] = cumulative;
+
 //	printf("pmf sum is %lf\n", total);
 	if (cumulative > best_value){
 	    printf("New value %lf is less than old %lf. guess updated to %lf\n", cumulative, best_value, current_delta);
 	    best_value = cumulative;
 	    best_delta = current_delta;
-	    if (outfile != NULL){
-		FILE *fp1 = fopen(lambda_out, "w");
-	
-		for (i = 0; i < num_bins; ++i) {
-		    fprintf(fp1, "%lf %lf\n", midpoints[i], lambda_sums[i]);
-		}
-		fclose(fp1);
-	    }
-	    
+	    memcpy(best_lambda_sums, lambda_sums, sizeof(double) * num_bins);
 	} else {
 	    printf("New value %lf is larger than old %lf. guess remains at %lf\n", cumulative, best_value, best_delta);
 	}
 
 	current_delta += delta_step;
 	free_double_multi_arr(combined);
+	j++;
     }
-    
 
+    if (outfile != NULL && output_switch != 0){
+	char* out = malloc(strlen(outfile) + strlen("_pmf_lambda.dat") + 5);
+	if (output_switch >= 1){
+	    sprintf(out, "%s_pmf_delay.dat", outfile);
+	    output_double_multi_arr(out, "w", delay_pmfs);
+	}
+
+	if (output_switch >= 2){
+	    sprintf(out, "%s_pmf_lambda.dat", outfile);
+	    FILE *fp = fopen(out, "w");
+		
+	    for (i = 0; i < num_bins; ++i) {
+		fprintf(fp, "%lf %lf\n", midpoints[i], best_lambda_sums[i]);
+	    }
+	    fclose(fp);
+
+
+	    sprintf(out, "%s_pmf_bins.dat", outfile);
+	    fp = fopen(out, "w");
+	    for (i = 0; i < num_bins; ++i) {
+		//	printf("bin %d [%d, %d] has %d events\n", i, i * bin_length, (i + 1) * bin_length, bin_counts[i]);
+		/* bin_counts1[i] /= (combine_interval/ num_bins); */
+		/* bin_counts2[i] /= (combine_interval/num_bins); */
+	    
+		fprintf(fp, "%lf %d %d\n", midpoints[i], bin_counts1[i], bin_counts2[i]);
+	    }
+	    fclose(fp);
+	}
+	
+	free(out);
+    }
 
     printf("number of bins that need to be skipped %d\n", skip_bins);
 
     free(midpoints);
     free(lambda_sums);
+    free(best_lambda_sums);
     free(bin_counts1);
     free(bin_counts2);
     free(store);
-    if (outfile != NULL){
-	fclose(fp2);
-	free(out);
-	free(lambda_out);
-    }
     free_double_arr(time_delay);
-
+    free_double_multi_arr(delay_pmfs);
+    
     return best_delta;
 }
 
@@ -395,7 +398,7 @@ double _find_normaliser(void* f1, double_arr* events, double interval_start,
  * estimation function again to make a finer pass over the data.
  */
 double estimate_delay_area(paramlist* params, char* outfile, void* f1, void* f2,
-			   char* hierarchical, char* type)
+			   char* hierarchical, char* type, int output_switch)
 {
     if (!has_required_params(params, area_params, sizeof(area_params)/sizeof(char*))){
 	printf("Some parameters required to perform an area estimate of the"\
@@ -423,7 +426,7 @@ double estimate_delay_area(paramlist* params, char* outfile, void* f1, void* f2,
 
     double result = _estimate_delay_area(outfile, f1, f2, comp_start, comp_end, 
 					 -max_delay, max_delay, max_delay,
-					 resolution, step, type);
+					 resolution, step, type, output_switch);
 
     if (hc){
     	printf("Initial result is %lf. Improving estimate using finer step of %lf" \
@@ -431,7 +434,8 @@ double estimate_delay_area(paramlist* params, char* outfile, void* f1, void* f2,
     	       result + fine_range);
     	double hres = _estimate_delay_area(outfile, f1, f2, comp_start, comp_end,
     					   result - fine_range, result + fine_range,
-    					   max_delay, resolution, step_fine, type);
+    					   max_delay, resolution, step_fine, type,
+					   output_switch);
     	printf("Estimate revised to %lf from %lf.\n", hres, result);
     	result = hres;
     }
@@ -455,7 +459,7 @@ double estimate_delay_area(paramlist* params, char* outfile, void* f1, void* f2,
  */
 double _estimate_delay_area(char* outfile, void* f1, void* f2, double comp_start, double comp_end,
 			    double start_delta, double end_delta, double max_delay,
-			    double resolution, double step, char* type)
+			    double resolution, double step, char* type, int output_switch)
 {
 
     double best_delta = 0;
@@ -466,7 +470,7 @@ double _estimate_delay_area(char* outfile, void* f1, void* f2, double comp_start
     double norm_start = comp_start + max_delay, norm_end = comp_end - max_delay;
     FILE *fp = NULL;
     char* out = NULL;
-    if (outfile != NULL){
+    if (outfile != NULL && output_switch >= 1){
 	out = malloc(strlen(outfile) + strlen("_area_delay.dat") + 5);
 	sprintf(out, "%s_area_delay.dat", outfile);
 	fp = fopen(out, "w");

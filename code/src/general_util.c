@@ -291,13 +291,13 @@ int create_default_param_file(char* filename)
     fprintf(fp, "%s %s\n", "# base_est_outfile", DEFAULT_BASE_OUT);
     fprintf(fp, "%s\n%s %s\n\n", "# File to output gaussian estimate data to.", 
 	    "gauss_est_outfile", DEFAULT_GAUSS_EST_OUT);
-    fprintf(fp, "%s\n%s %d\n\n", "# define the verbosity of output to data files.\n"\
-	    "# 0 output only event data for each run\n# 1 output event times and"\
-	    " lambda values for each run\n# 2 output event time and lambda values"\
-	    " for each run, as well as midpoints and\n# bin counts, to a single"\
-	    " file\n# 3 output the above, but also save a file with only event"\
-	    " data in it (all data\n# is saved as {filename}_ad, events as "\
-	    "{filename}_ev)", "verbosity", DEFAULT_VERBOSITY);
+    /* fprintf(fp, "%s\n%s %d\n\n", "# define the verbosity of output to data files.\n"\ */
+    /* 	    "# 0 output only event data for each run\n# 1 output event times and"\ */
+    /* 	    " lambda values for each run\n# 2 output event time and lambda values"\ */
+    /* 	    " for each run, as well as midpoints and\n# bin counts, to a single"\ */
+    /* 	    " file\n# 3 output the above, but also save a file with only event"\ */
+    /* 	    " data in it (all data\n# is saved as {filename}_ad, events as "\ */
+    /* 	    "{filename}_ev)", "verbosity", DEFAULT_VERBOSITY); */
     // data input
     put_section_header(fp, "Data Input");
     fprintf(fp, "%s\n%s %s\n\n", "# Default input file used for estimation",

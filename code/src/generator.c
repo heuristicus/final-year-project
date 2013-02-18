@@ -18,7 +18,7 @@ int check_expr_vars(muParserHandle_t hparser, struct paramlist* params);
 double* parser_tptr(muParserHandle_t hparser);
 void view_expr(muParserHandle_t hparser);
 
-void generate(char* paramfile, char* outfile, int nstreams)
+void generate(char* paramfile, char* outfile, int nstreams, int output_switch)
 {
     paramlist* params = get_parameters(paramfile);
 
@@ -48,11 +48,16 @@ void generate(char* paramfile, char* outfile, int nstreams)
     double lambda = get_double_param(params, "lambda");
     double interval_time = get_double_param(params, "interval_time");
     double_arr* time_delta = get_double_list_param(params, "timedelta");
-    int output_verbosity = get_int_param(params, "verbosity");
     char* expression = get_string_param(params, "expression");
-
-    _generate(params, outfile, interval_time, lambda, time_delta, output_verbosity,
+    char* stream_ext = get_string_param(params, "stream_ext");
+    
+    char* out = malloc(strlen(outfile) + strlen(stream_ext) + 5);
+    sprintf(out, "%s%s", outfile, stream_ext);
+    
+    _generate(params, out, interval_time, lambda, time_delta, output_switch,
 	      nstreams, expression);
+    
+    free(out);
 }
 
 /*
@@ -61,7 +66,7 @@ void generate(char* paramfile, char* outfile, int nstreams)
  * The order in which the arguments are is defined inside start.c
  */
 void _generate(paramlist* params, char* outfile, double interval_time, double lambda, 
-	       double_arr* time_delta, int output_verbosity, int nstreams, char* expr)
+	       double_arr* time_delta, int output_switch, int nstreams, char* expr)
 {
 #ifdef VERBOSE
     printf("Number of runs: %d\nLambda: %lf\nInterval time: %lf\nTime deltas: ", nstreams, 
@@ -97,7 +102,7 @@ void _generate(paramlist* params, char* outfile, double interval_time, double la
 	exit(1);
     }
     
-    run_time_nstreams(hparser, lambda, interval_time, time_delta, nstreams, outfile, output_verbosity);
+    run_time_nstreams(hparser, lambda, interval_time, time_delta, nstreams, outfile, output_switch);
     
     mupRelease(hparser);
 
@@ -279,7 +284,7 @@ void generate_gaussian_data(char* paramfile, char* infile, char* outfile,
 	       " will probably be completely flat!\n");
     }
     
-    if (outfile == NULL){
+    if (outfile == NULL && output_type > 0){
     	if (infile == NULL){
 	    outfile = get_string_param(params, "function_outfile");
     	} else {
@@ -297,43 +302,44 @@ void generate_gaussian_data(char* paramfile, char* infile, char* outfile,
 
     printf("Reading from %s.\n", infile);
 
-    int i;
-
-    // Allocate enough memory for the output filename so that we can reuse it
-    char* out = malloc(strlen(outfile) + 5 + strlen(".dat") + strlen("_contrib"));
-
-    for (i = 0; i < number; ++i) {
-	sprintf(out, "%s_%d.dat", outfile, i);
-	gauss_vector* G = _generate_gaussian(infile, stdev, start, interval, 
-					     step, resolution, multiplier);
+    if (outfile != NULL && output_type != 0){
+	// Allocate enough memory for the output filename so that we can reuse it
+	char* out = malloc(strlen(outfile) + 5 + strlen(".dat") + strlen("_contrib"));
 	
-	double* wts = G->w;
-	G->w = multiply_arr(wts, G->len, multiplier);
-	free(wts);
+	int i;
+	for (i = 0; i < number; ++i) {
+	    sprintf(out, "%s_%d.dat", outfile, i);
+	    gauss_vector* G = _generate_gaussian(infile, stdev, start, interval, 
+						 step, resolution, multiplier);
+	
+	    double* wts = G->w;
+	    G->w = multiply_arr(wts, G->len, multiplier);
+	    free(wts);
 
-	if (output_type >= 0){
-	    output_gaussian_vector(out, "w", G);
-	    printf("Raw gaussian data output to %s. Use this file if you wish"\
-		   " to generate event streams.\n", out);
+	    if (output_type >= 1){
+		output_gaussian_vector(out, "w", G);
+		printf("Raw gaussian data output to %s. Use this file if you wish"\
+		       " to generate event streams.\n", out);
+	    }
+	    if (output_type >= 2){
+		// Normalisation might be necesary here
+		sprintf(out, "%s_%d_sum.dat", outfile, i);
+		double_multi_arr* func = shifted_transform(G, start, interval, step, resolution);
+		output_double_multi_arr(out, "w", func);
+		free_double_multi_arr(func);
+		printf("Gaussian sum output to %s.\n", out);
+	    }
+	    if (output_type >= 3){
+		sprintf(out, "%s_%d_contrib.dat", outfile, i);
+		output_gaussian_contributions(out, "w", G, start, start + interval, resolution, 1);
+		printf("Individual gaussian contributions output to %s.\n", out);
+	    }
+	    free_gauss_vector(G);
 	}
-	if (output_type >= 1){
-	    // Need to apply something to normalise when you have input file. Dividing by the
-	    // stdev is ok, but not good enough. Is this really necessary?
-	    sprintf(out, "%s_%d_sum.dat", outfile, i);
-	    double_multi_arr* func = shifted_transform(G, start, interval, step, resolution);
-    	    output_double_multi_arr(out, "w", func);
-    	    free_double_multi_arr(func);
-	    printf("Gaussian sum output to %s.\n", out);
-	}
-	if (output_type >= 2){
-	    sprintf(out, "%s_%d_contrib.dat", outfile, i);
-	    output_gaussian_contributions(out, "w", G, start, start + interval, resolution, 1);
-	    printf("Individual gaussian contributions output to %s.\n", out);
-	}
-	free_gauss_vector(G);
+	free(out);
     }
+    
 
-    free(out);
     free_list(params);
 }
 
@@ -478,10 +484,10 @@ void run_time_nstreams(muParserHandle_t hparser, double lambda, double end_time,
 		       double_arr* time_delta, int nstreams, char* outfile, int outswitch)
 {
     int i;
-    char *out = malloc(strlen(outfile) + strlen("_stream_n") + 10);
+    char *out = malloc(strlen(outfile) + 10);
     for (i = 0; i < nstreams; ++i){
 	printf("Generating event stream %d\n", i);
-	sprintf(out, "%s_stream_%d", outfile, i); // save each stream to a separate file
+	sprintf(out, "%s%d.dat", outfile, i); // save each stream to a separate file
 	run_time_nonhom(hparser, lambda, time_delta->data[i], 0, end_time, out, outswitch);
     }
     free(out);
@@ -540,61 +546,44 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
     int size = run_to_time_non_homogeneous(hparser, lambda, time_delta, start_time,\
 					   end_time, eptr, lptr, DEFAULT_ARR_SIZE);
 
-    if (outswitch == 0) // Outputs only event data - this is what the real data will be like.
-	double_to_file(outfile, "w", *eptr, size);
-    if (outswitch == 1) // Outputs only events and lambda values
-	mult_double_to_file(outfile, "w", *eptr, *lptr, size);
-    if (outswitch == 2){ // Outputs all data, including bin counts
-	int num_intervals = (end_time - start_time) / DEFAULT_WINDOW_SIZE;
+    if (outswitch > 0){
+	if (outswitch >= 1){
+	    double_to_file(outfile, "w", *eptr, size);
+	} 
+	if (outswitch >= 2){
+	    mult_double_to_file(outfile, "w", *eptr, *lptr, size);
+	} 
+	if (outswitch >= 3){
+	    int num_intervals = (end_time - start_time) / DEFAULT_WINDOW_SIZE;
 
-	int* bin_counts = sum_events_in_interval(*eptr, size, start_time, end_time, num_intervals);
-	double* midpoints = get_interval_midpoints(start_time, end_time, num_intervals);
-
-#ifdef VERBOSE
-	int i;
-	for (i = 0; i < num_intervals; ++i){
-	    printf("Interval %d: %d\n", i, bin_counts[i]);
-	}
-
-	for (i = 0; i < num_intervals; ++i){
-	    printf("%lf\n", midpoints[i]);
-	}
-#endif
+	    int* bin_counts = sum_events_in_interval(*eptr, size, start_time, end_time, num_intervals);
+	    double* midpoints = get_interval_midpoints(start_time, end_time, num_intervals);
     
-	int_dbl_to_file(outfile, "w", midpoints, bin_counts, num_intervals);
-	free(midpoints);
-	free(bin_counts);
-    }
-    if (outswitch == 3){
-	char *tmp = malloc(strlen(outfile) + 4 + strlen(".dat")); // space for extra chars and null terminator
-	sprintf(tmp, "%s.dat", outfile);
-	double_to_file(tmp, "w", *eptr, size);
+	    int_dbl_to_file(outfile, "w", midpoints, bin_counts, num_intervals);
+	    free(midpoints);
+	    free(bin_counts);
+	}
+	if (outswitch >= 4){
+	    char *tmp = malloc(strlen(outfile) + 4 + strlen(".dat")); // space for extra chars and null terminator
+	    sprintf(tmp, "%s.dat", outfile);
+	    double_to_file(tmp, "w", *eptr, size);
 	
-	sprintf(tmp, "%s_ad%s", outfile, ".dat");
+	    sprintf(tmp, "%s_ad%s", outfile, ".dat");
 
-	mult_double_to_file(tmp, "w", *eptr, *lptr, size);
+	    mult_double_to_file(tmp, "w", *eptr, *lptr, size);
 
-	int num_intervals = (end_time - start_time) / DEFAULT_WINDOW_SIZE;
+	    int num_intervals = (end_time - start_time) / DEFAULT_WINDOW_SIZE;
 
-	int* bin_counts = sum_events_in_interval(*eptr, size, start_time, end_time, num_intervals);
-	double* midpoints = get_interval_midpoints(start_time, end_time, num_intervals);
-
-#ifdef VERBOSE
-	int i;
-	for (i = 0; i < num_intervals; ++i){
-	    printf("Interval %d: %d\n", i, bin_counts[i]);
-	}
-
-	for (i = 0; i < num_intervals; ++i){
-	    printf("midpoint %d: %lf\n", i, midpoints[i]);
-	}
-#endif
+	    int* bin_counts = sum_events_in_interval(*eptr, size, start_time, end_time, num_intervals);
+	    double* midpoints = get_interval_midpoints(start_time, end_time, num_intervals);
     
-	int_dbl_to_file(tmp, "a", midpoints, bin_counts, num_intervals);
-	free(midpoints);
-	free(bin_counts);
-	free(tmp);
+	    int_dbl_to_file(tmp, "a", midpoints, bin_counts, num_intervals);
+	    free(midpoints);
+	    free(bin_counts);
+	    free(tmp);
+	}
     }
+    
 
     free(*eptr);
     free(*lptr);

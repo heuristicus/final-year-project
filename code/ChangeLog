@@ -1,3 +1,15 @@
+2013-02-18  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* generator.c: Old generator functions updated to use the output switch system.
+
+	* launcher.h: Modified usage output to detail the -t switch usage in more depth.
+	Each output type is listed for all things which use the data passed to the switch.
+
+	* estimator_delta.c: The -t switch now affects what files are output by the
+	delta estimators. 0 outputs nothing, 1 outputs the value computed by the function
+	for each guess at delta, 2 outputs lambda and bin data. The hierarchical estimate
+	outputs its data to files with "hier" in the name.
+
 2013-02-17  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* estimator.c, general_util.c: Removed duplicated parameter checking function

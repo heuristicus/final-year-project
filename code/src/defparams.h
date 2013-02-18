@@ -20,7 +20,7 @@
 // Default parameters for generation
 #define DEFAULT_EXTENSION "_stream_"
 #define DEFAULT_FUNCTION_EXT "_func_"
-#define DEFAULT_VERBOSITY 3
+//#define DEFAULT_VERBOSITY 3
 #define DEFAULT_START 0.0
 #define DEFAULT_NSTREAMS 1
 #define DEFAULT_TIMEDELTA "0.0,10.0,20.0"

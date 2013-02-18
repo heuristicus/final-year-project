@@ -133,7 +133,7 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* extra_
 	    generate_gaussian_data(paramfile, infile, outfile, args->nstreams, args->writing);
 	} else if (generator_type == NULL || strcmp(generator_type, "mup") == 0){
 	    printf("Generating event stream with expression from parameter file.\n");
-	    generate(paramfile, outfile, args->nstreams);
+	    generate(paramfile, outfile, args->nstreams, args->writing);
 	} else if (strcmp(generator_type, "rand") == 0){
 	    printf("Generating event stream with random functions.\n");
 	    generate_from_gaussian(paramfile, outfile, infile, args->nstreams);
@@ -201,7 +201,7 @@ void multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, 
     if (step <= 0)
 	step = DEFAULT_STEP;
 
-    if (outfile == NULL){
+    if (outfile == NULL && output_switch != 0){
 	if (gauss)
 	    outfile = get_string_param(params, "gauss_est_outfile");
 	else
@@ -212,13 +212,13 @@ void multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, 
 	printf("You must include the parameters \"outfile\" and \"stream_ext\" in"\
 	       " your parameter file.\n");
 	exit(1);
-    } else if (outfile == NULL){
+    } else if (outfile == NULL && output_switch != 0){
 	if (gauss)
 	    printf("You must include the parameter \"gauss_est_outfile\" in your" \
 		   " parameter file, or specify the output file with the -o switch.\n");
 	else
 	    printf("You must include the parameter \"est_outfile\" in your" \
-		   " parameter file, or specify the output file with the -o switch.\n");
+		   " parameter file,area or specify the output file with the -o switch.\n");
 	exit(1);
     }
 
@@ -237,7 +237,9 @@ void multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, 
 
     for (i = 0; i < nstreams; ++i) {
 	sprintf(infname, "%s%s%d.dat", fname, pref, i);
-	sprintf(outname, "%s_%d", outfile, i);
+	if (outfile != NULL && output_switch >= 1)
+	    sprintf(outname, "%s_%d", outfile, i);
+	
 	if (gauss)
 	    estimates[i] = estimate_gaussian_raw(params, infname, outname);
 	else
@@ -277,7 +279,8 @@ void multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, 
 
 	    // Read sets of events for the two streams from different files.
 	    sprintf(infname, "%s%s%d.dat", fname, pref, i);
-	    sprintf(outname, "%s_%d", outfile, i-1);
+	    if (outfile != NULL && output_switch >= 1)
+		sprintf(outname, "%s_%d", outfile, i-1);
 	    double* ev2 = get_event_data_all(infname);
 	    double_arr* f2_events = malloc(sizeof(double_arr));
 	    f2_events->len = ev2[0] - 1;
@@ -285,12 +288,13 @@ void multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, 
 
 	    if (strcmp(delta_method, "area") == 0){
 		delays->data[i] = estimate_delay_area(params, outname, estimates[0],
-						      estimates[i], hierarchical, estimator_type);
+						      estimates[i], hierarchical,
+						      estimator_type, output_switch);
 	    } else if (strcmp(delta_method, "pmf") == 0){
 		delays->data[i] = estimate_delay_pmf(params, outname, base_stream_events,
-						       f2_events, estimates[0],
-						       estimates[i], normaliser, 
-						       hierarchical, estimator_type);
+						     f2_events, estimates[0],
+						     estimates[i], normaliser, 
+						     hierarchical, estimator_type, output_switch);
 	    }
 	    
 	    // This data is not reused, so free it
@@ -321,14 +325,16 @@ void multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, 
     }
 
     double_multi_arr* final_estimate = NULL;
-    sprintf(outname, "%s_combined.dat", outfile);
     if (gauss) {
 	final_estimate = combine_gauss_vectors((gauss_vector**)estimates, delays, start, interval_time, step, nstreams);
     } else {
 	final_estimate = combine_functions((est_arr**)estimates, delays, start, interval_time, step, nstreams);
     }
 
-    output_double_multi_arr(outname, "w", final_estimate);
+    if (outfile != NULL && output_switch >= 1){
+	sprintf(outname, "%s_combined.dat", outfile);
+	output_double_multi_arr(outname, "w", final_estimate);
+    }
     
     free(infname);
     free(outname);
@@ -353,7 +359,7 @@ launcher_args* make_arg_struct()
     a->gauss = 0;
     a->gen = 0;
     a->nstreams = 1;
-    a->writing = 0;
+    a->writing = 1;
     a->rfunc = 0;
 
     return a;
