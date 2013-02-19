@@ -2,15 +2,16 @@
 #include "paramlist.h"
 #include "general_util.h"
 #include "file_util.h"
+#include "general_util.h"
 
-static char *ols_params[] = {"start_time", "interval_time", "ols_subintervals"};
-static char *iwls_params[] = {"iwls_iterations", "start_time", 
-			      "interval_time", "iwls_subintervals"};
-static char *pc_params[] = {"start_time", "interval_time", "pc_iwls_iterations", 
+static char* ols_params[] = {"est_start_time", "est_interval_time", "ols_subintervals"};
+static char* iwls_params[] = {"iwls_iterations", "est_start_time", 
+			      "est_interval_time", "iwls_subintervals"};
+static char* pc_params[] = {"est_start_time", "est_interval_time", "pc_iwls_iterations", 
 			    "pc_iwls_subintervals", "pc_max_extension", "pc_max_breakpoints"};
-static char *base_params[] = {"start_time", "interval_time", "base_iwls_iterations", 
+static char* base_params[] = {"est_start_time", "est_interval_time", "base_iwls_iterations", 
 			      "base_iwls_subintervals", "base_max_extension", "base_max_breakpoints"};
-static char *gauss_params[] = {"start_time", "interval_time", "gauss_stdev", "gauss_resolution"};
+static char *gauss_params[] = {"est_start_time", "est_interval_time", "gauss_stdev", "gauss_resolution"};
 
 /*
  * Runs the specified estimator using the provided parameter and output files. Performs
@@ -117,36 +118,14 @@ est_arr* run_base(paramlist* params, char* infile, char* outfile)
     }
 }
 
-
-double** run_gauss(paramlist* params, char* infile, char* outfile)
+double_multi_arr* run_gauss(paramlist* params, char* infile, char* outfile)
 {
     if (has_required_params(params, gauss_params, sizeof(gauss_params)/sizeof(char*))){
-	estimate_gaussian(params, infile, outfile);
+	return estimate_gaussian(params, infile, outfile);
     } else {
 	print_string_array("Some parameters required for gaussian estimates are missing. " \
 			   "Ensure that your parameter file contains the following entries and try again.",
 			   gauss_params, sizeof(gauss_params)/sizeof(char*));
 	exit(1);
     }
-
-    return NULL;
-}
-
-/*
- * Checks that the paramlist provided contains parameters with names corresponding to the
- * strings provided in the required_params array.
- */
-int has_required_params(paramlist* params, char** required_params, int len)
-{
-    int i;
-    int ok = 1;
-    
-    for (i = 0; i < len; ++i) {
-	if (get_param(params, required_params[i]) == NULL){
-	    printf("Missing parameter: %s\n", required_params[i]);
-	    ok = 0;
-	}
-    }
-
-    return ok;
 }

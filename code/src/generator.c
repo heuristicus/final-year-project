@@ -9,83 +9,69 @@
 #define PARSER_MAXVARS 10
 
 static int generated_outfile = 0;
+static char* generator_params[] = {"nstreams", "lambda", "interval_time",
+				   "timedelta", "verbosity", "expression"};
 
 void on_error(muParserHandle_t hParser);
-muFloat_t* var_factory(const muChar_t* a_szName, void *pUserData);
-int check_expr_vars(muParserHandle_t hparser, struct paramlist *params);
+muFloat_t* var_factory(const muChar_t* a_szName, void* pUserData);
+int check_expr_vars(muParserHandle_t hparser, struct paramlist* params);
 double* parser_tptr(muParserHandle_t hparser);
 void view_expr(muParserHandle_t hparser);
 
-//#define VERBOSE
+void generate(char* paramfile, char* outfile, int nstreams, int output_switch)
+{
+    paramlist* params = get_parameters(paramfile);
+
+    if (outfile == NULL){
+	outfile = get_string_param(params, "outfile");
+	if (outfile == NULL){
+	    printf("You must specify an output file to use. Add \"outfile\" to your"\
+		   "parameter file.\n");
+	    exit(1);
+   	}
+    }
+    
+    if (has_required_params(params, generator_params, sizeof(generator_params)/sizeof(char*))){
+	
+    } else {
+	print_string_array("Some parameters required for generating streams are missing. " \
+			   "Ensure that your parameter file contains the following entries"\
+			   " and try again. If you have not defined the expression to use, "\
+			   " this can be done by adding something like \"expression a+b*x\""\
+			   " and defining values for the variables; \"a 10\" etc.",
+			   generator_params, sizeof(generator_params)/sizeof(char*));
+	exit(1);
+    }
+
+    if (nstreams == 1)
+	nstreams = get_int_param(params, "nstreams");
+    double lambda = get_double_param(params, "lambda");
+    double interval_time = get_double_param(params, "interval_time");
+    double_arr* time_delta = get_double_list_param(params, "timedelta");
+    char* expression = get_string_param(params, "expression");
+    char* stream_ext = get_string_param(params, "stream_ext");
+    
+    char* out = malloc(strlen(outfile) + strlen(stream_ext) + 5);
+    sprintf(out, "%s%s", outfile, stream_ext);
+    
+    _generate(params, out, interval_time, lambda, time_delta, output_switch,
+	      nstreams, expression);
+    
+    free(out);
+}
 
 /*
  * Initialises the generator with some values specified by the arguments passed to the program,
  * and those that are contained in the parameter file, if there is one (there should be).
  * The order in which the arguments are is defined inside start.c
  */
-void generate(char *paramfile, char *outfile, int nruns)
+void _generate(paramlist* params, char* outfile, double interval_time, double lambda, 
+	       double_arr* time_delta, int output_switch, int nstreams, char* expr)
 {
-    int i;
-    paramlist *params = NULL;
-    char *tmp;
-
-    double interval_time = 10.0;
-    double lambda = 100.0;
-    double *time_delta;
-    int tdlen;
-    int outswitch = 3;
-    char *expr;
-
-    if (paramfile != NULL){
-	params = get_parameters(paramfile);
-    } else {
-	printf("You have not specified a parameter file. Please specify one in the command line call.\n");
-	exit(1);
-    }
-
-    if ((outfile = select_output_file(outfile, get_string_param(params, "outfile"))) == NULL){
-	free(params);
-	return;
-    }
-
-    // Check param files for parameters and use those instead of defaults if they exist
-    if (nruns == 1 && (tmp = get_string_param(params, "nruns")) != NULL)
-	nruns = atoi(tmp);
-
-    if ((tmp = get_string_param(params, "lambda")) != NULL)
-	lambda = atol(tmp);
-
-    if ((tmp = get_string_param(params, "interval_time")) != NULL)
-    	interval_time = atol(tmp);
-
-    if ((tmp = get_string_param(params, "timedelta")) != NULL){
-	char **vals = string_split(tmp, ',');
-	tdlen = atoi(vals[0]) - 1;
-	time_delta = malloc((tdlen + 1) * sizeof(double));
-	
-	for (i = 1; i < tdlen + 1; ++i) {
-	    time_delta[i - 1] = atof(vals[i]);
-	}
-
-	free_pointer_arr((void**) vals, atoi(vals[0]));
-    } else { // setup default time delta for one loop
-	time_delta = malloc(sizeof(double));
-	time_delta[0] = 0.0;
-	tdlen = 1;
-    }
-
-    if ((tmp = get_string_param(params, "verbosity")) != NULL)
-	outswitch = atoi(tmp);
-
-    if ((tmp = get_string_param(params, "expression")) != NULL){
-	expr = tmp;
-    } else {
-	printf("You have not defined an expression to use.\nPlease do so in the parameter file (add \"expression a+b*x\" and define values for the variables; \"a 10\" etc.)\n");
-	exit(1);
-    }
-
 #ifdef VERBOSE
-    printf("Number of runs: %d\nLambda: %lf\nInterval time: %lf\nTime deltas: ", nruns, lambda, interval_time);
+    printf("Number of runs: %d\nLambda: %lf\nInterval time: %lf\nTime deltas: ", nstreams, 
+	   lambda, interval_time);
+    int i;
 
     for (i = 0; i < tdlen; ++i) {
 	printf("%lf", time_delta[i]);
@@ -105,7 +91,7 @@ void generate(char *paramfile, char *outfile, int nruns)
     mupSetExpr(hparser, expr);
 
     if (!check_expr_vars(hparser, params) || mupError(hparser)){
-	printf("Expression is invalid. Exiting.\n");
+	printf("Expression is invalid. Check that you have defined all the variables.\n");
 	mupRelease(hparser);
 
 	if (generated_outfile)
@@ -116,14 +102,13 @@ void generate(char *paramfile, char *outfile, int nruns)
 	exit(1);
     }
     
-    run_time_nstreams(hparser, lambda, interval_time, time_delta, nruns, outfile, outswitch);
+    run_time_nstreams(hparser, lambda, interval_time, time_delta, nstreams, outfile, output_switch);
     
     mupRelease(hparser);
 
     if (generated_outfile)
 	free(outfile);
 
-    free_list(params);
     free(time_delta);
 }
 
@@ -145,23 +130,14 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile, int ns
     double resolution = get_double_param(params, "gauss_resolution");
     char* stream_ext = get_string_param(params, "stream_ext");
     
-    double* time_delta;
-    char* tmp;
-    int tdlen;
     int i;
-    
-    if ((tmp = get_string_param(params, "timedelta")) != NULL){
-	char** vals = string_split(tmp, ',');
-	tdlen = atoi(vals[0]) - 1;
-	time_delta = malloc(tdlen * sizeof(double));
-	
-	for (i = 0; i < tdlen; ++i) {
-	    time_delta[i] = atof(vals[i + 1]);
-	}
 
-	free_pointer_arr((void**) vals, atoi(vals[0]));
-    } else {
-	printf("no timedelta provided.\n");
+    double_arr* time_delta = get_double_list_param(params, "timedelta");
+
+    if (time_delta->len < nstreams){
+	printf("You have not specified time delta values between all streams.\n"\
+	       "Specified: %d, required: %d.\nPlease add values to the timedelta"\
+	       " parameter in your parameter file.\n", time_delta->len, nstreams);
 	exit(1);
     }
 
@@ -187,21 +163,19 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile, int ns
     double max = find_max_value(T->data[1], T->lengths[1]);
     double min = find_min_value(T->data[1], T->lengths[1]);
     double lambda = ceil(-min + max);
-//    output_gauss_transform("gen_transform", "w", T->data, -min, T->lengths[1], 1);
-//    output_gaussian_contributions("gen_gauss" , "w", G, start, start + interval, resolution, 1);
 
     char* out = malloc(strlen(outfile) + strlen(stream_ext) + 5 + strlen(".dat"));
 
     for (i = 0; i < nstreams; ++i) {
 	sprintf(out, "%s%s%d.dat", outfile, stream_ext, i);
-    	double_multi_arr* stream = nonhom_from_gaussian(G, lambda, start, interval, time_delta[i], -min);
+    	double_multi_arr* stream = nonhom_from_gaussian(G, lambda, start, interval, time_delta->data[i], -min);
 	output_double_multi_arr(out, "w", stream);
 	free_double_multi_arr(stream);
     }
 
     free_gauss_vector(G);
     free_double_multi_arr(T);
-    free(time_delta);
+    free_double_arr(time_delta);
     free_list(params);
     free(out);
 }
@@ -215,7 +189,7 @@ double_multi_arr* nonhom_from_gaussian(gauss_vector* G, double lambda,
 				       double start, double interval, double time_delta, double shift)
 {
     init_rand(0.0);
-            
+
     double base_time = start;
     double shifted_time = time_delta + start;
     double end = start + interval;
@@ -231,6 +205,8 @@ double_multi_arr* nonhom_from_gaussian(gauss_vector* G, double lambda,
     while (base_time < end){
 	hom_out = homogeneous_time(lambda);
 	base_time += hom_out;
+	if (base_time >= end)
+	    break;
 	shifted_time += hom_out;
 	non_hom_lambda = sum_gaussians_at_point(shifted_time, G) + shift;
 	if ((rand = get_uniform_rand()) <= non_hom_lambda / lambda){
@@ -258,86 +234,112 @@ double_multi_arr* nonhom_from_gaussian(gauss_vector* G, double lambda,
  * Generates gaussian data of the type specified. If an input file is provided, 
  * the assumed 1-dimensional data provides the means for unweighted gaussians 
  * with the given standard deviation. If no input file is specified, then gaussians
- * are generated uniformly over the interval specified in the parameter file.
- * A value of 1 outputs raw gaussians, which can be used to generate event streams. 
- * 0 outputs the discrete transform, which gives the value of the function at evenly
- * spaced points along the x-axis.
+ * are generated uniformly over the interval specified in the parameter file. The 
+ * output type specifies what data to output about the generated data. You will always
+ * get the gaussians in their raw form, with a value of 0, and any increase on that will
+ * generate more files.
+ * A value of 0 outputs raw gaussians, which can be used to generate event streams. 
+ * 1 outputs the discrete transform, which gives the value of the function at evenly
+ * spaced points along the x-axis. 2 outputs the contribution of each individual gaussian
+ * used to create the function to file.
  */
 void generate_gaussian_data(char* paramfile, char* infile, char* outfile,
 			    int number, int output_type)
 {
     paramlist* params = get_parameters(paramfile);
     
-    double stdev = get_double_param(params, "gauss_stdev");
+    double stdev = -1, alpha = -1;
     double start = get_double_param(params, "start_time");
     double interval = get_double_param(params, "interval_time");
     double step = get_double_param(params, "gauss_generation_step");
     double resolution = get_double_param(params, "gauss_resolution");
     double multiplier = get_double_param(params, "gauss_func_multiplier");
 
+    if (strcmp(get_string_param(params, "simple_stdev"), "no") == 0){
+	alpha = get_double_param(params, "stdev_alpha");
+	if (alpha == -1){
+	    printf("You have not specified the alpha to use to calculate the"\
+		   " standard deviation. Add \"stdev_alpha\" to your parameter"\
+		   " file.\n");
+	    free_list(params);
+	    exit(1);
+	} else {
+	    stdev = alpha * step;
+	    printf("Gaussians will have standard deviation  %lf * %lf (%lf).\n",
+		   alpha, step, alpha * step);
+	}
+    } else {
+	stdev = get_double_param(params, "gauss_stdev");
+	if (stdev == -1){
+	    printf("You have not specified the standard devation for the gaussians"\
+		   " used to generate functions. Please add \"gauss_stdev\" to your"\
+		   " parameter file.\n");
+	    free_list(params);
+	    exit(1);
+	}
+    }
+    
     if (multiplier == 0){
 	printf("WARNING: Multiplier for function generation is zero! Your functions"\
 	       " will probably be completely flat!\n");
     }
     
-    if (outfile == NULL){
-	if (infile == NULL){
-	    if (output_type == 0) {
-		printf("Outputting raw uniformly spaced gaussians.\n");
-		outfile = get_string_param(params, "gauss_func_outfile_raw");
-	    } else {
-		printf("Outputting discrete transform of uniformly spaced"\
-		       " gaussians.\n");
-		outfile = get_string_param(params, "gauss_func_outfile");
-	    }
-	} else {
-	    if (output_type == 0) {
-		printf("Outputting raw gaussians with means centred on data "\
-		       "from file.\n");
-		outfile = get_string_param(params, "gauss_event_func_outfile_raw");
-	    } else {
-		printf("Outputting discrete transform of gaussians with means"\
-		       " centred on data from file.\n");
-		outfile = get_string_param(params, "gauss_event_func_outfile");
-	    }
+    if (outfile == NULL && output_type > 0){
+    	if (infile == NULL){
+	    outfile = get_string_param(params, "function_outfile");
+    	} else {
+	    outfile = get_string_param(params, "stream_function_outfile");
+	}
+	if (outfile == NULL){
+	    printf("No file to output to could be found. Please define function"\
+		   "_outfile or stream_outfile in your parameter file, or provide"\
+		   " one using the -o switch. Default parameter files can be"\
+		   " created using the -d switch.\n");
+	    free_list(params);
+	    exit(1);
 	}
     }
 
     printf("Reading from %s.\n", infile);
 
-    int i;
-
-    char* out = malloc(strlen(outfile) + 5 + strlen(".dat"));
-
-    for (i = 0; i < number; ++i) {
-	sprintf(out, "%s_%d.dat", outfile, i);
-	gauss_vector* G = _generate_gaussian(infile, stdev, start, interval, 
-					     step, resolution, multiplier);
+    if (outfile != NULL && output_type != 0){
+	// Allocate enough memory for the output filename so that we can reuse it
+	char* out = malloc(strlen(outfile) + 5 + strlen(".dat") + strlen("_contrib"));
 	
-	double* wts = G->w;
-	G->w = multiply_arr(wts, G->len, multiplier);
-	free(wts);
+	int i;
+	for (i = 0; i < number; ++i) {
+	    sprintf(out, "%s_%d.dat", outfile, i);
+	    gauss_vector* G = _generate_gaussian(infile, stdev, start, interval, 
+						 step, resolution, multiplier);
+	
+	    double* wts = G->w;
+	    G->w = multiply_arr(wts, G->len, multiplier);
+	    free(wts);
 
-	if (output_type == 0){
-	    output_gaussian_vector(out, "w", G);
-	} else {
-	    // Need to apply something to normalise when you have input file. Dividing by the
-	    // stdev is ok, but not good enough.
-	    double_multi_arr* func = shifted_transform(G, start, interval, step, resolution);
-    	    output_double_multi_arr(out, "w", func);
-    	    free_double_multi_arr(func);
-	    if (output_type == 2){
-	    	char* c_out = malloc(strlen(outfile) + strlen("_contrib") + strlen(".dat") + 5);
-	    	sprintf(c_out, "%s_%d_contrib.dat", outfile, i);
-	    	output_gaussian_contributions(c_out, "w", G, start, start + interval, resolution, 1);
-	    	free(c_out);
+	    if (output_type >= 1){
+		output_gaussian_vector(out, "w", G);
+		printf("Raw gaussian data output to %s. Use this file if you wish"\
+		       " to generate event streams.\n", out);
 	    }
+	    if (output_type >= 2){
+		// Normalisation might be necesary here
+		sprintf(out, "%s_%d_sum.dat", outfile, i);
+		double_multi_arr* func = shifted_transform(G, start, interval, step, resolution);
+		output_double_multi_arr(out, "w", func);
+		free_double_multi_arr(func);
+		printf("Gaussian sum output to %s.\n", out);
+	    }
+	    if (output_type >= 3){
+		sprintf(out, "%s_%d_contrib.dat", outfile, i);
+		output_gaussian_contributions(out, "w", G, start, start + interval, resolution, 1);
+		printf("Individual gaussian contributions output to %s.\n", out);
+	    }
+	    free_gauss_vector(G);
 	}
-	free_gauss_vector(G);
-	printf("Output to %s.\n", out);
+	free(out);
     }
+    
 
-    free(out);
     free_list(params);
 }
 
@@ -368,7 +370,7 @@ gauss_vector* _generate_gaussian(char* infile, double stdev, double start,
  * variable specified in the parameter file, and that a variable t is
  * present in the equation.
  */
-int check_expr_vars(muParserHandle_t hparser, struct paramlist *params)
+int check_expr_vars(muParserHandle_t hparser, struct paramlist* params)
 {
     char* tmp;
     int valid = 1;
@@ -382,9 +384,9 @@ int check_expr_vars(muParserHandle_t hparser, struct paramlist *params)
 	valid = 0;
     } else {
 	int i;
-	const muChar_t *mu_vname = 0;
-	muFloat_t *vaddr = 0;
-	char *vname;
+	const muChar_t* mu_vname = 0;
+	muFloat_t* vaddr = 0;
+	char* vname;
 	    
 	for (i = 0; i < nvars; ++i){
 	    // Get the variable name and value from the parser
@@ -400,7 +402,7 @@ int check_expr_vars(muParserHandle_t hparser, struct paramlist *params)
 		printf("Value for %s is not defined in param file. Aborting.\n", vname);
 		valid = 0;
 		break;
-	    } 
+	    }
 	}
 
 	if (tdef != 1){
@@ -420,9 +422,9 @@ void view_expr(muParserHandle_t hparser)
     int nvars = mupGetExprVarNum(hparser);
         
     int i;
-    const muChar_t *mu_vname = 0;
-    muFloat_t *vaddr = 0;
-    char *vname;
+    const muChar_t* mu_vname = 0;
+    muFloat_t* vaddr = 0;
+    char* vname;
 	    
     for (i = 0; i < nvars; ++i){
 	// Get the variable name and value from the parser
@@ -436,7 +438,7 @@ void view_expr(muParserHandle_t hparser)
  * Factory for creating new muparser variables. Space is automatically allocated
  * by the parser. Values can be retrieved by calling mupGetExprVar().
  */
-muFloat_t* var_factory(const muChar_t* varname, void *pUserData)
+muFloat_t* var_factory(const muChar_t* varname, void* pUserData)
 {
   static muFloat_t var_buf[PARSER_MAXVARS];
   static int num_vars = 0;
@@ -479,14 +481,14 @@ void on_error(muParserHandle_t hparser)
  * *IMPORTANT* The value of lambda MUST exceed the maximum value of the function! *IMPORTANT*
  */
 void run_time_nstreams(muParserHandle_t hparser, double lambda, double end_time,
-		       double *time_delta, int nstreams, char *outfile, int outswitch)
+		       double_arr* time_delta, int nstreams, char* outfile, int outswitch)
 {
     int i;
-    char *out = malloc(strlen(outfile) + strlen("_stream_n") + 10);
+    char *out = malloc(strlen(outfile) + 10);
     for (i = 0; i < nstreams; ++i){
 	printf("Generating event stream %d\n", i);
-	sprintf(out, "%s_stream_%d", outfile, i); // save each stream to a separate file
-	run_time_nonhom(hparser, lambda, time_delta[i], 0, end_time, out, outswitch);
+	sprintf(out, "%s%d.dat", outfile, i); // save each stream to a separate file
+	run_time_nonhom(hparser, lambda, time_delta->data[i], 0, end_time, out, outswitch);
     }
     free(out);
 }
@@ -500,9 +502,9 @@ char* select_output_file(char* cur_out, char* param_out)
     char* outfile;
     
     if (param_out == NULL && cur_out == NULL){
-	printf("No parameter for the output file found in the parameters file "\
-	       "or command line arguments. Auto-generating...\n");
-	outfile = generate_outfile();
+	printf("No parameter for the output file found in the parameter file"\
+	       " or command line arguments. Auto-generating...\n");
+	outfile = generate_outfile("generator_output", 0);
 	generated_outfile = 1;
     } else if (param_out != NULL && cur_out != NULL){
 	printf("Output file found in both parameter file and command line arguments.\n");
@@ -535,70 +537,53 @@ char* select_output_file(char* cur_out, char* param_out)
 void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
 		     double start_time, double end_time, char *outfile, int outswitch)
 {
-    double *et = malloc(DEFAULT_ARR_SIZE * sizeof(double));
-    double *lv = malloc(DEFAULT_ARR_SIZE * sizeof(double));
+    double* et = malloc(DEFAULT_ARR_SIZE * sizeof(double));
+    double* lv = malloc(DEFAULT_ARR_SIZE * sizeof(double));
     
-    double **eptr = &et;
-    double **lptr = &lv;
+    double** eptr = &et;
+    double** lptr = &lv;
 
     int size = run_to_time_non_homogeneous(hparser, lambda, time_delta, start_time,\
 					   end_time, eptr, lptr, DEFAULT_ARR_SIZE);
 
-    if (outswitch == 0) // Outputs only event data - this is what the real data will be like.
-	double_to_file(outfile, "w", *eptr, size);
-    if (outswitch == 1) // Outputs only events and lambda values
-	mult_double_to_file(outfile, "w", *eptr, *lptr, size);
-    if (outswitch == 2){ // Outputs all data, including bin counts
-	int num_intervals = (end_time - start_time) / DEFAULT_WINDOW_SIZE;
+    if (outswitch > 0){
+	if (outswitch >= 1){
+	    double_to_file(outfile, "w", *eptr, size);
+	} 
+	if (outswitch >= 2){
+	    mult_double_to_file(outfile, "w", *eptr, *lptr, size);
+	} 
+	if (outswitch >= 3){
+	    int num_intervals = (end_time - start_time) / DEFAULT_WINDOW_SIZE;
 
-	int *bin_counts = sum_events_in_interval(*eptr, size, start_time, end_time, num_intervals);
-	double *midpoints = get_interval_midpoints(start_time, end_time, num_intervals);
-
-#ifdef VERBOSE
-	int i;
-	for (i = 0; i < num_intervals; ++i){
-	    printf("Interval %d: %d\n", i, bin_counts[i]);
-	}
-
-	for (i = 0; i < num_intervals; ++i){
-	    printf("%lf\n", midpoints[i]);
-	}
-#endif
+	    int* bin_counts = sum_events_in_interval(*eptr, size, start_time, end_time, num_intervals);
+	    double* midpoints = get_interval_midpoints(start_time, end_time, num_intervals);
     
-	int_dbl_to_file(outfile, "w", midpoints, bin_counts, num_intervals);
-	free(midpoints);
-	free(bin_counts);
-    }
-    if (outswitch == 3){
-	char *tmp = malloc(strlen(outfile) + 4 + strlen(".dat")); // space for extra chars and null terminator
-	sprintf(tmp, "%s%s", outfile, ".dat");
-	double_to_file(tmp, "w", *eptr, size);
+	    int_dbl_to_file(outfile, "w", midpoints, bin_counts, num_intervals);
+	    free(midpoints);
+	    free(bin_counts);
+	}
+	if (outswitch >= 4){
+	    char *tmp = malloc(strlen(outfile) + 4 + strlen(".dat")); // space for extra chars and null terminator
+	    sprintf(tmp, "%s.dat", outfile);
+	    double_to_file(tmp, "w", *eptr, size);
 	
-	sprintf(tmp, "%s_ad%s", outfile, ".dat");
+	    sprintf(tmp, "%s_ad%s", outfile, ".dat");
 
-	mult_double_to_file(tmp, "w", *eptr, *lptr, size);
+	    mult_double_to_file(tmp, "w", *eptr, *lptr, size);
 
-	int num_intervals = (end_time - start_time) / DEFAULT_WINDOW_SIZE;
+	    int num_intervals = (end_time - start_time) / DEFAULT_WINDOW_SIZE;
 
-	int *bin_counts = sum_events_in_interval(*eptr, size, start_time, end_time, num_intervals);
-	double *midpoints = get_interval_midpoints(start_time, end_time, num_intervals);
-
-#ifdef VERBOSE
-	int i;
-	for (i = 0; i < num_intervals; ++i){
-	    printf("Interval %d: %d\n", i, bin_counts[i]);
-	}
-
-	for (i = 0; i < num_intervals; ++i){
-	    printf("midpoint %d: %lf\n", i, midpoints[i]);
-	}
-#endif
+	    int* bin_counts = sum_events_in_interval(*eptr, size, start_time, end_time, num_intervals);
+	    double* midpoints = get_interval_midpoints(start_time, end_time, num_intervals);
     
-	int_dbl_to_file(tmp, "a", midpoints, bin_counts, num_intervals);
-	free(midpoints);
-	free(bin_counts);
-	free(tmp);
+	    int_dbl_to_file(tmp, "a", midpoints, bin_counts, num_intervals);
+	    free(midpoints);
+	    free(bin_counts);
+	    free(tmp);
+	}
     }
+    
 
     free(*eptr);
     free(*lptr);
@@ -655,6 +640,8 @@ int run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda,
     while (base_time < end_time){
 	hom_out = homogeneous_time(lambda);
 	base_time += hom_out;
+	if (base_time >= end_time)
+	    break;
 	shifted_time += hom_out;
 	non_hom_lambda = mupEval(hparser);
 	//printf("%lf %lf\n", time, non_hom_lambda);//more granularity on lambda values // get this into output file
@@ -693,8 +680,8 @@ int run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda,
 void run_events_nonhom(muParserHandle_t hparser, double lambda, double start_time,
 		       int events, char *outfile, int outswitch)
 {
-    double *et = malloc(events * sizeof(double));
-    double *lv = malloc(events * sizeof(double));
+    double* et = malloc(events * sizeof(double));
+    double* lv = malloc(events * sizeof(double));
 
     run_to_event_limit_non_homogeneous(hparser, lambda, start_time, events, et, lv);
     mult_double_to_file(outfile, "a", et, lv, events);

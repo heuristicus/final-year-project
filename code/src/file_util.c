@@ -9,10 +9,10 @@
 /* 
  * Creates a filename to use for data output with the format:
  * prefix_dd-mm-yyyy_hr:min:sec_usec.dat
+ * the usec parameters specifies whether to add nanoseconds (0 is no)
  */
-char* generate_outfile()
+char* generate_outfile(char* prefix, int usec)
 {
-    char* prefix = "output_poisson";
     char* datetime = malloc(MAX_DATE_LENGTH * sizeof(char));
     char* fname = malloc((MAX_DATE_LENGTH + strlen(prefix)) * sizeof(char));
     time_t timer = time(NULL);
@@ -22,8 +22,12 @@ char* generate_outfile()
 
     strftime(datetime, MAX_DATE_LENGTH, "%d-%m-%Y_%H:%M:%S", localtime(&timer));
     
-    sprintf(fname, "%s_%s_%d.dat", prefix, datetime, (int) t.tv_usec);
-
+    if (usec){
+	sprintf(fname, "%s_%s_%d.dat", prefix, datetime, (int) t.tv_usec);
+    } else {
+	sprintf(fname, "%s_%s.dat", prefix, datetime);
+    }
+    
     free(datetime);
     
     return fname;
@@ -66,11 +70,22 @@ paramlist* get_parameters(char* filename)
 	param = strtok(line, " ");
 	value = strtok(NULL, "\n");
 	
-	if (plist == NULL)
-	    plist = init_list(param, value);
-	else
-	    plist = add(plist, param, value);
+	if (plist == NULL) {
 
+	    if (value == NULL){
+		printf("No value found for %s.\n", param);
+		plist = init_list(param, "<empty>");
+	    } else {
+		plist = init_list(param, value);	
+	    }
+	} else {
+	    if (value == NULL){
+		printf("No value found for %s.\n", param);
+		plist = add(plist, param, "<empty>");
+	    } else {
+		plist = add(plist, param, value);
+	    }
+	}
     }
         
     free(lp);
@@ -152,18 +167,20 @@ double* get_event_data_all(char *filename)
 /*
  * Checks whether a line received from the parameter file is valid.
  */
-int valid_param(char *pname)
+int valid_param(char* pname)
 {
     int spacecount;
     
     for (spacecount = 0; *pname != '\0'; ++pname){
 	// 10 is the backspace character - seems to come up from time to time
-	if ((32 < *pname && 126 > *pname) || *pname == 10)
+	if ((32 < *pname && 126 > *pname) || *pname == 10) {
 	    continue;
-	else if (*pname == 32)
+	} else if (*pname == ' '){
 	    spacecount++;
-	else
-	    printf("invalid char %d\n", *pname);
+	} else {
+	    printf("invalid char %c\n", *pname);
+	    return 0;
+	}
 	
 	if (spacecount > 1)
 	    return 0;
@@ -173,7 +190,6 @@ int valid_param(char *pname)
 	return 0;
     
     return 1;
-    
 }
 
 /*
@@ -318,19 +334,19 @@ void estimate_to_file(char *filename, est_data *estimate, char *mode)
         
     while(counter < end){
 	fprintf(fp, "%lf %lf\n", counter, a + counter * b);
-#ifdef DEBUG
+#ifdef VERBOSE3
 	printf("%lf + %lf * %lf = %lf\n", a, counter, b, a + counter * b);
 #endif
 	if (end - counter <= 1){
 	    counter += end - counter;
-#ifdef DEBUG
+#ifdef VERBOSE3
 	    printf("%lf + %lf * %lf = %lf\n", a, counter, b, a + counter * b);
 #endif
 	    fprintf(fp, "%lf %lf\n", counter, a + counter * b);
 	} else {
 	    counter += 1;
 	}
-#ifdef DEBUG
+#ifdef VERBOSE3
 	printf("counter: %lf, end %lf\n", counter, end);
 #endif
     }
@@ -386,11 +402,11 @@ void output_gauss_transform(char* filename, char* mode, double** T, double shift
 void output_gaussian_contributions(char* filename, char* mode, gauss_vector* G, double start,
 				   double end, double resolution, int apply_weight)
 {
-    if (!interval_valid(start, end)){
-	printf("Invalid interval [%lf, %lf] when outputting gaussians to %s.\n",
-	       start, end, filename);
-	return;
-    }
+    /* if (!interval_valid(start, end)){ */
+    /* 	printf("Invalid interval [%lf, %lf] when outputting gaussians to %s.\n", */
+    /* 	       start, end, filename); */
+    /* 	return; */
+    /* } */
 
     FILE *fp = fopen(filename, mode);
 
@@ -440,11 +456,20 @@ gauss_vector* read_gauss_vector(char* filename)
     
     gaussian** G = malloc(sizeof(gaussian*) * memsize);
     double* wts = malloc(sizeof(double) * memsize);
+
     
+    printf("Reading vector of gaussians from %s\n", filename);
     FILE *fp = fopen(filename, "r");
+
+    if (fp == NULL) {
+	perror("File does not exist");
+	exit(1);
+    }
+    
     int i = 0;
     
-    char *line = malloc(MAX_PARAM_STRING_LENGTH * sizeof(char));
+    char* line = malloc(MAX_PARAM_STRING_LENGTH);
+    char* d = line; // Need to keep a reference to the line pointer to free later
 
     double st, wt, mu;
     
@@ -461,7 +486,9 @@ gauss_vector* read_gauss_vector(char* filename)
 	    g->stdev = st;
 	    wts[i] = wt;
 	    G[i] = g;
-	    printf("%lf %lf %lf\n", G[i]->mean, G[i]->stdev, wts[i]);
+#ifdef VERBOSE
+	    printf("Gaussian %d mean: %lf, stdev: %lf, weight: %lf\n", G[i]->mean, G[i]->stdev, wts[i]);
+#endif
 	}
 	i++;
 	if (i > memsize){
@@ -471,19 +498,12 @@ gauss_vector* read_gauss_vector(char* filename)
 	}
     }
 
-    
-    ret->gaussians = G;
-    ret->len = i;
-    ret->w = wts;
-
-    printf("out %lf %lf %lf\n", ret->gaussians[0]->mean, ret->gaussians[0]->stdev, ret->w[0]);
-    // realloc to get the correct memory size.
-    G = realloc(G, sizeof(gaussian*) * i);
-    wts = realloc(wts, sizeof(double) * i);
-
+    free(d);
     fclose(fp);
-
-    printf("%lf %lf %lf\n", ret->gaussians[0]->mean, ret->gaussians[0]->stdev, ret->w[0]);
+    
+    ret->gaussians = realloc(G, sizeof(gaussian*) * i);
+    ret->len = i;
+    ret->w = realloc(wts, sizeof(double) * i);
 
     return ret;
 }
@@ -508,4 +528,41 @@ void output_double_multi_arr(char* filename, char* mode, double_multi_arr* arr)
     fprintf(fp, "\n\n");
 
     fclose(fp);
+}
+
+/*
+ * Creates a file with the filename specified in the directory given. If the
+ * directory does not exist it is created. If all goes well, returns zero, 
+ * else returns -1. The directory is created with read, write and execute 
+ * permissions for the user.
+ */
+int create_file_in_dir(char* filename, char* dirname)
+{
+    int r = mkdir(dirname, S_IRWXU);
+    
+    if (r == 0 || errno == EEXIST){
+	char* fullpath = malloc(strlen(filename) + strlen(dirname) + 1);
+	sprintf(fullpath, "%s/%s", dirname, filename);
+	int file = open(fullpath, O_CREAT | O_EXCL, S_IRWXU | S_IROTH | S_IRGRP);
+	
+	if (file == -1)
+	    return -1;
+	else
+	    close(file);
+	
+	return 0;
+    }
+
+    return -1;
+}
+
+/*
+ * Checks whether a file exists. 1 if it does, 0 if not.
+ */
+int file_exists(char* filename)
+{
+    if (access(filename, F_OK) != -1)
+	return 1;
+    else
+	return 0;
 }

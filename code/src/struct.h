@@ -46,6 +46,12 @@ typedef struct
 
 typedef struct
 {
+    char** data;
+    int len;
+} string_arr;
+
+typedef struct
+{
     int* data;
     int len;
 } int_arr;

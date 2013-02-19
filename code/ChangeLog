@@ -1,3 +1,247 @@
+2013-02-18  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* generator.c: Old generator functions updated to use the output switch system.
+
+	* launcher.h: Modified usage output to detail the -t switch usage in more depth.
+	Each output type is listed for all things which use the data passed to the switch.
+
+	* estimator_delta.c: The -t switch now affects what files are output by the
+	delta estimators. 0 outputs nothing, 1 outputs the value computed by the function
+	for each guess at delta, 2 outputs lambda and bin data. The hierarchical estimate
+	outputs its data to files with "hier" in the name.
+
+2013-02-17  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* estimator.c, general_util.c: Removed duplicated parameter checking function
+	from estimator and made the one in general util work.
+
+	* estimator_gaussian.c: Estimators check that the parameter list they receive
+	contains the parameters that they require.
+
+	* estimator_delta.c: Restructured delay estimators. Each now has a function which
+	extracts parameters from the parameter file and then calls the main function
+	which does the calculations. Also added the ability to searching for an
+	estimate in a hierarchical fashion, first making a coarse pass over the array
+	and then refining the estimate. Functions now also check to make sure that the
+	parameter list contains the parameters they require. Estimators output relevant
+	data to files with names which make sense.
+
+	* math_util.c: Implemented a function to check whether a double is less than
+	another with a certain precision value. This is now used in the array interval
+	summing function, which should work properly for most cases.
+
+2013-02-16  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* estimator_delta.c: pmf estimator now takes two double_arr structs containing
+	event data as parameters - this means that files do not have to be read multiple
+	times unnecessarily. Also fixed a bug which would mean that only the same two
+	files would be read regardless of the number of streams. Normalisation constant
+	function split into two functions to make calling it easier. Also removed the
+	calculation from inside the pmf estimator and made it a parameter. There is no
+	point calculating it multiple times since it will be pretty much the same
+	for all functions generated from gaussians which use the same standard deviation.
+
+	* estimator_gaussian.c: Changed structure to reduce code duplication slightly,
+	output files are now generated depending on whether a file name is received
+	or not.
+
+	* math_util.c: Fixed memory leak from gauss_transform function.
+
+	* file_util.c: Fixed memory leak in read_gauss_vector function.
+
+	* general_util.c: Fixed freeing string_arr structs.
+
+2013-02-15  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* check_combinefunction.c: Test for combination of gauss vectors.
+
+	* check_math_util.c: Tests for new mathematical functions.
+
+	* estimator_delta.c: Fixed memory leaks and errors.
+
+	* launcher.c: Combined separate multi estimate functions for gauss and baseline
+	estimates into a single one - lots of unnecessary code duplication. Fixed memory
+	leaks and errors.
+
+2013-02-14  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* estimate_delta.c: Fixed issues where baseline pmf calculations were not being
+	done correctly due to issues with math functions.
+
+	* math_util.c: When summing pmfs, points at which lambda is zero caused -nan
+	to be returned, even if there was only a single point at which there was a zero.
+	This led to bad behaviour, so the calculation is now done with a very small lambda
+	value which should be better than ignoring those values entirely.
+	Array interval summing now sums values in the right-closed interval (start,end]
+
+2013-02-13  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* tests: Fixed some tests which were broken by minor modifications to functions.
+
+	* generator.c: Generation stops if the time exceeds the end time when the
+	homogeneous lambda value is added to the base time. Would previously have
+	a small number of events that exceeded the threshold.
+
+	* estimate_delta.c: Implemented a pmf estimator which sums the pmfs from
+	both streams being compared. Previous version used only one of the streams
+	to check whether the combined function was representative of the bin counts,
+	which was sub-optimal. pmf estimation now gives good results. Area estimator
+	uses normalised start and end points, between which both functions have data
+	at all of the delays that are being attempted. The same applies for the pmf
+	estimator as well.
+
+	* math_util.c: Fixed array interval summing issue which was causing pmf
+	delay estimator to work sub-optimally.
+
+2013-02-12  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* general_util.c, defparams.h: Added parameters for delta estimation to
+	default file. Added comments to some existing parameters. More headings
+	in the file, as well as some more separation for delta estimation parameters.
+	Each of the area and pmf methods has its own start and interval times and
+	resolutions. Also added separate start and interval times for estimation and
+	generation. Not sure if all places where this is used have been found.
+
+	* estimate_delta.c: Functions now use parameters from parameter file.
+
+2013-02-11  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* estimate_delta.c: More progress on the pmf estimator. Looping over the
+	different delay values again, as the underlying logic seems to work reasonably
+	well. Need to work out how to get the pmfs to come out correctly for different
+	interval lengths, as the estimates are not as good as expected. Calculating only
+	based on the interval in which functions overlaps seems like a good idea, but
+	if this is to be implemented it needs to be normalised somehow, which is
+	probably quite difficult. Delays with shorter overlaps always come out with the
+	highest pmf because there are fewer elements to sum. Maybe incur some fixed
+	penalty for points at which the combined function is zero? Perhaps using more
+	than 10 intervals would work better.
+
+	* combinefunctions.c: Expected structure of time delay matches the current
+	scheme. Minor fix where the gauss vector function would not find the correct
+	maximum delay value if it was in the last array position.
+
+	* launcher.c: Fixed time delay arrays to match the scheme. Decided to use
+	a value to represent the delay of each individual stream rather than delays
+	between streams. The delays will still be relative to the first function, but
+	there will be n delay values rather than n-1 as was the case previously. This
+	makes things more compatible with the generator setup. The two multi-estimate
+	functions duplicate a lot of code. Should put them together to make things
+	cleaner.
+
+2013-02-10  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* math_util.c: Function for finding the sum of the log of probability mass
+	functions, which takes a normalisation constant. Takes an array of counts
+	and an array of lambda values and finds the pmf for each, summing as it goes.
+	The normalisation constant ensures that the lambda values correspond to the
+	bin counts so that a true value can be found. Function for summing values
+	in a specified interval given time values and data values. Function for
+	summing gaussians at the specified points by passing an array of desired
+	sample points. Function to find the largest value in the array, positive or
+	negative.
+
+	* general_util.c: Functions for initialising array structs with specified
+	lengths, function for finding a series of values from an est_arr struct.
+
+	* estimator_delta.c: Prototype of pmf estimator improved and almost working.
+	Function combination needs to be completed to a satisfactory level before it
+	can be finished. Implemented a function to find the normalisation constant
+	required to get gaussians to correspond to differing numbers of bins when
+	doing the delta estimation. The normalisation constant required depends on the
+	standard deviation of the gaussians used to estimate the function.
+
+	* combinefunction.c: Fixed function combination. Required an array containing
+	a delay for the first function as well, but since that is taken as a base with
+	no delay, it is unneeded. The function now takes an array containing delays
+	between the base and subsequent functions. This will lead to the function
+	combination breaking when the time delta is read from the parameter file, as
+	there the base time is specified as zero. Changing the value in the parameter
+	file also affects the generator. Decide which one is better and fix this!
+
+2013-02-09  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* estimator_delta.c: Untested prototype of the pmf estimator implemented.
+
+	* launcher.c: Function combination for gaussians added to the multiple estimate
+	process. pmf method now able to be used.
+
+	* general_util.c: Function for initialising double_multi_arr structs so that
+	code is cleaner.
+
+	* combinefunction.c: Function for combining gaussians. Takes a set of gauss
+	vectors and finds their average. This should probably be done on non-normalised
+	gaussians which can be normalised when being output to file, or once the
+	normalisation constant has been estimated.
+
+2013-02-08  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* launcher.c: Estimates delta according to parameters in the paramfile.
+	Perhaps a good idea to add another switch to the launcher to specify whether
+	or not to estimate it? Seems a little different to the main estimators, so
+	it's probably fine to keep it in the parameter file.
+
+	* combinefunction.c: Moved functions for finding the value of an estimate
+	at a given point to general_util as it is useful in other places as well.
+
+	* general_util.c: Parameters for time delta estimation added to
+	default parameter file. estimate_timedelta specifies whether to
+	estimate delta or just take it from the paramfile. timedelta_est_method
+	specifies which method of estimation to use. Parameters for specifying
+	the step, resolution and max delta for delta estimation. Modified some
+	of the default parameters for the baseline estimator so it performs
+	better by default.
+
+	* estimator_delta.c: Function for estimating the time delta
+	based on the area between two curves. Works for data from both the
+	gaussian and baseline estimators. Single function for both which requires
+	the conversion to a void pointer. This is so that there is less code
+	duplication - there is essentially only one function that has to change
+	in each of the sub-functions.
+
+	* paramlist.c: New function to extract a list of double parameters separated
+	by commas (with no spaces).
+
+	* launcher.c, generator.c: Time delta extraction changed to use new function
+	in paramlist.
+
+	* combinefunction.c: Function now takes a double_arr struct.
+
+	* check_math_util.c: Tests modified to use new double checking function,
+	updated for new gaussian calculation (which was wrong).
+
+	* testmain.h: Added function for checking the equivalence of doubles.
+
+2013-02-06  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* general_util.c: Passing a file which already exists to default parameter
+	creation asks whether to overwrite.
+
+2013-02-05  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* general_util.c, defparams.h: Added parameters to the files to allow
+	for dynamic calculation of the standard deviation based on the step
+	between gaussians and a parameter alpha. Specifying the standard deviation
+	normally is also possible. The simple_stdev parameter decides which is used.
+	Parameters for gaussian generator output modified. One parameter for generating
+	from stream data, one for generating from a uniform distribution of gaussians.
+	Files are output with strings appended to show what they contain.
+
+	* generator.c: Improved output file handling. Multiple files are output
+	depending on the parameter provided to the gaussian generator. Fixed erroneous
+	time delta extraction.
+
+2013-02-04  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* develop: Merged gaussians branch as it had pretty much all the intended
+	functionality and was working relatively well. Need to move on.
+	Also merged the experiment harness branch. Was getting too far behind and
+	there were structural changes in both that and the gaussian branch that
+	had some minor conflicts - better to merge now than to risk things getting
+	even more disparate and difficult to merge later on. Development of the
+	experiment harness put on hold for now.
+
+
 2013-02-03  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* estimator_baseline.c: Discovered crashes, but not sure of the cause.
@@ -85,7 +329,7 @@
 2013-01-31  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* file_util.c: Extremely weird bug where crash occurs on fclose discovered.
-	Not sure how to solve yet. Functions to read and write gaussians with 
+	Not sure how to solve yet. Functions to read and write gaussians with
 	mean, stdev and weight representation, along with tests.
 
 	* struct.h: Header file for structs to prevent interdependencies causing
@@ -113,6 +357,40 @@
 	* general_util.c: Parameters for gaussians added to default file generation.
 
 	* file_util.c: Gauss transform output can be shifted along the y axis.
+
+2013-01-29  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* file_util.c: Wondering whether to allow parameters without
+	values specified. Makes having to specify loads of parameters
+	in the experiment paramfile unnecessary if you just want to run
+	experiments on one part of the system.
+
+	* experimenter.c: Function to parse parameters from a string of
+	comma separated values. If the string contains a range indicator
+	(...), then it will revert to the function to calculate the range.
+	Experimenter structure changed. Requires parameters to be defined
+	for all the parts of the system you want to experiment with. Checks
+	whether these parameters exist in the paramfile. Still a work in
+	progress.
+
+	* general_util.c: Function to check whether parameters in a string
+	array are present in a paramlist.
+
+2013-01-28  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* general_util.c: Modified split_string function and its tests.
+
+	* experimenter.c: Completed range parsing functions, with tests.
+	Experimenter now takes two parameter files to read - one to read
+	default parameters, and one for its own use. Checks that some required
+	parameters are present.
+
+	* exp_param.txt: Added some parameters that make sense to use.
+
+	* check_file_util.c: Test for create file function.
+
+	* file_util.c: Added function for creating files within directories.
+	Fixed crash when parameter in paramfile does not have a value.
 
 2013-01-27  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
@@ -200,6 +478,13 @@
 
 2013-01-13  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
+	* paramlist.c: Added functions for setting the value of parameters in the list.
+
+	* file_util.c: Modified file generator to take parameters.
+
+	* generator.c: Added helper function to extract parameters from a parameter
+	file.
+
 	* estimator_piecewise.c: Fixed bug with estimation data from the first
 	subinterval not being output to file. Minimum length of interval now in
 	place for piecewise estimate. Affects the baseline estimator as well.
@@ -207,7 +492,8 @@
 	* defparams.h: New header file containing default parameters for estimators
 	and generator.
 
-	* general_util.c: Added a function for generating a default parameter file.
+	* general_util.c: Added a function for generating a default parameter file,
+	moved in function for checking parameters in a list.
 
 2013-01-11  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 

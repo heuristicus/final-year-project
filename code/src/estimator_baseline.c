@@ -16,8 +16,8 @@ est_arr* estimate_baseline(paramlist* params, char *event_file, char *output_fil
     int iterations = get_int_param(params, "base_iwls_iterations");
     int breakpoints = get_int_param(params, "base_max_breakpoints");
     double max_extension = get_double_param(params, "base_max_extension");
-    double start = get_double_param(params, "start_time");
-    double end = get_double_param(params, "interval_time") + start;
+    double start = get_double_param(params, "est_start_time");
+    double end = get_double_param(params, "est_interval_time") + start;
     double min_interval_proportion = get_double_param(params, "base_min_interval_proportion");
     double pmf_threshold = get_double_param(params, "base_pmf_threshold");
     double pmf_sum_threshold = get_double_param(params, "base_pmf_sum_threshold");
@@ -31,12 +31,12 @@ est_arr* estimate_baseline(paramlist* params, char *event_file, char *output_fil
  * and the start and end points of consecutive estimates are moved so that they are joined at the midpoint
  * between them.
  */
-est_arr* _estimate_baseline(char *event_file, char *output_file, double interval_start, 
+est_arr* _estimate_baseline(char* event_file, char* output_file, double interval_start, 
 			    double interval_end, int IWLS_iterations, int IWLS_subintervals,
 			    int max_breakpoints, double max_extension, double min_interval_proportion, 
 			    double pmf_threshold, double pmf_sum_threshold)
 {
-    est_arr *pieces = _estimate_piecewise(event_file, NULL, interval_start, interval_end,
+    est_arr* pieces = _estimate_piecewise(event_file, NULL, interval_start, interval_end,
 					 IWLS_iterations,IWLS_subintervals, max_breakpoints,
 					  max_extension, min_interval_proportion, pmf_threshold, 
 					  pmf_sum_threshold);
@@ -53,37 +53,38 @@ est_arr* _estimate_baseline(char *event_file, char *output_file, double interval
 #endif
 
     
-    double *breakpoint_vector = get_breakpoint_vector(pieces->estimates, len);
-    double *func_eval = get_func_vals_at_breakpoints(pieces->estimates, len);
-    double *midpoints = get_breakpoint_midpoints(breakpoint_vector, func_eval, len);
-    est_arr *new_est = recalculate_estimates(breakpoint_vector, midpoints, len);
+    double* breakpoint_vector = get_breakpoint_vector(pieces->estimates, len);
+    double* func_eval = get_func_vals_at_breakpoints(pieces->estimates, len);
+    double* midpoints = get_breakpoint_midpoints(breakpoint_vector, func_eval, len);
+    est_arr* new_est = recalculate_estimates(breakpoint_vector, midpoints, len);
+
+    char* out = malloc(strlen(output_file) + strlen(".data") + 5);
+    sprintf(out, "%s.dat", output_file);
         
-    output_estimates(output_file, new_est->estimates, len);
+    output_estimates(out, new_est->estimates, len);
     
-    /* printf("breakpoint values\n"); */
-    /* for (i = 0; i < len + 1; ++i) { */
-    /* 	printf("%lf\n", breakpoint_vector[i]); */
-    /* } */
+#ifdef VERBOSE3
+    printf("breakpoint values\n");
+    for (i = 0; i < len + 1; ++i) {
+    	printf("%d %lf\n", i, breakpoint_vector[i]);
+    }
 
-    /* printf("function values\n"); */
-    /* for (i = 0; i < len * 2; ++i) { */
-    /* 	printf("%lf\n", func_eval[i]); */
-    /* } */
+    printf("function values\n");
+    for (i = 0; i < len * 2; ++i) {
+    	printf("%d %lf\n", i, func_eval[i]);
+    }
 
-    /* printf("midpoint values\n"); */
-    /* for (i = 0; i < len + 1; ++i) { */
-    /* 	printf("%lf\n", midpoints[i]); */
-    /* } */
+    printf("midpoint values\n");
+    for (i = 0; i < len + 1; ++i) {
+    	printf("%d %lf\n", i, midpoints[i]);
+    }
+#endif
 
     free_est_arr(pieces);
     free(breakpoint_vector);
     free(midpoints);
     free(func_eval);
-    
-    // for each piece
-    // find the midpoint at each breakpoint
-    // find the equation for line starting at middle of previous breakpoint and ending at the next breakpoint
-    // output the data to file
+    free(out);
 
     return new_est;
 }
@@ -94,7 +95,7 @@ est_arr* _estimate_baseline(char *event_file, char *output_file, double interval
  */
 double* get_breakpoint_vector(est_data** pieces, int num_breakpoints)
 {
-    double *breakpoints = malloc((num_breakpoints + 1) * sizeof(double));
+    double* breakpoints = malloc((num_breakpoints + 1) * sizeof(double));
     
     int i;
     
@@ -119,7 +120,7 @@ double* get_breakpoint_vector(est_data** pieces, int num_breakpoints)
 double* get_func_vals_at_breakpoints(est_data** pieces, int num_breakpoints)
 {
     int i, j;
-    double *func_eval = malloc(num_breakpoints * 2 * sizeof(double));
+    double* func_eval = malloc(num_breakpoints * 2 * sizeof(double));
         
     for (i = 0, j = 0; i < num_breakpoints + 1; ++i, j += 2) {
 	if (pieces[i] == NULL)
@@ -144,7 +145,7 @@ double* get_func_vals_at_breakpoints(est_data** pieces, int num_breakpoints)
  */
 double* get_breakpoint_midpoints(double* breakpoint_vector, double* func_vals, int len)
 {
-    double *midpoints = malloc((len + 1) * sizeof(double));
+    double* midpoints = malloc((len + 1) * sizeof(double));
 
     midpoints[0] = func_vals[0];
     int i, j;
@@ -181,8 +182,8 @@ est_arr* recalculate_estimates(double* breakpoint_vector, double* function_value
 #ifdef VERBOSE
 	printf("function %d starts at (%.2lf, %.2lf) and ends at (%.2lf, %.2lf)\n", i, breakpoint_vector[i], function_values[i],  breakpoint_vector[i+1], function_values[i+1]);
 #endif
-	double *tmp = get_intercept_and_gradient(breakpoint_vector[i], function_values[i],  breakpoint_vector[i+1], function_values[i+1]);
-	est_data *this_interval = malloc(sizeof(est_data));
+	double* tmp = get_intercept_and_gradient(breakpoint_vector[i], function_values[i],  breakpoint_vector[i+1], function_values[i+1]);
+	est_data* this_interval = malloc(sizeof(est_data));
 	this_interval->est_a = tmp[0];
 	this_interval->est_b = tmp[1];
 	this_interval->start = breakpoint_vector[i];

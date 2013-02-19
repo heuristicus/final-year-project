@@ -19,8 +19,8 @@ est_arr* estimate_piecewise(paramlist* params, char *event_file, char *output_fi
     int iterations = get_int_param(params, "pc_iwls_iterations");
     int breakpoints = get_int_param(params, "pc_max_breakpoints");
     double max_extension = get_double_param(params, "pc_max_extension");
-    double start = get_double_param(params, "start_time");
-    double end = get_double_param(params, "interval_time") + start;
+    double start = get_double_param(params, "est_start_time");
+    double end = get_double_param(params, "est_interval_time") + start;
     double min_interval_proportion = get_double_param(params, "pc_min_interval_proportion");
     double pmf_threshold = get_double_param(params, "pc_pmf_threshold");
     double pmf_sum_threshold = get_double_param(params, "pc_pmf_sum_threshold");
@@ -117,8 +117,12 @@ est_arr* _estimate_piecewise(char* event_file, char* output_file,
 	free_est_arr(interval_estimate_array);
     } while(i <= max_breakpoints && start_time != end_time);
 
-    if (output_file != NULL)
-	output_estimates(output_file, interval_data, i);
+    if (output_file != NULL){
+	char* out = malloc(strlen(output_file) + strlen(".dat") + 5);
+	sprintf(out, "%s.dat", output_file);
+	output_estimates(out, interval_data, i);
+	free(out);
+    }
 
     est_arr* results = malloc(sizeof(est_arr));
     results->len = i;

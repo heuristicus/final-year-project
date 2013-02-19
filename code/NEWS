@@ -1,3 +1,22 @@
+Alpha 0.6: (19/02/13)
+
++ Estimating the delay between two streams is now possible. Two methods are
+  available; area and pmf. The area computation works by calculating the
+  area between the curves of two functions and picking the time delay
+  which minimises this area. The pmf method uses the sum of probability
+  mass functions at points on the function estimates of both streams compared
+  to the bin counts for the relevant interval. The delay chosen is the one which
+  maximises the sum. The use of a hierarchical method which does two passes over
+  the data, initially with a coarse pass, and following with a finer pass over
+  a smaller part of the data based on the initial estimate.
+
++ Data output improved - files now have names which should indicate the data
+  that they contain more clearly. The -t switch can be used to output data to
+  various levels of granularity. Running launcher -h gives more information about
+  what sort of data each subsystem produces.
+
+--------------------------------------------------------------------------------
+
 Alpha 0.5: (04/02/13)
 
 + Random functions can be generated. These functions are constructed by summing

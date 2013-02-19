@@ -1,7 +1,5 @@
 #include "estimator.h"
 
-//#define DEBUG
-
 static double* initialise_weights(int num_subintervals);
 static double a_estimate(double alpha, double interval_time, int num_subintervals);
 static double b_estimate(double beta, double interval_time, int num_subintervals);
@@ -26,8 +24,8 @@ static void weight_estimate(double* weights, double* lambda, int num_subinterval
 est_arr* estimate_OLS(paramlist* params, char* infile, char* outfile)
 {
     int subint = get_int_param(params, "ols_subintervals");
-    double start = get_int_param(params, "start_time");
-    double end = get_int_param(params, "interval_time") + start;
+    double start = get_int_param(params, "est_start_time");
+    double end = get_int_param(params, "est_interval_time") + start;
 
     return _estimate_OLS(infile, outfile, start, end, subint);
 }
@@ -46,8 +44,8 @@ est_arr* estimate_IWLS(paramlist* params, char* infile, char* outfile)
 {
     int subint = get_int_param(params, "iwls_subintervals");
     int iterations = get_int_param(params, "iwls_iterations");
-    double start = get_double_param(params, "start_time");
-    double end = get_double_param(params, "interval_time") + start;
+    double start = get_double_param(params, "est_start_time");
+    double end = get_double_param(params, "est_interval_time") + start;
 
     return _estimate_IWLS(infile, outfile, start, end, subint, iterations);
 }
@@ -77,9 +75,9 @@ est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double e
     double* weights = initialise_weights(num_subintervals);
     double* lambda = NULL;
     
-    int i, loop;
+    int loop;
     
-#ifdef DEBUG
+#ifdef VERBOSE
     for (i = 0; i < num_subintervals; ++i){
     	printf("%lf - (%lf/%lf) -  %lf: %d\n", intervals[i][0], midpoints[i], intervals[i][1], intervals[i][2], bin_counts[i]);
     }
@@ -89,7 +87,7 @@ est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double e
     
     for (loop = 0; loop < iterations; ++loop){
 	
-#ifdef DEBUG
+#ifdef VERBOSE
 	if (lambda){
 	    for (i = 0; i < num_subintervals; ++i) {
 		printf("Random variable %d is %lf\n", i, lambda[i]);
@@ -155,7 +153,7 @@ est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double e
     
 	weight_estimate(weights, lambda, num_subintervals);
 
-#ifdef DEBUG
+#ifdef VERBOSE
 	for (i = 0; i < num_subintervals; ++i) {
 	    printf("New lambda estimate for random variable %d: %lf\n", i, lambda[i]);
 	}
@@ -175,33 +173,6 @@ est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double e
 
     printf("Final estimates:\na = %lf\nb = %lf\n", a, b);
 
-
-    if (outfile){
-	FILE* fp = fopen(outfile, "w");
-    
-
-	double pos = start_time;
-    
-	while (pos <= end_time){
-	    fprintf(fp, "%lf, %lf\n", pos, a + b * pos);
-	    pos += 1;
-	}
-
-	fprintf(fp, "\n\n");
-        
-	for (i = 0; i < num_subintervals; ++i) {
-	    fprintf(fp, "%lf, %lf, %d, %lf\n", intervals[i][1], a + b * intervals[i][1], bin_counts[i], lambda[i]);
-	}
-
-	fclose(fp);
-    }
-    
-    free_pointer_arr((void**) intervals, num_subintervals);
-    free(bin_counts);
-    free(midpoints);
-    free(lambda);
-    free(weights);
-    
     est_data** data = malloc(sizeof(est_data*));
     est_data* est = malloc(sizeof(est_data));
     
@@ -216,8 +187,21 @@ est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double e
     retval->len = 1;
     retval->estimates = data;
 
+    if (outfile){
+	char* out = malloc(strlen(outfile) + strlen(".dat") + 5);
+	sprintf(out, "%s.dat", outfile);
+	output_estimates(out, retval->estimates, retval->len);
+	free(out);
+    }
+
     print_estimates(retval);
     
+    free_pointer_arr((void**) intervals, num_subintervals);
+    free(bin_counts);
+    free(midpoints);
+    free(lambda);
+    free(weights);
+
 //    printf("%lf, %lf, %lf, %lf\n", retval->estimates[0]->start, retval->estimates[0]->end, retval->estimates[0]->est_a, retval->estimates[0]->est_b);
 
     return retval;
@@ -320,7 +304,7 @@ static double beta_estimate(double* weights, double* midpoints, int* bin_counts,
 	squarediffsum += weights[i] * pow(midpoints[i] - mean_x, 2);
     }
 
-#ifdef DEBUG
+#ifdef VERBOSE
     printf("xdiff %lf, sqdiff %lf\n", xdiffsum, squarediffsum);
 #endif
 

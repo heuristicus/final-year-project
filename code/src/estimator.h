@@ -13,19 +13,18 @@
 #define EST_TYPE_ERROR "%s is not a valid estimator. Try -a [ols|iwls|pc|base|gauss].\n"
 
 est_arr* estimate(char* paramfile, char* infile, char* outfile, char* estimator_type);
-int has_required_params(paramlist* params, char** required_params, int len);
 est_arr* run_ols(paramlist* params, char* infile, char* outfile);
 est_arr* run_iwls(paramlist* params, char* infile, char* outfile);
 est_arr* run_pc(paramlist* params, char* infile, char* outfile);
 est_arr* run_base(paramlist* params, char* infile, char* outfile);
-double** run_gauss(paramlist* params, char* infile, char* outfile);
+double_multi_arr* run_gauss(paramlist* params, char* infile, char* outfile);
 
 // Use these rather than the functions below.
 est_arr* estimate_OLS(paramlist* params, char *infile, char *outfile);
 est_arr* estimate_IWLS(paramlist* params, char *infile, char *outfile);
 est_arr* estimate_piecewise(paramlist* params, char *event_file, char *output_file);
 est_arr* estimate_baseline(paramlist* params, char *event_file, char *output_file);
-void estimate_gaussian(paramlist* params, char* infile, char* outfile);
+double_multi_arr* estimate_gaussian(paramlist* params, char* infile, char* outfile);
 
 // Easier to use functions above than these.
 est_arr* _estimate_baseline(char *event_file, char *output_file, double interval_start, 
@@ -45,5 +44,33 @@ double_multi_arr* _estimate_gaussian(char* infile, char* outfile, double start,
 
 double** get_subintervals(double start_time, double end_time, int num_subintervals);
 void free_pointer_arr(void **arr, int length);
+gauss_vector* _estimate_gaussian_raw(char* infile, char* outfile, double start,
+				     double interval_length, double stdev, double resolution);
+gauss_vector* estimate_gaussian_raw(paramlist* params, char* infile, char* outfile);
+
+double area_at_point_gauss(gauss_vector* f1, gauss_vector* f2, double x, double delay);
+double area_at_point_base(est_arr* f1, est_arr* f2, double x, double delay);
+double estimate_delay_area(paramlist* params, char* outfile, void* f1, void* f2,
+			   char* hierarchical, char* type, int output_switch);
+double _estimate_delay_area(char* outfile, void* f1, void* f2, double comp_start,
+			    double comp_end, double start_delta, double end_delta,
+			    double max_delay, double resolution, double step,
+			    char* type, int output_switch);
+double _estimate_delay_pmf(char* outfile, double_arr* base_events,
+			   double_arr* f2_events, void* f1, void* f2,
+			   double combine_start, double combine_interval, 
+			   double combine_step, int num_bins, double start_delta,
+			   double end_delta, double max_delay,double delta_step,
+			   double normaliser, char* type, int output_switch);
+double estimate_delay_pmf(paramlist* params, char* outfile, double_arr* base_events,
+			  double_arr* f2_events, void* f1, void* f2,
+			  double normaliser, char* hierarchical, char* type,
+			  int output_switch);
+double total_area_estimate(void* f1, void* f2, double start, double end,
+			   double resolution, double delay, char* type);
+double find_normaliser(paramlist* params, void* f1, double_arr* events, char* type);
+double _find_normaliser(void* f1, double_arr* events, double interval_start,
+		       double interval_end, double check_start, double check_limit,
+		       double step, int subintervals, char* type);
 
 #endif

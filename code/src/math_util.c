@@ -1,6 +1,5 @@
 #include "math_util.h"
 
-//#define DEBUG
 #define ZERO_EPSILON 0.000000000000000001
 
 
@@ -48,8 +47,7 @@ int* sum_events_in_interval(double *event_times, int num_events, double start_ti
     double subinterval_time = (end_time - start_time) / num_subintervals;
 
     int *bins = calloc(num_subintervals, sizeof(int));
-    
-    for (; i < num_events; ++i){
+     for (; i < num_events; ++i){
 	for (; event_times[i] < start_time; i++); // get to the start of the interval that we are checking.
 		
 	// Just in case we go over the end of the array that we receive. This shouldn't really happen
@@ -59,14 +57,14 @@ int* sum_events_in_interval(double *event_times, int num_events, double start_ti
 	}
 
 	while (event_times[i] > (start_time + (subinterval_time * (current_interval + 1)))) {
-#ifdef DEBUG
+#ifdef VERBOSE
 	    printf("event time: %lf, end of interval: %lf\n", event_times[i], start_time + (subinterval_time * (current_interval + 1)));
 	    printf("%lf is greater than %lf, interval time: %lf, interval incremented to %d\n", event_times[i], start_time + (subinterval_time * (current_interval + 1)), subinterval_time, current_interval + 1);
 #endif
 	    current_interval++;
 	}
 
-#ifdef DEBUG
+#ifdef VERBOSE
 	printf("current time: %lf, interval end: %lf. Adding to loc %d\n", event_times[i], start_time + (subinterval_time * (current_interval + 1)), current_interval);
 #endif
 
@@ -345,7 +343,7 @@ double gaussian_contribution_at_point(double x, gaussian* g, double weight)
     if (weight == 0)
 	return 0;
 
-    return weight * exp(-pow(x - g->mean, 2)/pow(g->stdev, 2));
+    return weight * exp(-pow(x - g->mean, 2)/(2 * pow(g->stdev, 2)));
 }
 
 /*
@@ -354,7 +352,8 @@ double gaussian_contribution_at_point(double x, gaussian* g, double weight)
  */
 double** gaussian_contribution(gaussian* g, double start, double end, double step, double weight)
 {
-    if (!interval_valid(start, end) || g == NULL || step <= 0)
+    printf("contrib %lf %lf\n", start, end);
+    if (g == NULL || step <= 0 || start >= end)
 	return NULL;
     
     int len = (end - start)/step;
@@ -397,41 +396,31 @@ double sum_gaussians_at_point(double x, gauss_vector* G)
  */
 double_multi_arr* gauss_transform(gauss_vector* G, double start, double end, double resolution)
 {
-    if (!interval_valid(start, end) || resolution <= 0 || G == NULL)
+    if (start >= end || resolution <= 0 || G == NULL)
 	return NULL;
 
     double current;
     int i;
-    double_multi_arr* ret = malloc(sizeof(double_multi_arr));
-    ret->len = 2;
-    ret->lengths = malloc(sizeof(int) * ret->len);
-    
-    double** T = malloc(2 * sizeof(double*));
     
     int memsize = ((end - start)/resolution) + 1;
-    
-    T[0] = malloc(sizeof(double) * memsize);
-    T[1] = malloc(sizeof(double) * memsize);
-    ret->lengths[0] = memsize;
-    ret->lengths[1] = memsize;
+    double_multi_arr* ret = init_multi_array(2, memsize);
     
     for (i = 0, current = start; current <= end && i < memsize; current += resolution, i++) {
-	T[0][i] = current;
-	T[1][i] = sum_gaussians_at_point(current, G);
+	ret->data[0][i] = current;
+	ret->data[1][i] = sum_gaussians_at_point(current, G);
     }
 
-    ret->data = T;
-    
     return ret;
 }
 
 /*
- * Returns a gaussian transform which is shifted so that all points are >= 0
+ * Returns a gaussian transform which is shifted so that all points are >= 0 on the
+ * y axis
  */
 double_multi_arr* shifted_transform(gauss_vector* V, double start, double interval,
 				   double step, double resolution)
 {
-    if (step <= 0 || resolution <= 0 || !interval_valid(start, start + interval))
+    if (step <= 0 || resolution <= 0 || start >= start + interval)
 	return NULL;
     
     double_multi_arr* func = gauss_transform(V, start, start + interval, resolution);
@@ -447,36 +436,6 @@ double_multi_arr* shifted_transform(gauss_vector* V, double start, double interv
     func->data[1] = rep;
     
     return func;
-}
-
-double** kernel_density(double* events, int len, double start, double end, double bandwidth, double resolution)
-{
-    double current = start;
-    
-    while (current <= end){
-	printf("kernel density at %lf is %lf\n", current, kernel_density_at_point(events, len, current, bandwidth));
-	current += resolution;
-    }
-
-    return NULL;
-}
-
-double kernel_density_at_point(double* events, int len, int x, double bandwidth)
-{
-    int i;
-    double sum = 0;    
-
-    for (i = 0; i < len; ++i) {
-	sum = (1/(len * bandwidth)) * gaussian_kernel((x - events[i])/bandwidth, x, bandwidth);
-    }
-    
-    return sum;
-}
-
-double gaussian_kernel(double x, double mean, double stdev)
-{
-    return exp(-pow(x - mean, 2)/(2 * pow(stdev, 2)));
-//    return (1/sqrt(2 * M_PI)) * exp((-1/2) * pow(x, 2));
 }
 
 /*
@@ -531,7 +490,7 @@ gauss_vector* gen_gaussian_vector_uniform(double stdev, double start,
 					  double multiplier)
 {
     double end = start + interval_time;
-    if (!interval_valid(start, end) || step <= 0 || stdev <= 0)
+    if (start >= end || step <= 0 || stdev <= 0)
 	return NULL;
     
     gauss_vector* G = malloc(sizeof(gauss_vector));
@@ -676,4 +635,125 @@ double* multiply_arr(double* data, int len, double multiplier)
     }
 
     return new;
+}
+
+/*
+ * Computes the log of the probability mass function for each count-lambda pair.
+ */
+double sum_log_pmfs(int* counts, double* lambdas, double normaliser, int len)
+{
+    if (counts == NULL || lambdas == NULL || normaliser == 0 || len <= 0)
+	return -INFINITY;
+    
+    int i;
+    double sum = 0;
+    double res;
+
+//    printf("Using normaliser %lf\n", normaliser);
+    
+    for (i = 0; i < len; ++i) {
+	if (lambdas[i] == 0){
+	    res = log(gsl_ran_poisson_pdf(counts[i], 0.00001 / normaliser));
+	} else {
+	    res = log(gsl_ran_poisson_pdf(counts[i], lambdas[i] / normaliser));
+	}
+	sum += res;
+//	printf("count %d, normalised lambda %lf, pmf %lf, sum now %lf\n",
+//              counts[i], lambdas[i]/normaliser, res, sum);
+    }
+
+    return sum;
+}
+
+/*
+ * Computes the sum of values in the left-open, right-closed interval (start, end].
+ * This means that values which fall at exactly start or end are not considered
+ * in the sum. Each value in the times array should correspond to a value in the
+ * values array. All values in the value array are divided by the normaliser provided.
+ */
+double sum_array_interval(double* times, double* values, double start, double end,
+			  double normaliser, int len)
+{
+    if (times == NULL || values == NULL || end <= start || len <= 0)
+	return -INFINITY;
+    
+//    printf("summing interval from %lf to %lf, normaliser %lf with len %d\n", start, end, normaliser, len);
+    
+    int i;
+    double current = times[0], sum = 0;
+    
+    for (i = 0; dbl_less_than(current, end, 0.0001) && i < len; ++i, current = times[i]) {
+	if (dbl_less_than(current, start, 0.0001))
+	    continue;
+//	printf("current is %.30lf, end is %.30lf, i is %d, value is %lf\n", current, end, i, values[i]);
+	sum += values[i];
+    }
+
+    /* printf("sum is %lf\n", sum); */
+    /* printf("normalised sum is %lf\n", sum/normaliser); */
+
+    return sum / normaliser;
+}
+
+/*
+ * Sums the given gaussian vector at all points provided in the array.
+ */
+double_arr* sum_gaussians_at_points(gauss_vector* G, double* points, int len)
+{
+    if (G == NULL || points == NULL || len <= 0)
+	return NULL;
+
+    double_arr* ret = init_double_arr(len);
+
+    int i;
+
+    for (i = 0; i < len; ++i) {
+	ret->data[i] = sum_gaussians_at_point(points[i], G);
+    }
+    
+    return ret;
+}
+
+/*
+ * Finds the largest positive or negative value in the given array. Returns the
+ * absolute value of the largest element.
+ */
+double largest_value_in_arr(double* data, int len)
+{
+    if (data == NULL || len <= 0){
+	return 0;
+    }
+    
+    int i;
+    double max = -INFINITY;
+    
+    for (i = 0; i < len; ++i) {
+	
+	if (fabs(data[i]) > max){
+	    max = fabs(data[i]);
+	}
+	
+    }
+    return max;
+}
+
+/*
+ * Return the absolute value of the parameter with the largest absolute value
+ */
+double abs_max(double a, double b)
+{
+    double br = fabs(b), ar = fabs(a);
+    return ar > br ? ar : br;
+}
+
+/*
+ * Checks whether a is less than b, to some number of decimal places.
+ */
+int dbl_less_than(double a, double b, double precision)
+{
+    double diff = b - a;
+
+    /* printf("diff is %.30lf\n", diff); */
+    /* printf("returning %d\n", diff > precision && diff > 0); */
+    return diff > precision && diff > 0;
 }

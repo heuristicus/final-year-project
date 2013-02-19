@@ -4,33 +4,34 @@
  * Combines two or more function estimates to produce a single estimate.
  * Takes an array of function estimates from different streams, and the
  * time delay between each. The average value of these functions is taken.
+ * This function will return only points for which all functions being combined
+ * have values. The overlap between functions depends
+ * on the maximum time delay between any two functions. For example, if there are
+ * three functions, and the delay between 0 and 1 is 10, and 0 and 2 is 20, and you
+ * specify an interval time of 100, then you will only receive data for times 20 to 80,
+ * since the functions only overlap there.
  */
-double_multi_arr* combine_functions(est_arr** estimates, double* time_delay, 
-			   double interval_time, int num_estimates, double step)
+double_multi_arr* combine_functions(est_arr** estimates, double_arr* time_delay, 
+				    double start, double interval_time, double step,
+				    int num_estimates)
 {
+    printf("estimates %p, time delay %p, interval_time %lf, step %lf, num estimates %d\n", estimates, time_delay, interval_time, step, num_estimates);
     if (estimates == NULL || time_delay == NULL || step <= 0 || num_estimates <= 0 ||
 	interval_time <= 0)
 	return NULL;
-    
+
     double time;
     int estimate_num;
-    double max_delay = 0;
-        
-    int i;
+    double max_delay = largest_value_in_arr(time_delay->data, num_estimates);
+    double end = interval_time - start - max_delay;
 
-    for (i = 0; i < num_estimates; ++i) {
-	max_delay = time_delay[i] > max_delay ? time_delay[i] : max_delay;
-    }
+//    printf("Combining function between %lf and %lf.\n", time, end);
 
-    double_multi_arr* combination = malloc(sizeof(double_multi_arr));
-    int memsize = (int)(((interval_time - max_delay) - max_delay)/ step + 1);
-    combination->data = malloc(sizeof(double*) * 2);
-    combination->data[0] = malloc(sizeof(double) * memsize);
-    combination->data[1] = malloc(sizeof(double) * memsize);
-    combination->len = 2;
-    combination->lengths = malloc(sizeof(int) * 2);
-    combination->lengths[0] = memsize;
-    combination->lengths[1] = memsize;
+    // need to fix this to work with combinations at any point and
+    // any interval. This currently only works for stuff which starts
+    // at zero and when the delay is non-negative.
+    int memsize = (int)(((interval_time - start - 2 * max_delay) / step + 1));
+    double_multi_arr* combination = init_multi_array(2, memsize);
 
     /*
      * Only have data for all functions in the intervals in which they
@@ -39,11 +40,12 @@ double_multi_arr* combine_functions(est_arr** estimates, double* time_delay,
      * where the maximum delay is. The last time we have data for all functions is 
      * where the least delayed function ends (interval_time - max_delay).
      */
+    int i;
 
-    for (i = 0, time = max_delay; time <= interval_time - max_delay; time += step, ++i) {
+    for (i = 0, time = max_delay; time <= end; time += step, ++i) {
 	double total = 0;
 	for (estimate_num = 0; estimate_num < num_estimates; ++estimate_num) {
-	    total += estimate_at_point(estimates[estimate_num], time - time_delay[estimate_num]);
+	    total += estimate_at_point(estimates[estimate_num], time - time_delay->data[estimate_num]);
 	}
 	combination->data[0][i] = time;
 	combination->data[1][i] = total/num_estimates;
@@ -55,45 +57,48 @@ double_multi_arr* combine_functions(est_arr** estimates, double* time_delay,
 /*
  * Combines a set of vectors of gaussians into a single set of values representing
  * the average value of the sums of the gaussians. Samples are taken with the 
- * given resolution
+ * given resolution. This version of the function will return only points for which
+ * all functions being combined have values. The overlap between functions depends
+ * on the maximum time delay between any two functions. For example, if there are
+ * three functions, and the delay between 0 and 1 is 10, and 0 and 2 is 20, and you
+ * specify an interval time of 100, then you will only receive data for times 20 to 80,
+ * since the functions only overlap there.
  */
-double_arr* combine_gauss_vectors(gauss_vector** V, int num)
+double_multi_arr* combine_gauss_vectors(gauss_vector** V, double_arr* time_delay,
+					double start, double interval_time, double step,
+					int num_vectors)
 {
-    return NULL;
-}
 
-/*
- * calculates the value of the estimate at a given point in time.
- */
-double estimate_at_point(est_arr* estimate, double time)
-{
-    est_data* idata = data_at_point(estimate, time);
-
-    if (idata == NULL)
-	return 0;
-    
-    return idata->est_a + idata->est_b * time;
-}
-
-/*
- * Returns the data from the given estimate that can be used to calculate
- * the function value at the specified time.
- */
-est_data* data_at_point(est_arr* estimate, double check_time)
-{
-    if (estimate == NULL)
+    if (V == NULL || time_delay == NULL || interval_time <= 0 || step <= 0 || num_vectors <= 0)
 	return NULL;
     
-    est_data* current = NULL;
-    est_data* ret = NULL;
-        
-    int i;
+//    printf("start %lf, time %lf, step %lf, nvec %d\n", start, interval_time, step, num_vectors);
+//    printf("time delay for function 0 is %lf, 1 is %lf\n", time_delay->data[0], time_delay->data[1]);
     
-    for (i = 0; i < estimate->len; ++i) {
-	current = estimate->estimates[i];
-	if (current->start <= check_time && check_time <= current->end){
-	    ret = current;
+
+    double max_delay = largest_value_in_arr(time_delay->data, num_vectors);
+//    printf("max delay %lf\n", max_delay);
+    int memsize = (int)(interval_time - start - 2 * max_delay) / step + 1;
+//    printf("memsize is %d\n", memsize);
+    double_multi_arr* res = init_multi_array(2, memsize);
+    
+    double current = max_delay, end = interval_time - start - max_delay, sum;
+//    printf("Combining function between %lf and %lf.\n", current, end);
+    int i, vector_num;
+    for (i = 0; current <= end; ++i, current += step) {
+//	printf("current is %lf\n", current);
+	sum = 0;
+	for (vector_num = 0; vector_num < num_vectors; ++vector_num) {
+	    sum += sum_gaussians_at_point(current - time_delay->data[vector_num], V[vector_num]);
+//		printf("summing vector %d at %lf\n", vector_num, current - time_delay->data[vector_num]);
+//		printf("sum is now %lf\n", sum);
+		
 	}
+	res->data[0][i] = current;
+	// must apply the same normalisation that is being applied to the gaussians in the estimate?
+	// does not apply if the normalisation is calculated later and then applied.
+	res->data[1][i] = sum / num_vectors;
     }
-    return ret;
+
+    return res;
 }
