@@ -64,7 +64,7 @@ nstreams 1
 # The delay between zero and each stream. If the delay is greater than zero, then
 # when generating events, instead of using lambda(t) to generate, lambda(t+delta)
 # is used.
-timedelta 0.0,10.0,20.0
+timedelta 0.0,-10.0,20.0
 
 # The lambda value to use when generating events. This value is used during thinning
 # to calculate whether an event should be kept. lambda must be > lambda(t) for all
@@ -219,7 +219,7 @@ estimate_delta yes
 # simpler, estimating the delay based on the area between the curves of two
 # functions. The point at which the area is smallest is most likely the actual
 # time delay.
-delta_est_method pmf
+delta_est_method area
 
 # If this is set to yes, the time delta estimation will be performed hierarchically.
 # Initially, a single pass over the shifts will be done, with the coarse step provided,

@@ -106,31 +106,27 @@ int interval_valid(double interval_start, double interval_end)
  * This should be used to prevent excessive reading from file. Very naive - complexity
  * probably O(n^2). Probably marginally better than processing files.
  *
- * Note that an unmodified event array is expected - i.e. one which contains the length in
- * the zeroth location.
  */
-double* get_event_subinterval(double *events, double interval_start, double interval_end)
+double_arr* get_event_subinterval(double_arr* events, double interval_start, double interval_end)
 {
 
     if (!interval_valid(interval_start, interval_end) || events == NULL)
 	return NULL;
     
-    int count = 1;
+    int count = 0;
     double *start = NULL;
-//    double *end = NULL;
     
-    int arr_end = events[0];
+    int arr_end = events->len;
 
     int i;
     double cur_time;
     
-    //printf("interval start %lf, interval end %lf\n", interval_start, interval_end);
-        
-    for (i = 1, cur_time = events[i]; (i < arr_end) && (events[i] <= interval_end); ++i, cur_time = events[i]) {
-	//printf("cur_time %lf, i %d, i > arr_end %d, i < arr_end %d\n", cur_time, i, i > arr_end, i < arr_end);
+    printf("interval start %lf, interval end %lf\n", interval_start, interval_end);
+    for (i = 0, cur_time = events->data[i]; (i < arr_end) && (events->data[i] <= interval_end); ++i, cur_time = events->data[i]) {
+//	printf("cur_time %lf, i %d, i > arr_end %d, i < arr_end %d\n", cur_time, i, i > arr_end, i < arr_end);
 	if (cur_time >= interval_start && start == NULL){
 	    //printf("interval start detected at %lf\n", cur_time);
-	    start = (events + i); // start pointer moves to indicate the start of the interval
+	    start = (events->data + i); // start pointer moves to indicate the start of the interval
 	    count++;
 	} else if (cur_time > interval_end){
 	    //printf("interval end detected at %lf\n", cur_time);
@@ -142,15 +138,14 @@ double* get_event_subinterval(double *events, double interval_start, double inte
     }
     
     // If we didn't find any events within the specified interval
-    if (count == 1)
+    if (count == 0)
 	return NULL;
 
-    double *pruned_events = malloc((count + 1) * sizeof(double));
-    pruned_events[0] = count;
+    double_arr* pruned_events = init_double_arr(count);
 
     //printf("end - start %d\n", end - start);
     
-    memcpy((void*)(pruned_events + 1), start, count * sizeof(double));
+    memcpy((void*)(pruned_events->data), start, count * sizeof(double));
     
     
     /* for (i = 0; i < count; ++i) { */

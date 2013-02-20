@@ -351,14 +351,14 @@ gauss_vector* _generate_gaussian(char* infile, double stdev, double start,
 				 double interval, double gen_step, 
 				 double resolution, double multiplier)
 {
-    double* means = NULL;
+    double_arr* means = NULL;
     gauss_vector* G;
     
     if (infile == NULL){
 	G = gen_gaussian_vector_uniform(stdev, start, start + interval, gen_step, multiplier);
     } else {
 	means = get_event_data_all(infile);
-	G = gen_gaussian_vector_from_array(means + 1, means[0] - 1, stdev, multiplier, 1);
+	G = gen_gaussian_vector_from_array(means->data, means->len, stdev, multiplier, 1);
 	free(means);
     }
 

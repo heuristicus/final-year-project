@@ -259,10 +259,7 @@ void multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, 
 	// The input file for the base function is used for all delay estimates, so
 	// just read it once.
 	sprintf(infname, "%s%s0.dat", fname, pref);
-	double* bs = get_event_data_all(infname);
-	double_arr* base_stream_events = malloc(sizeof(double_arr));
-	base_stream_events->len = bs[0] - 1;
-	base_stream_events->data = bs + 1;
+	double_arr* base_stream_events = get_event_data_all(infname);
 	double normaliser = 1;
 
 	if (strcmp(delta_method, "pmf") == 0 && gauss){
@@ -281,10 +278,8 @@ void multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, 
 	    sprintf(infname, "%s%s%d.dat", fname, pref, i);
 	    if (outfile != NULL && output_switch >= 1)
 		sprintf(outname, "%s_%d", outfile, i-1);
-	    double* ev2 = get_event_data_all(infname);
-	    double_arr* f2_events = malloc(sizeof(double_arr));
-	    f2_events->len = ev2[0] - 1;
-	    f2_events->data = ev2 + 1;
+
+	    double_arr* f2_events = get_event_data_all(infname);
 
 	    if (strcmp(delta_method, "area") == 0){
 		delays->data[i] = estimate_delay_area(params, outname, estimates[0],
@@ -298,16 +293,14 @@ void multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, 
 	    }
 	    
 	    // This data is not reused, so free it
-	    free(ev2);
-	    free(f2_events);
+	    free_double_arr(f2_events);
 	}
 
 	for (i = 0; i < delays->len; ++i) {
 	    printf("Delay for stream %d: %lf\n", i, delays->data[i]);
 	}
 
-	free(base_stream_events);
-	free(bs);
+	free_double_arr(base_stream_events);
     } else {
 	if ((delays = get_double_list_param(params, "timedelta")) == NULL){
 	    printf("You must specify the time delay between each stream. "\

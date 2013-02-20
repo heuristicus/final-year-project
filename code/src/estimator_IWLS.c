@@ -6,7 +6,7 @@ static double b_estimate(double beta, double interval_time, int num_subintervals
 static double beta_estimate(double* weights, double* midpoints, int* bin_counts, double mean_x, int num_subintervals);
 static double alpha_estimate(double mean_y, double mean_x, double beta_estimate);
 static double w_SSE(double* weights, double* midpoints, int* bin_counts, double alpha, double beta, int num_subintervals);
-static int* get_bin_counts(double* events, double start_time, double end_time, int num_subintervals);
+static int* get_bin_counts(double_arr* events, double start_time, double end_time, int num_subintervals);
 static double mean_x(double* midpoints, double* weights, int num_subintervals);
 static double mean_Y(int* bin_counts, double* weights, int num_subintervals);
 //static double* initialise_random_variables(int* bin_counts, int length);
@@ -68,9 +68,10 @@ est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double e
     double interval_time = end_time - start_time;
     
     double** intervals = get_subintervals(start_time, end_time, num_subintervals);
-    double* events = get_event_data_interval(start_time, end_time, infile);
+    double_arr* events = get_event_data_interval(start_time, end_time, infile);
     int* bin_counts = get_bin_counts(events, start_time, end_time, num_subintervals);
-
+    free_double_arr(events);
+    
     double* midpoints = get_interval_midpoints(start_time, end_time, num_subintervals);
     double* weights = initialise_weights(num_subintervals);
     double* lambda = NULL;
@@ -235,16 +236,11 @@ double** get_subintervals(double start_time, double end_time, int num_subinterva
 /*
  * Get the number of events that occurred in each subinterval.
  */
-static int* get_bin_counts(double* events, double start_time, double end_time, int num_subintervals)
+static int* get_bin_counts(double_arr* events, double start_time, double end_time, int num_subintervals)
 {
-    int num_events = (int) events[0] - 1;
-
-    int *bin_counts = sum_events_in_interval(events + 1, num_events, start_time, end_time, num_subintervals);
+    int *bin_counts = sum_events_in_interval(events->data, events->len, start_time, end_time, num_subintervals);
     
-    free(events);
-        
     return bin_counts;
-    
 }
 
 

@@ -75,9 +75,9 @@ gauss_vector* estimate_gaussian_raw(paramlist* params, char* infile, char* outfi
 gauss_vector* _estimate_gaussian_raw(char* infile, char* outfile, double start,
 				     double interval_length, double stdev, double resolution)
 {
-    double* ev = get_event_data_all(infile);
+    double_arr* ev = get_event_data_all(infile);
 
-    gauss_vector* G = gen_gaussian_vector_from_array(ev + 1, ev[0] - 1, stdev, 1, 0);
+    gauss_vector* G = gen_gaussian_vector_from_array(ev->data, ev->len, stdev, 1, 0);
     
 
     free(ev);

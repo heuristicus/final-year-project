@@ -38,11 +38,11 @@ double prob_num_events_in_time_span(double start_time, double end_time, double l
 /* 
  * Outputs the number of events in each interval to the array provided. 
  */
-int* sum_events_in_interval(double *event_times, int num_events, double start_time, double end_time, int num_subintervals)
+int* sum_events_in_interval(double* event_times, int num_events, double start_time, double end_time, int num_subintervals)
 {
     if (interval_valid(start_time, end_time) != 1 || event_times == NULL || num_events < 1 || num_subintervals < 1)
 	return NULL;
-    
+    printf("num subintervals %d num events %d\n", num_subintervals, num_events);
     int i = 0, current_interval = 0;
     double subinterval_time = (end_time - start_time) / num_subintervals;
 
@@ -52,7 +52,7 @@ int* sum_events_in_interval(double *event_times, int num_events, double start_ti
 		
 	// Just in case we go over the end of the array that we receive. This shouldn't really happen
 	if (event_times[i] < 0.0 + ZERO_EPSILON){
-	    printf("SOMETHING IS VERY ODD - WE WENT OVER THE END OF THE ARRAY RECEIVED BY SUM_EVENTS_IN_INTERVAL\n");
+	    printf("SOMETHING IS VERY ODD - WE PROBABLY WENT OVER THE END OF THE ARRAY RECEIVED BY SUM_EVENTS_IN_INTERVAL\n");
 	    return bins;
 	}
 

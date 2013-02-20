@@ -143,10 +143,10 @@ double extend_estimate(char *event_file, est_data *interval_estimate, double sta
     int i;
     double retval = start_time;
         
-    double *events = get_event_data_interval(start_time, start_time + max_extension,
-					     event_file);
+    double_arr* events = get_event_data_interval(start_time, start_time + max_extension,
+						 event_file);
 
-    double *lastevents = NULL;
+    double_arr* lastevents = NULL;
         
     for (i = 0; i < 5; ++i) {
 	double end_time = start_time + max_extension / (i + 1);	
@@ -159,15 +159,20 @@ double extend_estimate(char *event_file, est_data *interval_estimate, double sta
 	    events = get_event_subinterval(lastevents, start_time, end_time);
 	    free(lastevents);
 	}
+	
+	if (events == NULL) {
+	    printf("No events in interval - cannot extend.\n");
+	    return start_time;
+	}
 
-	int event_num = events[0] - 1;
+	int event_num = events->len;
 
 	if (event_num == 0 || end_time - start_time < subinterval_time)
 	    break;
 		
 	int num_subintervals = (end_time - start_time)/subinterval_time;
 
-	int *bin_counts = sum_events_in_interval((events + 1), event_num, 
+	int *bin_counts = sum_events_in_interval(events->data, event_num, 
 						 start_time, end_time, 
 						 num_subintervals);
 	double *midpoints = get_interval_midpoints(start_time, end_time,

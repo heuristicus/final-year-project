@@ -96,12 +96,10 @@ paramlist* get_parameters(char* filename)
 
 /*
  * Gets event data from the specified file. The file is assumed to contain only
- * data on event times. The size of the array will be stored in the zeroth index - this
- * does not include that value itself. For example, if there are 10 events, the actual
- * length will be 11, because of the length in index 0, but the value of the length will be 10.
+ * data on event times.
  * passing duplicate values into start_time and end_time will return all values.
  */
-double* get_event_data_interval(double start_time, double end_time, char *filename)
+double_arr* get_event_data_interval(double start_time, double end_time, char *filename)
 {
     FILE *fp;
 
@@ -113,11 +111,11 @@ double* get_event_data_interval(double start_time, double end_time, char *filena
 	perror("Could not access specified file");
 	exit(1);
     }
-#ifdef DEBUG
+#ifdef VERBOSE
     printf("Getting event data for interval [%lf, %lf]\n", start_time, end_time);
 #endif
     char *line = malloc(MAX_LINE_LENGTH);
-    double *event_times = malloc(DEFAULT_ARR_SIZE * sizeof(double));
+    double_arr* event_times = init_double_arr(DEFAULT_ARR_SIZE);
     int all = start_time == end_time; // Whether we want to get all data or not.
 
     if (!all && !interval_valid(start_time, end_time)){
@@ -125,12 +123,12 @@ double* get_event_data_interval(double start_time, double end_time, char *filena
 	return NULL;
     }
     
-    int i = 1, max_size = DEFAULT_ARR_SIZE;
+    int i = 0, max_size = DEFAULT_ARR_SIZE;
     while ((line = fgets(line, MAX_LINE_LENGTH, fp)) != NULL){
 	if (strcmp(line, "\n") == 0)
 	    break; // A newline indicates the end of the data.
 	if (i == max_size){
-	    event_times = realloc(event_times, max_size * 2 * sizeof(double));
+	    event_times->data = realloc(event_times->data, max_size * 2 * sizeof(double));
 	    max_size *= 2;
 	}
 
@@ -142,12 +140,16 @@ double* get_event_data_interval(double start_time, double end_time, char *filena
 		break; // Don't add data past the specified end time.
 	}
 
-	event_times[i] = atof(line);
+	event_times->data[i] = atof(line);
 	i++;
     }
 
-    event_times[0] = i;// Store the length at the start of the array.
+    if (i == 0){// we found no events in the given interval
+	free_double_arr(event_times);
+	return NULL;
+    }
     event_times = realloc(event_times, i * sizeof(double)); // Potentially save memory?
+    event_times->len = i;
     
     fclose(fp);
     free(line);
@@ -158,7 +160,7 @@ double* get_event_data_interval(double start_time, double end_time, char *filena
 /*
  * Gets all event data from the specified file.
  */
-double* get_event_data_all(char *filename)
+double_arr* get_event_data_all(char *filename)
 {
     return get_event_data_interval(0.0, 0.0, filename);
 }

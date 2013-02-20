@@ -60,25 +60,28 @@ END_TEST
 
 START_TEST (test_get_event_subinterval)
 {
-    double a1[8] = {8, 0.5, 1, 1.5, 2, 2.5, 3, 3.5};
-    
+    double ad[7] = {0.5, 1, 1.5, 2, 2.5, 3, 3.5};
+    double_arr* a1 = init_double_arr(7);
+    a1->data = ad;
+    printf("yeah\n");
     // Get back what we put in
-    double* res1 = get_event_subinterval(a1, 0, 4);
+    double_arr* res1 = get_event_subinterval(a1, 0, 4);
     int i;
-    
-    for (i = 0; i < 8; ++i) {
-	//printf("%d: %lf %lf\n", i, res1[i], a1[i]);
-	fail_unless(res1[i] == a1[i]);
+
+    for (i = 0; i < res1->len; ++i) {
+	printf("%d: %lf %lf\n", i, res1->data[i], a1->data[i]);
+	fail_unless(res1->data[i] == a1->data[i]);
     }
     free(res1);
+    printf("crashem\n");
     
     // Get a subinterval
-    double* res2 = get_event_subinterval(a1, 0, 2);
-    fail_unless(res2[0] == 4, NULL);
+    double_arr* res2 = get_event_subinterval(a1, 0, 2);
+    fail_unless(res2->len == 3, NULL);
     
-    for (i = 1; i < 5; ++i) {
+    for (i = 0; i < res2->len; ++i) {
 	//printf("%d: %lf %lf\n", i, res1[i], a1[i]);
-	fail_unless(res2[i] == a1[i], NULL);
+	fail_unless(res2->data[i] == a1->data[i], NULL);
     }
     free(res2);
 
@@ -87,22 +90,22 @@ START_TEST (test_get_event_subinterval)
     
     // Invalid subinterval
     fail_unless(get_event_subinterval(a1, -2, -3) == NULL, NULL);
-    double *a2 = NULL;
+    double_arr* a2 = NULL;
     
     // Null array
     fail_unless(get_event_subinterval(a2, 2, 3) == NULL, NULL);
     
     // Get events that are the same as the start interval times
-    double* res3 = get_event_subinterval(a1, 3, 4);
+    double_arr* res3 = get_event_subinterval(a1, 3, 4);
     
-    fail_unless(res3[0] == 3, NULL);
-    fail_unless(res3[1] == 3.0, NULL);
-    fail_unless(res3[2] == 3.5, NULL);
+    fail_unless(res3->len == 2, NULL);
+    fail_unless(res3->data[0] == 3.0, NULL);
+    fail_unless(res3->data[1] == 3.5, NULL);
 
     // very short, but valid interval
-    double* res4 = get_event_subinterval(a1, 0.999999, 1.00000001);
-    fail_unless(res4[0] == 2, NULL);
-    fail_unless(res4[1] == 1, NULL);
+    double_arr* res4 = get_event_subinterval(a1, 0.999999, 1.00000001);
+    fail_unless(res4->len == 1, NULL);
+    fail_unless(res4->data[0] == 1, NULL);
 }
 END_TEST
 

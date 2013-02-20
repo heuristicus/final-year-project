@@ -1,3 +1,17 @@
+2013-02-20  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* tests: Tests updated to deal with the changes to return types and parameters
+	of functions caused by the modification of the event functions.
+
+	* file_util.c: Modified the get_event_data functions to return a double array
+	instead of a double pointer with the length in the first location. This has
+	changed a few functions in other places which read event data, but only small
+	changes were required to get things working.
+
+	* estimator_piecewise.c: Fixed bug where when the interval being extended into
+	had no events in it the estimator would crash.
+
+
 2013-02-18  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* generator.c: Old generator functions updated to use the output switch system.

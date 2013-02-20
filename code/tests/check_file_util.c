@@ -17,16 +17,17 @@ END_TEST
 START_TEST (test_get_event_data_all)
 {
     double data[15] = {0.1,0.3,0.8,1.1,1.6,2.4,2.9,3.0,3.8,4.3,4.4,4.8,5.0,5.1,5.9};
-    double* file = get_event_data_all("./files/testdata.txt");
+    double_arr* file = get_event_data_all("./files/testdata.txt");
 
     // length of array in index 0
-    fail_unless(file[0] == 16, NULL);
+    printf("data length %d\n", file->len);
+    fail_unless(file->len == 15, NULL);
     
     int i;
     
     for (i = 0; i < 15; ++i) {
 	//printf("%lf %lf\n", data[i], file[i + 1]);
-	fail_unless(data[i] == file[i + 1], NULL);
+	fail_unless(data[i] == file->data[i], NULL);
     }
 }
 END_TEST
@@ -34,37 +35,39 @@ END_TEST
 START_TEST (test_get_event_data_interval)
 {
     double data[15] = {0.1,0.3,0.8,1.1,1.6,2.4,2.9,3.0,3.8,4.3,4.4,4.8,5.0,5.1,5.9};
-    double* a = get_event_data_interval(1, 2, "./files/testdata.txt");
+    double_arr* a = get_event_data_interval(1, 2, "./files/testdata.txt");
 
     // length of array in index 0
-    fail_unless(a[0] == 3, NULL);
+    fail_unless(a->len == 2, NULL);
     
     int i;
     
-    for (i = 1; i < a[i]; ++i) {
-	//printf("%lf %lf\n", data[i + 2], a[i]);
-	fail_unless(data[i + 2] == a[i], NULL);
+    for (i = 0; i < a->len; ++i) {
+	printf("%lf %lf\n", data[i + 3], a->data[i]);
+	fail_unless(data[i + 3] == a->data[i], NULL);
     }
 
     // check that the "get all" functionality works ok with negatives
-    double* b = get_event_data_interval(-1, -1, "./files/testdata.txt");
+    double_arr* b = get_event_data_interval(-1, -1, "./files/testdata.txt");
     
-    fail_unless(b[0] == 16, NULL);
-    
+    fail_unless(b->len == 15, NULL);
+    printf("bdata\n");    
     for (i = 0; i < 15; ++i) {
-	//printf("%lf %lf\n", data[i], file[i + 1]);
-	fail_unless(data[i] == b[i + 1], NULL);
+	printf("i is %d, %lf %lf equal? %d\n", i, data[i], b->data[i], data[i] == b->data[i]);
+	fail_unless(data[i] == b->data[i], NULL);
     }
-
+printf("yay\n");
     // empty interval
-    double* c = get_event_data_interval(6, 7, "./files/testdata.txt");
-    fail_unless(c[0] == 1);
-
+    double_arr* c = get_event_data_interval(6, 7, "./files/testdata.txt");
+    printf("nope1\n");
+    fail_unless(c == NULL, NULL);
+    printf("nope\n");
+    
     // Check invalid intervals
-    double* d = get_event_data_interval(-1, 0, "./files/testdata.txt");
-    fail_unless(d == NULL);
+    double_arr* d = get_event_data_interval(-1, 0, "./files/testdata.txt");
+    fail_unless(d == NULL, NULL);
     d = get_event_data_interval(0.1, 0.01, "./files/testdata.txt");
-    fail_unless(d == NULL);
+    fail_unless(d == NULL, NULL);
             
 }
 END_TEST
