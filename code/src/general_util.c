@@ -68,7 +68,7 @@ string_arr* string_split(char* string, char separator)
     string_arr* ret = malloc(sizeof(string_arr));
     ret->data = split;
     ret->len = size;
-        
+
     return ret;
 }
 

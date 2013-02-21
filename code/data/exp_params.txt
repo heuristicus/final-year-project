@@ -35,6 +35,7 @@ test_ols yes
 test_iwls yes
 test_piecewise yes
 test_baseline yes
+test_gaussian yes
 
 # Specify the parameters to experiment on for the different estimators and
 # generator. The 
@@ -43,7 +44,7 @@ ols_params ols_subintervals
 iwls_params iwls_subintervals,iwls_iterations
 piecewise_params pc_max_extension,pc_max_breakpoints
 baseline_params base_max_breakpoints,base_pmf_threshold
-
+gaussian_params gauss_est_stdev
 
 # Number of times to repeat each experiment
 repetitions 5
@@ -55,3 +56,13 @@ regenerate_stream yes
 ######### parameters
 iwls_subintervals 1,2,...,10
 iwls_iterations 1,2,3
+
+ols_subintervals 1,2,...,10
+
+base_max_breakpoints 5,7,...,21
+base_pmf_threshold 0.05,0.07,...,0.15
+
+pc_max_extension 5,10,...,25
+pc_max_breakpoints 5,7,...,21
+
+gauss_est_stdev 1,2,4,6,8,10

@@ -1,3 +1,8 @@
+2013-02-21  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* experimenter.c: Added structs for storing experimental data in a structured way.
+	Data from the experiment parameter file is loaded into the exp_set struct.
+
 2013-02-20  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* tests: Tests updated to deal with the changes to return types and parameters

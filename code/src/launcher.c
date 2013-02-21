@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 	exit(1);
     }
         
-    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:f:hrt:", opts, &opt_ind)) != -1){
+    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:f:hrt:p:", opts, &opt_ind)) != -1){
     	switch(c){
     	case 'e': // estimate
     	    args->est = 1;
