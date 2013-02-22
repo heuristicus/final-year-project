@@ -28,7 +28,7 @@ output_estimate_data yes
 # you will get results with parameter settings like a1b1, a1b2, a1b3, a2b1,
 # a2b2, and so on, for all parameter combinations. This might take a very long
 # time if you have a lot of parameters and values.
-run_separately yes
+run_separately no
 
 test_generator no
 test_ols yes
@@ -66,3 +66,5 @@ pc_max_extension 5,10,...,25
 pc_max_breakpoints 5,7,...,21
 
 gauss_est_stdev 1,2,4,6,8,10
+test1 1,2,3
+test2 2,3,4
