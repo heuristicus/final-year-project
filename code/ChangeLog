@@ -1,5 +1,18 @@
 2013-02-23  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
+	* estimator_piecewise.c: Event file is read before any calls are made to the
+	IWLS estimator. This significantly reduces the file accesses that IWLS needs to
+	make during piecewise estimation.
+
+	* estimator_IWLS.c: Modified the weight update function to deal with lambda
+	values of zero. Previously had errors with division by zero, but modified the
+	function to set weights of the points with zero value to zero, rather than
+	getting values of infinity. Estimator can now take an array of doubles containing
+	event data as a parameter so that it does not have to read files multiple times
+	when being called more than once.
+
+	* file_util.c: Fixed reallocation on incorrect pointer in get_event_data_interval.
+
 	* experimenter.c: Experiment required parameters are generated from a list of
 	experiment names in the parameter file - this should make it possible to add
 	new experiments without having to modify the internals of the system. Can also

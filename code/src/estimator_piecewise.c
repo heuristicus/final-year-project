@@ -1,13 +1,13 @@
 #include "estimator.h"
 
-double extend_estimate(char *event_file, est_data *interval_estimate, double start_time,
+double extend_estimate(double_arr* event_data, est_data *interval_estimate, double start_time,
 		       double max_extension, double subinterval_time, double pmf_threshold);
-double* interval_pmf(int *bin_counts, double *midpoints, int len, double a, double b);
-int pmf_check(double *midpoints, int *bindata, double a, double b, int num_subintervals,
+double* interval_pmf(int* bin_counts, double* midpoints, int len, double a, double b);
+int pmf_check(double* midpoints, int* bindata, double a, double b, int num_subintervals,
 	      double threshold);
-int pmf_threshold_check(double *pmfs, int len, double threshold);
-int pmf_cumulative_check(double *pmfs, int len, int limit, double threshold);
-int pmf_consecutive_check(double *pmfs, int len, int limit, double threshold);
+int pmf_threshold_check(double* pmfs, int len, double threshold);
+int pmf_cumulative_check(double* pmfs, int len, int limit, double threshold);
+int pmf_consecutive_check(double* pmfs, int len, int limit, double threshold);
 
 /*
  * Helper function for the piecewise estimator. Takes parameters out of a parameter list and 
@@ -56,7 +56,7 @@ est_arr* _estimate_piecewise(char* event_file, char* output_file,
 	default_interval_length = interval_end - interval_start;
     else 
 	default_interval_length = (interval_end - interval_start) / max_breakpoints;
-#ifdef VERBOSE 
+#ifdef VERBOSE
     printf("default interval length %lf\n", default_interval_length);
 #endif
     // start time and end time of the subinterval
@@ -67,6 +67,11 @@ est_arr* _estimate_piecewise(char* event_file, char* output_file,
     est_data** interval_data = calloc(max_breakpoints + 1, sizeof(est_data*)); 
     est_arr* interval_estimate_array;
     est_data* interval_estimate;
+
+    // Get event data from file so that it does not have to be read independently for all
+    // IWLS estimates.
+    double_arr* event_data = get_event_data_all(event_file);
+    printf("got event data\n");
         
     // We want to do this at least once, specifically if max_breakpoints is zero
     do {
@@ -89,8 +94,8 @@ est_arr* _estimate_piecewise(char* event_file, char* output_file,
 	/*     printf("Interval %d is now [%lf, %lf]\n", i-1, interval_data[i-1]->start, interval_data[i-1]->end); */
 	/* } */
 
-	interval_estimate_array = _estimate_IWLS(event_file, NULL, start_time, end_time,
-					   IWLS_subintervals, IWLS_iterations);
+	interval_estimate_array = _estimate_IWLS(NULL, NULL, start_time, end_time,
+						 IWLS_subintervals, IWLS_iterations, event_data);
 	interval_estimate = interval_estimate_array->estimates[0];
 #ifdef VERBOSE
 	printf("%lf, %lf, %lf, %lf\n", interval_estimate->start, interval_estimate->end, interval_estimate->est_a, interval_estimate->est_b);
@@ -104,7 +109,7 @@ est_arr* _estimate_piecewise(char* event_file, char* output_file,
 	    double extension_time = max_extension > interval_end - end_time ?interval_end - end_time : max_extension;
 
 	    if (extension_time > 0)
-		end_time = extend_estimate(event_file, interval_estimate, end_time,
+		end_time = extend_estimate(event_data, interval_estimate, end_time,
 					   extension_time, 1, pmf_threshold);
 	}
 
@@ -143,14 +148,13 @@ est_arr* _estimate_piecewise(char* event_file, char* output_file,
  * interval estimated with IWLS. Returns the end time of the extended interval if it
  * is possible to extend the line, otherwise returns start_time.
  */
-double extend_estimate(char *event_file, est_data *interval_estimate, double start_time, 
+double extend_estimate(double_arr* event_data, est_data *interval_estimate, double start_time, 
 		       double max_extension, double subinterval_time, double pmf_threshold)
 {
     int i;
     double retval = start_time;
         
-    double_arr* events = get_event_data_interval(start_time, start_time + max_extension,
-						 event_file);
+    double_arr* events = get_event_subinterval(event_data, start_time, start_time + max_extension);
 
     double_arr* lastevents = NULL;
         

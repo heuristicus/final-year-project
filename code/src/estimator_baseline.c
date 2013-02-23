@@ -184,6 +184,7 @@ est_arr* recalculate_estimates(double* breakpoint_vector, double* function_value
 #endif
 	double* tmp = get_intercept_and_gradient(breakpoint_vector[i], function_values[i],  breakpoint_vector[i+1], function_values[i+1]);
 	est_data* this_interval = malloc(sizeof(est_data));
+//	printf("tmp0 is %lf, tmp1 is %lf, start %lf, end %lf\n", tmp[0], tmp[1], breakpoint_vector[i], breakpoint_vector[i+1]);
 	this_interval->est_a = tmp[0];
 	this_interval->est_b = tmp[1];
 	this_interval->start = breakpoint_vector[i];

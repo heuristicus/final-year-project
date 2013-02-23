@@ -160,6 +160,7 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, exp_set* expe
     int i, j, k;
     int expcount = 0;
 
+
     if (strcmp(get_string_param(exp_list, "run_separately"), "yes") == 0){
 	for (i = 0; i < experiments->len; ++i) {
 	    if (experiments->exps[i] == NULL){
@@ -183,17 +184,33 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, exp_set* expe
 		printf("No experiment on %s\n", experiments->exp_names[i]);
 		continue;
 	    }
-
+	    char* tmp = malloc(strlen(experiments->exp_names[i]) + strlen("_estimator") + 5);
+	    sprintf(tmp, "%s_type", experiments->exp_names[i]);
+	    int multiple = 0;
+	    if (strcmp(get_string_param(exp_list, tmp), "delay") == 0){
+		multiple = 1;
+	    } else if (strcmp(get_string_param(exp_list, tmp), "function") == 0){
+		multiple = 0;
+	    } else {
+		printf("Unknown type %s for experiment %s. Use delay or function\n",
+		       get_string_param(exp_list, tmp), experiments->exp_names[i]);
+		continue;
+	    }
 	    // Read the estimator type to use from the parameter file
-	    char* estparam = malloc(strlen(experiments->exp_names[i]) + strlen("_estimator") + 5);
-	    sprintf(estparam, "%s_estimator", experiments->exp_names[i]);
-	    char* est_type = get_string_param(exp_list, estparam);
+	    sprintf(tmp, "%s_estimator", experiments->exp_names[i]);
+	    char* est_type = get_string_param(exp_list, tmp);
 	    printf("Using estimator %s\n", est_type);
 	    exp_tuple_arr* current_exp = experiments->exps[i];
 	    // Go through all parameter combinations, running the estimator with each combination
 	    do {
 		update_parameters(current_exp, def_list);
-		_estimate(def_list, NULL, "test", est_type);
+		if (multiple){
+		    printf("Estimating time delay.\n");
+		    _multi_estimate(def_list, NULL, "test", 2, 1, est_type);
+		} else {
+		    printf("Estimating functions.\n");
+		    _estimate(def_list, NULL, "test", est_type);
+		}
 		printf("Exp %d complete\n", expcount);
 		expcount++;
 		sepcount++;

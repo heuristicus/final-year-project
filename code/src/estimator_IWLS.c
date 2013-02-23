@@ -5,7 +5,7 @@ static double a_estimate(double alpha, double interval_time, int num_subinterval
 static double b_estimate(double beta, double interval_time, int num_subintervals);
 static double beta_estimate(double* weights, double* midpoints, int* bin_counts, double mean_x, int num_subintervals);
 static double alpha_estimate(double mean_y, double mean_x, double beta_estimate);
-static double w_SSE(double* weights, double* midpoints, int* bin_counts, double alpha, double beta, int num_subintervals);
+//static double w_SSE(double* weights, double* midpoints, int* bin_counts, double alpha, double beta, int num_subintervals);
 static int* get_bin_counts(double_arr* events, double start_time, double end_time, int num_subintervals);
 static double mean_x(double* midpoints, double* weights, int num_subintervals);
 static double mean_Y(int* bin_counts, double* weights, int num_subintervals);
@@ -37,7 +37,7 @@ est_arr* estimate_OLS(paramlist* params, char* infile, char* outfile)
  */
 est_arr* _estimate_OLS(char* infile, char* outfile, double start_time, double end_time, int num_subintervals)
 {
-    return _estimate_IWLS(infile, outfile, start_time, end_time, num_subintervals, 1);
+    return _estimate_IWLS(infile, outfile, start_time, end_time, num_subintervals, 1, NULL);
 }
 
 est_arr* estimate_IWLS(paramlist* params, char* infile, char* outfile)
@@ -47,7 +47,7 @@ est_arr* estimate_IWLS(paramlist* params, char* infile, char* outfile)
     double start = get_double_param(params, "est_start_time");
     double end = get_double_param(params, "est_interval_time") + start;
 
-    return _estimate_IWLS(infile, outfile, start, end, subint, iterations);
+    return _estimate_IWLS(infile, outfile, start, end, subint, iterations, NULL);
 }
 
 /*
@@ -57,7 +57,7 @@ est_arr* estimate_IWLS(paramlist* params, char* infile, char* outfile)
  *
  * **** THE START AND END TIMES MUST BE THE CORRECT START AND END TIMES FOR THE EVENT DATA THAT YOU HAVE. ****
  */
-est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double end_time, int num_subintervals, int iterations)
+est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double end_time, int num_subintervals, int iterations, double_arr* event_data)
 {
     // Does it matter if the interval is longer than what we have data for? if lambda is really low then it
     // is entirely possible that there are no events for a significant period of time after the visible 
@@ -68,7 +68,37 @@ est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double e
     double interval_time = end_time - start_time;
     
     double** intervals = get_subintervals(start_time, end_time, num_subintervals);
-    double_arr* events = get_event_data_interval(start_time, end_time, infile);
+    double_arr* events;
+    if (infile == NULL){
+	events = get_event_subinterval(event_data, start_time, end_time);
+    } else if (event_data == NULL) {
+	events = get_event_data_interval(start_time, end_time, infile);
+    } else {
+	printf("Neither the input file nor an event array were provided to the IWLS estimator. No data to work with - null return.\n");
+	return NULL;
+    }
+	
+    // If there are no events in the given interval, then we can do nothing but return
+    // a line along the x axis for the duration of the interval.
+    if (events == NULL){
+	printf("No events between %lf and %lf.\n", start_time, end_time);
+	est_data** data = malloc(sizeof(est_data*));
+	est_data* est = malloc(sizeof(est_data));
+    
+	est->est_a = 0;
+	est->est_b = 0;
+	est->start = start_time;
+	est->end = end_time;
+
+	data[0] = est;
+
+	est_arr* retval = malloc(sizeof(est_arr));
+	retval->len = 1;
+	retval->estimates = data;
+
+	return retval;
+    }
+
     int* bin_counts = get_bin_counts(events, start_time, end_time, num_subintervals);
     free_double_arr(events);
     
@@ -84,7 +114,7 @@ est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double e
     }
 #endif
 
-    double Y_mean, x_mean, est_beta, est_alpha, sse_alpha_beta, sse_a_b, a = 0, b = 0;
+    double Y_mean, x_mean, est_beta, est_alpha, a = 0, b = 0;
     
     for (loop = 0; loop < iterations; ++loop){
 	
@@ -106,17 +136,18 @@ est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double e
 	est_beta = beta_estimate(weights, midpoints, bin_counts, x_mean, num_subintervals);
 	est_alpha = alpha_estimate(Y_mean, x_mean, est_beta);
 
-	sse_alpha_beta = w_SSE(weights, midpoints, bin_counts, est_alpha, est_beta, num_subintervals);
+
     
 	a = a_estimate(est_alpha, interval_time, num_subintervals);
 	b = b_estimate(est_beta, interval_time, num_subintervals);
 
 #ifdef VERBOSE 
+	/* double sse_alpha_beta = w_SSE(weights, midpoints, bin_counts, est_alpha, est_beta, num_subintervals); */
 	printf("mean x %lf\n", x_mean);
 	printf("mean randvar %lf\n", Y_mean);
 	printf("alpha estimate: %lf\n", est_alpha);
 	printf("beta estimate: %lf\n", est_beta);
-	printf("SSE on alpha and beta: %lf\n", sse_alpha_beta);
+	/* printf("SSE on alpha and beta: %lf\n", sse_alpha_beta); */
 	printf("a estimate: %lf\nb estimate %lf\n", a, b);
 #endif
 
@@ -178,10 +209,11 @@ est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double e
 	}
 #endif
 
-	sse_a_b = w_SSE(weights, midpoints, bin_counts, a, b, num_subintervals);
+	
 
 #ifdef VERBOSE 
-	printf("SSE on a and b: %lf\n", sse_a_b);
+	/* double sse_a_b = w_SSE(weights, midpoints, bin_counts, a, b, num_subintervals); */
+	/* printf("SSE on a and b: %lf\n", sse_a_b); */
 	printf("Estimates after %d iterations:\na = %lf\nb = %lf\n\n\n", loop + 1, a , b);
 #endif
     
@@ -254,7 +286,8 @@ double** get_subintervals(double start_time, double end_time, int num_subinterva
  */
 static int* get_bin_counts(double_arr* events, double start_time, double end_time, int num_subintervals)
 {
-    int *bin_counts = sum_events_in_interval(events->data, events->len, start_time, end_time, num_subintervals);
+//    printf("edata %p elen %d start %lf end %lf numsum %d\n", events->data, events->len, start_time, end_time, num_subintervals);
+    int* bin_counts = sum_events_in_interval(events->data, events->len, start_time, end_time, num_subintervals);
     
     return bin_counts;
 }
@@ -447,11 +480,18 @@ static void weight_estimate(double* weights, double* random_variables, int num_s
     double randvar_total = 0;
         
     for (i = 0; i < num_subintervals; ++i) {
+	if (random_variables[i] == 0.0)
+	    continue;
 	randvar_total += 1/random_variables[i];
     }
 
     for (i = 0; i < num_subintervals; ++i) {
-	weights[i] = (num_subintervals/random_variables[i]) / randvar_total;
+//	printf("subintervals %d, randvar i %lf, randvar total %lf\n", num_subintervals, random_variables[i], randvar_total);
+	if (random_variables[i] == 0.0)
+	    weights[i] = 0;
+	else
+	    weights[i] = (num_subintervals/random_variables[i]) / randvar_total;
+//	printf("corresponding weight %lf\n", weights[i]);
     }
 
 }
@@ -466,6 +506,7 @@ static double mean_x(double* midpoints, double* weights, int num_subintervals)
     double sum = 0.0;
     
     for (i = 0; i < num_subintervals; ++i){
+//	printf("weight is %lf, midpoint is %lf\n", weights[i], midpoints[i]);
 	sum += weights[i] * midpoints[i];
     }
 
@@ -482,6 +523,7 @@ static double mean_Y(int* bin_counts, double* weights, int num_subintervals)
     double sum = 0;
     
     for (i = 0; i < num_subintervals; ++i) {
+//	printf("weight is %lf, bin count is %d\n", weights[i], bin_counts[i]);
 	sum += weights[i] * bin_counts[i];
     }
     
@@ -492,14 +534,14 @@ static double mean_Y(int* bin_counts, double* weights, int num_subintervals)
 /*
  * Find the sum squared error for a set of estimates
  */
-static double w_SSE(double* weights, double* midpoints, int* bin_counts, double alpha, double beta, int num_subintervals)
-{
-    double sum = 0.0;
-    int i;
+/* static double w_SSE(double* weights, double* midpoints, int* bin_counts, double alpha, double beta, int num_subintervals) */
+/* { */
+/*     double sum = 0.0; */
+/*     int i; */
     
-    for (i = 0; i < num_subintervals; ++i){
-	sum += weights[i] * pow((bin_counts[i] - (alpha + beta * midpoints[i])), 2);
-    }
+/*     for (i = 0; i < num_subintervals; ++i){ */
+/* 	sum += weights[i] * pow((bin_counts[i] - (alpha + beta * midpoints[i])), 2); */
+/*     } */
 
-    return sum;
-}
+/*     return sum; */
+/* } */

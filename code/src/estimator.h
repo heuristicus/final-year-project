@@ -19,6 +19,9 @@ est_arr* run_iwls(paramlist* params, char* infile, char* outfile);
 est_arr* run_pc(paramlist* params, char* infile, char* outfile);
 est_arr* run_base(paramlist* params, char* infile, char* outfile);
 double_multi_arr* run_gauss(paramlist* params, char* infile, char* outfile);
+void multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, int output_switch,
+		    char* estimator_type);
+void _multi_estimate(paramlist* params, char* infile, char* outfile, int nstreams, int output_switch, char* estimator_type);
 
 // Use these rather than the functions below.
 est_arr* estimate_OLS(paramlist* params, char *infile, char *outfile);
@@ -39,7 +42,7 @@ est_arr* _estimate_piecewise(char* event_file, char* output_file, double interva
 est_arr* _estimate_OLS(char* infile, char* outfile, double start_time, double end_time,
 			int num_subintervals);
 est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double end_time,
-			 int num_subintervals, int iterations);
+			int num_subintervals, int iterations, double_arr* event_data);
 double_multi_arr* _estimate_gaussian(char* infile, char* outfile, double start,
 			double interval_length, double stdev, double resolution);
 

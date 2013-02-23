@@ -148,7 +148,7 @@ double_arr* get_event_data_interval(double start_time, double end_time, char *fi
 	free_double_arr(event_times);
 	return NULL;
     }
-    event_times = realloc(event_times, i * sizeof(double)); // Potentially save memory?
+    event_times->data = realloc(event_times->data, i * sizeof(double)); // Potentially save memory?
     event_times->len = i;
     
     fclose(fp);
