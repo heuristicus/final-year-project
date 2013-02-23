@@ -76,8 +76,7 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* extra_
 int exists_in_arr(char** arr, int len, char* name);
 void multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, int output_switch,
 		    char* estimator_type);
-void multi_est_gauss(paramlist* params, char* infile, char* outfile, int nstreams);
-void multi_est_default(char* paramfile, char* infile, char* outfile, char* estimator_type, int nstreams);
+void _multi_estimate(paramlist* params, char* infile, char* outfile, int nstreams, int output_switch, char* estimator_type);
 launcher_args* make_arg_struct();
 
 #endif

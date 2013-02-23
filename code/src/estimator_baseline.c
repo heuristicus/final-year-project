@@ -41,7 +41,7 @@ est_arr* _estimate_baseline(char* event_file, char* output_file, double interval
 					  max_extension, min_interval_proportion, pmf_threshold, 
 					  pmf_sum_threshold);
 
-    print_estimates(pieces);
+//    print_estimates(pieces);
     
     int len = pieces->len;
 

@@ -56,7 +56,9 @@ est_arr* _estimate_piecewise(char* event_file, char* output_file,
 	default_interval_length = interval_end - interval_start;
     else 
 	default_interval_length = (interval_end - interval_start) / max_breakpoints;
+#ifdef VERBOSE 
     printf("default interval length %lf\n", default_interval_length);
+#endif
     // start time and end time of the subinterval
     double start_time = interval_start;
     double end_time = interval_start + default_interval_length;
@@ -68,13 +70,17 @@ est_arr* _estimate_piecewise(char* event_file, char* output_file,
         
     // We want to do this at least once, specifically if max_breakpoints is zero
     do {
+#ifdef VERBOSE 
 	printf("Estimating interval [%lf, %lf].\n", start_time, end_time);
+#endif
 	// If the next interval is too short, make the end time of this interval
 	// the end of the overall interval.
 	if (interval_end - end_time  < (interval_end-interval_start) * min_interval_proportion){
-	    printf("INTERVAL TOO SHORT - RE-ESTIMATING NEW INTERVAL\n");
 	    end_time = interval_end;
+#ifdef VERBOSE 
+	    printf("INTERVAL TOO SHORT - RE-ESTIMATING NEW INTERVAL\n");
 	    printf("Estimating interval [%lf, %lf].\n", start_time, end_time);
+#endif
 	}
 
 	/* if (interval_end - end_time  < (interval_end-interval_start)*min_interval_proportion){ */
@@ -115,7 +121,7 @@ est_arr* _estimate_piecewise(char* event_file, char* output_file,
 	start_time = end_time; // The start of the next interval is the end of the current
 	end_time = start_time + default_interval_length > interval_end ? interval_end : start_time + default_interval_length;
 	free_est_arr(interval_estimate_array);
-    } while(i <= max_breakpoints && start_time != end_time);
+    } while (i <= max_breakpoints && start_time != end_time);
 
     if (output_file != NULL){
 	char* out = malloc(strlen(output_file) + strlen(".dat") + 5);

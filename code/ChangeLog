@@ -1,3 +1,10 @@
+2013-02-23  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* experimenter.c: Experiment required parameters are generated from a list of
+	experiment names in the parameter file - this should make it possible to add
+	new experiments without having to modify the internals of the system. Can also
+	specify the type of estimator used by each experiment.
+
 2013-02-21  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* experimenter.c: Added structs for storing experimental data in a structured way.

@@ -294,7 +294,6 @@ void output_estimates(char *filename, est_data **estimates, int len)
 {
     int i;
     //char *f;
-        printf("outing\n");
     for (i = 0; i < len; ++i) {
 	//f = malloc(strlen(filename) + 4);
 	//sprintf(f, "%s_%d", filename, i);
@@ -305,7 +304,6 @@ void output_estimates(char *filename, est_data **estimates, int len)
 	    break;
 	}
 	// Write to file if it's the first run, otherwise append
-	printf("ok\n");
 	estimate_to_file(filename, estimates[i], i > 0 ? "a" : "w");
     }
 }
@@ -330,7 +328,9 @@ void estimate_to_file(char *filename, est_data *estimate, char *mode)
     // length of the interval.
     double counter = start;
     
+#ifdef VERBOSE 
     printf("int end %lf, int start %lf\n", end, start);
+#endif
     
     FILE *fp = fopen(filename, mode);
         

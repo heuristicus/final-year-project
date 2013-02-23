@@ -1,13 +1,5 @@
 #include "experimenter.h"
 
-static char* experiment_params[] = {"generator_params", "iwls_params",
-				    "ols_params", "piecewise_params", 
-				    "baseline_params", "test_generator", 
-				    "test_ols", "test_iwls", "test_piecewise",
-				    "test_baseline", "test_gaussian"};
-
-static char* base_strings[] = {"generator", "iwls", "ols", "baseline", "piecewise", "gaussian"};
-
 typedef struct
 {
     char* param_name;
@@ -45,24 +37,47 @@ void run_experiments(char* exp_paramfile, char* def_paramfile)
     execute_experiments(exp_list, def_list, experiments);
 }
 
-
 exp_set* experiment_setup(paramlist* exp_list, paramlist* def_list)
 {
 
-    if (!has_required_params(exp_list, experiment_params,\
-			     sizeof(experiment_params)/sizeof(char*))){
+    char* ename = get_string_param(exp_list, "experiment_names");
+    string_arr* base_strings = string_split(ename, ',');
+    string_arr* experiment_params = malloc(sizeof(string_arr));
+    experiment_params->data = malloc(base_strings->len * 4 * sizeof(char*));
+    experiment_params->len = base_strings->len * 4;
+    
+    int i;
+    char* req_param = malloc(200);
+    for (i = 0; i < base_strings->len; ++i) {
+	// Create the strings which indicate which parameters are required by the experimenter
+	// in order to do experiments
+	sprintf(req_param, "test_%s", base_strings->data[i]);
+	experiment_params->data[i*4] = strdup(req_param);
+	sprintf(req_param, "%s_params", base_strings->data[i]);
+	experiment_params->data[i*4 + 1] = strdup(req_param);
+	sprintf(req_param, "%s_estimator", base_strings->data[i]);
+	experiment_params->data[i*4 + 2] = strdup(req_param);
+	sprintf(req_param, "%s_type", base_strings->data[i]);
+	experiment_params->data[i*4 + 3] = strdup(req_param);
+    }
+
+    free(req_param);
+    
+    // Make sure that the parameters which specify what parameters will be experimented on
+    // are present in the experiment parameter list.
+    if (!has_required_params(exp_list, experiment_params->data, experiment_params->len)){
 	print_string_array("Some parameters required for experiments are missing. " \
-			   "Ensure that your file contains the following parameters, and"\
-			   " that you're using the right file. Pass the experiment parameters"\
-			   " to -x, and the default ones to -p.",
-			   experiment_params, sizeof(experiment_params)/sizeof(char*));
+			   "Ensure that your file contains the following parameters,\nand"\
+			   " that you're using the right file. Pass the experiment parameter file"\
+			   " to -x, and the default file to -p.",
+			   experiment_params->data, experiment_params->len);
 	exit(1);
     }
 
-    int i,j;
+    int j;
     int missing = 0;
     int req = 0;
-    int baselen = sizeof(base_strings)/sizeof(char*);
+    int baselen = base_strings->len;
 
     exp_set* exval = malloc(sizeof(exp_set));
     exval->exp_names = malloc(baselen * sizeof(char*));
@@ -73,12 +88,16 @@ exp_set* experiment_setup(paramlist* exp_list, paramlist* def_list)
 	char teststr[30];
 	char paramstr[30];
 
-	sprintf(teststr, "test_%s", base_strings[i]);
-	sprintf(paramstr, "%s_params", base_strings[i]);
-	exval->exp_names[i] = strdup(teststr);
-		
-	if (strcmp(get_string_param(exp_list, teststr), "yes") == 0){
-	    printf("%s requested. Checking that experimental values are defined.\n", teststr);
+	sprintf(teststr, "test_%s", base_strings->data[i]);
+	// Read parameter data from this string
+	sprintf(paramstr, "%s_params", base_strings->data[i]);
+	exval->exp_names[i] = strdup(base_strings->data[i]);
+
+	if (get_string_param(exp_list, teststr) == NULL){
+	    printf("%s not defined in paramfile. Skipping.\n", teststr);
+	    continue;
+	} else if (strcmp(get_string_param(exp_list, teststr), "yes") == 0){
+	    printf("%s requested. Checking that experimental values are defined in %s.\n", teststr, paramstr);
 	    char* p = get_string_param(exp_list, paramstr);
 	    if (p == NULL){
 		printf("Expected parameter %s not defined. Skipping.\n", paramstr);
@@ -87,18 +106,23 @@ exp_set* experiment_setup(paramlist* exp_list, paramlist* def_list)
 
 	    string_arr* testparams = string_split(p, ',');
 
+	    // Check whether parameters being modified exist in both parameter files.
 	    if (!parameters_coherent(exp_list, def_list, testparams->data, testparams->len)){
 	    	missing = 1;
 	    } else {
 	    	printf("OK\n");
 	    }
 
+	    // Allocate memory and define lengths for the tuple array which is used
+	    // to store parameters being experimented on.
 	    exval->exps[i] = malloc(sizeof(exp_tuple_arr));
 	    exval->exps[i]->data = malloc(sizeof(exp_tuple*) * testparams->len);
 	    exval->exps[i]->num_params = testparams->len;
 	    exval->exps[i]->param_ind = calloc(testparams->len, sizeof(int));
 	    
 	    for (j = 0; j < testparams->len; ++j) {
+		// Parse the experimental values for each parameter into an
+		// individual tuple and add it to the experiment set.
 		exp_tuple* etup = malloc(sizeof(exp_tuple));
 		etup->param_name = testparams->data[j];
 		etup->param_vals = parse_param(exp_list, etup->param_name);
@@ -127,7 +151,9 @@ exp_set* experiment_setup(paramlist* exp_list, paramlist* def_list)
 }
 
 /*
- * Executes the experiments defined in the experiment set provided.
+ * Executes the experiments defined in the experiment set provided. If the run_separately
+ * parameter is set to yes, then each parameter is experimented on independently of the
+ * others in that set. Otherwise, all possible parameter combinations are experimented on.
  */
 void execute_experiments(paramlist* exp_list, paramlist* def_list, exp_set* experiments)
 {
@@ -157,9 +183,18 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, exp_set* expe
 		printf("No experiment on %s\n", experiments->exp_names[i]);
 		continue;
 	    }
+
+	    // Read the estimator type to use from the parameter file
+	    char* estparam = malloc(strlen(experiments->exp_names[i]) + strlen("_estimator") + 5);
+	    sprintf(estparam, "%s_estimator", experiments->exp_names[i]);
+	    char* est_type = get_string_param(exp_list, estparam);
+	    printf("Using estimator %s\n", est_type);
 	    exp_tuple_arr* current_exp = experiments->exps[i];
+	    // Go through all parameter combinations, running the estimator with each combination
 	    do {
 		update_parameters(current_exp, def_list);
+		_estimate(def_list, NULL, "test", est_type);
+		printf("Exp %d complete\n", expcount);
 		expcount++;
 		sepcount++;
 	    } while (increment_experiment(experiments->exps[i]));
@@ -245,6 +280,9 @@ int parameters_coherent(paramlist* experiment, paramlist* def, char** check, int
     return ok;
 }
 
+/*
+ * Prints an experiment set, displaying all the data contained within it.
+ */
 void print_exp_set(exp_set* set)
 {
     int i, j, k;
@@ -282,6 +320,8 @@ double_arr* parse_param(paramlist* params, char* param_to_parse)
     double* vals = malloc(sizeof(double) * splitparam->len);
     
     for (i = 0; i < splitparam->len; ++i) {
+	// If we find a ..., this indicates a range, so hand over
+	// to the other function.
 	if (strcmp(splitparam->data[i], "...") == 0){
 	    free(vals);
 	    free(ret);
@@ -306,6 +346,8 @@ double_arr* parse_param(paramlist* params, char* param_to_parse)
  */
 double_arr* parse_double_range(string_arr* param_string)
 {
+    // The step is the difference between the first two values
+    // in the array.
     double first = atof(param_string->data[0]);
     double step = atof(param_string->data[1]) - first;
     
@@ -315,6 +357,7 @@ double_arr* parse_double_range(string_arr* param_string)
     int i;
     int contain = 0;
         
+    // ensure that the array received contains a range.
     for (i = 1; i < param_string->len; ++i) {
 	if (strcmp(param_string->data[i], "...") == 0 && i + 1 != param_string->len){
 	    contain = 1;
@@ -326,8 +369,12 @@ double_arr* parse_double_range(string_arr* param_string)
 	double_arr* ret = malloc(sizeof(double_arr));
 	double last = atof(param_string->data[param_string->len - 1]);
 	
+	// The final array will contain this many values once the range
+	// has been expanded.
 	int len = (last - first) / step + 1;
 	int special = 0;
+	// if the step calculated does not go cleanly to the end of the
+	// range, we will add the range end to the end of the array.
 	if (first + (len - 1) * step < last) {
 	    special = 1;
 	    ret->len = len + 1;

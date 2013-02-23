@@ -20,6 +20,12 @@ static char *gauss_params[] = {"est_start_time", "est_interval_time", "gauss_std
 est_arr* estimate(char* paramfile, char* infile, char* outfile, char* estimator_type)
 {
     paramlist* params = get_parameters(paramfile);
+    est_arr* result = _estimate(params, infile, outfile, estimator_type);
+    return result;
+}
+
+est_arr* _estimate(paramlist* params, char* infile, char* outfile, char* estimator_type)
+{
     est_arr* result = NULL;
 
     if (infile == NULL){
@@ -52,9 +58,8 @@ est_arr* estimate(char* paramfile, char* infile, char* outfile, char* estimator_
     } else {
 	printf(EST_TYPE_ERROR, estimator_type);
     }
-    free_list(params);
     
-    return result;
+    return result;    
 }
 
 /*

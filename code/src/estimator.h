@@ -13,6 +13,7 @@
 #define EST_TYPE_ERROR "%s is not a valid estimator. Try -a [ols|iwls|pc|base|gauss].\n"
 
 est_arr* estimate(char* paramfile, char* infile, char* outfile, char* estimator_type);
+est_arr* _estimate(paramlist* params, char* infile, char* outfile, char* estimator_type);
 est_arr* run_ols(paramlist* params, char* infile, char* outfile);
 est_arr* run_iwls(paramlist* params, char* infile, char* outfile);
 est_arr* run_pc(paramlist* params, char* infile, char* outfile);

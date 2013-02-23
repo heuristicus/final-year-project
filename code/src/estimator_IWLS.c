@@ -103,50 +103,64 @@ est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double e
 	Y_mean = mean_Y(bin_counts, weights, num_subintervals);
 	x_mean = mean_x(midpoints, weights, num_subintervals);
 
-	printf("mean x %lf\n", x_mean);
-	printf("mean randvar %lf\n", Y_mean);
-
-
 	est_beta = beta_estimate(weights, midpoints, bin_counts, x_mean, num_subintervals);
 	est_alpha = alpha_estimate(Y_mean, x_mean, est_beta);
 
-	printf("alpha estimate: %lf\n", est_alpha);
-	printf("beta estimate: %lf\n", est_beta);
-
 	sse_alpha_beta = w_SSE(weights, midpoints, bin_counts, est_alpha, est_beta, num_subintervals);
-
-	printf("SSE on alpha and beta: %lf\n", sse_alpha_beta);
     
 	a = a_estimate(est_alpha, interval_time, num_subintervals);
 	b = b_estimate(est_beta, interval_time, num_subintervals);
 
+#ifdef VERBOSE 
+	printf("mean x %lf\n", x_mean);
+	printf("mean randvar %lf\n", Y_mean);
+	printf("alpha estimate: %lf\n", est_alpha);
+	printf("beta estimate: %lf\n", est_beta);
+	printf("SSE on alpha and beta: %lf\n", sse_alpha_beta);
 	printf("a estimate: %lf\nb estimate %lf\n", a, b);
+#endif
 
 	if (loop == 0) {
 	    if (a < 0){
+#ifdef VERBOSE 
 		printf("Estimate for a is not positive (%lf) - setting a to 0 and recalculating b.(OLS)\n", a);
+#endif
 		a = 0;
 		b = constraint_a_OLS(weights, midpoints, bin_counts, interval_time, num_subintervals);
+#ifdef VERBOSE 
 		printf("New a: %lf\nNew b: %lf\n", a, b);
+#endif
 	    } else if (a > 0 && b < -a/interval_time){
+#ifdef VERBOSE 
 		printf("Estimate for b is not within constraints (%lf) - setting a=-bT, b=N*beta/T. (OLS)\n", b);
+#endif
 		a = -b * interval_time;
 		b = constraint_b_OLS(weights, midpoints, bin_counts, interval_time, num_subintervals);
+#ifdef VERBOSE 
 		printf("New a: %lf\nNew b: %lf\n", a, b);
+#endif
 	    }
 	} else {
 	    if (a < 0){
+#ifdef VERBOSE 
 		printf("Estimate for a is not within constraints (%lf) - setting a to 0 and recalculating b. (IWLS)\n", a);
+#endif
 		a = 0;
 		//b = constraint_b_IWLS(bin_counts, interval_time, num_subintervals);
 		b = constraint_b_IWLS(bin_counts, midpoints, interval_time, num_subintervals);
+#ifdef VERBOSE 
 		printf("New a: %lf\nNew b: %lf\n", a, b);
+#endif
 	    } else if (a > 0 && b < -a/interval_time){
+#ifdef VERBOSE 
 		printf("Estimate for b is not within constraints (%lf). Recalculating (IWLS)\n", b);
+#endif
 		a = -b * interval_time;
 		//b = constraint_b_IWLS(bin_counts, interval_time, num_subintervals);
 		b = constraint_b_IWLS(bin_counts, midpoints, interval_time, num_subintervals);
+#ifdef VERBOSE 
 		printf("New a: %lf\nNew b: %lf\n", a, b);
+#endif
 	    }
 	}
 	
@@ -166,13 +180,12 @@ est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double e
 
 	sse_a_b = w_SSE(weights, midpoints, bin_counts, a, b, num_subintervals);
 
+#ifdef VERBOSE 
 	printf("SSE on a and b: %lf\n", sse_a_b);
-
 	printf("Estimates after %d iterations:\na = %lf\nb = %lf\n\n\n", loop + 1, a , b);
+#endif
     
     }
-
-    printf("Final estimates:\na = %lf\nb = %lf\n", a, b);
 
     est_data** data = malloc(sizeof(est_data*));
     est_data* est = malloc(sizeof(est_data));
@@ -195,7 +208,10 @@ est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double e
 	free(out);
     }
 
+#ifdef VERBOSE
+    printf("Final estimates:\na = %lf\nb = %lf\n", a, b);
     print_estimates(retval);
+#endif
     
     free_pointer_arr((void**) intervals, num_subintervals);
     free(bin_counts);

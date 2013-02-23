@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 	exit(1);
     }
         
-    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:f:hrt:p:", opts, &opt_ind)) != -1){
+    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:f:hrt:rp:", opts, &opt_ind)) != -1){
     	switch(c){
     	case 'e': // estimate
     	    args->est = 1;
@@ -189,7 +189,11 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* extra_
 void multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, int output_switch, char* estimator_type)
 {
     paramlist* params = get_parameters(paramfile);
+    _multi_estimate(params, infile, outfile, nstreams, output_switch, estimator_type);
+}
 
+void _multi_estimate(paramlist* params, char* infile, char* outfile, int nstreams, int output_switch, char* estimator_type)
+{
     char* fname = get_string_param(params, "outfile"); // default generator output filename
     char* pref = get_string_param(params, "stream_ext"); // default extension
     double step = get_double_param(params, "output_step");
@@ -243,7 +247,7 @@ void multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, 
 	if (gauss)
 	    estimates[i] = estimate_gaussian_raw(params, infname, outname);
 	else
-	    estimates[i] = estimate(paramfile, infname, outname, estimator_type);
+	    estimates[i] = _estimate(params, infname, outname, estimator_type);
     }
 
     if (strcmp(est_delta, "yes") == 0){

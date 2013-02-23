@@ -121,7 +121,9 @@ double_arr* get_event_subinterval(double_arr* events, double interval_start, dou
     int i;
     double cur_time;
     
+#ifdef VERBOSE 
     printf("interval start %lf, interval end %lf\n", interval_start, interval_end);
+#endif
     for (i = 0, cur_time = events->data[i]; (i < arr_end) && (events->data[i] <= interval_end); ++i, cur_time = events->data[i]) {
 //	printf("cur_time %lf, i %d, i > arr_end %d, i < arr_end %d\n", cur_time, i, i > arr_end, i < arr_end);
 	if (cur_time >= interval_start && start == NULL){
@@ -213,7 +215,7 @@ int has_required_params(paramlist* params, char** required_params, int len)
 {
     int i;
     int ok = 1;
-    
+
     for (i = 0; i < len; ++i) {
 	if (get_param(params, required_params[i]) == NULL){
 	    printf("Missing parameter: %s\n", required_params[i]);

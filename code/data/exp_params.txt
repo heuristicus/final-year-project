@@ -30,35 +30,35 @@ output_estimate_data yes
 # time if you have a lot of parameters and values.
 run_separately no
 
-test_generator no
-test_ols yes
-test_iwls yes
+# Here, you can specify the names for experiments that you want to run. Parameters
+# to test can be added to these experiments by adding a [name]_params parameter
+# to this file. The experiments can be run by defining a test_[name] parameter
+# here and setting its value to yes.
+experiment_names baseline,piecewise,gaussian
+
+# Indicate whether or not to run experiments on the parameters specified by
+# the [name]_params parameter.
 test_piecewise yes
 test_baseline yes
 test_gaussian yes
 
 # Specify the parameters to experiment on for the different estimators and
 # generator. The 
-generator_params start_time,nstreams
-ols_params ols_subintervals
-iwls_params iwls_subintervals,iwls_iterations
 piecewise_params pc_max_extension,pc_max_breakpoints
 baseline_params base_max_breakpoints,base_pmf_threshold
 gaussian_params gauss_est_stdev
 
-# Number of times to repeat each experiment
-repetitions 5
-seed 0
+# Specify the estimator to use on that set of experiments
+piecewise_estimator pc
+baseline_estimator base
+gaussian_estimator gauss
 
-# Whether or not to regenerate the photon stream for each experiment
-regenerate_stream yes
+# Estimate the time delay between two streams or just estimate the function
+piecewise_type function
+baseline_type delay
+gaussian_type delay
 
 ######### parameters
-iwls_subintervals 1,2,...,10
-iwls_iterations 1,2,3
-
-ols_subintervals 1,2,...,10
-
 base_max_breakpoints 5,7,...,21
 base_pmf_threshold 0.05,0.07,...,0.15
 
@@ -66,5 +66,3 @@ pc_max_extension 5,10,...,25
 pc_max_breakpoints 5,7,...,21
 
 gauss_est_stdev 1,2,4,6,8,10
-test1 1,2,3
-test2 2,3,4
