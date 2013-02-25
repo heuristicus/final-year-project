@@ -159,9 +159,9 @@ int set_double_param(paramlist* head, char* param_name, double new_value)
 	return 1;
     }
 
+    free(data->val);
     char* tmp = malloc(MAX_VALUE_LENGTH);
     snprintf(tmp, MAX_VALUE_LENGTH, "%lf", new_value);
-
     data->val = tmp;
 
     return 0;

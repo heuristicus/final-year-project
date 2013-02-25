@@ -109,8 +109,9 @@ est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double e
     int loop;
     
 #ifdef VERBOSE
+    int i;
     for (i = 0; i < num_subintervals; ++i){
-    	printf("%lf - (%lf/%lf) -  %lf: %d\n", intervals[i][0], midpoints[i], intervals[i][1], intervals[i][2], bin_counts[i]);
+    	printf("Interval start: %lf, midpoint: %lf end: %lf, bin count: %d\n", intervals[i][0], midpoints[i], intervals[i][2], bin_counts[i]);
     }
 #endif
 
@@ -119,6 +120,7 @@ est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double e
     for (loop = 0; loop < iterations; ++loop){
 	
 #ifdef VERBOSE
+//	int i;
 	if (lambda){
 	    for (i = 0; i < num_subintervals; ++i) {
 		printf("Random variable %d is %lf\n", i, lambda[i]);
@@ -158,38 +160,38 @@ est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double e
 #endif
 		a = 0;
 		b = constraint_a_OLS(weights, midpoints, bin_counts, interval_time, num_subintervals);
-#ifdef VERBOSE 
+#ifdef VERBOSE
 		printf("New a: %lf\nNew b: %lf\n", a, b);
 #endif
 	    } else if (a > 0 && b < -a/interval_time){
-#ifdef VERBOSE 
+#ifdef VERBOSE
 		printf("Estimate for b is not within constraints (%lf) - setting a=-bT, b=N*beta/T. (OLS)\n", b);
 #endif
 		a = -b * interval_time;
 		b = constraint_b_OLS(weights, midpoints, bin_counts, interval_time, num_subintervals);
-#ifdef VERBOSE 
+#ifdef VERBOSE
 		printf("New a: %lf\nNew b: %lf\n", a, b);
 #endif
 	    }
 	} else {
 	    if (a < 0){
-#ifdef VERBOSE 
+#ifdef VERBOSE
 		printf("Estimate for a is not within constraints (%lf) - setting a to 0 and recalculating b. (IWLS)\n", a);
 #endif
 		a = 0;
 		//b = constraint_b_IWLS(bin_counts, interval_time, num_subintervals);
 		b = constraint_b_IWLS(bin_counts, midpoints, interval_time, num_subintervals);
-#ifdef VERBOSE 
+#ifdef VERBOSE
 		printf("New a: %lf\nNew b: %lf\n", a, b);
 #endif
 	    } else if (a > 0 && b < -a/interval_time){
-#ifdef VERBOSE 
+#ifdef VERBOSE
 		printf("Estimate for b is not within constraints (%lf). Recalculating (IWLS)\n", b);
 #endif
 		a = -b * interval_time;
 		//b = constraint_b_IWLS(bin_counts, interval_time, num_subintervals);
 		b = constraint_b_IWLS(bin_counts, midpoints, interval_time, num_subintervals);
-#ifdef VERBOSE 
+#ifdef VERBOSE
 		printf("New a: %lf\nNew b: %lf\n", a, b);
 #endif
 	    }
@@ -211,7 +213,7 @@ est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double e
 
 	
 
-#ifdef VERBOSE 
+#ifdef VERBOSE
 	/* double sse_a_b = w_SSE(weights, midpoints, bin_counts, a, b, num_subintervals); */
 	/* printf("SSE on a and b: %lf\n", sse_a_b); */
 	printf("Estimates after %d iterations:\na = %lf\nb = %lf\n\n\n", loop + 1, a , b);
@@ -259,7 +261,7 @@ est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double e
 /*
  * Gets the start, midpoint and end of each time interval, defined
  * by the total time and number of subintervals.
- * 
+ *
  * interval = (((k-1)*T)/N, kT/N]
  */
 double** get_subintervals(double start_time, double end_time, int num_subintervals)
@@ -331,12 +333,13 @@ static double* initialise_weights(int num_subintervals)
  */
 static double alpha_estimate(double mean_y, double mean_x, double beta_estimate)
 {
+//    printf("mean y %lf, beta %lf, meanx %lf\n", mean_y, beta_estimate, mean_x);
     return mean_y - beta_estimate * mean_x;
 }
 
 /*
  * Estimates the value of beta
- */ 
+ */
 static double beta_estimate(double* weights, double* midpoints, int* bin_counts, double mean_x, int num_subintervals)
 {
     double xdiffsum = 0;
@@ -345,13 +348,19 @@ static double beta_estimate(double* weights, double* midpoints, int* bin_counts,
     int i;
     
     for (i = 0; i < num_subintervals; ++i) {
-	xdiffsum += weights[i] * (midpoints[i] - mean_x) * bin_counts[i];
+//	xdiffsum += weights[i] * (midpoints[i] - mean_x) * bin_counts[i];
+//	printf("xdiffsum is %lf\n", xdiffsum);
 	squarediffsum += weights[i] * pow(midpoints[i] - mean_x, 2);
+//	printf("squarediffsum is %lf\n", squarediffsum);
     }
 
 #ifdef VERBOSE
     printf("xdiff %lf, sqdiff %lf\n", xdiffsum, squarediffsum);
 #endif
+
+    if (squarediffsum == 0){
+	return 0;
+    }
 
     return xdiffsum/squarediffsum;
         
@@ -362,6 +371,7 @@ static double beta_estimate(double* weights, double* midpoints, int* bin_counts,
  */
 static double a_estimate(double alpha, double interval_time, int num_subintervals)
 {
+//    printf("num_sub %d int time %lf, div %lf\n", num_subintervals, interval_time, num_subintervals/interval_time);
     return alpha * (num_subintervals/interval_time);
 }
 
@@ -370,6 +380,7 @@ static double a_estimate(double alpha, double interval_time, int num_subinterval
  */
 static double b_estimate(double beta, double interval_time, int num_subintervals)
 {
+//    printf("num_sub %d int time %lf, div %lf\n", num_subintervals, interval_time, num_subintervals/interval_time);
     return beta * (num_subintervals/interval_time);
 }
 
@@ -447,7 +458,7 @@ static double constraint_b_IWLS(int* bin_counts, double* midpoints, double inter
 	ysum += bin_counts[i];
 	xsum += midpoints[i];
     }
-    
+
     return (num_subintervals / interval_time) * (ysum / xsum);
     
 }
@@ -464,7 +475,15 @@ static double* lambda_estimate(double* lambda, double* midpoints, double a, doub
     }
         
     for (i = 0; i < num_subintervals; ++i) {
-	lambda[i] = (interval_time/num_subintervals) * (a + b * midpoints[i]);
+//	printf("a is %lf, b is %lf\n", a, b);
+	double val = (interval_time/num_subintervals) * (a + b * midpoints[i]);
+//	printf("time/sub %lf\n", interval_time/num_subintervals);
+//	printf("a+b*mid %lf\n", a+b*midpoints[i]);
+	if (val < 0)
+	    lambda[i] = 0;
+	else
+	    lambda[i] = val;
+//	printf("lambda %d set to %lf\n", i, lambda[i]);
     }
 
     return lambda;
@@ -477,17 +496,17 @@ static double* lambda_estimate(double* lambda, double* midpoints, double a, doub
 static void weight_estimate(double* weights, double* random_variables, int num_subintervals)
 {
     int i;
-    double randvar_total = 0;
+    double randvar_total = 0.0;
         
     for (i = 0; i < num_subintervals; ++i) {
-	if (random_variables[i] == 0.0)
+	if (random_variables[i] <= 0.0)
 	    continue;
 	randvar_total += 1/random_variables[i];
     }
 
     for (i = 0; i < num_subintervals; ++i) {
 //	printf("subintervals %d, randvar i %lf, randvar total %lf\n", num_subintervals, random_variables[i], randvar_total);
-	if (random_variables[i] == 0.0)
+	if (random_variables[i] == 0.0 || randvar_total == 0.0)
 	    weights[i] = 0;
 	else
 	    weights[i] = (num_subintervals/random_variables[i]) / randvar_total;
@@ -504,12 +523,12 @@ static double mean_x(double* midpoints, double* weights, int num_subintervals)
 {
     int i;
     double sum = 0.0;
-    
+//    printf("meanx calculation\n");
     for (i = 0; i < num_subintervals; ++i){
 //	printf("weight is %lf, midpoint is %lf\n", weights[i], midpoints[i]);
 	sum += weights[i] * midpoints[i];
     }
-
+//    printf("resulting 1/nsubs * sum %lf\n", (1.0/num_subintervals) * sum);
     return (1.0/num_subintervals) * sum;
     
 }
@@ -522,11 +541,13 @@ static double mean_Y(int* bin_counts, double* weights, int num_subintervals)
     int i;
     double sum = 0;
     
+//    printf("meany calculation\n");
     for (i = 0; i < num_subintervals; ++i) {
 //	printf("weight is %lf, bin count is %d\n", weights[i], bin_counts[i]);
 	sum += weights[i] * bin_counts[i];
+
     }
-    
+//    printf("resulting 1/nsubs * sum is %lf\n", (1.0/num_subintervals) * sum);
     return (1.0/num_subintervals) * sum;
     
 }

@@ -1,3 +1,8 @@
+############# input
+# The directory from which to read event data. This should contain files which
+# have a structured naming scheme
+input_dir event_streams
+
 ############## output
 # Base name used for output data. The date and time will be appended,
 # perhaps with some more information
@@ -7,7 +12,7 @@ base_outfile experiment_data
 exp_outfile exp
 
 # Directory into which files generated will be placed
-output_dir experiments
+output_dir experiment_output
 
 # File into which to save information about parameter settings used to generate
 # each file put into the output directory
@@ -38,9 +43,9 @@ experiment_names baseline,piecewise,gaussian
 
 # Indicate whether or not to run experiments on the parameters specified by
 # the [name]_params parameter.
-test_piecewise yes
+test_piecewise no
 test_baseline yes
-test_gaussian yes
+test_gaussian no
 
 # Specify the parameters to experiment on for the different estimators and
 # generator. The 
@@ -59,10 +64,10 @@ baseline_type delay
 gaussian_type delay
 
 ######### parameters
-base_max_breakpoints 5,7,...,21
-base_pmf_threshold 0.05,0.07,...,0.15
+base_max_breakpoints 10,12,14
+base_pmf_threshold 0.05,0.07,0.09
 
-pc_max_extension 5,10,...,25
-pc_max_breakpoints 5,7,...,21
+pc_max_extension 5,10
+pc_max_breakpoints 10,12,14
 
 gauss_est_stdev 1,2,4,6,8,10

@@ -151,10 +151,8 @@ double_arr* get_event_subinterval(double_arr* events, double interval_start, dou
     
     
     /* for (i = 0; i < count; ++i) { */
-    /* 	printf("%lf, %d\n", pruned_events[i], i); */
+    /* 	printf("%lf, %d\n", pruned_events->data[i], i); */
     /* } */
-
-    //printf("interval start %lf, first event: %lf, interval end %lf, last event %lf, count %d\n", interval_start, *start, interval_end, *(end - 1), count);
 
     return pruned_events;
 }
@@ -737,4 +735,41 @@ double_arr* init_double_arr(int len)
     r->data = malloc(sizeof(double) * r->len);
     
     return r;
+}
+
+void free_exp_tuple(exp_tuple* t)
+{
+    free(t->param_name);
+    free_double_arr(t->param_vals);
+    free(t);
+}
+
+void free_tuple_arr(exp_tuple_arr* ta)
+{
+    int i;
+    int end = ta->num_params;
+    
+    for (i = 0; i < end; ++i) {
+	free_exp_tuple(ta->data[i]);
+    }
+    
+    free(ta->data);
+    free(ta->param_ind);
+    free(ta);
+}
+
+void free_exp_set(exp_set* es)
+{
+    int i;
+    
+    for (i = 0; i < es->len; ++i) {
+	free(es->exp_names[i]);
+	if (es->exps[i] == NULL)
+	    continue;
+	free_tuple_arr(es->exps[i]);
+    }
+
+    free(es->exp_names);
+    free(es->exps);
+    free(es);
 }

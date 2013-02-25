@@ -36,13 +36,16 @@
     "\t -x, --experiment\n"						\
     "\t\t Run an experiment. Requires parameter file.\n\n"\
     "General options.\n\n"\
+    "\t -c, --count\n"							\
+    "\t\tSpecify the number of functions to generate data from. This can be used\n"\
+    "\t\tto generate or estimate streams from multiple functions at the same time.\n"\
+    "\t\tDefaults to 1.\n\n"\
     "\t -d, --defparam\n"						\
     "\t\t Creates a default parameter file with the given name\n\n"	\
     "\t -h, --help\n"							\
     "\t\t Display this message.\n\n"					\
     "\t -n, --nstreams\n"						\
-    "\t\tNumber of times to run generation. Use this to generate multiple streams."\
-    "\n\t\tAlso specifies how many functions to estimate when using the -e switch.\n\n"\
+    "\t\tUsed to specify how many streams to generate from each function. Defaults to 1.\n\n"\
     "\t -i, --infile\n"						\
     "\t\tSpecify the file to use as input to the subsystem. Usually specifies a file"\
     "\n\t\tcontaining event data.\n\n"								\

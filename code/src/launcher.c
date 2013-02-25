@@ -13,6 +13,7 @@ static struct option opts[] =
 	{"paramfile",  required_argument, 0, 'p'},
 	{"defparam", required_argument, 0, 'd'},
 	{"nstreams",    required_argument, 0, 'n'},
+	{"count",    required_argument, 0, 'c'},
 	{"outtype",    required_argument, 0, 't'},
 	{"help", no_argument, 0, 'h'},
 	{0, 0, 0, 0}
@@ -36,7 +37,7 @@ int main(int argc, char *argv[])
 	exit(1);
     }
         
-    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:f:hrt:rp:", opts, &opt_ind)) != -1){
+    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:f:hrt:rp:c:", opts, &opt_ind)) != -1){
     	switch(c){
     	case 'e': // estimate
     	    args->est = 1;
@@ -73,9 +74,12 @@ int main(int argc, char *argv[])
     	case 'i': // specify input file
     	    infile = strdup(optarg);
     	    break;
-    	case 'n': // specify number of streams/functions
+    	case 'n': // specify number of streams
     	    args->nstreams = atoi(optarg);
     	    break;
+	case 'c': // specify number of functions to estimate or generate from
+	    args->nfuncs = atoi(optarg);
+	    break;
     	case 'o': // specify output file
     	    outfile = strdup(optarg);
     	    break;
@@ -130,13 +134,13 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* extra_
 	    exit(1);
 	} else if (args->rfunc == 1){
 	    printf("Generating gaussians.\n");
-	    generate_gaussian_data(paramfile, infile, outfile, args->nstreams, args->writing);
+	    generate_gaussian_data(paramfile, infile, outfile, args->nfuncs, args->writing);
 	} else if (generator_type == NULL || strcmp(generator_type, "mup") == 0){
 	    printf("Generating event stream with expression from parameter file.\n");
 	    generate(paramfile, outfile, args->nstreams, args->writing);
 	} else if (strcmp(generator_type, "rand") == 0){
 	    printf("Generating event stream with random functions.\n");
-	    generate_from_gaussian(paramfile, outfile, infile, args->nstreams);
+	    generate_from_gaussian(paramfile, outfile, infile, args->nstreams, args->nfuncs);
 	} else {
 	    printf("something bad happened.\n");
 	}
@@ -158,7 +162,7 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* extra_
 	}
 	if (args->nstreams > 1){
 	    printf("Running estimates of multiple (%d) streams.\n", args->nstreams);
-	    multi_estimate(paramfile, infile, outfile, args->nstreams, args->writing, estimator_type);
+	    multi_estimate(paramfile, infile, outfile, args->nstreams, args->nfuncs, args->writing, estimator_type);
 	} else {
 	    printf("Estimating single stream.\n");
 	    // mess with outfile here to output it nicely.
@@ -173,7 +177,7 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* extra_
 		   " Use the -p switch to do so.\n");
 	    exit(1);
 	}
-	run_experiments(paramfile, extra_paramfile);
+	run_experiments(paramfile, extra_paramfile, infile, outfile);
     } else {
 	printf("No action specified. You can run either an estimator, a generator or"\
 	       " experiments by using the -e, -g or -x switches respectively.\n");
@@ -191,6 +195,7 @@ launcher_args* make_arg_struct()
     a->gauss = 0;
     a->gen = 0;
     a->nstreams = 1;
+    a->nfuncs = 1;
     a->writing = 1;
     a->rfunc = 0;
 

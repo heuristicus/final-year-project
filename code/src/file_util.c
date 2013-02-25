@@ -559,6 +559,27 @@ int create_file_in_dir(char* filename, char* dirname)
 }
 
 /*
+ * Creates a directory. Returns 1 if the directory already existed and the
+ * permissions are valid, or was successfully created, 0 otherwise.
+ */
+int create_dir(char* dirname)
+{
+    int r = mkdir(dirname, S_IRWXU);
+    DIR* x;
+    
+    
+    if (r == 0 || errno == EEXIST){
+	if ((x = opendir(dirname)) == NULL){
+	    return 0;
+	}
+	free(x);
+	return 1;
+    }
+
+    return 0;
+}
+
+/*
  * Checks whether a file exists. 1 if it does, 0 if not.
  */
 int file_exists(char* filename)
@@ -567,4 +588,28 @@ int file_exists(char* filename)
 	return 1;
     else
 	return 0;
+}
+
+/*
+ * Checks if a directory exists and is accessible. 1 if yes, 0 otherwise.
+ */
+int dir_exists(char* dirname)
+{
+    struct stat s;
+    
+    int err = stat(dirname, &s);
+    
+    if (err == -1){
+	if (errno == ENOENT){
+	    return 0;
+	} else {
+	    perror("Error accessing directory.");
+	    return 0;
+	}
+    } else {
+	if (S_ISDIR(s.st_mode)){
+	    return 1;
+	}
+    }
+    return 0;
 }

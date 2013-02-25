@@ -113,26 +113,23 @@ void _generate(paramlist* params, char* outfile, double interval_time, double la
 }
 
 /*
- * Generates an event stream by using a random function provided by a set of 
- * gaussians. The gaussians are expected as input in raw form from the infile.
- * If no input is provided, a random function will be generated and events will
- * be generated from that.
+ * Generates a series of event streams from a number of functions. The functions must have filenames
+ * which follow a given scheme, defined by parameters in the paramfile.
  */
-void generate_from_gaussian(char* paramfile, char* outfile, char* infile, int nstreams)
+void generate_from_gaussian(char* paramfile, char* outfile, char* infile,
+				  int nstreams, int nfuncs)
 {
-    gauss_vector* G;
+    int i;
     paramlist* params = get_parameters(paramfile);
-
+    
     double stdev = get_double_param(params, "gauss_stdev");
     double start = get_double_param(params, "start_time");
     double interval = get_double_param(params, "interval_time");
     double step = get_double_param(params, "gauss_generation_step");
     double resolution = get_double_param(params, "gauss_resolution");
     char* stream_ext = get_string_param(params, "stream_ext");
-    
-    int i;
-
     double_arr* time_delta = get_double_list_param(params, "timedelta");
+    char* funcfile = get_string_param(params, "function_outfile");
 
     if (time_delta->len < nstreams){
 	printf("You have not specified time delta values between all streams.\n"\
@@ -144,7 +141,33 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile, int ns
     if (outfile == NULL){
 	outfile = get_string_param(params, "outfile");
     }
-    
+
+    char* infname = malloc(strlen(funcfile) + 5);
+
+    for (i = 0; i < nfuncs; ++i) {
+	sprintf(infname, "%s_%d.dat", funcfile, i);
+	_generate_from_gaussian(params, outfile, infname, stdev, start, interval,
+				step, resolution, stream_ext, time_delta, nstreams);
+    }
+
+    free(infname);
+    free_double_arr(time_delta);
+}
+
+/*
+ * Generates an event stream by using a random function provided by a set of 
+ * gaussians. The gaussians are expected as input in raw form from the infile.
+ * If no input is provided, a random function will be generated and events will
+ * be generated from that.
+ */
+void _generate_from_gaussian(paramlist* params, char* outfile, char* infile,
+			     double stdev, double start, double interval,
+			     double step, double resolution, char* stream_ext,
+			     double_arr* time_delta, int nstreams)
+{
+    int i;
+    gauss_vector* G;
+
     if (infile == NULL){
 	double multiplier = get_double_param(params, "gauss_func_multiplier");
 	if (multiplier == 0){
@@ -164,10 +187,12 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile, int ns
     double min = find_min_value(T->data[1], T->lengths[1]);
     double lambda = ceil(-min + max);
 
-    char* out = malloc(strlen(outfile) + strlen(stream_ext) + 5 + strlen(".dat"));
+    char* out = malloc(strlen(outfile) + strlen(stream_ext) + 5 + strlen(".dat") + strlen(infile));
+    char* intrunc = malloc(strlen(infile));
+    snprintf(intrunc, strlen(infile) - 3, "%s", infile);
 
     for (i = 0; i < nstreams; ++i) {
-	sprintf(out, "%s%s%d.dat", outfile, stream_ext, i);
+	sprintf(out, "%s_%s%s%d.dat", intrunc, outfile, stream_ext, i);
     	double_multi_arr* stream = nonhom_from_gaussian(G, lambda, start, interval, time_delta->data[i], -min);
 	output_double_multi_arr(out, "w", stream);
 	free_double_multi_arr(stream);
@@ -175,8 +200,6 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile, int ns
 
     free_gauss_vector(G);
     free_double_multi_arr(T);
-    free_double_arr(time_delta);
-    free_list(params);
     free(out);
 }
 

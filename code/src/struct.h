@@ -71,7 +71,28 @@ typedef struct
     int gauss;
     int rfunc;
     int nstreams;
+    int nfuncs;
     int writing;
 } launcher_args;
+
+typedef struct
+{
+    char* param_name;
+    double_arr* param_vals;
+} exp_tuple;
+
+typedef struct
+{
+    exp_tuple** data;
+    int* param_ind;
+    int num_params;
+} exp_tuple_arr;
+
+typedef struct
+{
+    exp_tuple_arr** exps;
+    char** exp_names;
+    int len;
+} exp_set;
 
 #endif

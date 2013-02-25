@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <dirent.h>
 
 void standard_out(char filename, void* arr1, void* arr2, int len, char* arrtype);
 void mult_double_to_file(char* filename, char* mode, double* arr1, double* arr2, int len);
@@ -41,5 +42,7 @@ gauss_vector* read_gauss_vector(char* filename);
 void output_double_multi_arr(char* filename, char* mode, double_multi_arr* arr);
 int create_file_in_dir(char* filename, char* dirname);
 int file_exists(char* filename);
+int dir_exists(char* dirname);
+int create_dir(char* dirname);
 
 #endif

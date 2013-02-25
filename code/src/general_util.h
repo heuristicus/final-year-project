@@ -26,5 +26,8 @@ double_arr* estimate_at_points(est_arr* estimate, double* points, int len);
 double_multi_arr* init_multi_array(int num_arrays, int array_length);
 double_arr* init_double_arr(int len);
 void free_double_arr(double_arr* arr);
+void free_exp_set(exp_set* es);
+void free_tuple_arr(exp_tuple_arr* ta);
+void free_exp_tuple(exp_tuple* t);
 
 #endif

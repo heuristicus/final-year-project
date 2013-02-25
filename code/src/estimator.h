@@ -19,9 +19,13 @@ est_arr* run_iwls(paramlist* params, char* infile, char* outfile);
 est_arr* run_pc(paramlist* params, char* infile, char* outfile);
 est_arr* run_base(paramlist* params, char* infile, char* outfile);
 double_multi_arr* run_gauss(paramlist* params, char* infile, char* outfile);
-void multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, int output_switch,
-		    char* estimator_type);
-void _multi_estimate(paramlist* params, char* infile, char* outfile, int nstreams, int output_switch, char* estimator_type);
+void multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, int nfuncs,
+		    int output_switch, char* estimator_type);
+void _multi_estimate(paramlist* params, char* infile, char* outfile, int nstreams, int nfuncs,
+		    int output_switch, char* estimator_type);
+void do_multi_estimate(paramlist* params, char* infile, char* outfile, double step,
+		     double start, char* est_delta, int nstreams, int output_switch,
+		     char* estimator_type);
 
 // Use these rather than the functions below.
 est_arr* estimate_OLS(paramlist* params, char *infile, char *outfile);

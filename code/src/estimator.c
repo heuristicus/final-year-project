@@ -137,29 +137,31 @@ double_multi_arr* run_gauss(paramlist* params, char* infile, char* outfile)
     }
 }
 
+void multi_estimate(char* paramfile, char* in_dir, char* outfile, int nstreams, int nfuncs,
+		    int output_switch, char* estimator_type)
+{
+    paramlist* params = get_parameters(paramfile);
+    
+    _multi_estimate(params, in_dir, outfile, nstreams, nfuncs, output_switch, estimator_type);
+    free_list(params);
+}
+
 /*
  * Estimate a series of streams. Constructs the file to read data from by using
  * parameters used to output the data from the generator, and then runs estimators
  * on each file. Data is then stored and once all estimates have been made the data
- * is combined to make a single estimate.
+ * is combined to make a single estimate. The i
  */
-void multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, int output_switch, char* estimator_type)
-{
-    paramlist* params = get_parameters(paramfile);
-    _multi_estimate(params, infile, outfile, nstreams, output_switch, estimator_type);
-    free_list(params);
-}
-
-void _multi_estimate(paramlist* params, char* infile, char* outfile, int nstreams, int output_switch, char* estimator_type)
+void _multi_estimate(paramlist* params, char* in_dir, char* outfile, int nstreams, int nfuncs, int output_switch, char* estimator_type)
 {
     char* fname = get_string_param(params, "outfile"); // default generator output filename
     char* pref = get_string_param(params, "stream_ext"); // default extension
     double step = get_double_param(params, "output_step");
     char* est_delta = get_string_param(params, "estimate_delta");
     double start = get_double_param(params, "est_start_time");
-    double_arr* delays = NULL;// Will be used to store time delays
     int gauss = strcmp(estimator_type, "gauss") == 0;
-    
+    char* function_fname = get_string_param(params, "function_outfile");
+
     if (step <= 0)
 	step = DEFAULT_STEP;
 
@@ -183,10 +185,37 @@ void _multi_estimate(paramlist* params, char* infile, char* outfile, int nstream
 		   " parameter file,area or specify the output file with the -o switch.\n");
 	exit(1);
     }
-
-    printf("running estimator %s for %d streams\n", estimator_type, nstreams);
     
-    char* infname = malloc(strlen(fname) + strlen(pref) + strlen(".dat") + 5);
+    char* infname;
+    if (in_dir != NULL){
+	infname = malloc(strlen(in_dir) + strlen(function_fname) + strlen(fname) + strlen(pref) + strlen(".dat") + 5);
+    } else {
+	infname = malloc(strlen(function_fname) + strlen(fname) + strlen(pref) + strlen(".dat") + 5);
+    }
+
+    int i;
+    
+    
+    for (i = 0; i < nfuncs; ++i) {
+	if (in_dir != NULL){
+	    sprintf(infname, "%s/%s_%d_%s%s", in_dir, function_fname, i, fname, pref);
+	} else {
+	    sprintf(infname, "%s_%d_%s%s", function_fname, i, fname, pref);
+	}
+	
+	do_multi_estimate(params, infname, outfile, step, start, est_delta, nstreams, output_switch, estimator_type);
+    }
+
+    free(infname);
+}
+
+void do_multi_estimate(paramlist* params, char* infile, char* outfile, double step, double start, char* est_delta, int nstreams, int output_switch, char* estimator_type)
+{
+    double_arr* delays = NULL;// Will be used to store time delays
+    int gauss = strcmp(estimator_type, "gauss") == 0;
+    printf("running estimator %s for %d streams\n", estimator_type, nstreams);
+
+    char* infname = malloc(strlen(infile) + strlen(".dat") + 5);
     char* outname = malloc(strlen(outfile) + strlen(".dat") + strlen("_combined") + 5);
     int i;
 
@@ -198,7 +227,7 @@ void _multi_estimate(paramlist* params, char* infile, char* outfile, int nstream
 	estimates = malloc(sizeof(est_arr*) * nstreams);
 
     for (i = 0; i < nstreams; ++i) {
-	sprintf(infname, "%s%s%d.dat", fname, pref, i);
+	sprintf(infname, "%s%d.dat", infile, i);
 	if (outfile != NULL && output_switch >= 1)
 	    sprintf(outname, "%s_%d", outfile, i);
 	
@@ -220,7 +249,7 @@ void _multi_estimate(paramlist* params, char* infile, char* outfile, int nstream
 
 	// The input file for the base function is used for all delay estimates, so
 	// just read it once.
-	sprintf(infname, "%s%s0.dat", fname, pref);
+	sprintf(infname, "%s0.dat", infile);
 	double_arr* base_stream_events = get_event_data_all(infname);
 	double normaliser = 1;
 
@@ -237,7 +266,7 @@ void _multi_estimate(paramlist* params, char* infile, char* outfile, int nstream
 	    printf("Estimating delta for stream 0 and stream %d\n", i);
 
 	    // Read sets of events for the two streams from different files.
-	    sprintf(infname, "%s%s%d.dat", fname, pref, i);
+	    sprintf(infname, "%s%d.dat", infile, i);
 	    if (outfile != NULL && output_switch >= 1)
 		sprintf(outname, "%s_%d", outfile, i-1);
 
@@ -297,10 +326,10 @@ void _multi_estimate(paramlist* params, char* infile, char* outfile, int nstream
     free_double_multi_arr(final_estimate);
     free_double_arr(delays);
     for (i = 0; i < nstreams; ++i) {
-	if (gauss)
-	    free_gauss_vector((gauss_vector*)estimates[i]);
-	else
-	    free_est_arr((est_arr*)estimates[i]);
+    	if (gauss)
+    	    free_gauss_vector((gauss_vector*)estimates[i]);
+    	else
+    	    free_est_arr((est_arr*)estimates[i]);
     }
     free(estimates);
 }

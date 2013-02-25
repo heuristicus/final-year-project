@@ -124,6 +124,7 @@ est_arr* _estimate_piecewise(char* event_file, char* output_file,
 		
 	++i;
 	start_time = end_time; // The start of the next interval is the end of the current
+	// Make sure that the end time does not exceed the interval end
 	end_time = start_time + default_interval_length > interval_end ? interval_end : start_time + default_interval_length;
 	free_est_arr(interval_estimate_array);
     } while (i <= max_breakpoints && start_time != end_time);
@@ -138,6 +139,7 @@ est_arr* _estimate_piecewise(char* event_file, char* output_file,
     est_arr* results = malloc(sizeof(est_arr));
     results->len = i;
     results->estimates = interval_data;
+    free_double_arr(event_data);
     
     return results;
 }
@@ -167,12 +169,11 @@ double extend_estimate(double_arr* event_data, est_data *interval_estimate, doub
 
 	if (lastevents != NULL){
 	    events = get_event_subinterval(lastevents, start_time, end_time);
-	    free(lastevents);
-	}
-	
-	if (events == NULL) {
-	    printf("No events in interval - cannot extend.\n");
-	    return start_time;
+	    free_double_arr(lastevents);
+	    if (events == NULL) {
+		printf("No events in interval - cannot extend.\n");
+		return start_time;
+	    }
 	}
 
 	int event_num = events->len;
@@ -205,7 +206,7 @@ double extend_estimate(double_arr* event_data, est_data *interval_estimate, doub
 	lastevents = events;
     }
 
-    free(events);
+    free_double_arr(events);
         
     return retval;
 }
