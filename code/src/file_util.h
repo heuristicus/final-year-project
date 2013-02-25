@@ -44,5 +44,6 @@ int create_file_in_dir(char* filename, char* dirname);
 int file_exists(char* filename);
 int dir_exists(char* dirname);
 int create_dir(char* dirname);
+void list_to_file(char* filename, char* mode, paramlist* param);
 
 #endif

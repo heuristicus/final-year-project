@@ -35,6 +35,12 @@ output_estimate_data yes
 # time if you have a lot of parameters and values.
 run_separately no
 
+# Specify the number of streams to use to estimate the time delay
+num_streams 2
+
+# Specify the number of functions in the data set being used for the experiments.
+num_functions 10
+
 # Here, you can specify the names for experiments that you want to run. Parameters
 # to test can be added to these experiments by adding a [name]_params parameter
 # to this file. The experiments can be run by defining a test_[name] parameter
@@ -43,8 +49,8 @@ experiment_names baseline,piecewise,gaussian
 
 # Indicate whether or not to run experiments on the parameters specified by
 # the [name]_params parameter.
-test_piecewise no
-test_baseline yes
+test_piecewise yes
+test_baseline no
 test_gaussian no
 
 # Specify the parameters to experiment on for the different estimators and
@@ -64,8 +70,8 @@ baseline_type delay
 gaussian_type delay
 
 ######### parameters
-base_max_breakpoints 10,12,14
-base_pmf_threshold 0.05,0.07,0.09
+base_max_breakpoints 10,12
+base_pmf_threshold 0.05,0.07
 
 pc_max_extension 5,10
 pc_max_breakpoints 10,12,14

@@ -6,12 +6,23 @@ int increment_experiment(exp_tuple_arr* exp);
 void update_parameters(exp_tuple_arr* exp, paramlist* params);
 int parameters_coherent(paramlist* experiment, paramlist* def, char** check, int check_len);
 exp_set* experiment_setup(paramlist* exp_params, paramlist* def_params);
-void execute_experiments(paramlist* exp_params, paramlist* def_params, char* in_dir, char* out_dir, exp_set* experiments);
+void execute_experiments(paramlist* exp_params, paramlist* def_params,
+			 char* in_dir, char* out_dir, exp_set* experiments,
+			 int num_streams, int num_functions, int output_switch);
 
-void run_experiments(char* exp_paramfile, char* def_paramfile, char* indir, char* outdir)
+void run_experiments(char* exp_paramfile, char* def_paramfile, char* indir,
+		     char* outdir, int num_streams, int num_functions,
+		     int output_switch)
 {
     paramlist* exp_list = get_parameters(exp_paramfile);
     paramlist* def_list = get_parameters(def_paramfile);
+
+    if (num_streams == 1 && num_functions == 1){
+	num_streams = get_int_param(exp_list, "num_streams");
+	num_functions = get_int_param(exp_list, "num_functions");
+    }
+    printf("num streams is %d, funcs is %d\n", num_streams, num_functions);
+
     if (indir == NULL)
 	indir = get_string_param(exp_list, "input_dir");
     if (outdir == NULL)
@@ -51,7 +62,8 @@ void run_experiments(char* exp_paramfile, char* def_paramfile, char* indir, char
     }
 
     exp_set* experiments = experiment_setup(exp_list, def_list);
-    execute_experiments(exp_list, def_list, indir, outdir, experiments);
+    execute_experiments(exp_list, def_list, indir, outdir, experiments,
+			num_streams, num_functions, output_switch);
 
     free_list(exp_list);
     free_list(def_list);
@@ -60,8 +72,12 @@ void run_experiments(char* exp_paramfile, char* def_paramfile, char* indir, char
 
 exp_set* experiment_setup(paramlist* exp_list, paramlist* def_list)
 {
-
     char* ename = get_string_param(exp_list, "experiment_names");
+    if (ename == NULL){
+	printf("No parameter experiment_names specified. Please add this to"\
+	       " the parameter file and define some experiments\n");
+	exit(1);
+    }
     string_arr* base_strings = string_split(ename, ',');
     string_arr* experiment_params = malloc(sizeof(string_arr));
     experiment_params->data = malloc(base_strings->len * 4 * sizeof(char*));
@@ -178,24 +194,28 @@ exp_set* experiment_setup(paramlist* exp_list, paramlist* def_list)
  * parameter is set to yes, then each parameter is experimented on independently of the
  * others in that set. Otherwise, all possible parameter combinations are experimented on.
  */
-void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir, char* out_dir, exp_set* experiments)
+void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
+			 char* out_dir, exp_set* experiments, int num_streams,
+			 int num_functions, int output_switch)
 {
     int i, j, k;
     int expcount = 0;
     char* tmp = NULL;
-    int multiple = 0;
-    int num_functions = 10;
-    int num_streams = 2;
+    int multiple = 0; // Are we estimating the time delay or just a single stream (function)
     char* function_fname = get_string_param(def_list, "function_outfile");
     char* fname = get_string_param(def_list, "outfile"); // default generator output filename
     char* pref = get_string_param(def_list, "stream_ext"); // default extension
     
+    // Go through all of the experiments that are in the set received
     for (i = 0; i < experiments->len; ++i) {
 	printf("Running experiments for %s\n", experiments->exp_names[i]);
 	if (experiments->exps[i] == NULL){
 	    printf("No experiment on %s\n", experiments->exp_names[i]);
 	    continue;
 	}
+
+	// Some parameters we need to read from the paramfile vary depending on the
+	// estimator name, so use this to get them.
 	tmp = malloc(strlen(experiments->exp_names[i]) + strlen("_estimator") + 5);
 	sprintf(tmp, "%s_type", experiments->exp_names[i]);
 	if (strcmp(get_string_param(exp_list, tmp), "delay") == 0){
@@ -211,9 +231,12 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 	sprintf(tmp, "%s_estimator", experiments->exp_names[i]);
 	char* est_type = get_string_param(exp_list, tmp);
 	printf("Using estimator %s\n", est_type);
+	// Store the reference to the current experiment to reduce clutter.
 	exp_tuple_arr* current_exp = experiments->exps[i];
 	
-	char* output_directory = malloc(strlen(experiments->exp_names[i]) + strlen(out_dir) + 5);
+	// This is the top level directory to which we will output data from
+	// this set of experiments
+	char* output_directory = malloc(strlen(experiments->exp_names[i]) + strlen(out_dir) + strlen("experiment") + 5);
 	sprintf(output_directory, "%s/%s", out_dir, experiments->exp_names[i]);
 	if (!create_dir(output_directory)){
 	    printf("Something went wrong when creating directory %s.\n", output_directory);
@@ -222,50 +245,76 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 	}
 	printf("output directory is %s\n", output_directory);
 	
+	// The way we do experiments depends on whether the parameters are to be
+	// co-varied - we split here.
 	if (strcmp(get_string_param(exp_list, "run_separately"), "yes") == 0){
 	    for (j = 0; j < current_exp->num_params; ++j) {
-		printf("Parameter %d: %s\nValues:\n", j, current_exp->data[j]->param_name);
+//		printf("Parameter %d: %s\nValues:\n", j, current_exp->data[j]->param_name);
 		for (k = 0; k < current_exp->data[j]->param_vals->len; ++k) {
-		    printf("%lf\n", current_exp->data[j]->param_vals->data[k]);
+//		    printf("%lf\n", current_exp->data[j]->param_vals->data[k]);
 		    expcount++;
 		}
 	    }
 	} else {
-	    int sepcount = 0;
-	    char* output_file = malloc(strlen(output_directory) + strlen("test") + 5);
+	    int sepcount = 0; // separate count for each experiment
+	    
+	    // This is the directory in which data for an experiment with the same set of parameters.
+	    char* experiment_directory = malloc(strlen(output_directory) + \
+						strlen("experiment_") + 8);
+	    // Data is output to this file (note that more things are appended!)
 
 	    // Go through all parameter combinations, running the estimator with each combination
 	    do {
-		sprintf(output_file, "%s/%s", output_directory, "test");
+		// Update the experiment directory with the current experiment number, and create it.
+		sprintf(experiment_directory, "%s/experiment_%d", output_directory, sepcount);
+		if (!create_dir(experiment_directory)){
+		    printf("Something went wrong when attempting to create directory %s.\n",
+			   experiment_directory);
+		    perror("Error");
+		    exit(1);
+		}
+		char* output_file = malloc(strlen(experiment_directory) + strlen("test") + \
+					   5 + strlen("experiment_"));
+			    
+
+		// Set the parameters in the parameter list to those which are to be
+		// used for the current experiment
 		update_parameters(current_exp, def_list);
-		if (multiple){
+		// Output the parameter settings to the experiment directory so
+		// that they can be checked later.
+		sprintf(output_file, "%s/%s", experiment_directory, "parameters.txt");
+		list_to_file(output_file, "w", def_list);
+		// The data is output to this file - prepend the experiment directory location
+		sprintf(output_file, "%s/%s", experiment_directory, "exp");
+		if (multiple){ 
 		    printf("Estimating time delay.\n");
 		    _multi_estimate(def_list, in_dir, output_file, num_streams, num_functions, 1, est_type);
 		} else {
 		    printf("Estimating functions.\n");
-		    char* infname = infname = malloc(strlen(in_dir) + strlen(function_fname) + strlen(fname) + strlen(pref) + strlen(".dat") + 5);
+		    char* infname = infname = malloc(strlen(in_dir) + strlen(function_fname) + strlen(fname) + strlen(pref) + strlen(".dat") + 10);
 		    int i;
 		    
 		    for (i = 0; i < num_functions; ++i) {
-			sprintf(infname, "%s/%s_%d_%s%s_%d.dat", in_dir, function_fname, i, fname, pref, 0);
-			free_est_arr(_estimate(def_list, in_dir, output_file, est_type));
+			sprintf(infname, "%s/%s_%d_%s%s%d.dat", in_dir, function_fname, i, fname, pref, 0);
+			free_est_arr(_estimate(def_list, infname, output_file, est_type, output_switch));
 		    }
 		    free(infname);
 		}
 		printf("Exp %d complete\n", expcount);
 		expcount++;
 		sepcount++;
+		free(output_file);
 	    } while (increment_experiment(current_exp));
 	    printf("Completed %d experiments for %s.\n", sepcount, experiments->exp_names[i]);
 	    sepcount = 0;
-	    free(output_file);
+	    free(experiment_directory);
 	}
 	free(output_directory);
     }
 	
     free(tmp);
     
-    printf("total experiments: %d\n", expcount);
+    printf("total experiments: %d on %d functions = %d\n", expcount, num_functions, expcount * num_functions);
 }
 
 /*

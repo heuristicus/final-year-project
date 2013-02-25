@@ -63,17 +63,17 @@ START_TEST (test_get_event_subinterval)
     double ad[7] = {0.5, 1, 1.5, 2, 2.5, 3, 3.5};
     double_arr* a1 = init_double_arr(7);
     a1->data = ad;
-    printf("yeah\n");
     // Get back what we put in
     double_arr* res1 = get_event_subinterval(a1, 0, 4);
     int i;
+
+    fail_unless(res1->len == sizeof(ad)/sizeof(double));
 
     for (i = 0; i < res1->len; ++i) {
 	printf("%d: %lf %lf\n", i, res1->data[i], a1->data[i]);
 	fail_unless(res1->data[i] == a1->data[i]);
     }
     free(res1);
-    printf("crashem\n");
     
     // Get a subinterval
     double_arr* res2 = get_event_subinterval(a1, 0, 2);

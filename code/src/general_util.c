@@ -120,23 +120,30 @@ double_arr* get_event_subinterval(double_arr* events, double interval_start, dou
 
     int i;
     double cur_time;
+
+    /* for (i = 0; i < events->len; ++i) { */
+    /* 	printf("event %d is %lf\n", i, events->data[i]); */
+    /* } */
+
     
 #ifdef VERBOSE 
     printf("interval start %lf, interval end %lf\n", interval_start, interval_end);
 #endif
-    for (i = 0, cur_time = events->data[i]; (i < arr_end) && (events->data[i] <= interval_end); ++i, cur_time = events->data[i]) {
+    for (i = 0; (i < arr_end) && (events->data[i] <= interval_end); ++i) {
+	cur_time = events->data[i];
 //	printf("cur_time %lf, i %d, i > arr_end %d, i < arr_end %d\n", cur_time, i, i > arr_end, i < arr_end);
 	if (cur_time >= interval_start && start == NULL){
-	    //printf("interval start detected at %lf\n", cur_time);
+//	    printf("interval start detected at %lf\n", cur_time);
 	    start = (events->data + i); // start pointer moves to indicate the start of the interval
 	    count++;
 	} else if (cur_time > interval_end){
-	    //printf("interval end detected at %lf\n", cur_time);
+//	    printf("interval end detected at %lf\n", cur_time);
 	    count++;
 	    break;
 	} else if (cur_time > interval_start && cur_time < interval_end){
 	    count++;
 	}
+
     }
     
     // If we didn't find any events within the specified interval

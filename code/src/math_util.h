@@ -69,6 +69,7 @@ double_arr* sum_gaussians_at_points(gauss_vector* G, double* points, int len);
 double largest_value_in_arr(double* arr, int len);
 double abs_max(double a, double b);
 int dbl_less_than(double a, double b, double precision);
+int dbl_equal(double a, double b, double precision);
 
 #endif
 

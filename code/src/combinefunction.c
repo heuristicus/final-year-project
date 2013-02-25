@@ -15,7 +15,7 @@ double_multi_arr* combine_functions(est_arr** estimates, double_arr* time_delay,
 				    double start, double interval_time, double step,
 				    int num_estimates)
 {
-    printf("estimates %p, time delay %p, interval_time %lf, step %lf, num estimates %d\n", estimates, time_delay, interval_time, step, num_estimates);
+//    printf("estimates %p, time delay %p, interval_time %lf, step %lf, num estimates %d\n", estimates, time_delay, interval_time, step, num_estimates);
     if (estimates == NULL || time_delay == NULL || step <= 0 || num_estimates <= 0 ||
 	interval_time <= 0)
 	return NULL;
@@ -29,10 +29,13 @@ double_multi_arr* combine_functions(est_arr** estimates, double_arr* time_delay,
 
     // need to fix this to work with combinations at any point and
     // any interval. This currently only works for stuff which starts
-    // at zero and when the delay is non-negative.
-    int memsize = (int)(((interval_time - start - 2 * max_delay) / step + 1));
-    double_multi_arr* combination = init_multi_array(2, memsize);
+    // at zero and when the delay is non-negative(?).
+    int memsize = interval_time - start - 2 * max_delay / step + 10;
 
+
+    double* times = malloc((memsize + 10) * sizeof(double));
+    double* sums = malloc((memsize + 10) * sizeof(double));
+    
     /*
      * Only have data for all functions in the intervals in which they
      * are all active, so we must limit the times being checked to this interval.
@@ -47,9 +50,19 @@ double_multi_arr* combine_functions(est_arr** estimates, double_arr* time_delay,
 	for (estimate_num = 0; estimate_num < num_estimates; ++estimate_num) {
 	    total += estimate_at_point(estimates[estimate_num], time - time_delay->data[estimate_num]);
 	}
-	combination->data[0][i] = time;
-	combination->data[1][i] = total/num_estimates;
+	
+	times[i] = time;
+	sums[i] = total/num_estimates;
     }
+
+    double_multi_arr* combination = malloc(sizeof(double_multi_arr));
+    combination->len = 2;
+    combination->lengths = malloc(2 * sizeof(int));
+    combination->lengths[0] = i;
+    combination->lengths[1] = i;
+    combination->data = malloc(2 * sizeof(double*));
+    combination->data[0] = times;
+    combination->data[1] = sums;
 
     return combination;
 }

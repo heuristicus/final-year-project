@@ -221,7 +221,7 @@ void free_list(paramlist *head)
 }
 
 /* Returns the length of the list.  */
-int length(paramlist* head)
+int list_length(paramlist* head)
 {
     int len;
 
@@ -229,4 +229,3 @@ int length(paramlist* head)
     
     return len;
 }
-

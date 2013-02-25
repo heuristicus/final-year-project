@@ -170,10 +170,11 @@ double extend_estimate(double_arr* event_data, est_data *interval_estimate, doub
 	if (lastevents != NULL){
 	    events = get_event_subinterval(lastevents, start_time, end_time);
 	    free_double_arr(lastevents);
-	    if (events == NULL) {
-		printf("No events in interval - cannot extend.\n");
-		return start_time;
-	    }
+	}
+
+	if (events == NULL) {
+	    printf("No events in interval - cannot extend.\n");
+	    return start_time;
 	}
 
 	int event_num = events->len;

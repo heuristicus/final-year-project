@@ -1,5 +1,25 @@
 2013-02-25  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
+	* estimator_gaussian.c: Added output switch parameter to the estimator functions.
+	Outputting the contribution of each gaussian takes extremely long, so if it is
+	not necessary it should be done. The standard output is just the sum of gaussians
+	if using the non-raw estimator. To output the contributions as well, a value of
+	3 should be passed to the -t switch.
+
+	* experimenter.c: The number of functions and number of streams to work on for
+	each function are defined in the experiment file and passed to the estimators
+	for each experiment. Data for each experiment is output to a separate directory
+	and each filename can be used to identify which of the input functions was
+	used to generate that data. A parameter file is output to each experiment
+	directory so that the settings used for that experiment can be checked later.
+	Correct file is now passed to the single stream estimator.
+
+	* combinefunction.c: Fixed memory access issue caused by allocation of arrays
+	too small to hold data in cases where the interval length was a round number.
+
+	* general_util.c: Finally fixed event subinterval function causing errors to
+	show up in valgrind.
+
 	* estimator_IWLS.c: More fixes to situations which result in -nan values being
 	produced. Beta estimate function returns zero if the denominator is zero to
 	prevent nan results.

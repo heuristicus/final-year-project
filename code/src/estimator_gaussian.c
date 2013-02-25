@@ -7,7 +7,8 @@ char *gauss_params[] = {"gauss_est_stdev", "est_start_time", "est_interval_time"
  * Estimates the given set of events using gaussian kernels, returning the
  * gaussian transform of the kernels.
  */
-double_multi_arr* estimate_gaussian(paramlist* params, char* infile, char* outfile)
+double_multi_arr* estimate_gaussian(paramlist* params, char* infile, char* outfile,
+				    int output_switch)
 {
     if (!has_required_params(params, gauss_params, sizeof(gauss_params)/sizeof(char*))){
 	printf("Some parameters required to perform gaussian estimation are missing."\
@@ -28,13 +29,16 @@ double_multi_arr* estimate_gaussian(paramlist* params, char* infile, char* outfi
     	shift = -min;
     }
     
-    if (outfile != NULL){
-	printf("outputting stuff\n");
+    if (outfile != NULL && output_switch > 0){
 	char* out = malloc(strlen(outfile) + strlen("_contrib.dat") + 3);
-	sprintf(out, "%s_contrib.dat", outfile);
-	output_gaussian_contributions(out, "w", G, start, start + interval, resolution, 0);
-	sprintf(out, "%s_sum.dat", outfile);
-	output_gauss_transform(out, "w", T->data, shift, T->lengths[0], stdev + 6);
+	if (output_switch >= 1){
+	    sprintf(out, "%s_sum.dat", outfile);
+	    output_gauss_transform(out, "w", T->data, shift, T->lengths[0], stdev + 6);
+	}
+	if (output_switch >= 3){
+	    sprintf(out, "%s_contrib.dat", outfile);
+	    output_gaussian_contributions(out, "w", G, start, start + interval, resolution, 0);
+	}
     }
 
     free_gauss_vector(G);
@@ -47,7 +51,8 @@ double_multi_arr* estimate_gaussian(paramlist* params, char* infile, char* outfi
  * Estimates the given set of events using gaussian kernels, returning the kernels
  * in their raw form.
  */
-gauss_vector* estimate_gaussian_raw(paramlist* params, char* infile, char* outfile)
+gauss_vector* estimate_gaussian_raw(paramlist* params, char* infile, char* outfile,
+				    int output_switch)
 {
     if (!has_required_params(params, gauss_params, sizeof(gauss_params)/sizeof(char*))){
 	printf("Some parameters required to perform gaussian estimation are missing."\
@@ -62,11 +67,13 @@ gauss_vector* estimate_gaussian_raw(paramlist* params, char* infile, char* outfi
 
     gauss_vector* G = _estimate_gaussian_raw(infile, outfile, start, interval, stdev, resolution);
  
-    if (outfile != NULL){
-	char* out = malloc(strlen(outfile) + strlen("_contrib.dat") + 3);
-	sprintf(out, "%s_contrib.dat", outfile);
-	output_gaussian_contributions(out, "w", G, start, start + interval, resolution, 0);
-	free(out);
+    if (outfile != NULL && output_switch > 0){
+	if (output_switch >= 3){
+	    char* out = malloc(strlen(outfile) + strlen("_contrib.dat") + 3);
+	    sprintf(out, "%s_contrib.dat", outfile);
+	    output_gaussian_contributions(out, "w", G, start, start + interval, resolution, 0);
+	    free(out);
+	}
     }
 
     return G;
@@ -78,7 +85,6 @@ gauss_vector* _estimate_gaussian_raw(char* infile, char* outfile, double start,
     double_arr* ev = get_event_data_all(infile);
 
     gauss_vector* G = gen_gaussian_vector_from_array(ev->data, ev->len, stdev, 1, 0);
-    
 
     free(ev);
     

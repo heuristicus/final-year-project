@@ -19,14 +19,14 @@ static char *gauss_params[] = {"est_start_time", "est_interval_time", "gauss_std
  * Runs the specified estimator using the provided parameter and output files. Performs
  * checks on the required parameters and does not run if they are not specified in the parameter file.
  */
-est_arr* estimate(char* paramfile, char* infile, char* outfile, char* estimator_type)
+est_arr* estimate(char* paramfile, char* infile, char* outfile, char* estimator_type, int output_switch)
 {
     paramlist* params = get_parameters(paramfile);
-    est_arr* result = _estimate(params, infile, outfile, estimator_type);
+    est_arr* result = _estimate(params, infile, outfile, estimator_type, output_switch);
     return result;
 }
 
-est_arr* _estimate(paramlist* params, char* infile, char* outfile, char* estimator_type)
+est_arr* _estimate(paramlist* params, char* infile, char* outfile, char* estimator_type, int output_switch)
 {
     est_arr* result = NULL;
 
@@ -56,7 +56,7 @@ est_arr* _estimate(paramlist* params, char* infile, char* outfile, char* estimat
     } else if (strcmp("base", estimator_type) == 0){
 	result = run_base(params, infile, outfile);
     } else if (strcmp("gauss", estimator_type) == 0){
-	run_gauss(params, infile, outfile);
+	run_gauss(params, infile, outfile, output_switch);
     } else {
 	printf(EST_TYPE_ERROR, estimator_type);
     }
@@ -125,10 +125,10 @@ est_arr* run_base(paramlist* params, char* infile, char* outfile)
     }
 }
 
-double_multi_arr* run_gauss(paramlist* params, char* infile, char* outfile)
+double_multi_arr* run_gauss(paramlist* params, char* infile, char* outfile, int output_switch)
 {
     if (has_required_params(params, gauss_params, sizeof(gauss_params)/sizeof(char*))){
-	return estimate_gaussian(params, infile, outfile);
+	return estimate_gaussian(params, infile, outfile, output_switch);
     } else {
 	print_string_array("Some parameters required for gaussian estimates are missing. " \
 			   "Ensure that your parameter file contains the following entries and try again.",
@@ -152,7 +152,8 @@ void multi_estimate(char* paramfile, char* in_dir, char* outfile, int nstreams, 
  * on each file. Data is then stored and once all estimates have been made the data
  * is combined to make a single estimate. The i
  */
-void _multi_estimate(paramlist* params, char* in_dir, char* outfile, int nstreams, int nfuncs, int output_switch, char* estimator_type)
+void _multi_estimate(paramlist* params, char* in_dir, char* outfile, int nstreams,
+		     int nfuncs, int output_switch, char* estimator_type)
 {
     char* fname = get_string_param(params, "outfile"); // default generator output filename
     char* pref = get_string_param(params, "stream_ext"); // default extension
@@ -187,6 +188,7 @@ void _multi_estimate(paramlist* params, char* in_dir, char* outfile, int nstream
     }
     
     char* infname;
+    char* outname = malloc(strlen(outfile) + strlen("func") + 10);
     if (in_dir != NULL){
 	infname = malloc(strlen(in_dir) + strlen(function_fname) + strlen(fname) + strlen(pref) + strlen(".dat") + 5);
     } else {
@@ -202,14 +204,17 @@ void _multi_estimate(paramlist* params, char* in_dir, char* outfile, int nstream
 	} else {
 	    sprintf(infname, "%s_%d_%s%s", function_fname, i, fname, pref);
 	}
-	
-	do_multi_estimate(params, infname, outfile, step, start, est_delta, nstreams, output_switch, estimator_type);
+	sprintf(outname, "%s_func_%d", outfile, i);
+		
+	do_multi_estimate(params, infname, outname, step, start, est_delta, nstreams, output_switch, estimator_type);
     }
-
+    free(outname);
     free(infname);
 }
 
-void do_multi_estimate(paramlist* params, char* infile, char* outfile, double step, double start, char* est_delta, int nstreams, int output_switch, char* estimator_type)
+void do_multi_estimate(paramlist* params, char* infile, char* outfile, double step,
+		       double start, char* est_delta, int nstreams, int output_switch,
+		       char* estimator_type)
 {
     double_arr* delays = NULL;// Will be used to store time delays
     int gauss = strcmp(estimator_type, "gauss") == 0;
@@ -232,9 +237,9 @@ void do_multi_estimate(paramlist* params, char* infile, char* outfile, double st
 	    sprintf(outname, "%s_%d", outfile, i);
 	
 	if (gauss)
-	    estimates[i] = estimate_gaussian_raw(params, infname, outname);
+	    estimates[i] = estimate_gaussian_raw(params, infname, outname, output_switch);
 	else
-	    estimates[i] = _estimate(params, infname, outname, estimator_type);
+	    estimates[i] = _estimate(params, infname, outname, estimator_type, output_switch);
     }
 
     if (strcmp(est_delta, "yes") == 0){

@@ -166,7 +166,7 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* extra_
 	} else {
 	    printf("Estimating single stream.\n");
 	    // mess with outfile here to output it nicely.
-	    est_arr* result = estimate(paramfile, infile, outfile, estimator_type);
+	    est_arr* result = estimate(paramfile, infile, outfile, estimator_type, args->writing);
 	    if (result != NULL)
 		free_est_arr(result);
 	}
@@ -177,7 +177,7 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* extra_
 		   " Use the -p switch to do so.\n");
 	    exit(1);
 	}
-	run_experiments(paramfile, extra_paramfile, infile, outfile);
+	run_experiments(paramfile, extra_paramfile, infile, outfile, args->nstreams, args->nfuncs, args->writing);
     } else {
 	printf("No action specified. You can run either an estimator, a generator or"\
 	       " experiments by using the -e, -g or -x switches respectively.\n");

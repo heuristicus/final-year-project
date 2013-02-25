@@ -759,3 +759,10 @@ int dbl_less_than(double a, double b, double precision)
     /* printf("returning %d\n", diff > precision && diff > 0); */
     return diff > precision && diff > 0;
 }
+
+int dbl_equal(double a, double b, double precision)
+{
+    double diff = fabs(b - a);
+
+    return diff < precision;
+}

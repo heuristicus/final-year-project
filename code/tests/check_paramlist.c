@@ -155,6 +155,7 @@ Suite* paramlist_suite(void)
     tcase_add_test(tc_core, test_get_double_list_param);
     tcase_add_test(tc_core, test_set_double_param);
     tcase_add_test(tc_core, test_set_string_param);
+    tcase_add_test(tc_core, test_set_int_param);
     
     suite_add_tcase(s, tc_core);
     return s;

@@ -613,3 +613,28 @@ int dir_exists(char* dirname)
     }
     return 0;
 }
+
+/*
+ * Ouputs the parameter names and values to a file.
+ */
+void list_to_file(char* filename, char* mode, paramlist* param)
+{
+    int i;
+
+    paramlist* l = param;
+    
+    FILE *fp = fopen(filename, mode);
+
+    if (fp == NULL){
+	printf("Could not open file %s.\n", filename);
+	perror("Error");
+	return;
+    }
+
+    for (i = 0; i < list_length(l); ++i) {
+	fprintf(fp, "%s %s\n", l->par, l->val);
+	l = l->next;
+    }
+
+    fclose(fp);
+}
