@@ -1,150 +1,305 @@
-% Created 2013-01-13 Sun 16:50
-\documentclass[11pt]{article}
+% Created 2013-02-25 Mon 21:54
+\documentclass[a4paper,12pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+\usepackage{fixltx2e}
 \usepackage{graphicx}
 \usepackage{longtable}
 \usepackage{float}
 \usepackage{wrapfig}
 \usepackage{soul}
+\usepackage{textcomp}
+\usepackage{marvosym}
+\usepackage{wasysym}
+\usepackage{latexsym}
 \usepackage{amssymb}
 \usepackage{hyperref}
+\tolerance=1000
 \usepackage{fontspec}
+\usepackage[titletoc,page,title]{appendix}
 \defaultfontfeatures{Mapping=tex-text}
 \setromanfont[Ligatures={Common},Numbers={Lining}]{Linux Libertine}
+\providecommand{\alert}[1]{\textbf{#1}}
 
-\title{Kernel regression methods for estimation of time delays in gravitationally lensed photon streams}
+\title{A Weighted Least Squares Method for Time Delay Estimation in Gravitationally Lensed Photon Streams}
 \author{\Large{Micha{\l} Staniaszek} \\\small{Supervisor: Peter Tiňo}}
-\date{13 January 2013}
+\date{\today}
+\hypersetup{
+  pdfkeywords={},
+  pdfsubject={},
+  pdfcreator={Emacs Org-mode version 7.8.11}}
 
 \begin{document}
 
 \maketitle
 
-\setcounter{tocdepth}{3}
-\tableofcontents
-\vspace*{1cm}
 
-\section{Acknowledgements}
+\thispagestyle{empty}
+\newpage
+\pagenumbering{roman}
+\begin{abstract}
+In this report, we present a system for the estimation of the
+time delay $\Delta t$ between multiple realisations of a Poisson
+process with the underlying function $\lambda(t)$, with particular
+application to gravitationally lensed photon streams. We build on
+the weighted least squares approach to develop a linear estimator 
+which we use to estimate $\lambda(t)$. We then introduce a numerical
+and probabilistic method for estimating $\Delta t$ using
+the function estimates. Finally, we compare the performance of our
+linear estimator to kernel regression on simulated data and data 
+from the quasar Q0957+561.
+\end{abstract}
+\newpage
+\tableofcontents
+\newpage
+\pagenumbering{arabic}
+\section{Introduction}
 \label{sec-1}
 
-\section{Introduction}
-\label{sec-2}
-
+\begin{itemize}
+\item Talk generally about the problem of time delay estimation
+\item refer to physics papers attempting to make estimates of the delay
+\item talk about how better estimates benefit the scientific community
+\item refer to peter's paper about the efficacy of kernel regression
+\item better estimators are necessary to increase the accuracy of estimates
+\item this is an experiment to see whether this method has any use
+\end{itemize}
 \subsection{Problem statement}
-\label{sec-2.1}
+\label{sec-1-1}
 
-   we are trying to find the time delay between two or more photon streams which come from a gravitationally lensed object. In order to do this, we use a kernel regression method to estimate the underlying functions of each stream, and then use various techniques to determine whether the two streams of photons originate from the same object. After confirming that both streams are likely to come from the same object (with some confidence), we determine the time delay between the two streams.
+   we are trying to find the time delay between two or more photon
+   streams which come from a gravitationally lensed object. In order
+   to do this, we use a kernel regression method to estimate the
+   underlying functions of each stream, and then use various
+   techniques to determine whether the two streams of photons
+   originate from the same object. After confirming that both streams
+   are likely to come from the same object (with some confidence), we
+   determine the time delay between the two streams.
+
+form a base for a system which can automatically recognise potential
+lensed objects and flag them for further investigation
 \subsection{Impact of solving (or not solving) the problem}
-\label{sec-2.2}
+\label{sec-1-2}
 
-   Successful completion of the project will lead to a more effective technique for determining the time delay from gravitationally lensed photon streams. In particular, if the technique is more accurate than those currently used for the calculation of these delays, then it could allow more accurate estimation of things that are important to determine the structure of the universe. Time delay calculations have been used to determine the value of the hubble constant to a higher precision, as well as to find out the mass distribution in a certain area of space. Both of these are areas of great importance in astrophysics, and the ability to calculate these values more accurately could potentially lead to discoveries being made in other areas.
+   Successful completion of the project will lead to a more effective
+   technique for determining the time delay from gravitationally
+   lensed photon streams. In particular, if the technique is more
+   accurate than those currently used for the calculation of these
+   delays, then it could allow more accurate estimation of things that
+   are important to determine the structure of the universe. Time
+   delay calculations have been used to determine the value of the
+   hubble constant to a higher precision, as well as to find out the
+   mass distribution in a certain area of space. Both of these are
+   areas of great importance in astrophysics, and the ability to
+   calculate these values more accurately could potentially lead to
+   discoveries being made in other areas.
 \subsection{how we will try and solve the problem}
-\label{sec-2.3}
+\label{sec-1-3}
 
-   In order to solve this problem, we will use estimation methods which allow the calculation of the rate parameter $\lambda$ at any time $t \in[0,T]$, where $T$ is the end of the time interval for which we have photon data. Once we are able to do this, we can take two streams of photons and compare the functions that we compute from the streams, and judge whether they are coming from the same lensed object or not, and at the same time calculate the time delay between the two streams. Whether the two streams have the same underlying function will be determined by using a maximum likelihood estimator. Intuitively, the point of maximum likelihood is the value of $\Delta t$ at which there is most overlap between the two functions. The two functions will be judged to be the same function when the return value of some error function drops below a specified threshold. Our estimate for the time delay $\Delta t$ is therefore the value that it takes at the point at which the error is lowest. 
+   In order to solve this problem, we will use estimation methods
+   which allow the calculation of the rate parameter $\lambda$ at any
+   time $t \in[0,T]$, where $T$ is the end of the time interval for
+   which we have photon data. Once we are able to do this, we can take
+   two streams of photons and compare the functions that we compute
+   from the streams, and judge whether they are coming from the same
+   lensed object or not, and at the same time calculate the time delay
+   between the two streams. Whether the two streams have the same
+   underlying function will be determined by using a maximum
+   likelihood estimator. Intuitively, the point of maximum likelihood
+   is the value of $\Delta t$ at which there is most overlap between
+   the two functions. The two functions will be judged to be the same
+   function when the return value of some error function drops below a
+   specified threshold. Our estimate for the time delay $\Delta t$ is
+   therefore the value that it takes at the point at which the error
+   is lowest.
 \subsection{steps to do that}
-\label{sec-2.4}
+\label{sec-1-4}
 
-   In order to build a system which can perform the required task, the following components will be necessary.
+   In order to build a system which can perform the required task, the
+   following components will be necessary.
    
 \subsubsection{Photon simulator}
-\label{sec-2.4.1}
+\label{sec-1-4-1}
 
-    Although we have access to photon data for a specific gravitationally lensed object, it is useful for testing and experimentation purposes to have a simulator with which the efficacy of techniques can be evaluated. The most suitable way to simulate events in the natural world is by way of poisson processes. In the case of photon streams these will be non-homogeneous processes, since the rate at which photons arrive will be non-linear. We will create generators for both homogeneous and non-homogeneous processes, which will allow the specification of the function to be used to generate the photon stream. The generator will output data which we can use as the ground truth for experimentation.
+    Although we have access to photon data for a specific
+    gravitationally lensed object, it is useful for testing and
+    experimentation purposes to have a simulator with which the
+    efficacy of techniques can be evaluated. The most suitable way to
+    simulate events in the natural world is by way of poisson
+    processes. In the case of photon streams these will be
+    non-homogeneous processes, since the rate at which photons arrive
+    will be non-linear. We will create generators for both homogeneous
+    and non-homogeneous processes, which will allow the specification
+    of the function to be used to generate the photon stream. The
+    generator will output data which we can use as the ground truth
+    for experimentation.
 \subsubsection{Linear estimators}
-\label{sec-2.4.2}
+\label{sec-1-4-2}
 
-    While a linear estimator is not strictly necessary to complete the project, we feel that the implementation of these estimators will be a good method of increasing understanding of the process of estimation. The knowledge gained from writing these more basic estimators should mean that the theory behind the more complex estimator is approached with a deeper understanding of the foundations of estimation techniques, which should make its implementation easier to tackle, as well as resulting in an intuition as to good ways of proceeding. The first step of this stage is to implement a simple linear estimator, which will estimate functions of the form $y=a+bx$. We can then modify this to work as a piecewise estimator for non-linear functions similar in form to those that the photon data is likely to take.
-\subsubsection{Kernel regression with maximum likelihood estimator}
-\label{sec-2.4.3}
-
-    The final estimator will be a maximum likelihood estimator which uses kernel regression techniques to estimate non-linear functions. It is hoped that this estimator will provide us with much better results than the piecewise linear estimator. Whether this is the case will be evaluated in the experiments.
+    While a linear estimator is not strictly necessary to complete the
+    project, we feel that the implementation of these estimators will
+    be a good method of increasing understanding of the process of
+    estimation. The knowledge gained from writing these more basic
+    estimators should mean that the theory behind the more complex
+    estimator is approached with a deeper understanding of the
+    foundations of estimation techniques, which should make its
+    implementation easier to tackle, as well as resulting in an
+    intuition as to good ways of proceeding. The first step of this
+    stage is to implement a simple linear estimator, which will
+    estimate functions of the form $y=a+bx$. We can then modify this
+    to work as a piecewise estimator for non-linear functions similar
+    in form to those that the photon data is likely to take.
 \subsubsection{Error function for time delay estimation}
-\label{sec-2.4.4}
+\label{sec-1-4-3}
 
-    When the maximum likelihood estimator is completed, we should be able to estimate non-linear functions to a high degree of accuracy, which is necessary to improve the estimation of the time delay. The more accurate our estimate of the function that underlies the photon stream, the better we will be able to estimate the delay. To perform this estimation, we will need an error function which we can use to determine the error between the two photon streams. With this error value, we can give a confidence value to each value of $\Delta t$, and choose the one which produces the lowest error for the two streams.
-\section{Simulation of photon streams}
-\label{sec-3}
+    When the maximum likelihood estimator is completed, we should be
+    able to estimate non-linear functions to a high degree of
+    accuracy, which is necessary to improve the estimation of the time
+    delay. The more accurate our estimate of the function that
+    underlies the photon stream, the better we will be able to
+    estimate the delay. To perform this estimation, we will need an
+    error function which we can use to determine the error between the
+    two photon streams. With this error value, we can give a
+    confidence value to each value of $\Delta t$, and choose the one
+    which produces the lowest error for the two streams.
+\section{Background}
+\label{sec-2}
+\subsection{Gravitational Lensing}
+\label{sec-2-1}
 
+\begin{itemize}
+\item what is it
+\item how does it occur
+\item pictures
+\item what does it tell us about the universe or things in it
+\end{itemize}
 \subsection{Poisson Processes}
-\label{sec-3.1}
+\label{sec-2-2}
 
-\subsubsection{Homogeneous}
-\label{sec-3.1.1}
-
-    Times for a homogeneous poisson process can be generated using the formula $\log\frac{-U}{\lambda}$
-\subsubsection{Non-homogeneous}
-\label{sec-3.1.2}
-
-\subsubsection{Experiments}
-\label{sec-3.1.3}
-
-\section{Linear Estimation}
+\begin{itemize}
+\item where do they occur
+\item what can they be used for
+\item Times for a homogeneous poisson process can be generated using
+     the formula $\log\frac{-U}{\lambda}$
+\end{itemize}
+\section{Simulation of Photon Streams}
+\label{sec-3}
+\subsection{Function Generation}
+\label{sec-3-1}
+\subsection{Generating Streams from Functions}
+\label{sec-3-2}
+\section{Function Estimation}
 \label{sec-4}
+\subsection{Baseline Estimation}
+\label{sec-4-1}
+\subsubsection{Optimum Least Squares}
+\label{sec-4-1-1}
+\subsubsection{Iterative Weighted Least Squares}
+\label{sec-4-1-2}
+\subsubsection{Piecewise Iterative Weighted Least Squares}
+\label{sec-4-1-3}
 
-\subsection{brief method description}
-\label{sec-4.1}
+    Initially, we thought that it may be possible to decide whether to
+    extend the line or not based on the difference in slope between
+    the estimate from the previous time interval and the estimate of
+    the next. If the previous estimate was positive, and the next
+    negative, and vice versa, clearly the line should not be
+    continued. The intercept parameter was considered to be much less
+    important. However, this assumption was highly flawed. Due to the
+    nature of poisson processes, it is perfectly possible that
+    although the function has changed significantly after the end of
+    the previous interval, the estimate for the interval that we are
+    trying to extend the line into could return very similar values to
+    that of the previous interval. Because of this, we extend the line
+    when we should not be doing so. There are several potential
+    solutions to this problem. First, rather than forming a new
+    estimate, we extend the line and then check how much the error has
+    increased. If it goes over a certain threshold, then we reject the
+    extension attempt and try again, this time with a shorter
+    extension. Another potential way of improving the piecewise
+    estimation in general would be to require the estimate for the
+    next time period to start from the end point of the last time
+    period. This would prevent the intercept parameter from changing,
+    and would force the estimator to find the best estimate given a
+    specific starting point, rather than giving it free reign to find
+    the estimate which actually minimises the error.
+\begin{itemize}
 
-\subsection{coding issues}
-\label{sec-4.2}
-
-\subsection{experimentation}
-\label{sec-4.3}
-
-\subsubsection{general cases}
-\label{sec-4.3.1}
-
-    give some idea of the sorts of error you get 
-\subsubsection{extreme cases}
-\label{sec-4.3.2}
-
-    very short time period but v.high rate parameter
-    v long time period but very slow increasing rate parameter
-\subsection{issues with the technique}
-\label{sec-4.4}
-
-\section{Piecewise Estimation}
-\label{sec-5}
-
-\subsection{method description}
-\label{sec-5.1}
-
-\subsection{coding issues}
-\label{sec-5.2}
-
-   Initially, we thought that it may be possible to decide whether to extend the line or not based on the difference in slope between the estimate from the previous time interval and the estimate of the next. If the previous estimate was positive, and the next negative, and vice versa, clearly the line should not be continued. The intercept parameter was considered to be much less important. However, this assumption was highly flawed. Due to the nature of poisson processes, it is perfectly possible that although the function has changed significantly after the end of the previous interval, the estimate for the interval that we are trying to extend the line into could return very similar values to that of the previous interval. Because of this, we extend the line when we should not be doing so. There are several potential solutions to this problem. First, rather than forming a new estimate, we extend the line and then check how much the error has increased. If it goes over a certain threshold, then we reject the extension attempt and try again, this time with a shorter extension. Another potential way of improving the piecewise estimation in general would be to require the estimate for the next time period to start from the end point of the last time period. This would prevent the intercept parameter from changing, and would force the estimator to find the best estimate given a specific starting point, rather than giving it free reign to find the estimate which actually minimises the error.
-
-cubic spline interpolation on midpoints of estimated lines gives reasonable estimates of the function sometimes.
-
-
-\subsection{experimentation}
-\label{sec-5.3}
-
-\section{Baseline Estimation}
-\label{sec-6}
-
-\subsection{coding issues}
-\label{sec-6.1}
-
-what to do with the issue of minimum length of intervals? Sometimes not extending the original gives a better estimate of the line than
-re-estimating the interval extended, or adding the short interval onto the end of the previous one and using its estimate. See data in the
-min$_{\mathrm{interval}}$$_{\mathrm{length}}$ folder in data. The better fitting line is the baseline estimate of that with no minimum, and the other set is the estimate
-with minimum interval length applied.
-\section{Kernel Regression}
-\label{sec-7}
-
+\item coding issues\\
+\label{sec-4-1-3-1}%
+what to do with the issue of minimum length of intervals? Sometimes
+not extending the original gives a better estimate of the line than
+re-estimating the interval extended, or adding the short interval onto
+the end of the previous one and using its estimate. See data in the
+min$_{\mathrm{interval}}$$_{\mathrm{length}}$ folder in data. The better fitting line is the
+baseline estimate of that with no minimum, and the other set is the
+estimate with minimum interval length applied
+\end{itemize} % ends low level
+\subsubsection{Baseline}
+\label{sec-4-1-4}
+\subsection{Kernel Density Estimation}
+\label{sec-4-2}
 \section{Time Delay Calculation}
+\label{sec-5}
+\subsection{Area Method}
+\label{sec-5-1}
+\subsection{Probability Mass Function Method}
+\label{sec-5-2}
+\section{System}
+\label{sec-6}
+\subsection{System Structure}
+\label{sec-6-1}
+\subsubsection{Overall Structure}
+\label{sec-6-1-1}
+\subsubsection{Estimators}
+\label{sec-6-1-2}
+\subsubsection{Generators}
+\label{sec-6-1-3}
+\subsubsection{Experimenter}
+\label{sec-6-1-4}
+\subsection{Development}
+\label{sec-6-2}
+\subsubsection{Development Process}
+\label{sec-6-2-1}
+\subsubsection{Version Control}
+\label{sec-6-2-2}
+
+\begin{itemize}
+\item branching strategy
+\item commit frequency
+\item using issues on github
+\end{itemize}
+\subsubsection{Project Management}
+\label{sec-6-2-3}
+
+\begin{itemize}
+\item keep changelog
+\item writing up and planning layout in notebook
+\end{itemize}
+\section{Evaluation}
+\label{sec-7}
+\subsection{experimentation on simulated data}
+\label{sec-7-1}
+\subsection{experimentation on real-world data}
+\label{sec-7-2}
+\section{Conclusion}
 \label{sec-8}
 
-\section{experimentation on simulated data}
+
+
+\newpage
+\begin{appendices}
+\section{Installation}
 \label{sec-9}
+\subsection{MuParser}
+\label{sec-9-1}
 
-\section{experimentation on real-world data}
-\label{sec-10}
+ download package\\
+ run \texttt{./configure --prefix=/usr}, followed by \texttt{make \&\& make install} (may require sudo)
+ this installs muparser so that headers can be found in \texttt{/usr/include}
+    
+    sudo apt-get install libgsl0-dev check 
 
-\section{conclusions}
-\label{sec-11}
-
+\end{appendices}
 
 \end{document}
