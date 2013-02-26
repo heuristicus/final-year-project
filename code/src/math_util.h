@@ -25,10 +25,6 @@ double get_uniform_rand();
 double get_rand_gaussian();
 
 double avg(double *arr, int len);
-double TSS(double *dependent_variables, int len);
-double ESS(double *estimates, double *dependent_variables, int len);
-double RSS(double *dependent_variables, double *independent_variables,
-	   double (*f)(double), int len);
 double sum_double_arr(double *arr, int len);
 int sum_int_arr(int *arr, int len);
 
@@ -70,6 +66,13 @@ double largest_value_in_arr(double* arr, int len);
 double abs_max(double a, double b);
 int dbl_less_than(double a, double b, double precision);
 int dbl_equal(double a, double b, double precision);
+double get_twofunction_RSS(gauss_vector* original, double_multi_arr* estimated);
+double get_twofunction_ESS(gauss_vector* original, double_multi_arr* estimated);
+double get_twofunction_TSS(gauss_vector* original, double_multi_arr* estimated);
+double TSS(double *dependent_variables, int len);
+double ESS(double *estimates, double *dependent_variables, int len);
+double RSS(double *dependent_variables, double *independent_variables, int len);
+double stdev(double* data, int len);
 
 #endif
 

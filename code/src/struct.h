@@ -95,4 +95,13 @@ typedef struct
     int len;
 } exp_set;
 
+typedef struct
+{
+    double_multi_arr* final_estimate;
+    double_arr* delays;
+    void** intermediate_estimates;
+    int nstreams;
+    char* type;
+} tdelta_result;
+
 #endif

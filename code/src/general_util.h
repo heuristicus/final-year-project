@@ -29,5 +29,7 @@ void free_double_arr(double_arr* arr);
 void free_exp_set(exp_set* es);
 void free_tuple_arr(exp_tuple_arr* ta);
 void free_exp_tuple(exp_tuple* t);
+void free_tdelta_result(tdelta_result* res);
+void print_double_multi_arr(double_multi_arr* arr);
 
 #endif

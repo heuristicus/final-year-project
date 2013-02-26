@@ -137,12 +137,12 @@ double_multi_arr* run_gauss(paramlist* params, char* infile, char* outfile, int 
     }
 }
 
-void multi_estimate(char* paramfile, char* in_dir, char* outfile, int nstreams, int nfuncs,
+tdelta_result** multi_estimate(char* paramfile, char* in_dir, char* outfile, int nstreams, int nfuncs,
 		    int output_switch, char* estimator_type)
 {
     paramlist* params = get_parameters(paramfile);
     
-    _multi_estimate(params, in_dir, outfile, nstreams, nfuncs, output_switch, estimator_type);
+    return _multi_estimate(params, in_dir, outfile, nstreams, nfuncs, output_switch, estimator_type);
     free_list(params);
 }
 
@@ -152,7 +152,7 @@ void multi_estimate(char* paramfile, char* in_dir, char* outfile, int nstreams, 
  * on each file. Data is then stored and once all estimates have been made the data
  * is combined to make a single estimate. The i
  */
-void _multi_estimate(paramlist* params, char* in_dir, char* outfile, int nstreams,
+tdelta_result** _multi_estimate(paramlist* params, char* in_dir, char* outfile, int nstreams,
 		     int nfuncs, int output_switch, char* estimator_type)
 {
     char* fname = get_string_param(params, "outfile"); // default generator output filename
@@ -197,7 +197,7 @@ void _multi_estimate(paramlist* params, char* in_dir, char* outfile, int nstream
 
     int i;
     
-    
+    tdelta_result** results = malloc(sizeof(tdelta_result) * nfuncs);
     for (i = 0; i < nfuncs; ++i) {
 	if (in_dir != NULL){
 	    sprintf(infname, "%s/%s_%d_%s%s", in_dir, function_fname, i, fname, pref);
@@ -206,13 +206,15 @@ void _multi_estimate(paramlist* params, char* in_dir, char* outfile, int nstream
 	}
 	sprintf(outname, "%s_func_%d", outfile, i);
 		
-	do_multi_estimate(params, infname, outname, step, start, est_delta, nstreams, output_switch, estimator_type);
+	results[i] = do_multi_estimate(params, infname, outname, step, start, est_delta, nstreams, output_switch, estimator_type);
     }
     free(outname);
     free(infname);
+    
+    return results;
 }
 
-void do_multi_estimate(paramlist* params, char* infile, char* outfile, double step,
+tdelta_result* do_multi_estimate(paramlist* params, char* infile, char* outfile, double step,
 		       double start, char* est_delta, int nstreams, int output_switch,
 		       char* estimator_type)
 {
@@ -242,7 +244,7 @@ void do_multi_estimate(paramlist* params, char* infile, char* outfile, double st
 	    estimates[i] = _estimate(params, infname, outname, estimator_type, output_switch);
     }
 
-    if (strcmp(est_delta, "yes") == 0){
+    if (strcmp(est_delta, "yes") == 0 && nstreams > 1){
 	char* delta_method = get_string_param(params, "delta_est_method");
 	char* hierarchical = get_string_param(params, "delta_est_hierarchical");
 	delays = init_double_arr(nstreams);
@@ -328,13 +330,12 @@ void do_multi_estimate(paramlist* params, char* infile, char* outfile, double st
     free(infname);
     free(outname);
 
-    free_double_multi_arr(final_estimate);
-    free_double_arr(delays);
-    for (i = 0; i < nstreams; ++i) {
-    	if (gauss)
-    	    free_gauss_vector((gauss_vector*)estimates[i]);
-    	else
-    	    free_est_arr((est_arr*)estimates[i]);
-    }
-    free(estimates);
+    tdelta_result* result = malloc(sizeof(tdelta_result));
+    result->final_estimate = final_estimate;
+    result->delays = delays;
+    result->intermediate_estimates = estimates;
+    result->nstreams = nstreams;
+    result->type = estimator_type;
+
+    return result;
 }

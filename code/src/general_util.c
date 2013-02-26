@@ -780,3 +780,43 @@ void free_exp_set(exp_set* es)
     free(es->exps);
     free(es);
 }
+
+/*
+ * Frees memory allocated for a tdelta_result struct
+ */
+void free_tdelta_result(tdelta_result* res)
+{
+    free_double_multi_arr(res->final_estimate);
+    free_double_arr(res->delays);
+    int gauss = strcmp("gauss", res->type) == 0;
+    int i;
+    for (i = 0; i < res->nstreams; ++i) {
+    	if (gauss){
+    	    free_gauss_vector((gauss_vector*)res->intermediate_estimates[i]);
+	} else {
+    	    free_est_arr((est_arr*)res->intermediate_estimates[i]);
+	}
+    }
+    free(res->intermediate_estimates);
+    free(res);
+}
+
+/*
+ * Prints a double multi array
+ */
+void print_double_multi_arr(double_multi_arr* arr)
+{
+    int minlen = find_min_value_int(arr->lengths, arr->len);
+    int i, j;
+    
+    for (i = 0; i < minlen; ++i) {
+	for (j = 0; j < arr->len; ++j) {
+	    if (j + 1 == arr->len){
+		printf("%lf\n", arr->data[j][i]);
+	    } else {
+		printf("%lf ", arr->data[j][i]);
+	    }
+	}
+    }
+    printf("\n\n");
+}

@@ -1,3 +1,17 @@
+2013-02-26  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* math_util.c: Added some functions for computing the RSS,ESS,TSS, but not sure
+	if they calculate what they are supposed to.
+
+	* estimator_gaussian.c: Fixed memory leak due to incorrect free function usage.
+
+	* experimenter.c: Basic analysis of experiment results is performed, and the results
+	are output to a file in the directory for that experiment, currently only for the
+	time delay estimation experiments.
+
+	* estimator.c: New struct for storing data output by the multi_estimate function
+	so that it can be analysed during experimentation.
+
 2013-02-25  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* estimator_gaussian.c: Added output switch parameter to the estimator functions.

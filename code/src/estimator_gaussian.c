@@ -86,7 +86,7 @@ gauss_vector* _estimate_gaussian_raw(char* infile, char* outfile, double start,
 
     gauss_vector* G = gen_gaussian_vector_from_array(ev->data, ev->len, stdev, 1, 0);
 
-    free(ev);
+    free_double_arr(ev);
     
     return G;
 }

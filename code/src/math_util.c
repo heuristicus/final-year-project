@@ -182,53 +182,7 @@ double avg(double *arr, int len)
     return sum/len;
 }
 
-/*
- * Calculates the total sum of squares for a set of dependent variables
- */
-double TSS(double *dependent_variables, int len)
-{
-    double grand_mean = avg(dependent_variables, len);
 
-    int i;
-    double sum = 0;
-    for (i = 0; i < len; ++i) {
-	sum += pow(dependent_variables[i] - grand_mean, 2);
-    }
-
-    return sum;
-}
-
-/*
- * Calculates explained sum of squares for a set of estimates and dependent variables
- */
-double ESS(double *estimates, double *dependent_variables, int len)
-{
-    double dep_var_mean = avg(dependent_variables, len);
-    
-    int i;
-    double sum = 0;
-    for (i = 0; i < len; ++i){
-	sum += pow(estimates[i] - dep_var_mean, 2);
-    }
-
-    return sum;
-}
-
-/*
- * Calculates the residual sum of squares for a specified set of dependent and independent variables.
- * est_func should be a pointer to a function that will return an estimated value of the dependent variable,
- * given a specific value of the independent variable.
- */
-double RSS(double *dependent_variables, double *independent_variables, double (*est_func)(double), int len)
-{
-    int i;
-    int sum = 0;
-    for (i = 0; i < len; ++i) {
-	sum += pow(dependent_variables[i] - est_func(independent_variables[i]), 2);
-    }
-
-    return sum;
-}
 
 /*
  * Returns the sum of a double array.
@@ -765,4 +719,117 @@ int dbl_equal(double a, double b, double precision)
     double diff = fabs(b - a);
 
     return diff < precision;
+}
+
+/*
+ * Calculates values of the original function given in a gauss vector which correspond
+ * to the sampling times of the estimated function.
+ */
+double* get_corresponding_funcvals(gauss_vector* original, double_multi_arr* estimated)
+{
+    int i;
+
+    double* func_orig = malloc(sizeof(double) * estimated->lengths[0]);
+        
+    for (i = 0; i < estimated->lengths[0]; ++i) {
+	func_orig[i] = sum_gaussians_at_point(estimated->data[0][i], original);
+    }
+    
+    return func_orig;
+}
+
+double get_twofunction_RSS(gauss_vector* original, double_multi_arr* estimated)
+{
+
+    double* func_orig = get_corresponding_funcvals(original, estimated);
+
+    double rss = RSS(func_orig, estimated->data[1], estimated->lengths[0]);
+    free(func_orig);
+    
+    return rss;
+}
+
+double get_twofunction_TSS(gauss_vector* original, double_multi_arr* estimated)
+{
+
+    double* func_orig = get_corresponding_funcvals(original, estimated);
+
+    double tss = TSS(func_orig, estimated->lengths[0]);
+    free(func_orig);
+    
+    return tss;
+}
+
+double get_twofunction_ESS(gauss_vector* original, double_multi_arr* estimated)
+{
+
+    double* func_orig = get_corresponding_funcvals(original, estimated);
+
+    double ess = ESS(estimated->data[1], func_orig, estimated->lengths[0]);
+    free(func_orig);
+    
+    return ess;
+}
+
+/*
+ * Calculates the total sum of squares for a set of dependent variables
+ */
+double TSS(double *dependent_variables, int len)
+{
+    double grand_mean = avg(dependent_variables, len);
+
+    int i;
+    double sum = 0;
+    for (i = 0; i < len; ++i) {
+	sum += pow(dependent_variables[i] - grand_mean, 2);
+    }
+
+    return sum;
+}
+
+/*
+ * Calculates explained sum of squares for a set of estimates and dependent variables
+ */
+double ESS(double *estimates, double *dependent_variables, int len)
+{
+    double dep_var_mean = avg(dependent_variables, len);
+    
+    int i;
+    double sum = 0;
+    for (i = 0; i < len; ++i){
+	sum += pow(estimates[i] - dep_var_mean, 2);
+    }
+
+    return sum;
+}
+
+/*
+ * Calculates the residual sum of squares for a specified set of dependent and independent variables.
+ */
+double RSS(double *dependent_variables, double *independent_variables, int len)
+{
+    int i;
+    int sum = 0;
+    for (i = 0; i < len; ++i) {
+	sum += pow(dependent_variables[i] - independent_variables[i], 2);
+    }
+
+    return sum;
+}
+
+/*
+ * Calculates the standard deviation for a set of data
+ */
+double stdev(double* data, int len)
+{
+    double mean = avg(data, len);
+    
+    int i;
+    
+    double sum = 0;
+    for (i = 0; i < len; ++i) {
+	sum += pow(data[i] - mean, 2);
+    }
+
+    return sqrt(sum/len);
 }

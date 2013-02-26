@@ -49,14 +49,14 @@ experiment_names baseline,piecewise,gaussian
 
 # Indicate whether or not to run experiments on the parameters specified by
 # the [name]_params parameter.
-test_piecewise yes
+test_piecewise no
 test_baseline no
-test_gaussian no
+test_gaussian yes
 
 # Specify the parameters to experiment on for the different estimators and
 # generator. The 
 piecewise_params pc_max_extension,pc_max_breakpoints
-baseline_params base_max_breakpoints,base_pmf_threshold
+baseline_params base_max_breakpoints
 gaussian_params gauss_est_stdev
 
 # Specify the estimator to use on that set of experiments
@@ -71,9 +71,16 @@ gaussian_type delay
 
 ######### parameters
 base_max_breakpoints 10,12
-base_pmf_threshold 0.05,0.07
+#base_pmf_threshold 0.05,0.07
 
 pc_max_extension 5,10
 pc_max_breakpoints 10,12,14
 
-gauss_est_stdev 1,2,4,6,8,10
+gauss_est_stdev 1
+
+
+########## Analysis
+# The time delta between streams in the input directory - should be the same
+# for each input set. Ensure that there are the same number of values as you
+# have streams.
+timedelta 0.0,-10.0,20.0

@@ -19,11 +19,11 @@ est_arr* run_iwls(paramlist* params, char* infile, char* outfile);
 est_arr* run_pc(paramlist* params, char* infile, char* outfile);
 est_arr* run_base(paramlist* params, char* infile, char* outfile);
 double_multi_arr* run_gauss(paramlist* params, char* infile, char* outfile, int output_switch);
-void multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, int nfuncs,
+tdelta_result** multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, int nfuncs,
 		    int output_switch, char* estimator_type);
-void _multi_estimate(paramlist* params, char* infile, char* outfile, int nstreams, int nfuncs,
+tdelta_result** _multi_estimate(paramlist* params, char* infile, char* outfile, int nstreams, int nfuncs,
 		    int output_switch, char* estimator_type);
-void do_multi_estimate(paramlist* params, char* infile, char* outfile, double step,
+tdelta_result* do_multi_estimate(paramlist* params, char* infile, char* outfile, double step,
 		     double start, char* est_delta, int nstreams, int output_switch,
 		     char* estimator_type);
 

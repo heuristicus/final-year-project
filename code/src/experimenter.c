@@ -9,6 +9,8 @@ exp_set* experiment_setup(paramlist* exp_params, paramlist* def_params);
 void execute_experiments(paramlist* exp_params, paramlist* def_params,
 			 char* in_dir, char* out_dir, exp_set* experiments,
 			 int num_streams, int num_functions, int output_switch);
+void analyse_multi(char* outfile, char* in_dir, paramlist* params,
+		   tdelta_result** results, int num_streams, int num_functions, double_arr* time_delays);
 
 void run_experiments(char* exp_paramfile, char* def_paramfile, char* indir,
 		     char* outdir, int num_streams, int num_functions,
@@ -205,6 +207,7 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
     char* function_fname = get_string_param(def_list, "function_outfile");
     char* fname = get_string_param(def_list, "outfile"); // default generator output filename
     char* pref = get_string_param(def_list, "stream_ext"); // default extension
+    double_arr* time_delays = NULL;
     
     // Go through all of the experiments that are in the set received
     for (i = 0; i < experiments->len; ++i) {
@@ -227,6 +230,12 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 		   get_string_param(exp_list, tmp), experiments->exp_names[i]);
 	    continue;
 	}
+	
+	if (multiple){
+	    // Use this later to compare estimated values to true values
+	    time_delays = get_double_list_param(exp_list, "timedelta");
+	}
+
 	// Read the estimator type to use from the parameter file
 	sprintf(tmp, "%s_estimator", experiments->exp_names[i]);
 	char* est_type = get_string_param(exp_list, tmp);
@@ -286,12 +295,22 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 		list_to_file(output_file, "w", def_list);
 		// The data is output to this file - prepend the experiment directory location
 		sprintf(output_file, "%s/%s", experiment_directory, "exp");
-		if (multiple){ 
+		if (multiple){
 		    printf("Estimating time delay.\n");
-		    _multi_estimate(def_list, in_dir, output_file, num_streams, num_functions, 1, est_type);
+		    tdelta_result** results = _multi_estimate(def_list, in_dir, output_file, num_streams, num_functions, 1, est_type);
+		    sprintf(output_file, "%s/%s", experiment_directory, "results.txt");
+		    analyse_multi(output_file, in_dir, def_list, results, num_streams, num_functions, time_delays);
+		    int i;
+		    
+		    for (i = 0; i < num_functions; ++i) {
+			free_tdelta_result(results[i]);
+		    }
+
+		    free(results);
 		} else {
 		    printf("Estimating functions.\n");
-		    char* infname = infname = malloc(strlen(in_dir) + strlen(function_fname) + strlen(fname) + strlen(pref) + strlen(".dat") + 10);
+		    char* infname = infname = malloc(strlen(in_dir) + strlen(function_fname)\
+						     + strlen(fname) + strlen(pref) + strlen(".dat") + 10);
 		    int i;
 		    
 		    for (i = 0; i < num_functions; ++i) {
@@ -312,9 +331,63 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 	free(output_directory);
     }
 	
+    if (multiple){
+	free_double_arr(time_delays);
+    }
+    
     free(tmp);
     
     printf("total experiments: %d on %d functions = %d\n", expcount, num_functions, expcount * num_functions);
+}
+
+/*
+ * Analyses time delta experiment results and outputs them to a file.
+ */
+void analyse_multi(char* outfile, char* in_dir, paramlist* params,
+		   tdelta_result** results, int num_streams, int num_functions, 
+		   double_arr* time_delays)
+{
+    int i, j;
+    FILE *fp = fopen(outfile, "w");
+    // Store estimated delta values so that the set of estimates for the delay of each stream are grouped
+    double_multi_arr* est_deltas = init_multi_array(num_streams, num_functions);
+    for (i = 0; i < num_functions; ++i) {
+	/* fprintf(fp, "Time deltas for function %d:\n", i); */
+			
+	for (j = 0; j < num_streams; ++j) {
+	    /* fprintf(fp, "Stream %d\n", j); */
+	    /* fprintf(fp, "Estimated: %lf\n", results[i]->delays->data[j]); */
+	    /* fprintf(fp, "Actual: %lf\n", time_delays->data[j]); */
+	    est_deltas->data[j][i] = results[i]->delays->data[j];
+	}
+
+	/* char* fout = get_string_param(params, "function_outfile"); */
+	/* char* orig_name = malloc(strlen(in_dir) + strlen(fout) + strlen(".dat") + 5); */
+	/* sprintf(orig_name, "%s/%s_%d.dat", in_dir, fout, i); */
+	/* gauss_vector* orig = read_gauss_vector(orig_name); */
+			
+	/* fprintf(fp, "Function RSS: %lf\n", get_twofunction_RSS(orig, results[i]->final_estimate)); */
+	/* fprintf(fp, "Function TSS: %lf\n", get_twofunction_TSS(orig, results[i]->final_estimate)); */
+	/* fprintf(fp, "Function ESS: %lf\n", get_twofunction_ESS(orig, results[i]->final_estimate)); */
+
+	/* free_tdelta_result(results[i]); */
+	/* fprintf(fp, "\n\n"); */
+    }
+
+
+
+    for (i = 0; i < num_streams; ++i) {
+	fprintf(fp, "Stream %d\n", i);
+	fprintf(fp, "Actual: %lf\n", time_delays->data[i]);
+	fprintf(fp, "Mean est: %lf\n", avg(est_deltas->data[i], num_functions));
+	fprintf(fp, "Est stdev: %lf\n", stdev(est_deltas->data[i], num_functions));
+    }
+    fprintf(fp, "\n\n");
+    
+    fclose(fp);
+    
+    output_double_multi_arr(outfile, "a", est_deltas);
+    free_double_multi_arr(est_deltas);
 }
 
 /*
