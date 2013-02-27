@@ -1,5 +1,5 @@
-% Created 2013-02-25 Mon 21:54
-\documentclass[a4paper,12pt]{article}
+% Created 2013-02-27 Wed 23:29
+\documentclass[a4paper,11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{fixltx2e}
@@ -17,6 +17,9 @@
 \tolerance=1000
 \usepackage{fontspec}
 \usepackage[titletoc,page,title]{appendix}
+\usepackage{biblatex}
+\usepackage{metalogo}
+\bibliography{fyp}
 \defaultfontfeatures{Mapping=tex-text}
 \setromanfont[Ligatures={Common},Numbers={Lining}]{Linux Libertine}
 \providecommand{\alert}[1]{\textbf{#1}}
@@ -37,7 +40,6 @@
 \thispagestyle{empty}
 \newpage
 \pagenumbering{roman}
-\begin{abstract}
 In this report, we present a system for the estimation of the
 time delay $\Delta t$ between multiple realisations of a Poisson
 process with the underlying function $\lambda(t)$, with particular
@@ -47,8 +49,14 @@ which we use to estimate $\lambda(t)$. We then introduce a numerical
 and probabilistic method for estimating $\Delta t$ using
 the function estimates. Finally, we compare the performance of our
 linear estimator to kernel regression on simulated data and data 
-from the quasar Q0957+561.
-\end{abstract}
+from real quasars.
+
+\vspace{1.0cm}\textbf{Keywords: }Poisson process, gravitational lensing,
+ machine learning, linear estimation
+
+\begin{center}
+\vspace*{\fill}\scriptsize{Typeset in Linux Libertine using \XeTeX}.
+\end{center}
 \newpage
 \tableofcontents
 \newpage
@@ -57,12 +65,16 @@ from the quasar Q0957+561.
 \label{sec-1}
 
 \begin{itemize}
+\item technological advances lead to increases in data gathering capacity, but ways to analyse massive amounts of data \cite{starck2002handbook}
+\item Start by talking about advances in astronomy - lots of data, but need some way to analyse it
 \item Talk generally about the problem of time delay estimation
 \item refer to physics papers attempting to make estimates of the delay
+\item talk about time delay estimation in particular, refer to kundic et al, many others
 \item talk about how better estimates benefit the scientific community
 \item refer to peter's paper about the efficacy of kernel regression
 \item better estimators are necessary to increase the accuracy of estimates
 \item this is an experiment to see whether this method has any use
+\item build on technique introduced in massey et al
 \end{itemize}
 \subsection{Problem statement}
 \label{sec-1-1}
@@ -285,10 +297,10 @@ estimate with minimum interval length applied
 \section{Conclusion}
 \label{sec-8}
 
-
-
 \newpage
-\begin{appendices}
+\nocite{*}
+\printbibliography
+\newpage
 \section{Installation}
 \label{sec-9}
 \subsection{MuParser}
@@ -299,7 +311,5 @@ estimate with minimum interval length applied
  this installs muparser so that headers can be found in \texttt{/usr/include}
     
     sudo apt-get install libgsl0-dev check 
-
-\end{appendices}
 
 \end{document}

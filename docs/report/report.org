@@ -14,9 +14,12 @@
 #+LINK_HOME: 
 #+XSLT:
 #+LATEX_CLASS: article
-#+LATEX_CLASS_OPTIONS: [a4paper,12pt]
+#+LATEX_CLASS_OPTIONS: [a4paper,11pt]
 #+LATEX_HEADER: \usepackage{fontspec}
 #+LATEX_HEADER: \usepackage[titletoc,page,title]{appendix}
+#+LaTeX_HEADER: \usepackage{biblatex}
+#+LaTeX_HEADER: \usepackage{metalogo}
+#+LaTeX_HEADER: \bibliography{fyp}
 #+LATEX_HEADER: \defaultfontfeatures{Mapping=tex-text}
 #+LATEX_HEADER: \setromanfont[Ligatures={Common},Numbers={Lining}]{Linux Libertine}
 
@@ -33,7 +36,14 @@ which we use to estimate $\lambda(t)$. We then introduce a numerical
 and probabilistic method for estimating $\Delta t$ using
 the function estimates. Finally, we compare the performance of our
 linear estimator to kernel regression on simulated data and data 
-from the quasar Q0957+561.
+from real quasars.
+
+\vspace{1.0cm}\textbf{Keywords: }Poisson process, gravitational lensing,
+ machine learning, linear estimation
+
+\begin{center}
+\vspace*{\fill}\scriptsize{Typeset in Linux Libertine using \XeTeX}.
+\end{center}
 #+END_abstract
 \newpage
 #+begin_latex
@@ -42,8 +52,11 @@ from the quasar Q0957+561.
 \pagenumbering{arabic}
 #+end_latex
 * Introduction
+- technological advances lead to increases in data gathering capacity, but ways to analyse massive amounts of data \cite{starck2002handbook}
+- Start by talking about advances in astronomy - lots of data, but need some way to analyse it
 - Talk generally about the problem of time delay estimation
 - refer to physics papers attempting to make estimates of the delay
+- talk about time delay estimation in particular, refer to kundic et al, many others
 - talk about how better estimates benefit the scientific community
 - refer to peter's paper about the efficacy of kernel regression
 - better estimators are necessary to increase the accuracy of estimates
@@ -208,8 +221,9 @@ estimate with minimum interval length applied
 ** experimentation on simulated data
 ** experimentation on real-world data
 * Conclusion
-
-
+\newpage
+\nocite{*}
+\printbibliography
 \newpage
 #+BEGIN_appendices
 * Installation
