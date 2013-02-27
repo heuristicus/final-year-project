@@ -1,3 +1,14 @@
+2013-02-27  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* math_util.c: RMS and MSE error functions, function to shift an array so that none
+	of the values it contains are negative.
+
+	* combinefunction.c: Gaussian vector combination now normalises the values calculated
+	based on the normalisation constant which is passed in.
+
+	* estimator.c: Time delay estimates which use gaussians as the estimation method
+	return normalised combined functions.
+
 2013-02-26  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* math_util.c: Added some functions for computing the RSS,ESS,TSS, but not sure

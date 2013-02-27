@@ -96,13 +96,13 @@ gauss_stdev 10.000000
 # \alpha * \Delta t. This allows the standard deviation to be specified as
 # a function of the step between the kernels. A yes value will use the above
 # standard deviation.
-simple_stdev yes
+simple_stdev no
 
 # Specifies the alpha parameter which is used to calculate the standard deviation of
 # kernels when generating functions from gaussians. Used when simple_stdev is set to no.
 # The value of this parameter is multiplied with the gauss_generation_step parameter
 # to calculate the standard deviation.
-stdev_alpha 3.000000
+stdev_alpha 1.000000
 
 # Specifies the distance on the x-axis between each gaussian when generating.
 gauss_generation_step 10.000000
@@ -113,10 +113,10 @@ gauss_generation_step 10.000000
 gauss_resolution 0.500000
 
 # Multiplier to apply to weights of gaussians when generating random functions.
-# The standard gaussian weight is ~ N(0,1). The standard functions have on average
+# The standard gaussian weight is ~ N(0,1). The standard functions on average
 # vary between -5 and 5, which may not be appropriate. Multiplying the weight
 # values gives a greater range of values but preserves the shape of the function.
-gauss_func_multiplier 5.000000
+gauss_func_multiplier 3.000000
 
 ################################################################################
 #                              Estimator Parameters                            #
@@ -194,6 +194,10 @@ base_pmf_sum_threshold 0.850000
 ################################################################################
 #                         Gaussian Estimator Parameters                        #
 ################################################################################
+# With this estimator, a gaussian kernel is centred on each point at which an event
+# occurred. The function then estimated by summing the kernels different points
+# along the x-axis to approximate the function.
+
 # Standard deviation to apply to gaussian kernels used to estimate functions
 # Changing this value will change the normalisation constant required to get
 # the correct function estimate.
@@ -308,7 +312,7 @@ normaliser_est_initial 1.000000
 normaliser_est_max 20.000000
 
 # Value by which to increase the checked value of the normaliser in each iteration.
-normaliser_est_step 1.000000
+normaliser_est_step 0.10000
 
 # Number of bins into which to split the interval being estimated into to find the
 # normaliser. Generally, this value should be equal to the length of the interval

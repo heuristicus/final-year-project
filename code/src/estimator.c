@@ -244,6 +244,20 @@ tdelta_result* do_multi_estimate(paramlist* params, char* infile, char* outfile,
 	    estimates[i] = _estimate(params, infname, outname, estimator_type, output_switch);
     }
 
+    double normaliser = 1;
+    // The input file for the base function is used for all delay estimates, so
+    // just read it once. We also need this to calculate the normalisation constant.
+    sprintf(infname, "%s0.dat", infile);
+    double_arr* base_stream_events = get_event_data_all(infname);
+    if (gauss){
+	// Find a normaliser to apply to the values of the estimated function.
+	// In its raw form, the estimated function is not on the same scale as
+	// the original if the gaussian estimator was used because of the way
+	// that gaussians are summed.
+	normaliser = find_normaliser(params, estimates[0], base_stream_events,
+				     estimator_type);
+    }
+
     if (strcmp(est_delta, "yes") == 0 && nstreams > 1){
 	char* delta_method = get_string_param(params, "delta_est_method");
 	char* hierarchical = get_string_param(params, "delta_est_hierarchical");
@@ -253,21 +267,6 @@ tdelta_result* do_multi_estimate(paramlist* params, char* infile, char* outfile,
 	// it has no delay - the delays of the other functions will be calculated
 	// relative to this.
 	delays->data[0] = 0;
-
-	// The input file for the base function is used for all delay estimates, so
-	// just read it once.
-	sprintf(infname, "%s0.dat", infile);
-	double_arr* base_stream_events = get_event_data_all(infname);
-	double normaliser = 1;
-
-	if (strcmp(delta_method, "pmf") == 0 && gauss){
-	    // Find a normaliser to apply to the values of the estimated function.
-	    // In its raw form, the estimated function is not on the same scale as
-	    // the original if the gaussian estimator was used because of the way
-	    // that gaussians are summed.
-	    normaliser = find_normaliser(params, estimates[0], base_stream_events,
-					 estimator_type);
-	}
 
 	for (i = 1; i < nstreams; ++i) {
 	    printf("Estimating delta for stream 0 and stream %d\n", i);
@@ -297,7 +296,7 @@ tdelta_result* do_multi_estimate(paramlist* params, char* infile, char* outfile,
 	for (i = 0; i < delays->len; ++i) {
 	    printf("Delay for stream %d: %lf\n", i, delays->data[i]);
 	}
-
+	printf("normaliser is %lf\n", normaliser);
 	free_double_arr(base_stream_events);
     } else {
 	if ((delays = get_double_list_param(params, "timedelta")) == NULL){
@@ -307,7 +306,6 @@ tdelta_result* do_multi_estimate(paramlist* params, char* infile, char* outfile,
 	}
     }
 
-
     double interval_time = 0;
 
     if ((interval_time = get_double_param(params, "interval_time")) == 0){
@@ -315,11 +313,15 @@ tdelta_result* do_multi_estimate(paramlist* params, char* infile, char* outfile,
 	exit(1);
     }
 
+
     double_multi_arr* final_estimate = NULL;
     if (gauss) {
-	final_estimate = combine_gauss_vectors((gauss_vector**)estimates, delays, start, interval_time, step, nstreams);
+	final_estimate = combine_gauss_vectors((gauss_vector**)estimates,
+					       delays, start, interval_time,
+					       step, normaliser, nstreams);
     } else {
-	final_estimate = combine_functions((est_arr**)estimates, delays, start, interval_time, step, nstreams);
+	final_estimate = combine_functions((est_arr**)estimates, delays,
+					   start, interval_time, step, nstreams);
     }
 
     if (outfile != NULL && output_switch >= 1){

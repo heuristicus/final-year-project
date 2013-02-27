@@ -352,29 +352,27 @@ void analyse_multi(char* outfile, char* in_dir, paramlist* params,
     // Store estimated delta values so that the set of estimates for the delay of each stream are grouped
     double_multi_arr* est_deltas = init_multi_array(num_streams, num_functions);
     for (i = 0; i < num_functions; ++i) {
-	/* fprintf(fp, "Time deltas for function %d:\n", i); */
+	fprintf(fp, "Time deltas for function %d:\n", i);
 			
 	for (j = 0; j < num_streams; ++j) {
-	    /* fprintf(fp, "Stream %d\n", j); */
-	    /* fprintf(fp, "Estimated: %lf\n", results[i]->delays->data[j]); */
-	    /* fprintf(fp, "Actual: %lf\n", time_delays->data[j]); */
+	    fprintf(fp, "Stream %d\n", j);
+	    fprintf(fp, "Estimated: %lf\n", results[i]->delays->data[j]);
+	    fprintf(fp, "Actual: %lf\n", time_delays->data[j]);
 	    est_deltas->data[j][i] = results[i]->delays->data[j];
 	}
 
-	/* char* fout = get_string_param(params, "function_outfile"); */
-	/* char* orig_name = malloc(strlen(in_dir) + strlen(fout) + strlen(".dat") + 5); */
-	/* sprintf(orig_name, "%s/%s_%d.dat", in_dir, fout, i); */
-	/* gauss_vector* orig = read_gauss_vector(orig_name); */
+	char* fout = get_string_param(params, "function_outfile");
+	char* orig_name = malloc(strlen(in_dir) + strlen(fout) + strlen(".dat") + 5);
+	sprintf(orig_name, "%s/%s_%d.dat", in_dir, fout, i);
+	gauss_vector* orig = read_gauss_vector(orig_name);
 			
-	/* fprintf(fp, "Function RSS: %lf\n", get_twofunction_RSS(orig, results[i]->final_estimate)); */
-	/* fprintf(fp, "Function TSS: %lf\n", get_twofunction_TSS(orig, results[i]->final_estimate)); */
-	/* fprintf(fp, "Function ESS: %lf\n", get_twofunction_ESS(orig, results[i]->final_estimate)); */
+	fprintf(fp, "Function RSS: %lf\n", get_twofunction_RSS(orig, results[i]->final_estimate));
+	fprintf(fp, "Function TSS: %lf\n", get_twofunction_TSS(orig, results[i]->final_estimate));
+	fprintf(fp, "Function ESS: %lf\n", get_twofunction_ESS(orig, results[i]->final_estimate));
+	fprintf(fp, "Function RMS: %lf\n", get_twofunction_RMS(orig, results[i]->final_estimate));
 
-	/* free_tdelta_result(results[i]); */
-	/* fprintf(fp, "\n\n"); */
+	fprintf(fp, "\n\n");
     }
-
-
 
     for (i = 0; i < num_streams; ++i) {
 	fprintf(fp, "Stream %d\n", i);

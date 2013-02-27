@@ -79,7 +79,7 @@ double_multi_arr* combine_functions(est_arr** estimates, double_arr* time_delay,
  */
 double_multi_arr* combine_gauss_vectors(gauss_vector** V, double_arr* time_delay,
 					double start, double interval_time, double step,
-					int num_vectors)
+					double normaliser, int num_vectors)
 {
 
     if (V == NULL || time_delay == NULL || interval_time <= 0 || step <= 0 || num_vectors <= 0)
@@ -110,7 +110,7 @@ double_multi_arr* combine_gauss_vectors(gauss_vector** V, double_arr* time_delay
 	res->data[0][i] = current;
 	// must apply the same normalisation that is being applied to the gaussians in the estimate?
 	// does not apply if the normalisation is calculated later and then applied.
-	res->data[1][i] = sum / num_vectors;
+	res->data[1][i] = sum / (num_vectors + normaliser);
     }
 
     return res;

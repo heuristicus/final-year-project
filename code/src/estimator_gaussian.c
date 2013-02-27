@@ -28,12 +28,12 @@ double_multi_arr* estimate_gaussian(paramlist* params, char* infile, char* outfi
     if (min <= 0){
     	shift = -min;
     }
-    
+
     if (outfile != NULL && output_switch > 0){
 	char* out = malloc(strlen(outfile) + strlen("_contrib.dat") + 3);
 	if (output_switch >= 1){
 	    sprintf(out, "%s_sum.dat", outfile);
-	    output_gauss_transform(out, "w", T->data, shift, T->lengths[0], stdev + 6);
+	    output_gauss_transform(out, "w", T->data, shift, T->lengths[0], 1);
 	}
 	if (output_switch >= 3){
 	    sprintf(out, "%s_contrib.dat", outfile);

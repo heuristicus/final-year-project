@@ -73,6 +73,10 @@ double TSS(double *dependent_variables, int len);
 double ESS(double *estimates, double *dependent_variables, int len);
 double RSS(double *dependent_variables, double *independent_variables, int len);
 double stdev(double* data, int len);
+double RMS(double* estimate, double* original, int len);
+double MSE(double* estimate, double* original, int len);
+double get_twofunction_RMS(gauss_vector* original, double_multi_arr* estimated);
+double* shift_above_zero(double* arr, int len);
 
 #endif
 

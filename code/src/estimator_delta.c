@@ -176,7 +176,7 @@ double _estimate_delay_pmf(char* outfile, double_arr* base_events, double_arr* f
 	if (strcmp(type, "gauss") == 0){
       	    combined = combine_gauss_vectors((gauss_vector**)store, time_delay,
 					     combine_start, combine_end, combine_step,
-					     num_streams);
+					     normaliser, num_streams);
     	} else if (strcmp(type, "base") == 0){
     	    combined = combine_functions((est_arr**)store, time_delay, combine_start,
 					 combine_interval, combine_step, num_streams);

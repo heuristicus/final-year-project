@@ -381,15 +381,9 @@ double_multi_arr* shifted_transform(gauss_vector* V, double start, double interv
     
     double_multi_arr* func = gauss_transform(V, start, start + interval, resolution);
 
-    double min = find_min_value(func->data[1], func->lengths[1]);
-    double shift = 0;
-    if (min <= 0){
-    	shift = -min;
-    }
-
-    double* rep = add_to_arr(func->data[1], func->lengths[1], shift);
+    double* shifted_func = shift_above_zero(func->data[1], func->lengths[1]);
     free(func->data[1]);
-    func->data[1] = rep;
+    func->data[1] = shifted_func;
     
     return func;
 }
@@ -722,20 +716,40 @@ int dbl_equal(double a, double b, double precision)
 }
 
 /*
+ * Shift the values of numbers in the given array such that none of them are < 0
+ */
+double* shift_above_zero(double* arr, int len)
+{
+    double min = find_min_value(arr, len);
+    double shift = 0;
+    if (min <= 0){
+    	shift = -min;
+    }
+
+    double* rep = add_to_arr(arr, len, shift);
+
+    return rep;
+}
+
+/*
  * Calculates values of the original function given in a gauss vector which correspond
- * to the sampling times of the estimated function.
+ * to the sampling times of the estimated function. The values received from the gaussian
+ * vector are shifted so that none of them are < 0. The estimated functions never have
+ * values below zero since the rate parameter can never go below zero.
  */
 double* get_corresponding_funcvals(gauss_vector* original, double_multi_arr* estimated)
 {
     int i;
 
     double* func_orig = malloc(sizeof(double) * estimated->lengths[0]);
-        
     for (i = 0; i < estimated->lengths[0]; ++i) {
 	func_orig[i] = sum_gaussians_at_point(estimated->data[0][i], original);
     }
     
-    return func_orig;
+    double* shifted_orig = shift_above_zero(func_orig, estimated->lengths[0]);
+    free(func_orig);
+
+    return shifted_orig;
 }
 
 double get_twofunction_RSS(gauss_vector* original, double_multi_arr* estimated)
@@ -771,17 +785,25 @@ double get_twofunction_ESS(gauss_vector* original, double_multi_arr* estimated)
     return ess;
 }
 
+double get_twofunction_RMS(gauss_vector* original, double_multi_arr* estimated)
+{
+
+    double* func_orig = get_corresponding_funcvals(original, estimated);
+    
+    return RMS(estimated->data[1], func_orig, estimated->lengths[1]);
+}
+
 /*
  * Calculates the total sum of squares for a set of dependent variables
  */
-double TSS(double *dependent_variables, int len)
+double TSS(double* dependent_variables, int len)
 {
-    double grand_mean = avg(dependent_variables, len);
+    double mean = avg(dependent_variables, len);
 
     int i;
     double sum = 0;
     for (i = 0; i < len; ++i) {
-	sum += pow(dependent_variables[i] - grand_mean, 2);
+	sum += pow(dependent_variables[i] - mean, 2);
     }
 
     return sum;
@@ -790,7 +812,7 @@ double TSS(double *dependent_variables, int len)
 /*
  * Calculates explained sum of squares for a set of estimates and dependent variables
  */
-double ESS(double *estimates, double *dependent_variables, int len)
+double ESS(double* estimates, double* dependent_variables, int len)
 {
     double dep_var_mean = avg(dependent_variables, len);
     
@@ -806,15 +828,40 @@ double ESS(double *estimates, double *dependent_variables, int len)
 /*
  * Calculates the residual sum of squares for a specified set of dependent and independent variables.
  */
-double RSS(double *dependent_variables, double *independent_variables, int len)
+double RSS(double* dependent_variables, double* independent_variables, int len)
 {
     int i;
     int sum = 0;
     for (i = 0; i < len; ++i) {
+	printf("dep %lf ind %lf\n", dependent_variables[i], independent_variables[i]);
 	sum += pow(dependent_variables[i] - independent_variables[i], 2);
     }
 
     return sum;
+}
+
+/*
+ * Calculates the root mean square error for the given values.
+ */
+double RMS(double* estimate, double* original, int len)
+{
+    return sqrt(MSE(estimate, original, len));
+}
+
+/*
+ * Calculates the mean squared error for a given set of predictions and true
+ * values.
+ */
+double MSE(double* estimate, double* original, int len)
+{
+    int i;
+    int sum = 0;
+    
+    for (i = 0; i < len; ++i) {
+	sum += pow(estimate[i] - original[i], 2);
+    }
+
+    return sum/len;
 }
 
 /*
