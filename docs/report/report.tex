@@ -1,4 +1,4 @@
-% Created 2013-02-27 Wed 23:29
+% Created 2013-02-28 Thu 23:30
 \documentclass[a4paper,11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -55,7 +55,7 @@ from real quasars.
  machine learning, linear estimation
 
 \begin{center}
-\vspace*{\fill}\scriptsize{Typeset in Linux Libertine using \XeTeX}.
+\vspace*{\fill}\scriptsize{Typeset in Linux Libertine using \XeLaTeX}.
 \end{center}
 \newpage
 \tableofcontents
@@ -64,18 +64,7 @@ from real quasars.
 \section{Introduction}
 \label{sec-1}
 
-\begin{itemize}
-\item technological advances lead to increases in data gathering capacity, but ways to analyse massive amounts of data \cite{starck2002handbook}
-\item Start by talking about advances in astronomy - lots of data, but need some way to analyse it
-\item Talk generally about the problem of time delay estimation
-\item refer to physics papers attempting to make estimates of the delay
-\item talk about time delay estimation in particular, refer to kundic et al, many others
-\item talk about how better estimates benefit the scientific community
-\item refer to peter's paper about the efficacy of kernel regression
-\item better estimators are necessary to increase the accuracy of estimates
-\item this is an experiment to see whether this method has any use
-\item build on technique introduced in massey et al
-\end{itemize}
+With continued advances in computing and sensing technologies, the amount of data that can be gathered from both everyday objects and scientific experiments has increased rapidly. However, more data is not always a blessing---it must be stored and analysed for it to have any use, and this is not an easy task when one has terabytes of data to deal with. The Large Hadron Collider at CERN is one perhaps extreme example, producing on the order of five terabytes of data each second. Storing this amount of data, let along analysing it is impossible, and so multiple stages of intelligent filtering are applied, reducing the throughput to 100 gigabytes per second, and then further to around 200 megabytes per second, where it is finally stored, producing almost two CDs each second \cite{WLCGproc}. This project focuses on creating the foundations for a system to do such intelligent filtering, but in the context of astronomical data. The volume of data produced by modern telescopes, while not on the same scale as the LHC, is nonetheless overwhelming. Image sizes of one to two gigabytes are not uncommon, and deciding what data is actually relevant is not a trivial task \cite{starck2002handbook}. Using intelligent filtering algorithms, it should be possible to flag up interesting-looking data for further study. While there are many areas in which such capabilities would be useful, we are particularly interested in finding candidates for images of gravitationally lensed objects. In order to do this, it is necessary to find pairs of observations of photon flux which appear to have the same underlying function. More precisely, given a set of data containing the time of arrival of photons from a particular source, henceforth called a \emph{stream}, we wish to find another stream which, when shifted in time by some value $\Delta t$, has similar numbers of photons arriving in a given interval as the first stream. We call $\Delta t$ the \emph{delay} between the two streams. In this project, we develop a system which can generate simulated photon streams using Poisson processes, use linear regression to estimate the underlying function of a given stream, and, given the function estimates of two streams, estimate the time delay between them. The concepts which underpin the project are discussed in more detail in the \hyperref[sec-2]{background} section.
 \subsection{Problem statement}
 \label{sec-1-1}
 
@@ -176,8 +165,21 @@ lensed objects and flag them for further investigation
     which produces the lowest error for the two streams.
 \section{Background}
 \label{sec-2}
-\subsection{Gravitational Lensing}
+\subsection{Time Delay Calculation}
 \label{sec-2-1}
+
+\begin{itemize}
+\item Talk generally about the problem of time delay estimation
+\item refer to physics papers attempting to make estimates of the delay
+\item talk about time delay estimation in particular, refer to kundic et al, many others
+\item talk about how better estimates benefit the scientific community
+\item refer to peter's paper about the efficacy of kernel regression
+\item better estimators are necessary to increase the accuracy of estimates
+\item this is an experiment to see whether this method has any use
+\item build on technique introduced in massey et al
+\end{itemize}
+\subsection{Gravitational Lensing}
+\label{sec-2-2}
 
 \begin{itemize}
 \item what is it
@@ -186,7 +188,7 @@ lensed objects and flag them for further investigation
 \item what does it tell us about the universe or things in it
 \end{itemize}
 \subsection{Poisson Processes}
-\label{sec-2-2}
+\label{sec-2-3}
 
 \begin{itemize}
 \item where do they occur
@@ -194,6 +196,8 @@ lensed objects and flag them for further investigation
 \item Times for a homogeneous poisson process can be generated using
      the formula $\log\frac{-U}{\lambda}$
 \end{itemize}
+\subsection{Linear Regression}
+\label{sec-2-4}
 \section{Simulation of Photon Streams}
 \label{sec-3}
 \subsection{Function Generation}
