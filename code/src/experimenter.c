@@ -11,7 +11,8 @@ void execute_experiments(paramlist* exp_params, paramlist* def_params,
 			 int num_streams, int num_functions, int output_switch);
 void analyse_multi(char* outfile, char* in_dir, paramlist* params,
 		   tdelta_result** results, int num_streams, int num_functions, double_arr* time_delays);
-void _stutter_stream(char* infile, char* outfile, double step, double interval);
+void _stutter_stream_uniform(char* infile, char* outfile, double step, double interval);
+void _stutter_stream_spec(char* infile, char* outfile, double_arr* intervals);
 
 void run_experiments(char* exp_paramfile, char* def_paramfile, char* indir,
 		     char* outdir, int num_streams, int num_functions,
@@ -476,8 +477,39 @@ void stutter_stream(char* indir, char* exp_paramfile, char* def_paramfile, int n
     char* fname = get_string_param(def_params, "outfile"); // default generator output filename
     char* pref = get_string_param(def_params, "stream_ext"); // default extension
     char* function_fname = get_string_param(def_params, "function_outfile");
-    double step = get_double_param(exp_params, "stutter_step");
-    double interval = get_double_param(exp_params, "stutter_interval");
+    int uniform = strcmp(get_string_param(exp_params, "uniform_stuttering"), "yes") == 0;
+    double step = 0;
+    double interval = 0;
+    double_arr* intervals = NULL;
+    
+    if (!uniform){
+	intervals = get_double_list_param(exp_params, "stutter_intervals");
+	if (intervals->len % 2 != 0){
+	    printf("stutter_intervals must have an even number of elements.\n");
+	}
+
+	int i,j;
+	int error = 0;
+	
+	for (i = 0; i < intervals->len; ++i) {
+	    for (j = 0; j < intervals->len; ++j) {
+		if (j < i && intervals->data[i] < intervals->data[j]) {
+		    printf("stutter_intervals must be monotonically increasing.\n"\
+			   "Index %d (%lf) is greater than index %d (%lf). Please fix this.\n",
+			   j, intervals->data[j], i, intervals->data[i]);
+		    error = 1;
+		}
+	    }
+	}
+	if (error){
+	    printf("stutter_intervals is non-monotonic. Exiting.\n");
+	    exit(1);
+	}
+    } else {
+	step = get_double_param(exp_params, "stutter_step");
+	interval = get_double_param(exp_params, "stutter_interval");
+ 
+    }
     
     if (indir == NULL){
 	indir = get_string_param(exp_params, "input_dir");
@@ -501,16 +533,20 @@ void stutter_stream(char* indir, char* exp_paramfile, char* def_paramfile, int n
 		    i, fname, pref, j);
 	    sprintf(outname, "%s/%s_%d_%s%s%d_stuttered.dat", indir, function_fname,
 		    i, fname, pref, j);
-	    _stutter_stream(infname, outname, step, interval);
+	    if (uniform)
+		_stutter_stream_uniform(infname, outname, step, interval);
+	    else
+		_stutter_stream_spec(infname, outname, intervals);
 	}
     }
 
 }
 
 /*
- * Function for reading stream data and producing stuttered data files.
+ * Function for reading stream data and producing stuttered data files, where stuttering
+ * is done at regular intervals
  */
-void _stutter_stream(char* infile, char* outfile, double step, double interval)
+void _stutter_stream_uniform(char* infile, char* outfile, double step, double interval)
 {
     double_arr* events = get_event_data_all(infile);
     
@@ -520,14 +556,49 @@ void _stutter_stream(char* infile, char* outfile, double step, double interval)
     FILE *fp = fopen(outfile, "w");
     for (i = 0; i < events->len; ++i) {
 	if (events->data[i] >= step * step_num && events->data[i] < step * step_num + interval){
+	    // The current event is inside one of the intervals where we delete data.
 	    //	    printf("Time is %lf\n", events->data[i]);
 	    continue;
 	} else if (events->data[i] > step * step_num + interval){
+	    // The interval was passed, so move to the next one.
 	    step_num++;
 	}
 	fprintf(fp, "%lf\n", events->data[i]);
     }
 
+    fclose(fp);
+    free_double_arr(events);
+}
+
+/*
+ * Function for reading stream data and producing stuttered data files, where stuttering
+ * is done based on the data provided by the stutter_intervals parameter.
+ */
+void _stutter_stream_spec(char* infile, char* outfile, double_arr* intervals)
+{
+    double_arr* events = get_event_data_all(infile);
+    
+    int interval_num = 0;
+    int i;
+    FILE *fp = fopen(outfile, "w");
+
+    for (i = 0; i < events->len; ++i) {
+	if (interval_num == intervals->len/2) {
+	    fprintf(fp, "%lf\n", events->data[i]);
+	    continue;
+	} else if (events->data[i] >= intervals->data[interval_num * 2] 
+	    && events->data[i] < intervals->data[interval_num * 2 + 1]){
+	    printf("inside interval %lf\n", events->data[i]);
+	    // The current event is inside one of the intervals where we delete data.
+	    continue;
+	} else if (events->data[i] > intervals->data[interval_num * 2 + 1]){
+	    printf("passed interval %lf\n", events->data[i]);
+	    // The interval was passed, so move to the next one.
+	    interval_num++;
+	    printf("start %lf, end %lf\n", intervals->data[interval_num * 2], intervals->data[interval_num * 2 + 1]);
+	}
+	fprintf(fp, "%lf\n", events->data[i]);
+    }
     fclose(fp);
     free_double_arr(events);
 }

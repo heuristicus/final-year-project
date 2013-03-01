@@ -588,6 +588,9 @@ void create_expparam(char* filename)
     fprintf(fp, "%s\n%s %s\n\n", "# Directory into which files generated will be"\
 	    " placed.", "output_dir", DEFAULT_EXP_OUTDIR);
     put_section_header(fp, "Setup");
+    fprintf(fp, "%s\n%s %s\n\n", "# Use uniform stuttering, or remove data in"\
+	    " the intervals specified by the\n# stutter_intervals parameter.",
+	    "uniform_stuttering", DEFAULT_EXP_UNIFORM_STUTTER);
     fprintf(fp, "%s\n%s %lf\n\n", "# Specifies the step at which data will be"\
 	    " removed from stream data to create\n# stuttered stream data.",
 	    "stutter_step", DEFAULT_EXP_STUTTER_STEP);
@@ -596,6 +599,12 @@ void create_expparam(char* filename)
 	    " will remove data in the intervals [10,12), [20,22)\n# and so on."\
 	    " Data in [0,2) will not be removed.", "stutter_interval",
 	    DEFAULT_EXP_STUTTER_INTERVAL);
+    fprintf(fp, "%s\n%s %s\n\n", "# Specify intervals in which to remove data."\
+	    " The numbers here should be in pairs\n# representing the intervals"\
+	    " to delete data from. As such, the array length should\n# be an even"\
+	    " number, an numbers with higher indexes should have strictly larger\n"\
+	    "# values than those below.", "stutter_intervals",
+	    DEFAULT_EXP_STUTTER_INTERVALS);
     put_section_header(fp, "Settings");
     fprintf(fp, "%s\n%s %s\n\n", "# If you want to run the experiments with parameters"\
 	    " co-varying, set this\n# to no. If you are working on the parameters"\
@@ -635,6 +644,7 @@ void create_expparam(char* filename)
 	    " there are the same number of values as you\n# have streams.",
 	    "timedelta", DEFAULT_EXP_TDELTA);
     
+    printf("done\n");
     fclose(fp);
 }
 

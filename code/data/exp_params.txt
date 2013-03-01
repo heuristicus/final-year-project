@@ -18,6 +18,10 @@ output_dir experiment_output
 ################################################################################
 #                                     Setup                                    #
 ################################################################################
+# Use uniform stuttering, or remove data in the intervals specified by the
+# stutter_intervals parameter.
+uniform_stuttering yes
+
 # Specifies the step at which data will be removed from stream data to create
 # stuttered stream data.
 stutter_step 10.000000
@@ -26,6 +30,12 @@ stutter_step 10.000000
 # 2 when the stutter_step is 10 will remove data in the intervals [10,12), [20,22)
 # and so on. Data in [0,2) will not be removed.
 stutter_interval 5.000000
+
+# Specify intervals in which to remove data. The numbers here should be in pairs
+# representing the intervals to delete data from. As such, the array length should
+# be an even number, an numbers with higher indexes should have strictly larger
+# values than those below.
+stutter_intervals 10,15,30,40,65,70
 
 ################################################################################
 #                                    Settings                                  #

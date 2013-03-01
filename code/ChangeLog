@@ -6,7 +6,8 @@
 
 	* experimenter.c: Added a function for removing certain intervals from stream data
 	in order to do model selection. Call with the same parameters as the experimenter,
-	but add the -s switch. This creates stuttered files in the input directory.
+	but add the -s switch. This creates stuttered files in the input directory. Uniform
+	method and method where the intervals are specified implemented.
 
 2013-02-27  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
