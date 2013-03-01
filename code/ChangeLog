@@ -1,3 +1,13 @@
+2013-03-01  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* launcher.c: Added a way to create a default experiment params file. Use something
+	like ./launcher -x a -d paramfile to create. -x switch requires a parameter, so pass
+	something random to it. It will not be used.
+
+	* experimenter.c: Added a function for removing certain intervals from stream data
+	in order to do model selection. Call with the same parameters as the experimenter,
+	but add the -s switch. This creates stuttered files in the input directory.
+
 2013-02-27  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* math_util.c: RMS and MSE error functions, function to shift an array so that none

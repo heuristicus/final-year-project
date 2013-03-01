@@ -35,13 +35,20 @@
     "Options related to experimentation.\n\n"\
     "\t -x, --experiment\n"						\
     "\t\t Run an experiment. Requires parameter file.\n\n"\
+    "\t -s, --stutter\n"						\
+    "\t\t Modifies streams in the input directory passed to -i, or specified by\n"\
+    "\t\t the input_dir parameter in the parameter file so that event data in some\n"\
+    "\t\t intervals is removed."									\
     "General options.\n\n"\
     "\t -c, --count\n"							\
     "\t\tSpecify the number of functions to generate data from. This can be used\n"\
     "\t\tto generate or estimate streams from multiple functions at the same time.\n"\
     "\t\tDefaults to 1.\n\n"\
     "\t -d, --defparam\n"						\
-    "\t\t Creates a default parameter file with the given name\n\n"	\
+    "\t\t Creates a default parameter file with the given name. To create a\n"\
+    "\t\t default experiment parameter file, use something like\n"\
+    "\t\t ./launcher -d paramfile -x a\n"				\
+    "\t\t The -x switch must take an arbitrary parameter, which will not be used.\n\n"\
     "\t -h, --help\n"							\
     "\t\t Display this message.\n\n"					\
     "\t -n, --nstreams\n"						\

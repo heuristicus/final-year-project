@@ -11,6 +11,7 @@ void execute_experiments(paramlist* exp_params, paramlist* def_params,
 			 int num_streams, int num_functions, int output_switch);
 void analyse_multi(char* outfile, char* in_dir, paramlist* params,
 		   tdelta_result** results, int num_streams, int num_functions, double_arr* time_delays);
+void _stutter_stream(char* infile, char* outfile, double step, double interval);
 
 void run_experiments(char* exp_paramfile, char* def_paramfile, char* indir,
 		     char* outdir, int num_streams, int num_functions,
@@ -460,6 +461,75 @@ int parameters_coherent(paramlist* experiment, paramlist* def, char** check, int
     }
 
     return ok;
+}
+
+/*
+ * Removes data in intervals specified in the parameter file from data files in the
+ * given input directory, and creates new files in the directory containing this
+ * stuttered data. This function performs some setup operations.
+ */
+void stutter_stream(char* indir, char* exp_paramfile, char* def_paramfile, int nfuncs, int nstreams)
+{    
+    paramlist* def_params = get_parameters(def_paramfile);
+    paramlist* exp_params = get_parameters(exp_paramfile);
+    
+    char* fname = get_string_param(def_params, "outfile"); // default generator output filename
+    char* pref = get_string_param(def_params, "stream_ext"); // default extension
+    char* function_fname = get_string_param(def_params, "function_outfile");
+    double step = get_double_param(exp_params, "stutter_step");
+    double interval = get_double_param(exp_params, "stutter_interval");
+    
+    if (indir == NULL){
+	indir = get_string_param(exp_params, "input_dir");
+    }
+
+    printf("Stuttering %d streams for each of %d functions in directory %s\n", nstreams, nfuncs, indir);
+
+    char* outname = malloc(strlen(indir) + strlen(function_fname)
+    			   + strlen(fname) + strlen(pref)
+    			   + strlen("stuttered") + 10);
+
+    char* infname =  malloc(strlen(indir) + strlen(function_fname)
+			    + strlen(fname) + strlen(pref)
+			    + strlen(".dat") + 5);
+    
+    int i, j;
+    
+    for (i = 0; i < nfuncs; ++i) {
+	for (j = 0; j < nstreams; ++j) {
+	    sprintf(infname, "%s/%s_%d_%s%s%d.dat", indir, function_fname, 
+		    i, fname, pref, j);
+	    sprintf(outname, "%s/%s_%d_%s%s%d_stuttered.dat", indir, function_fname,
+		    i, fname, pref, j);
+	    _stutter_stream(infname, outname, step, interval);
+	}
+    }
+
+}
+
+/*
+ * Function for reading stream data and producing stuttered data files.
+ */
+void _stutter_stream(char* infile, char* outfile, double step, double interval)
+{
+    double_arr* events = get_event_data_all(infile);
+    
+    int step_num = 1;
+    
+    int i;
+    FILE *fp = fopen(outfile, "w");
+    for (i = 0; i < events->len; ++i) {
+	if (events->data[i] >= step * step_num && events->data[i] < step * step_num + interval){
+	    //	    printf("Time is %lf\n", events->data[i]);
+	    continue;
+	} else if (events->data[i] > step * step_num + interval){
+	    step_num++;
+	}
+	fprintf(fp, "%lf\n", events->data[i]);
+    }
+
+    fclose(fp);
+    free_double_arr(events);
 }
 
 /*

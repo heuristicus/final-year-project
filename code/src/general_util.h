@@ -13,7 +13,7 @@ double_arr* get_event_subinterval(double_arr* events, double interval_start, dou
 void print_estimates(est_arr* estimates);
 void free_est_arr(est_arr* estimates);
 void print_string_array(char* message, char** array, int len);
-int create_default_param_file(char* filename);
+int create_default_param_file(char* filename, char* type);
 void put_section_header(FILE* fp, char* heading);
 void print_gauss_vector(gauss_vector* G);
 void free_gauss_vector(gauss_vector* G);

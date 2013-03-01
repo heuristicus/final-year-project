@@ -73,6 +73,7 @@ typedef struct
     int nstreams;
     int nfuncs;
     int writing;
+    int stutter;
 } launcher_args;
 
 typedef struct

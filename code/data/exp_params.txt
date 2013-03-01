@@ -1,31 +1,35 @@
-############# input
+################################################################################
+#                                     Input                                    #
+################################################################################
 # The directory from which to read event data. This should contain files which
-# have a structured naming scheme
+# have a structured naming scheme, following the parameters specified in the
+# default parameter file.
 input_dir event_streams
 
-############## output
-# Base name used for output data. The date and time will be appended,
-# perhaps with some more information
-base_outfile experiment_data
-
-# Name of the file containing results of experiments
+################################################################################
+#                                     Output                                   #
+################################################################################
+# Name of the file containing results of experiments.
 exp_outfile exp
 
-# Directory into which files generated will be placed
+# Directory into which files generated will be placed.
 output_dir experiment_output
 
-# File into which to save information about parameter settings used to generate
-# each file put into the output directory
-param_info_filename parameter_settings.txt
+################################################################################
+#                                     Setup                                    #
+################################################################################
+# Specifies the step at which data will be removed from stream data to create
+# stuttered stream data.
+stutter_step 10.000000
 
-# Save the parameter file used to generate the experiments into the directory
-save_paramfile yes
+# Specifies the interval length for which data will be removed. Setting this to
+# 2 when the stutter_step is 10 will remove data in the intervals [10,12), [20,22)
+# and so on. Data in [0,2) will not be removed.
+stutter_interval 5.000000
 
-# Output data from estimators into the output directory or not. If not, processing
-# will be performed in the program and results will be written to exp_outfile
-output_estimate_data yes
-
-######### settings
+################################################################################
+#                                    Settings                                  #
+################################################################################
 # If you want to run the experiments with parameters co-varying, set this
 # to no. If you are working on the parameters a 1,2,3 and b 1,2,3, then
 # running them with parameters co-varying will get you results for
@@ -35,7 +39,7 @@ output_estimate_data yes
 # time if you have a lot of parameters and values.
 run_separately no
 
-# Specify the number of streams to use to estimate the time delay
+# Specify the number of streams to use to estimate the time delay.
 num_streams 2
 
 # Specify the number of functions in the data set being used for the experiments.
@@ -45,42 +49,33 @@ num_functions 10
 # to test can be added to these experiments by adding a [name]_params parameter
 # to this file. The experiments can be run by defining a test_[name] parameter
 # here and setting its value to yes.
-experiment_names baseline,piecewise,gaussian
+experiment_names baseline,gaussian
 
 # Indicate whether or not to run experiments on the parameters specified by
-# the [name]_params parameter.
-test_piecewise no
+# the [name]_params parameter. (yes or no)
 test_baseline yes
 test_gaussian yes
 
-# Specify the parameters to experiment on for the different estimators and
-# generator. The 
-piecewise_params pc_max_extension,pc_max_breakpoints
-baseline_params base_max_breakpoints
-gaussian_params gauss_est_stdev
-
-# Specify the estimator to use on that set of experiments
-piecewise_estimator pc
+# Specify the estimator to use on the given set of experiments.
 baseline_estimator base
 gaussian_estimator gauss
 
-# Estimate the time delay between two streams or just estimate the function
-piecewise_type function
+# Estimate the time delay between two streams (delay) or just estimate the function (function)
 baseline_type delay
 gaussian_type delay
 
-######### parameters
+################################################################################
+#                             Experiment Parameters                            #
+################################################################################
 base_max_breakpoints 15
-#base_pmf_threshold 0.05,0.07
-
-pc_max_extension 5,10
-pc_max_breakpoints 10,12,14
 
 gauss_est_stdev 1
 
-
-########## Analysis
+################################################################################
+#                                    Analysis                                  #
+################################################################################
 # The time delta between streams in the input directory - should be the same
 # for each input set. Ensure that there are the same number of values as you
 # have streams.
 timedelta 0.0,-10.0,20.0
+

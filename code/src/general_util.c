@@ -5,6 +5,9 @@
 
 #define DEF_ARR_SIZE 5
 
+void create_defparam(char* filename);
+void create_expparam(char* filename);
+
 /*
  * Frees a pointer array
  */
@@ -235,9 +238,9 @@ int has_required_params(paramlist* params, char** required_params, int len)
  * Creates a parameter file with default parameters and comments.
  * Returns 1 if the file could not be opened, 0 if successful
  */
-int create_default_param_file(char* filename)
+int create_default_param_file(char* filename, char* type)
 {
-    printf("Writing default parameter file to %s...\n", filename);
+    printf("Writing %s parameter file to %s...\n", type, filename);
     
     if (file_exists(filename)){
 	printf("The file already exists. Overwrite? (y(es) or n(o))\n");
@@ -250,13 +253,29 @@ int create_default_param_file(char* filename)
 	}
     }
 
+    if (strcmp(type, "default") == 0){
+	create_defparam(filename);
+    } else if (strcmp(type, "experiment") == 0){
+	create_expparam(filename);
+    } else {
+	printf("Unknown parameter file type %s.\n", type);
+	exit(1);
+    }
+
+
+
+
+    return 0;
+}
+
+void create_defparam(char* filename)
+{
     FILE* fp = fopen(filename, "w");
 
     if (fp == NULL){
 	perror("Could not open file");
-	return 1;
+	return;
     }
-
 //    fprintf(fp, "%s\n%s %s\n\n", "", "",);
 
     // i/o files and stuff
@@ -333,7 +352,7 @@ int create_default_param_file(char* filename)
     put_section_header(fp, "Gaussian Function Generator");
     fprintf(fp, "%s\n%s %lf\n\n", "# Standard deviation to"\
 	    " apply to generated gaussians", "gauss_stdev", DEFAULT_STDEV);
-        fprintf(fp, "%s\n%s %s\n\n", "# Specifies whether to disregard the standard"\
+    fprintf(fp, "%s\n%s %s\n\n", "# Specifies whether to disregard the standard"\
 	    " deviation specified above and\n# instead calculate the standard"\
 	    " deviation to apply based on the function\n# \\alpha * \\Delta t. "\
 	    "This allows the standard deviation to be specified as\n# a function"\
@@ -547,8 +566,76 @@ int create_default_param_file(char* filename)
     fclose(fp);
 
     printf("done\n");
+}
 
-    return 0;
+void create_expparam(char* filename)
+{
+    FILE* fp = fopen(filename, "w");
+
+    if (fp == NULL){
+	perror("Could not open file");
+	return;
+    }
+    
+    put_section_header(fp, "Input");
+    fprintf(fp, "%s\n%s %s\n\n", "# The directory from which to read event data."\
+	    " This should contain files which\n# have a structured naming scheme,"\
+	    " following the parameters specified in the\n# default parameter file.",
+	    "input_dir", DEFAULT_EXP_INDIR);
+    put_section_header(fp, "Output");
+    fprintf(fp, "%s\n%s %s\n\n", "# Name of the file containing results of"\
+	    " experiments.", "exp_outfile", DEFAULT_EXP_OUTFILE);
+    fprintf(fp, "%s\n%s %s\n\n", "# Directory into which files generated will be"\
+	    " placed.", "output_dir", DEFAULT_EXP_OUTDIR);
+    put_section_header(fp, "Setup");
+    fprintf(fp, "%s\n%s %lf\n\n", "# Specifies the step at which data will be"\
+	    " removed from stream data to create\n# stuttered stream data.",
+	    "stutter_step", DEFAULT_EXP_STUTTER_STEP);
+    fprintf(fp, "%s\n%s %lf\n\n", "# Specifies the interval length for which data"\
+	    " will be removed. Setting this to\n# 2 when the stutter_step is 10"\
+	    " will remove data in the intervals [10,12), [20,22)\n# and so on."\
+	    " Data in [0,2) will not be removed.", "stutter_interval",
+	    DEFAULT_EXP_STUTTER_INTERVAL);
+    put_section_header(fp, "Settings");
+    fprintf(fp, "%s\n%s %s\n\n", "# If you want to run the experiments with parameters"\
+	    " co-varying, set this\n# to no. If you are working on the parameters"\
+	    " a 1,2,3 and b 1,2,3, then\n# running them with parameters co-varying"\
+	    " will get you results for\n# permutations of the parameters. If the"\
+	    " experiment priority is a,b then\n# you will get results with"\
+	    " parameter settings like a1b1, a1b2, a1b3, a2b1,\n# a2b2, and so on,"\
+	    " for all parameter combinations. This might take a very long\n# time if"\
+	    " you have a lot of parameters and values.",
+	    "run_separately", DEFAULT_EXP_RUN_SEP);
+    fprintf(fp, "%s\n%s %d\n\n", "# Specify the number of streams to use to"\
+	    " estimate the time delay.", "num_streams", DEFAULT_EXP_NUM_STREAMS);
+    fprintf(fp, "%s\n%s %d\n\n", "# Specify the number of functions in the data"\
+	    " set being used for the experiments.", "num_functions",
+	    DEFAULT_EXP_NUM_FUNCS);
+    fprintf(fp, "%s\n%s %s\n\n", "# Here, you can specify the names for experiments"\
+	    " that you want to run. Parameters\n# to test can be added to these"\
+	    " experiments by adding a [name]_params parameter\n# to this file. The"\
+	    " experiments can be run by defining a test_[name] parameter\n# here and"\
+	    " setting its value to yes.", "experiment_names", DEFAULT_EXP_NAMES);
+    fprintf(fp, "%s\n%s %s\n", "# Indicate whether or not to run experiments"\
+	    " on the parameters specified by\n# the [name]_params parameter. (yes or no)",
+	    "test_baseline", DEFAULT_EXP_TEST_BASELINE);
+    fprintf(fp, "%s %s\n\n", "test_gaussian", DEFAULT_EXP_TEST_GAUSSIAN);
+    fprintf(fp, "%s\n%s %s\n", "# Specify the estimator to use on the given set"\
+	    " of experiments.", "baseline_estimator", "base");
+    fprintf(fp, "%s %s\n\n", "gaussian_estimator", "gauss");
+    fprintf(fp, "%s\n%s %s\n", "# Estimate the time delay between two streams (delay)"\
+	    " or just estimate the function (function)", "baseline_type", DEFAULT_EXP_BASELINE_TYPE);
+    fprintf(fp, "%s %s\n\n", "gaussian_type", DEFAULT_EXP_GAUSSIAN_TYPE);
+    put_section_header(fp, "Experiment Parameters");
+    fprintf(fp, "%s %d\n\n", "base_max_breakpoints", DEFAULT_EXP_BASE_MAX_BREAK);
+    fprintf(fp, "%s %d\n\n", "gauss_est_stdev", DEFAULT_EXP_GAUSS_EST_STDEV);
+    put_section_header(fp, "Analysis");
+    fprintf(fp, "%s\n%s %s\n\n", "# The time delta between streams in the input"\
+	    " directory - should be the same\n# for each input set. Ensure that"\
+	    " there are the same number of values as you\n# have streams.",
+	    "timedelta", DEFAULT_EXP_TDELTA);
+    
+    fclose(fp);
 }
 
 /*

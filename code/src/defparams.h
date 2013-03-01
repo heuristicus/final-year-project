@@ -73,4 +73,24 @@
 #define DEFAULT_NORMALISER_STEP 1.0
 #define DEFAULT_NORMALISER_SUBINTERVALS 100
 
+// Experiment params
+#define DEFAULT_EXP_INDIR "event_streams"
+#define DEFAULT_EXP_OUTDIR "experiment_output"
+#define DEFAULT_EXP_OUTFILE "exp"
+#define DEFAULT_EXP_STUTTER_STEP 10.0
+#define DEFAULT_EXP_STUTTER_INTERVAL 5.0
+#define DEFAULT_EXP_RUN_SEP "no"
+#define DEFAULT_EXP_NUM_STREAMS 2
+#define DEFAULT_EXP_NUM_FUNCS 10
+#define DEFAULT_EXP_NAMES "baseline,gaussian"
+#define DEFAULT_EXP_TEST_BASELINE "yes"
+#define DEFAULT_EXP_TEST_GAUSSIAN "yes"
+#define DEFAULT_EXP_BASELINE_PARAMS "base_max_breakpoints"
+#define DEFAULT_EXP_GAUSSIAN_PARAMS "gauss_est_stdev"
+#define DEFAULT_EXP_BASELINE_TYPE "delay"
+#define DEFAULT_EXP_GAUSSIAN_TYPE "delay"
+#define DEFAULT_EXP_BASE_MAX_BREAK 15
+#define DEFAULT_EXP_GAUSS_EST_STDEV 1
+#define DEFAULT_EXP_TDELTA "0.0,-10.0,20.0"
+
 #endif

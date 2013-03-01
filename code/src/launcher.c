@@ -4,6 +4,7 @@ static char *estimators[] = {"iwls", "ols", "pc", "base", "gauss"};
 static char *generators[] = {"mup", "rand"};
 static struct option opts[] =
     {
+	{"stutter",    required_argument, 0, 's'},
 	{"experiment", required_argument, 0, 'x'},
 	{"generate", required_argument, 0, 'g'},
 	{"estimate", required_argument, 0, 'e'},
@@ -31,13 +32,14 @@ int main(int argc, char *argv[])
     char* infile = NULL;
     char* estimator_type = NULL;
     char* generator_type = NULL;
+    int createparam = 0;
 
     if (argc == 1){
 	printf("%s\n\nusage: %s options\n\n%s\n%s\n%s\n", PROG_DESC, argv[0], OPT_INFO, VERSION, BUGREPORT);
 	exit(1);
     }
         
-    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:f:hrt:rp:c:", opts, &opt_ind)) != -1){
+    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:f:hrt:rp:c:s", opts, &opt_ind)) != -1){
     	switch(c){
     	case 'e': // estimate
     	    args->est = 1;
@@ -53,8 +55,8 @@ int main(int argc, char *argv[])
 	    }
 	    break;
 	case 'd': // default paramfile
-	    create_default_param_file(optarg);
-	    exit(1);
+	    paramfile = strdup(optarg);
+	    createparam = 1;
 	    break;
 	case 'f': // specify generator type/function
 	    if (!exists_in_arr(generators, sizeof(generators)/sizeof(char*), optarg)){
@@ -92,8 +94,13 @@ int main(int argc, char *argv[])
 	case 'p':
 	    extra_paramfile = strdup(optarg);
 	    break;
+	case 's':
+	    args->stutter = 1;
+	    break;
     	case 'x':
     	    args->exp = 1;
+	    if (createparam)
+		break;
     	    paramfile = strdup(optarg);
     	    break;
     	default:
@@ -109,6 +116,14 @@ int main(int argc, char *argv[])
 	}
     }
 
+    if (createparam){
+	if (args->exp == 1)
+	    create_default_param_file(paramfile, "experiment");
+	else
+	    create_default_param_file(paramfile, "default");
+	exit(1);
+	free(paramfile);
+    }
 
     run_requested_operations(args, paramfile, extra_paramfile, infile, outfile, estimator_type, generator_type);
 
@@ -171,13 +186,16 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* extra_
 		free_est_arr(result);
 	}
     } else if (args->exp == 1){
-	printf("experimenting\n");
 	if (extra_paramfile == NULL){
 	    printf("You need to specify the file from which to read default parameters."\
 		   " Use the -p switch to do so.\n");
 	    exit(1);
 	}
-	run_experiments(paramfile, extra_paramfile, infile, outfile, args->nstreams, args->nfuncs, args->writing);
+	if (args->stutter == 1){
+	    stutter_stream(infile, paramfile, extra_paramfile, args->nfuncs, args->nstreams);
+	} else {
+	    run_experiments(paramfile, extra_paramfile, infile, outfile, args->nstreams, args->nfuncs, args->writing);
+	}
     } else {
 	printf("No action specified. You can run either an estimator, a generator or"\
 	       " experiments by using the -e, -g or -x switches respectively.\n");
@@ -198,6 +216,7 @@ launcher_args* make_arg_struct()
     a->nfuncs = 1;
     a->writing = 1;
     a->rfunc = 0;
+    a->stutter = 0;
 
     return a;
 }
