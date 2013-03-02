@@ -19,6 +19,7 @@
 #+LATEX_HEADER: \usepackage[titletoc,page,title]{appendix}
 #+LaTeX_HEADER: \usepackage{biblatex}
 #+LaTeX_HEADER: \usepackage{metalogo}
+#+LaTeX_HEADER: \usepackage{graphicx}
 #+LaTeX_HEADER: \bibliography{fyp}
 #+LATEX_HEADER: \defaultfontfeatures{Mapping=tex-text}
 #+LATEX_HEADER: \setromanfont[Ligatures={Common},Numbers={Lining}]{Linux Libertine}
@@ -27,16 +28,14 @@
 \newpage
 \pagenumbering{roman}
 #+BEGIN_abstract
-In this report, we present a system for the estimation of the
-time delay $\Delta t$ between multiple realisations of a Poisson
-process with the underlying function $\lambda(t)$, with particular
-application to gravitationally lensed photon streams. We build on
-the weighted least squares approach to develop a linear estimator 
-which we use to estimate $\lambda(t)$. We then introduce a numerical
-and probabilistic method for estimating $\Delta t$ using
-the function estimates. Finally, we compare the performance of our
-linear estimator to kernel regression on simulated data and data 
-from real quasars.
+In this report, we present a system for the estimation of the time delay $\Delta
+t$ between multiple realisations of a Poisson process with the underlying
+function $\lambda(t)$, with particular application to gravitationally lensed
+photon streams. We build on the weighted least squares approach to develop a
+linear estimator which we use to estimate $\lambda(t)$. We then introduce a
+numerical and probabilistic method for estimating $\Delta t$ using the function
+estimates. Finally, we compare the performance of our linear estimator to kernel
+regression on simulated data and data from real quasars.
 
 \vspace{1.0cm}\textbf{Keywords: }Poisson process, gravitational lensing,
  machine learning, linear estimation
@@ -52,93 +51,96 @@ from real quasars.
 \pagenumbering{arabic}
 #+end_latex
 * Introduction
-With continued advances in computing and sensing technologies, the amount of data that can be gathered from both everyday objects and scientific experiments has increased rapidly. However, more data is not always a blessing---it must be stored and analysed for it to have any use, and this is not an easy task when one has terabytes of data to deal with. The Large Hadron Collider at CERN is one perhaps extreme example, producing on the order of five terabytes of data each second. Storing this amount of data, let along analysing it is impossible, and so multiple stages of intelligent filtering are applied, reducing the throughput to 100 gigabytes per second, and then further to around 200 megabytes per second, where it is finally stored, producing almost two CDs each second \cite{WLCGproc}. This project focuses on creating the foundations for a system to do such intelligent filtering, but in the context of astronomical data. The volume of data produced by modern telescopes, while not on the same scale as the LHC, is nonetheless overwhelming. Image sizes of one to two gigabytes are not uncommon, and deciding what data is actually relevant is not a trivial task \cite{starck2002handbook}. Using intelligent filtering algorithms, it should be possible to flag up interesting-looking data for further study. While there are many areas in which such capabilities would be useful, we are particularly interested in finding candidates for images of gravitationally lensed objects. In order to do this, it is necessary to find pairs of observations of photon flux which appear to have the same underlying function. More precisely, given a set of data containing the time of arrival of photons from a particular source, henceforth called a \emph{stream}, we wish to find another stream which, when shifted in time by some value $\Delta t$, has similar numbers of photons arriving in a given interval as the first stream. We call $\Delta t$ the \emph{delay} between the two streams. In this project, we develop a system which can generate simulated photon streams using Poisson processes, use linear regression to estimate the underlying function of a given stream, and, given the function estimates of two streams, estimate the time delay between them. The concepts which underpin the project are discussed in more detail in the \hyperref[sec-2]{background} section.
-** Problem statement
-   we are trying to find the time delay between two or more photon
-   streams which come from a gravitationally lensed object. In order
-   to do this, we use a kernel regression method to estimate the
-   underlying functions of each stream, and then use various
-   techniques to determine whether the two streams of photons
-   originate from the same object. After confirming that both streams
-   are likely to come from the same object (with some confidence), we
-   determine the time delay between the two streams.
+With continued advances in computing and sensing technologies, the amount of
+data that can be gathered from both everyday objects and scientific experiments
+has increased rapidly. However, more data is not always a blessing---it must be
+stored and analysed for it to have any use, and this is not an easy task when
+one has terabytes of data to deal with. The Large Hadron Collider at CERN is one
+perhaps extreme example, producing on the order of five terabytes of data each
+second. Storing this amount of data, let along analysing it is impossible, and
+so multiple stages of intelligent filtering are applied, reducing the throughput
+to 100 gigabytes per second, and then further to around 200 megabytes per
+second, where it is finally stored, producing almost two CDs each second
+\cite{WLCGproc}. This project focuses on creating the foundations for a system
+to do such intelligent filtering, but in the context of astronomical data. The
+volume of data produced by modern telescopes, while not on the same scale as the
+LHC, is nonetheless overwhelming. Image sizes of one to two gigabytes are not
+uncommon, and deciding what data is actually relevant is not a trivial task
+\cite{starck2002handbook}. Using intelligent filtering algorithms, it should be
+possible to flag up interesting-looking data for further study. While there are
+many areas in which such capabilities would be useful, we are particularly
+interested in finding candidates for images of gravitationally lensed
+objects. In order to do this, it is necessary to find pairs of observations of
+photon flux which appear to have the same underlying function. More precisely,
+given a set of data containing the time of arrival of photons from a particular
+source, henceforth called a \emph{stream}, we wish to find another stream which,
+when shifted in time by some value $\Delta$, has similar numbers of photons
+arriving in a given interval as the first stream. We call $\Delta$ the
+\emph{delay} between the two streams. In this project, we develop a system which
+can generate simulated photon streams using Poisson processes, use linear
+regression to estimate the underlying function of a given stream, and, given the
+function estimates of two streams, estimate the time delay between them. Knowing
+the value of the time delay has many applications in astrophysics, and with more
+precise estimates, more accurate calculations can be made to increase our
+understanding of the universe we live in.
 
-form a base for a system which can automatically recognise potential
-lensed objects and flag them for further investigation
-** Impact of solving (or not solving) the problem
-   Successful completion of the project will lead to a more effective
-   technique for determining the time delay from gravitationally
-   lensed photon streams. In particular, if the technique is more
-   accurate than those currently used for the calculation of these
-   delays, then it could allow more accurate estimation of things that
-   are important to determine the structure of the universe. Time
-   delay calculations have been used to determine the value of the
-   hubble constant to a higher precision, as well as to find out the
-   mass distribution in a certain area of space. Both of these are
-   areas of great importance in astrophysics, and the ability to
-   calculate these values more accurately could potentially lead to
-   discoveries being made in other areas.
-** how we will try and solve the problem
-   In order to solve this problem, we will use estimation methods
-   which allow the calculation of the rate parameter $\lambda$ at any
-   time $t \in[0,T]$, where $T$ is the end of the time interval for
-   which we have photon data. Once we are able to do this, we can take
-   two streams of photons and compare the functions that we compute
-   from the streams, and judge whether they are coming from the same
-   lensed object or not, and at the same time calculate the time delay
-   between the two streams. Whether the two streams have the same
-   underlying function will be determined by using a maximum
-   likelihood estimator. Intuitively, the point of maximum likelihood
-   is the value of $\Delta t$ at which there is most overlap between
-   the two functions. The two functions will be judged to be the same
-   function when the return value of some error function drops below a
-   specified threshold. Our estimate for the time delay $\Delta t$ is
-   therefore the value that it takes at the point at which the error
-   is lowest.
-** steps to do that
-   In order to build a system which can perform the required task, the
-   following components will be necessary.
-   
-*** Photon simulator
-    Although we have access to photon data for a specific
-    gravitationally lensed object, it is useful for testing and
-    experimentation purposes to have a simulator with which the
-    efficacy of techniques can be evaluated. The most suitable way to
-    simulate events in the natural world is by way of poisson
-    processes. In the case of photon streams these will be
-    non-homogeneous processes, since the rate at which photons arrive
-    will be non-linear. We will create generators for both homogeneous
-    and non-homogeneous processes, which will allow the specification
-    of the function to be used to generate the photon stream. The
-    generator will output data which we can use as the ground truth
-    for experimentation.
-*** Linear estimators
-    While a linear estimator is not strictly necessary to complete the
-    project, we feel that the implementation of these estimators will
-    be a good method of increasing understanding of the process of
-    estimation. The knowledge gained from writing these more basic
-    estimators should mean that the theory behind the more complex
-    estimator is approached with a deeper understanding of the
-    foundations of estimation techniques, which should make its
-    implementation easier to tackle, as well as resulting in an
-    intuition as to good ways of proceeding. The first step of this
-    stage is to implement a simple linear estimator, which will
-    estimate functions of the form $y=a+bx$. We can then modify this
-    to work as a piecewise estimator for non-linear functions similar
-    in form to those that the photon data is likely to take.
-*** Error function for time delay estimation
-    When the maximum likelihood estimator is completed, we should be
-    able to estimate non-linear functions to a high degree of
-    accuracy, which is necessary to improve the estimation of the time
-    delay. The more accurate our estimate of the function that
-    underlies the photon stream, the better we will be able to
-    estimate the delay. To perform this estimation, we will need an
-    error function which we can use to determine the error between the
-    two photon streams. With this error value, we can give a
-    confidence value to each value of $\Delta t$, and choose the one
-    which produces the lowest error for the two streams.
+In section [[Background]] we discuss the concepts underpinning the project in more
+detail, with a more in-depth explanation of the issues surrounding the
+calculation of the time delay and its uses. In section [[Simulation of Photon
+Streams]] we introduce our method of generating photon streams from Poisson
+processes. Section [[Function Estimation]] shows our approach to estimating the
+underlying function of a given stream of photons. Our methods of calculating the
+time delays between multiple photon streams are explained in section [[Time Delay
+Calculation]]. Section [[System]] gives detailed information on the design and
+development of the system, including the software and project management
+aspects. Finally, in section [[Evaluation]] we present experimental data from both
+simulated and real data and discuss the relative effectiveness of our methods.
 * Background
-** Time Delay Calculation
+** Gravitational Lensing
+In an eight-year period starting in 1907 and ending in 1915 with the publication
+of a paper on field equations of gravitation\cite{einstein1915general}, Albert
+Einstein wrote many papers developing a new theory of gravitation, his general
+theory of relativity. This generalisation of special relativity and Newton's law
+of universal gravitation led to a revolution in the field of physics, and
+remains one of the most important scientific discoveries to date. The theory
+describes how spacetime is affected by the presence of matter and radiation, and
+this idea has many important consequences, but one of the effects in particular
+is important in the context of this report.
+
+According to the theory, objects with mass, or massive objects, cause spacetime
+to curve around them. A simple way to visualise this effect is to imagine
+dropping a ball onto a sheet of cloth which has been pulled taut. The ball will
+eventually come to a stop in the centre of the cloth, and cause it to sag. Here,
+the sheet represents spacetime, and the ball represents anything from planets,
+to stars, or even entire galaxies. Depending on the weight of the ball, the
+shape of the cloth will be affected to different degrees---a ping pong ball will
+have hardly any effect at all, but if we drop a bowling ball onto the sheet, the
+effect will be significant. In a similar way, the amount that spacetime curves
+around a massive object depends on its mass. An object with high mass will cause
+a large amount of curvature, whereas a lower mass object will cause less. If a
+second ball, lighter than the first, is introduced to the system, what happens?
+With no initial velocity, it will roll in a straight line towards the first ball
+sitting at the centre of the sheet. This is one way of thinking about gravity
+and its relationship with spacetime---an object's gravitational attraction is a
+result of its mass curving spacetime, and the strength of the attraction is
+proportional to the mass. While objects with no mass, such as photons, cannot be
+affected by gravity directly, they \emph{are} affected by the curvature of
+spacetime. This bending of light rays is known as
+\emph{gravitational lensing}.
+
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{einstein_ring}
+\caption{An example of a gravitational lensing effect known as an Einstein ring.
+In this image, the central galaxy, LRG 3-757, is distorting light from a distant
+blue galaxy \cite{einsteinring}.}
+\label{fig:einsteinring}
+\end{figure}
+- what is it
+- how does it occur
+- pictures
+- what does it tell us about the universe or things in it
+*** Importance of the Time Delay
 - Talk generally about the problem of time delay estimation
 - refer to physics papers attempting to make estimates of the delay
 - talk about time delay estimation in particular, refer to kundic et al, many others
@@ -147,11 +149,6 @@ lensed objects and flag them for further investigation
 - better estimators are necessary to increase the accuracy of estimates
 - this is an experiment to see whether this method has any use
 - build on technique introduced in massey et al
-** Gravitational Lensing
-   - what is it
-   - how does it occur
-   - pictures
-   - what does it tell us about the universe or things in it
 ** Poisson Processes
    - where do they occur
    - what can they be used for
