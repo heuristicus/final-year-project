@@ -615,6 +615,9 @@ void create_expparam(char* filename)
 	    " for all parameter combinations. This might take a very long\n# time if"\
 	    " you have a lot of parameters and values.",
 	    "run_separately", DEFAULT_EXP_RUN_SEP);
+    fprintf(fp, "%s\n%s %s\n\n", "# Whether to run experiments on stuttered streams."\
+	    " Stuttered data should be generated\n# first by using the -s switch.",
+	    "run_stuttered", "no");
     fprintf(fp, "%s\n%s %d\n\n", "# Specify the number of streams to use to"\
 	    " estimate the time delay.", "num_streams", DEFAULT_EXP_NUM_STREAMS);
     fprintf(fp, "%s\n%s %d\n\n", "# Specify the number of functions in the data"\
@@ -625,6 +628,9 @@ void create_expparam(char* filename)
 	    " experiments by adding a [name]_params parameter\n# to this file. The"\
 	    " experiments can be run by defining a test_[name] parameter\n# here and"\
 	    " setting its value to yes.", "experiment_names", DEFAULT_EXP_NAMES);
+    fprintf(fp, "%s\n%s %s\n", "# Specify the parameters that you wish to run experiments"\
+	    " with. The range of parameters\n# and the parameter name should be defined in"\
+	    " this file.", "baseline_params", "base_max_breakpoints");
     fprintf(fp, "%s\n%s %s\n", "# Indicate whether or not to run experiments"\
 	    " on the parameters specified by\n# the [name]_params parameter. (yes or no)",
 	    "test_baseline", DEFAULT_EXP_TEST_BASELINE);

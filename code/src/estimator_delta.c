@@ -230,10 +230,10 @@ double _estimate_delay_pmf(char* outfile, double_arr* base_events, double_arr* f
 	/* } */
 
 //	printf("s1\n");
-	double total1 = sum_log_pmfs(bin_counts1 + skip_bins, lambda_sums + skip_bins, 1, num_bins - 2 * skip_bins);
+	double total1 = sum_log_pdfs(bin_counts1 + skip_bins, lambda_sums + skip_bins, 1, num_bins - 2 * skip_bins);
 	// need to shift bin_counts2 so that the correct intervals line up for the given delay
 //	printf("s2\n");
-	double total2 = sum_log_pmfs(bin_counts2 + s2_shift, lambda_sums + skip_bins, 1, num_bins - 2 * skip_bins);
+	double total2 = sum_log_pdfs(bin_counts2 + s2_shift, lambda_sums + skip_bins, 1, num_bins - 2 * skip_bins);
 	double cumulative = total1 + total2;
 	delay_pmfs->data[0][j] = current_delta;
 	delay_pmfs->data[1][j] = cumulative;
@@ -373,7 +373,7 @@ double _find_normaliser(void* f1, double_arr* events, double interval_start,
     }
 
     while(normaliser <= check_limit){
-	double pmf_sum = sum_log_pmfs(bin_counts, function_values->data, normaliser, subintervals);
+	double pmf_sum = sum_log_pdfs(bin_counts, function_values->data, normaliser, subintervals);
 //	printf("Sum with normaliser %lf: %lf, current best %lf (%lf).\n", normaliser, pmf_sum, best, best_normaliser);
 	if (pmf_sum > best) {
 	    best = pmf_sum;

@@ -587,27 +587,28 @@ double* multiply_arr(double* data, int len, double multiplier)
     return new;
 }
 
+double log_pdf(int count, double lambda, double normaliser)
+{
+    if (lambda == 0)
+	return log(gsl_ran_poisson_pdf(count, 0.00001/normaliser));
+    else 
+	return log(gsl_ran_poisson_pdf(count, lambda/normaliser));
+}
+
 /*
  * Computes the log of the probability mass function for each count-lambda pair.
  */
-double sum_log_pmfs(int* counts, double* lambdas, double normaliser, int len)
+double sum_log_pdfs(int* counts, double* lambdas, double normaliser, int len)
 {
     if (counts == NULL || lambdas == NULL || normaliser == 0 || len <= 0)
 	return -INFINITY;
     
     int i;
     double sum = 0;
-    double res;
-
 //    printf("Using normaliser %lf\n", normaliser);
     
     for (i = 0; i < len; ++i) {
-	if (lambdas[i] == 0){
-	    res = log(gsl_ran_poisson_pdf(counts[i], 0.00001 / normaliser));
-	} else {
-	    res = log(gsl_ran_poisson_pdf(counts[i], lambdas[i] / normaliser));
-	}
-	sum += res;
+	sum += log_pdf(counts[i], lambdas[i], normaliser);
 //	printf("count %d, normalised lambda %lf, pmf %lf, sum now %lf\n",
 //              counts[i], lambdas[i]/normaliser, res, sum);
     }
@@ -833,7 +834,7 @@ double RSS(double* dependent_variables, double* independent_variables, int len)
     int i;
     int sum = 0;
     for (i = 0; i < len; ++i) {
-	printf("dep %lf ind %lf\n", dependent_variables[i], independent_variables[i]);
+//	printf("dep %lf ind %lf\n", dependent_variables[i], independent_variables[i]);
 	sum += pow(dependent_variables[i] - independent_variables[i], 2);
     }
 

@@ -24,18 +24,18 @@ uniform_stuttering yes
 
 # Specifies the step at which data will be removed from stream data to create
 # stuttered stream data.
-stutter_step 10.000000
+stutter_step 15.000000
 
 # Specifies the interval length for which data will be removed. Setting this to
 # 2 when the stutter_step is 10 will remove data in the intervals [10,12), [20,22)
 # and so on. Data in [0,2) will not be removed.
-stutter_interval 5.000000
+stutter_interval 4.000000
 
 # Specify intervals in which to remove data. The numbers here should be in pairs
 # representing the intervals to delete data from. As such, the array length should
 # be an even number, an numbers with higher indexes should have strictly larger
 # values than those below.
-stutter_intervals 10,15,30,40,65,70
+stutter_intervals 10,13,30,35,65,70
 
 ################################################################################
 #                                    Settings                                  #
@@ -49,6 +49,10 @@ stutter_intervals 10,15,30,40,65,70
 # time if you have a lot of parameters and values.
 run_separately no
 
+# Whether to run experiments on stuttered streams. Stuttered data should be generated
+# first by using the -s switch.
+run_stuttered yes
+
 # Specify the number of streams to use to estimate the time delay.
 num_streams 2
 
@@ -61,25 +65,30 @@ num_functions 10
 # here and setting its value to yes.
 experiment_names baseline,gaussian
 
+# Specify the parameters that you wish to run experiments with. The range of parameters
+# and the parameter name should be defined in this file.
+baseline_params base_max_breakpoints
+gaussian_params gauss_est_stdev
+
 # Indicate whether or not to run experiments on the parameters specified by
 # the [name]_params parameter. (yes or no)
 test_baseline yes
-test_gaussian yes
+test_gaussian no
 
 # Specify the estimator to use on the given set of experiments.
 baseline_estimator base
 gaussian_estimator gauss
 
 # Estimate the time delay between two streams (delay) or just estimate the function (function)
-baseline_type delay
-gaussian_type delay
+baseline_type function
+gaussian_type function
 
 ################################################################################
 #                             Experiment Parameters                            #
 ################################################################################
-base_max_breakpoints 15
+base_max_breakpoints 10
 
-gauss_est_stdev 1
+gauss_est_stdev 5
 
 ################################################################################
 #                                    Analysis                                  #

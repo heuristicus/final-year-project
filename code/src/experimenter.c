@@ -4,15 +4,21 @@ void print_exp_set(exp_set* set);
 void roll_experiment(exp_tuple_arr* exps, int level);
 int increment_experiment(exp_tuple_arr* exp);
 void update_parameters(exp_tuple_arr* exp, paramlist* params);
-int parameters_coherent(paramlist* experiment, paramlist* def, char** check, int check_len);
+int parameters_coherent(paramlist* experiment, paramlist* def, char** check,
+			int check_len);
 exp_set* experiment_setup(paramlist* exp_params, paramlist* def_params);
 void execute_experiments(paramlist* exp_params, paramlist* def_params,
 			 char* in_dir, char* out_dir, exp_set* experiments,
-			 int num_streams, int num_functions, int output_switch);
+			 int num_streams, int num_functions,
+			 int output_switch);
 void analyse_multi(char* outfile, char* in_dir, paramlist* params,
-		   tdelta_result** results, int num_streams, int num_functions, double_arr* time_delays);
-void _stutter_stream_uniform(char* infile, char* outfile, double step, double interval);
-void _stutter_stream_spec(char* infile, char* outfile, double_arr* intervals);
+		   tdelta_result** results, int num_streams, int num_functions,
+		   double_arr* time_delays);
+void _stutter_stream(char* outfile, double_arr* events, double_arr* intervals);
+double compare_stuttered_bins(paramlist* def_list, paramlist* exp_list, char* infile,
+			    void* estimate, int gauss, char* est_type, double_arr* stutter_intervals);
+double_arr* compute_stutter_intervals(double stutter_step, double stutter_interval,
+				      double first_event, double last_event);
 
 void run_experiments(char* exp_paramfile, char* def_paramfile, char* indir,
 		     char* outdir, int num_streams, int num_functions,
@@ -209,6 +215,7 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
     char* function_fname = get_string_param(def_list, "function_outfile");
     char* fname = get_string_param(def_list, "outfile"); // default generator output filename
     char* pref = get_string_param(def_list, "stream_ext"); // default extension
+    int stuttered = strcmp(get_string_param(exp_list, "run_stuttered"), "yes") == 0;
     double_arr* time_delays = NULL;
     
     // Go through all of the experiments that are in the set received
@@ -241,6 +248,7 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 	// Read the estimator type to use from the parameter file
 	sprintf(tmp, "%s_estimator", experiments->exp_names[i]);
 	char* est_type = get_string_param(exp_list, tmp);
+	int gauss = strcmp(est_type, "gauss") == 0;
 	printf("Using estimator %s\n", est_type);
 	// Store the reference to the current experiment to reduce clutter.
 	exp_tuple_arr* current_exp = experiments->exps[i];
@@ -272,6 +280,21 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 	    // This is the directory in which data for an experiment with the same set of parameters.
 	    char* experiment_directory = malloc(strlen(output_directory) + \
 						strlen("experiment_") + 8);
+	    double_arr* stutter_intervals = NULL;
+	    if (!multiple){
+		if (strcmp(get_string_param(exp_list, "uniform_stuttering"), "yes") == 0){
+		    double start = get_double_param(def_list, "est_start_time");
+		    double end = start + get_double_param(def_list, "est_interval_time");
+		    
+		    stutter_intervals = compute_stutter_intervals(get_double_param(exp_list, "stutter_step"),
+					      get_double_param(exp_list, "stutter_interval"),
+					      start, end);
+		} else {
+		    stutter_intervals = get_double_list_param(exp_list, "stutter_intervals");
+		}
+	    }
+	    
+
 	    // Data is output to this file (note that more things are appended!)
 
 	    // Go through all parameter combinations, running the estimator with each combination
@@ -284,8 +307,7 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 		    perror("Error");
 		    exit(1);
 		}
-		char* output_file = malloc(strlen(experiment_directory) + strlen("test") + \
-					   5 + strlen("experiment_"));
+		char* output_file = malloc(strlen(experiment_directory) + 5 + strlen("experiment_"));
 			    
 
 		// Set the parameters in the parameter list to those which are to be
@@ -299,9 +321,14 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 		sprintf(output_file, "%s/%s", experiment_directory, "exp");
 		if (multiple){
 		    printf("Estimating time delay.\n");
-		    tdelta_result** results = _multi_estimate(def_list, in_dir, output_file, num_streams, num_functions, 1, est_type);
+		    tdelta_result** results = _multi_estimate(def_list, in_dir,
+							      output_file, num_streams,
+							      num_functions, 1, est_type,
+							      stuttered);
 		    sprintf(output_file, "%s/%s", experiment_directory, "results.txt");
-		    analyse_multi(output_file, in_dir, def_list, results, num_streams, num_functions, time_delays);
+		    // Analyse the results and output them to a file in the experiment directory
+		    analyse_multi(output_file, in_dir, def_list, results, num_streams,
+				  num_functions, time_delays);
 		    int i;
 		    
 		    for (i = 0; i < num_functions; ++i) {
@@ -311,14 +338,39 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 		    free(results);
 		} else {
 		    printf("Estimating functions.\n");
-		    char* infname = infname = malloc(strlen(in_dir) + strlen(function_fname)\
-						     + strlen(fname) + strlen(pref) + strlen(".dat") + 10);
+		    char* infname = infname = malloc(strlen(in_dir) + strlen(function_fname)
+						     + strlen(fname) + strlen(pref) + strlen(".dat")
+						     + strlen("stuttered") + 10);
 		    int i;
 		    
+		    // Perform the experiment once for each function in the set.
 		    for (i = 0; i < num_functions; ++i) {
-			sprintf(infname, "%s/%s_%d_%s%s%d.dat", in_dir, function_fname, i, fname, pref, 0);
-			free_est_arr(_estimate(def_list, infname, output_file, est_type, output_switch));
+			// Filenames are different if the data is stuttered
+			sprintf(output_file, "%s/exp_func_%d", experiment_directory, i);
+			if (stuttered)
+			    sprintf(infname, "%s/%s_%d_%s%s%d_stuttered.dat", in_dir, function_fname, i, fname, pref, 0);
+			else
+			    sprintf(infname, "%s/%s_%d_%s%s%d.dat", in_dir, function_fname, i, fname, pref, 0);
+
+			void* est_res = _estimate(def_list, infname, output_file, est_type, output_switch);
+
+			sprintf(infname, "%s/%s_%d_%s%s%d", in_dir, function_fname, i, fname, pref, 0);
+			if (stuttered){
+			    double goodness = compare_stuttered_bins(def_list, exp_list, infname, est_res, gauss, est_type, stutter_intervals);
+			    printf("Goodness value for this parameter set is %lf\n", goodness);
+			    sprintf(infname, "%s/goodness.txt", experiment_directory);
+			    FILE *fp = fopen(infname, "w");
+			    fprintf(fp, "%lf\n", goodness);
+			    fclose(fp);
+			}
+			
+			if (gauss){
+			    free_gauss_vector(est_res);
+			} else {
+			    free_est_arr(est_res);
+			}
 		    }
+		    
 		    free(infname);
 		}
 		printf("Exp %d complete\n", expcount);
@@ -329,6 +381,8 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 	    printf("Completed %d experiments for %s.\n", sepcount, experiments->exp_names[i]);
 	    sepcount = 0;
 	    free(experiment_directory);
+	    if (!multiple)
+		free_double_arr(stutter_intervals);
 	}
 	free(output_directory);
     }
@@ -342,6 +396,83 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
     printf("total experiments: %d on %d functions = %d\n", expcount, num_functions, expcount * num_functions);
 }
 
+/*
+ * Compares the actual bin counts in the stuttered intervals (all events deleted) to the
+ * lambda value estimated by the function. For each bin, the closer the function is to the
+ * actual bin count, the higher the pdf is for that bin. The log probability over all bins is
+ * returned, and this can be used to decide how well the parameter setting generalises on
+ * functions.
+ */
+double compare_stuttered_bins(paramlist* def_list, paramlist* exp_list, char* infile,
+			    void* estimate, int gauss, char* est_type,
+			    double_arr* stutter_intervals)
+{
+    double start = get_double_param(def_list, "est_start_time");
+    double interval = get_double_param(def_list, "est_interval_time");
+    double end = interval + start;
+    int num_subintervals = 0;
+    if (strcmp(est_type, "ols") == 0){
+	num_subintervals = get_int_param(def_list, "ols_subintervals");
+    } else if (strcmp(est_type, "iwls") == 0){
+	num_subintervals = get_int_param(def_list, "iwls_subintervals");
+    } else if (strcmp(est_type, "gauss") != 0){
+	char* prname = malloc(strlen("_iwls_subintervals") + 10);
+	sprintf(prname, "%s_iwls_subintervals", est_type);
+	num_subintervals = get_int_param(def_list, prname);
+	sprintf(prname, "%s_max_breakpoints", est_type);
+	num_subintervals *= get_int_param(def_list, prname);
+	free(prname);
+    }
+    
+    char* infname = malloc(strlen(infile) + strlen("stuttered.dat") + 5);
+    sprintf(infname, "%s_stuttered.dat", infile);
+    double_arr* st_events = get_event_data_all(infname);
+    int* st_bins = sum_events_in_interval(st_events->data, st_events->len, start, end, (int)interval);
+    sprintf(infname, "%s.dat", infile);
+    double_arr* events = get_event_data_all(infname);
+    int* bins = sum_events_in_interval(events->data, events->len, start, end, (int)interval);
+    double* midpoints = get_interval_midpoints(start, end, (int)interval);
+
+    int i;
+    double* sums = malloc(sizeof(double) * (int)interval);
+    FILE *fp = fopen("check", "w");
+    int interval_num = 0;
+    double pdf_sum = 0;
+    
+    for (i = 0; i < (int)interval; ++i) {
+	//	printf("midpoint %lf, Stuttered: %d, normal: %d\n", midpoints[i], st_bins[i], bins[i]);
+	if (gauss)
+	    sums[i] = sum_gaussians_at_point(midpoints[i], estimate);
+	else
+	    sums[i] = estimate_at_point(estimate, midpoints[i]);
+	//	printf("sum is %lf\n", sums[i]);
+	fprintf(fp, "%lf %lf %d %d\n", midpoints[i], sums[i], bins[i], st_bins[i]);
+	if (midpoints[i] > stutter_intervals->data[interval_num * 2] 
+	    && midpoints[i] < stutter_intervals->data[interval_num * 2 + 1]){
+	    printf("midpoint %d (%lf) is inside a stutter interval\n", i, midpoints[i]);
+	    double thispdf = log_pdf(bins[i], sums[i], 1);
+	    pdf_sum += thispdf;
+	    printf("bin: %d, sum %lf. logpmf is %lf\n", bins[i], sums[i], thispdf);
+	} else if (midpoints[i] > stutter_intervals->data[interval_num * 2 + 1]){
+	    interval_num++;
+	    if (interval_num >= stutter_intervals->len/2)
+		break;
+	}
+    }
+
+    fclose(fp);
+    printf("num subintervals is %d\n", num_subintervals);
+    free(infname);
+    free_double_arr(st_events);
+    free_double_arr(events);
+    free(midpoints);
+    free(bins);
+    free(st_bins);
+    free(sums);
+
+    return pdf_sum;
+}
+    
 /*
  * Analyses time delta experiment results and outputs them to a file.
  */
@@ -480,23 +611,23 @@ void stutter_stream(char* indir, char* exp_paramfile, char* def_paramfile, int n
     int uniform = strcmp(get_string_param(exp_params, "uniform_stuttering"), "yes") == 0;
     double step = 0;
     double interval = 0;
-    double_arr* intervals = NULL;
+    double_arr* stutter_intervals = NULL;
     
     if (!uniform){
-	intervals = get_double_list_param(exp_params, "stutter_intervals");
-	if (intervals->len % 2 != 0){
+	stutter_intervals = get_double_list_param(exp_params, "stutter_intervals");
+	if (stutter_intervals->len % 2 != 0){
 	    printf("stutter_intervals must have an even number of elements.\n");
 	}
 
 	int i,j;
 	int error = 0;
 	
-	for (i = 0; i < intervals->len; ++i) {
-	    for (j = 0; j < intervals->len; ++j) {
-		if (j < i && intervals->data[i] < intervals->data[j]) {
+	for (i = 0; i < stutter_intervals->len; ++i) {
+	    for (j = 0; j < stutter_intervals->len; ++j) {
+		if (j < i && stutter_intervals->data[i] < stutter_intervals->data[j]) {
 		    printf("stutter_intervals must be monotonically increasing.\n"\
 			   "Index %d (%lf) is greater than index %d (%lf). Please fix this.\n",
-			   j, intervals->data[j], i, intervals->data[i]);
+			   j, stutter_intervals->data[j], i, stutter_intervals->data[i]);
 		    error = 1;
 		}
 	    }
@@ -519,13 +650,14 @@ void stutter_stream(char* indir, char* exp_paramfile, char* def_paramfile, int n
 
     char* outname = malloc(strlen(indir) + strlen(function_fname)
     			   + strlen(fname) + strlen(pref)
-    			   + strlen("stuttered") + 10);
+    			   + strlen("stuttered") + strlen(".dat") + 10);
 
     char* infname =  malloc(strlen(indir) + strlen(function_fname)
 			    + strlen(fname) + strlen(pref)
-			    + strlen(".dat") + 5);
+			    + strlen(".dat") + 10);
     
     int i, j;
+    double_arr* events = NULL;
     
     for (i = 0; i < nfuncs; ++i) {
 	for (j = 0; j < nstreams; ++j) {
@@ -533,66 +665,75 @@ void stutter_stream(char* indir, char* exp_paramfile, char* def_paramfile, int n
 		    i, fname, pref, j);
 	    sprintf(outname, "%s/%s_%d_%s%s%d_stuttered.dat", indir, function_fname,
 		    i, fname, pref, j);
+	    events = get_event_data_all(infname);
+	    
 	    if (uniform)
-		_stutter_stream_uniform(infname, outname, step, interval);
-	    else
-		_stutter_stream_spec(infname, outname, intervals);
+		stutter_intervals = compute_stutter_intervals(step, interval, events->data[0], events->data[events->len - 1]);
+
+	    _stutter_stream(outname, events, stutter_intervals);
+
+	    if (uniform)
+		free_double_arr(stutter_intervals);
+
+	    free_double_arr(events);
 	}
     }
-
+    free(infname);
+    free(outname);
+    free_list(exp_params);
+    free_list(def_params);
 }
 
 /*
- * Function for reading stream data and producing stuttered data files, where stuttering
- * is done at regular intervals
+ * Computes the intervals in which event data should be deleted.
  */
-void _stutter_stream_uniform(char* infile, char* outfile, double step, double interval)
+double_arr* compute_stutter_intervals(double stutter_step, double stutter_interval,
+				       double first_event, double last_event)
 {
-    double_arr* events = get_event_data_all(infile);
+    int diff = ceil(last_event - first_event);
+    int len = diff / stutter_step;
     
-    int step_num = 1;
+    double_arr* ret = init_double_arr(len * 2);
+    printf("ret len %d\n", ret->len);
+    double interval_start = stutter_step;
+    int interval_num = 1, i = 0;
     
-    int i;
-    FILE *fp = fopen(outfile, "w");
-    for (i = 0; i < events->len; ++i) {
-	if (events->data[i] >= step * step_num && events->data[i] < step * step_num + interval){
-	    // The current event is inside one of the intervals where we delete data.
-	    //	    printf("Time is %lf\n", events->data[i]);
-	    continue;
-	} else if (events->data[i] > step * step_num + interval){
-	    // The interval was passed, so move to the next one.
-	    step_num++;
-	}
-	fprintf(fp, "%lf\n", events->data[i]);
+    while (interval_start * interval_num < last_event) {
+	ret->data[i * 2] = interval_start * interval_num;
+	ret->data[i * 2 + 1] = interval_start * interval_num + stutter_interval;
+	interval_num++;
+	i++;
     }
 
-    fclose(fp);
-    free_double_arr(events);
+    return ret;
 }
 
 /*
  * Function for reading stream data and producing stuttered data files, where stuttering
  * is done based on the data provided by the stutter_intervals parameter.
  */
-void _stutter_stream_spec(char* infile, char* outfile, double_arr* intervals)
+void _stutter_stream(char* outfile, double_arr* events, double_arr* intervals)
 {
-    double_arr* events = get_event_data_all(infile);
-    
     int interval_num = 0;
+    int interval_count = 0;
     int i;
     FILE *fp = fopen(outfile, "w");
 
+    printf("start %lf, end %lf\n", intervals->data[interval_num * 2], intervals->data[interval_num * 2 + 1]);
     for (i = 0; i < events->len; ++i) {
-	if (interval_num == intervals->len/2) {
+	if (interval_num + 1 == intervals->len/2) {
 	    fprintf(fp, "%lf\n", events->data[i]);
 	    continue;
 	} else if (events->data[i] >= intervals->data[interval_num * 2] 
 	    && events->data[i] < intervals->data[interval_num * 2 + 1]){
-	    printf("inside interval %lf\n", events->data[i]);
+	    interval_count++;
+	    //printf("inside interval %lf\n", events->data[i]);
 	    // The current event is inside one of the intervals where we delete data.
 	    continue;
 	} else if (events->data[i] > intervals->data[interval_num * 2 + 1]){
-	    printf("passed interval %lf\n", events->data[i]);
+	    printf("Events deleted: %d\n", interval_count);
+	    interval_count = 0;
+	    printf("Event outside interval: %lf, Moving to interval %d\n", events->data[i], interval_num + 1);
 	    // The interval was passed, so move to the next one.
 	    interval_num++;
 	    printf("start %lf, end %lf\n", intervals->data[interval_num * 2], intervals->data[interval_num * 2 + 1]);
@@ -600,7 +741,6 @@ void _stutter_stream_spec(char* infile, char* outfile, double_arr* intervals)
 	fprintf(fp, "%lf\n", events->data[i]);
     }
     fclose(fp);
-    free_double_arr(events);
 }
 
 /*

@@ -23,15 +23,14 @@ double_multi_arr* estimate_gaussian(paramlist* params, char* infile, char* outfi
     gauss_vector* G = _estimate_gaussian_raw(infile, outfile, start, interval, stdev, resolution);
     double_multi_arr* T = gauss_transform(G, start, start + interval, resolution);
 
-    double min = find_min_value(T->data[1], T->lengths[1]);
-    double shift = 0;
-    if (min <= 0){
-    	shift = -min;
-    }
-
     if (outfile != NULL && output_switch > 0){
 	char* out = malloc(strlen(outfile) + strlen("_contrib.dat") + 3);
 	if (output_switch >= 1){
+	    double min = find_min_value(T->data[1], T->lengths[1]);
+	    double shift = 0;
+	    if (min <= 0){
+		shift = -min;
+	    }
 	    sprintf(out, "%s_sum.dat", outfile);
 	    output_gauss_transform(out, "w", T->data, shift, T->lengths[0], 1);
 	}
@@ -68,8 +67,19 @@ gauss_vector* estimate_gaussian_raw(paramlist* params, char* infile, char* outfi
     gauss_vector* G = _estimate_gaussian_raw(infile, outfile, start, interval, stdev, resolution);
  
     if (outfile != NULL && output_switch > 0){
+	char* out = malloc(strlen(outfile) + strlen("_contrib.dat") + 3);
+	if (output_switch >= 1){
+	    double_multi_arr* T = gauss_transform(G, start, start + interval, resolution);
+
+	    double min = find_min_value(T->data[1], T->lengths[1]);
+	    double shift = 0;
+	    if (min <= 0){
+		shift = -min;
+	    }
+	    sprintf(out, "%s_sum.dat", outfile);
+	    output_gauss_transform(out, "w", T->data, shift, T->lengths[0], 1);
+	}
 	if (output_switch >= 3){
-	    char* out = malloc(strlen(outfile) + strlen("_contrib.dat") + 3);
 	    sprintf(out, "%s_contrib.dat", outfile);
 	    output_gaussian_contributions(out, "w", G, start, start + interval, resolution, 0);
 	    free(out);

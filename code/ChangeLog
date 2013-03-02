@@ -1,3 +1,20 @@
+2013-03-02  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* experimenter.c: Function estimation experiments now output correctly to files.
+	Stuttering functions simplified so that two separate versions are not necessary.
+	Intervals for uniform stuttering are computed and then passed to a function which
+	operates on double_arr structs. Non-uniform stuttering intervals are already
+	specified, so no additional computation is necessary. "Goodness" calculation
+	based on difference between bin counts from function estimated from stuttered
+	data and the actual function.
+
+	* launcher.c: Fixed some memory leaks caused by changes to return types.
+
+	* estimator.c: _estimate function return value changed to void* so that gaussian
+	vectors can also be returned. Single stream estimation when input file is null
+	correctly grabs data from file with the new naming convention. Fixed some memory leaks
+	resulting from changes.
+
 2013-03-01  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* launcher.c: Added a way to create a default experiment params file. Use something

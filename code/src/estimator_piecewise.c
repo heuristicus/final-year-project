@@ -71,7 +71,6 @@ est_arr* _estimate_piecewise(char* event_file, char* output_file,
     // Get event data from file so that it does not have to be read independently for all
     // IWLS estimates.
     double_arr* event_data = get_event_data_all(event_file);
-    printf("got event data\n");
         
     // We want to do this at least once, specifically if max_breakpoints is zero
     do {

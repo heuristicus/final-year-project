@@ -177,13 +177,22 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* extra_
 	}
 	if (args->nstreams > 1){
 	    printf("Running estimates of multiple (%d) streams.\n", args->nstreams);
-	    multi_estimate(paramfile, infile, outfile, args->nstreams, args->nfuncs, args->writing, estimator_type);
+	    tdelta_result** r = multi_estimate(paramfile, infile, outfile, 
+					      args->nstreams, args->nfuncs, 
+					      args->writing, estimator_type, args->stutter);
+	    int i;
+	    
+	    for (i = 0; i < args->nfuncs; ++i) {
+		free_tdelta_result(r[i]);
+	    }
+	    free(r);
 	} else {
 	    printf("Estimating single stream.\n");
-	    // mess with outfile here to output it nicely.
-	    est_arr* result = estimate(paramfile, infile, outfile, estimator_type, args->writing);
-	    if (result != NULL)
-		free_est_arr(result);
+	    void* result = estimate(paramfile, infile, outfile, estimator_type, args->writing);
+	    if (strcmp(estimator_type, "gauss") == 0)
+		free_gauss_vector((gauss_vector*)result);
+	    else
+		free_est_arr((est_arr*)result);
 	}
     } else if (args->exp == 1){
 	if (extra_paramfile == NULL){
