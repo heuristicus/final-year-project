@@ -6,7 +6,12 @@
 	being freed correctly.
 
 	* experimenter.c: Goodness values averaged over each function in the experiment to
-	get a representative value for each experiment. These values are output to file.
+	get a representative value for each experiment. These values are output	to file.
+	Function for stuttering streams modified to read data from the default parameter
+	file which should be available whenever it is called. It now uses the interval time
+	for generation to get the actual number of array locations it needs to store all the
+	intervals that will be calculated. The best parameter settings for individual functions
+	are now output to the top level of each experiment directory.
 
 2013-03-02  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 

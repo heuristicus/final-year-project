@@ -73,7 +73,7 @@ gaussian_params gauss_est_stdev
 # Indicate whether or not to run experiments on the parameters specified by
 # the [name]_params parameter. (yes or no)
 test_baseline yes
-test_gaussian no
+test_gaussian yes
 
 # Specify the estimator to use on the given set of experiments.
 baseline_estimator base
@@ -91,7 +91,7 @@ base_max_extension 5,7,...,20
 base_pmf_threshold 0.01,0.02,...,0.15
 base_iwls_subintervals 2,4,...,10
 
-gauss_est_stdev 5
+gauss_est_stdev 1,2,...,20
 
 ################################################################################
 #                                    Analysis                                  #
