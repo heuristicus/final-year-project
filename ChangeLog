@@ -1,3 +1,13 @@
+2013-03-03  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* file_util.c: Fixed memory leak caused by lost pointer references in the
+	get_event_data_interval function. Fixed issue where experimenter would not
+	be able to open more files because file descriptors of directories were not
+	being freed correctly.
+
+	* experimenter.c: Goodness values averaged over each function in the experiment to
+	get a representative value for each experiment. These values are output to file.
+
 2013-03-02  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* experimenter.c: Function estimation experiments now output correctly to files.

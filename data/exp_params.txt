@@ -67,7 +67,7 @@ experiment_names baseline,gaussian
 
 # Specify the parameters that you wish to run experiments with. The range of parameters
 # and the parameter name should be defined in this file.
-baseline_params base_max_breakpoints
+baseline_params base_max_breakpoints,base_max_extension,base_pmf_threshold,base_iwls_subintervals
 gaussian_params gauss_est_stdev
 
 # Indicate whether or not to run experiments on the parameters specified by
@@ -86,7 +86,10 @@ gaussian_type function
 ################################################################################
 #                             Experiment Parameters                            #
 ################################################################################
-base_max_breakpoints 10
+base_max_breakpoints 5,7,...,20
+base_max_extension 5,7,...,20
+base_pmf_threshold 0.01,0.02,...,0.15
+base_iwls_subintervals 2,4,...,10
 
 gauss_est_stdev 5
 

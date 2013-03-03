@@ -95,7 +95,7 @@ est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double e
 	est_arr* retval = malloc(sizeof(est_arr));
 	retval->len = 1;
 	retval->estimates = data;
-
+	free_pointer_arr((void**) intervals, num_subintervals);
 	return retval;
     }
 

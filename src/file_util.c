@@ -114,12 +114,15 @@ double_arr* get_event_data_interval(double start_time, double end_time, char *fi
 #ifdef VERBOSE
     printf("Getting event data for interval [%lf, %lf]\n", start_time, end_time);
 #endif
-    char *line = malloc(MAX_LINE_LENGTH);
+    char* line = malloc(MAX_LINE_LENGTH);
+    char* lref = line;
     double_arr* event_times = init_double_arr(DEFAULT_ARR_SIZE);
     int all = start_time == end_time; // Whether we want to get all data or not.
 
     if (!all && !interval_valid(start_time, end_time)){
 	printf("ERROR: Interval passed to get_event_data_interval is invalid: start %lf, end %lf\n", start_time, end_time);
+	free(lref);
+	fclose(fp);
 	return NULL;
     }
     
@@ -146,13 +149,14 @@ double_arr* get_event_data_interval(double start_time, double end_time, char *fi
 
     if (i == 0){// we found no events in the given interval
 	free_double_arr(event_times);
+	free(lref);
+	fclose(fp);
 	return NULL;
     }
     event_times->data = realloc(event_times->data, i * sizeof(double)); // Potentially save memory?
     event_times->len = i;
-    
     fclose(fp);
-    free(line);
+    free(lref);
 
     return event_times;
 }
@@ -572,7 +576,7 @@ int create_dir(char* dirname)
 	if ((x = opendir(dirname)) == NULL){
 	    return 0;
 	}
-	free(x);
+	closedir(x);
 	return 1;
     }
 

@@ -294,9 +294,17 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 		}
 	    }
 	    
-
-	    // Data is output to this file (note that more things are appended!)
-
+	    // Use this to store the best goodness value when working with stuttered data
+	    int best_goodness_exp = -1;
+	    double best_goodness_value = -INFINITY;
+	    FILE *fp1 = NULL;
+	    if (stuttered){
+	    	char* infname = malloc(strlen(output_directory) + strlen("avg_goodness.txt") + 10);
+	    	sprintf(infname, "%s/avg_goodness.txt", output_directory);
+	    	fp1 = fopen(infname, "w");
+	    	free(infname);
+	    }
+			
 	    // Go through all parameter combinations, running the estimator with each combination
 	    do {
 		// Update the experiment directory with the current experiment number, and create it.
@@ -342,8 +350,19 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 						     + strlen(fname) + strlen(pref) + strlen(".dat")
 						     + strlen("stuttered") + 10);
 		    int i;
-		    
+		
+		    FILE *fp;
+
+		    double total_goodness = 0;
+
 		    // Perform the experiment once for each function in the set.
+		    if (stuttered){
+			sprintf(infname, "%s/goodness.txt", experiment_directory);
+			fp = fopen(infname, "w");
+			fprintf(fp, "experiment_%d\n", expcount);
+			
+		    }
+		    
 		    for (i = 0; i < num_functions; ++i) {
 			// Filenames are different if the data is stuttered
 			sprintf(output_file, "%s/exp_func_%d", experiment_directory, i);
@@ -357,11 +376,9 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 			sprintf(infname, "%s/%s_%d_%s%s%d", in_dir, function_fname, i, fname, pref, 0);
 			if (stuttered){
 			    double goodness = compare_stuttered_bins(def_list, exp_list, infname, est_res, gauss, est_type, stutter_intervals);
+			    total_goodness += goodness;
 			    printf("Goodness value for this parameter set is %lf\n", goodness);
-			    sprintf(infname, "%s/goodness.txt", experiment_directory);
-			    FILE *fp = fopen(infname, "w");
-			    fprintf(fp, "%lf\n", goodness);
-			    fclose(fp);
+			    fprintf(fp, "f%d: %lf\n", i, goodness);
 			}
 			
 			if (gauss){
@@ -370,7 +387,19 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 			    free_est_arr(est_res);
 			}
 		    }
-		    
+		    if (stuttered){
+			double avg_goodness = total_goodness/num_functions;
+			if (avg_goodness > best_goodness_value){
+			    best_goodness_value = avg_goodness;
+			    best_goodness_exp = expcount;
+			}
+			    
+			printf("Average goodness for experiment %d: %lf\n", expcount, avg_goodness);
+			fprintf(fp, "avg: %lf\n", avg_goodness);
+			fprintf(fp1, "%d %lf\n", expcount, avg_goodness);
+			fclose(fp);
+		    }
+		
 		    free(infname);
 		}
 		printf("Exp %d complete\n", expcount);
@@ -378,9 +407,13 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 		sepcount++;
 		free(output_file);
 	    } while (increment_experiment(current_exp));
+	    /* if (stuttered) */
+	    /* 	fclose(fp1); */
 	    printf("Completed %d experiments for %s.\n", sepcount, experiments->exp_names[i]);
 	    sepcount = 0;
 	    free(experiment_directory);
+	    if (stuttered)
+		printf("best goodness: %lf from experiment %d\n", best_goodness_value, best_goodness_exp);
 	    if (!multiple)
 		free_double_arr(stutter_intervals);
 	}
@@ -446,13 +479,13 @@ double compare_stuttered_bins(paramlist* def_list, paramlist* exp_list, char* in
 	else
 	    sums[i] = estimate_at_point(estimate, midpoints[i]);
 	//	printf("sum is %lf\n", sums[i]);
-	fprintf(fp, "%lf %lf %d %d\n", midpoints[i], sums[i], bins[i], st_bins[i]);
+	//	fprintf(fp, "%lf %lf %d %d\n", midpoints[i], sums[i], bins[i], st_bins[i]);
 	if (midpoints[i] > stutter_intervals->data[interval_num * 2] 
 	    && midpoints[i] < stutter_intervals->data[interval_num * 2 + 1]){
-	    printf("midpoint %d (%lf) is inside a stutter interval\n", i, midpoints[i]);
+	    //	    printf("midpoint %d (%lf) is inside a stutter interval\n", i, midpoints[i]);
 	    double thispdf = log_pdf(bins[i], sums[i], 1);
 	    pdf_sum += thispdf;
-	    printf("bin: %d, sum %lf. logpmf is %lf\n", bins[i], sums[i], thispdf);
+	    //	    printf("bin: %d, sum %lf. logpmf is %lf\n", bins[i], sums[i], thispdf);
 	} else if (midpoints[i] > stutter_intervals->data[interval_num * 2 + 1]){
 	    interval_num++;
 	    if (interval_num >= stutter_intervals->len/2)
@@ -719,7 +752,7 @@ void _stutter_stream(char* outfile, double_arr* events, double_arr* intervals)
     int i;
     FILE *fp = fopen(outfile, "w");
 
-    printf("start %lf, end %lf\n", intervals->data[interval_num * 2], intervals->data[interval_num * 2 + 1]);
+    //    printf("start %lf, end %lf\n", intervals->data[interval_num * 2], intervals->data[interval_num * 2 + 1]);
     for (i = 0; i < events->len; ++i) {
 	if (interval_num + 1 == intervals->len/2) {
 	    fprintf(fp, "%lf\n", events->data[i]);
@@ -731,12 +764,12 @@ void _stutter_stream(char* outfile, double_arr* events, double_arr* intervals)
 	    // The current event is inside one of the intervals where we delete data.
 	    continue;
 	} else if (events->data[i] > intervals->data[interval_num * 2 + 1]){
-	    printf("Events deleted: %d\n", interval_count);
+	    //	    printf("Events deleted: %d\n", interval_count);
 	    interval_count = 0;
-	    printf("Event outside interval: %lf, Moving to interval %d\n", events->data[i], interval_num + 1);
+	    //	    printf("Event outside interval: %lf, Moving to interval %d\n", events->data[i], interval_num + 1);
 	    // The interval was passed, so move to the next one.
 	    interval_num++;
-	    printf("start %lf, end %lf\n", intervals->data[interval_num * 2], intervals->data[interval_num * 2 + 1]);
+	    //	    printf("start %lf, end %lf\n", intervals->data[interval_num * 2], intervals->data[interval_num * 2 + 1]);
 	}
 	fprintf(fp, "%lf\n", events->data[i]);
     }
@@ -788,7 +821,9 @@ double_arr* parse_param(paramlist* params, char* param_to_parse)
 	if (strcmp(splitparam->data[i], "...") == 0){
 	    free(vals);
 	    free(ret);
-	    return parse_double_range(splitparam);
+	    ret = parse_double_range(splitparam);
+	    free_string_arr(splitparam);
+	    return ret;
 	} else {
 	    vals[i] = atof(splitparam->data[i]);
 	}
