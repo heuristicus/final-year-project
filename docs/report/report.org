@@ -20,6 +20,9 @@
 #+LaTeX_HEADER: \usepackage{biblatex}
 #+LaTeX_HEADER: \usepackage{metalogo}
 #+LaTeX_HEADER: \usepackage{graphicx}
+#+LaTeX_HEADER: \usepackage{moreverb}
+#+LaTeX_HEADER: \usepackage[center]{caption}
+#+LaTeX_HEADER: \usepackage{subcaption}
 #+LaTeX_HEADER: \bibliography{fyp}
 #+LATEX_HEADER: \defaultfontfeatures{Mapping=tex-text}
 #+LATEX_HEADER: \setromanfont[Ligatures={Common},Numbers={Lining}]{Linux Libertine}
@@ -98,7 +101,7 @@ simulated and real data and discuss the relative effectiveness of our methods.
 * Background
 ** Gravitational Lensing
 In an eight-year period starting in 1907 and ending in 1915 with the publication
-of a paper on field equations of gravitation\cite{einstein1915general}, Albert
+of a paper on field equations of gravitation \cite{einstein1915general}, Albert
 Einstein wrote many papers developing a new theory of gravitation, his general
 theory of relativity. This generalisation of special relativity and Newton's law
 of universal gravitation led to a revolution in the field of physics, and
@@ -128,19 +131,56 @@ affected by gravity directly, they \emph{are} affected by the curvature of
 spacetime. This bending of light rays is known as
 \emph{gravitational lensing}.
 
+The first person to study the effects of gravitational lensing was Orest
+Chvolson, publishing a short note to \emph{Astronomische Nachrichten} in 1924
+\cite{chwolsonlensing}. However, the concept was largely unknown until a short
+calculation by Einstein was published in \emph{Science} in 1936
+\cite{einsteinlensing}. Interestingly, Chvolson's note appears directly above a
+note from Einstein, but there appears to be no evidence that Einstein had ever
+seen it \cite{einsteinchwolson,renn2000eclipses}. The first gravitationally
+lensed object to be identified was the twin quasar SBS 0957+561, in 1979, and
+since then, over a hundred such objects have been discovered
+\cite{firstlens,gravlenscount}. The effect of gravitational lensing is, as the
+name suggests, similar to that of a lens, such as that of a camera. Unlike a
+camera lens, however, gravitational lenses do not have a focal point, but
+instead a focal line, resulting in images such as that shown in Figure
+\ref{fig:einring} if the source (the object being lensed), the lensing object
+(the massive object around which the light is being bent) and the observer lie on a
+straight line. This effect is relatively rare, however, and in general rather
+than a ring, multiple images of the source can be observed. In these so called
+\emph{strong} lensing effects, the distortion is very clearly visible. However,
+two other classes of lensing exist---\emph{weak lensing} and
+\emph{microlensing}.  The effects of weak lensing cannot easily be observed
+visually, but statistical techniques can show the distortion
+produced. Microlensing works on even smaller scales than the other two classes,
+and can be used to detect planets and stars. It has also been proposed as a
+method to find objects such as black holes and brown dwarfs, which are otherwise
+difficult to detect \cite{schneider2006gravitational}.
 \begin{figure}
 \centering
+\begin{subfigure}{0.4\textwidth}
 \includegraphics[width=\textwidth]{einstein_ring}
-\caption{An example of a gravitational lensing effect known as an Einstein ring.
-In this image, the central galaxy, LRG 3-757, is distorting light from a distant
-blue galaxy \cite{einsteinring}.}
-\label{fig:einsteinring}
+\caption{An Einstein ring}
+\label{fig:einring}
+\end{subfigure}
+\qquad
+\begin{subfigure}{0.4\textwidth}
+\includegraphics[width=\textwidth]{einstein_cross}
+\caption{Einstein's cross}
+\label{fig:einsteincross}
+\end{subfigure}
+\caption{Two examples of strong lensing effects. a) shows light from
+a distant blue galaxy being distorted by the central galaxy LRG 3-757
+\cite{einsteinring}. b) shows four images of a distant quasar being lensed by a
+foreground galaxy \cite{eincross}.}
+\label{fig:stronglens}
 \end{figure}
-- what is it
-- how does it occur
-- pictures
-- what does it tell us about the universe or things in it
 *** Importance of the Time Delay
+In gravitationally lensed systems, there is a delay between photon streams
+coming from images of the source due to the bending of light. Light from one
+source may have had to travel a slightly longer distance than that from the
+other, and while photons travel extremely fast, over astronomical distances the
+delay can become quite large. 
 - Talk generally about the problem of time delay estimation
 - refer to physics papers attempting to make estimates of the delay
 - talk about time delay estimation in particular, refer to kundic et al, many others
@@ -150,6 +190,43 @@ blue galaxy \cite{einsteinring}.}
 - this is an experiment to see whether this method has any use
 - build on technique introduced in massey et al
 ** Poisson Processes
+In certain situations, there are many benefits of having good models of the
+numbers of events that occur in a given period. For example, being able to
+estimate the number of incoming requests to a server, the number of calls made
+to emergency services, and the rate of radioactive decay at any given time are
+all useful in different applications. Poisson processes are \emph{stochastic
+processes} that can be used to do just that. A stochastic process is a way of
+representing the evolution of a random value or system over time by using
+collections of random variables. Most such processes do not evolve in a
+\emph{deterministic} way. That is, the way they change as time passes is not
+predictable.
+
+A Poisson process is one such process which counts the number of events and the
+time at which they occur in a given time interval, and have been used to model
+all of the above examples
+\cite{hajjam2008approach,cannizzaro1978results,arlitt1997internet}. In their
+basic form, Poisson processes have the following important properties
+\cite{ross1997simulation}:
+1. $N(0)=0$.
+   - $N(t)$ represents the total number of events that occurred up until time
+     $t$. Thus, if $N(0)=0$, it follows that the process begins at $t=0$.
+2. The numbers of events occurring in disjoint time intervals are independent.
+   - The \emph{independent increment} assumption. This states that $N(t)$, the
+     number of events that occur up to time $t$ is \emph{independent} of the
+     number $N(t+s)-N(t)$, i.e. the number of events in the time interval
+     between $t$ and $s$. In other words, the number of events that occur in one
+     interval does not have an effect on the number of events in any other time
+     interval.
+3. The probability distribution of the number of events that occur in a given
+   interval is dependent only on the length of the interval.
+   - The \emph{stationary increment} assumption. The implication of this is that
+     the probability distribution of $N(t+s)-N(t)$ is the same for all values of
+     $t$. That is, the likelihood of a number of events $n$ occurring in the
+     above time interval does not change, regardless of the value of $t$.
+4. No counted occurrences are simultaneous.
+   - For all events that occur in the duration of the process, no two events
+     will occur at the same time.
+Note the rate parameter cannot be below zero
    - where do they occur
    - what can they be used for
    - Times for a homogeneous poisson process can be generated using
@@ -220,7 +297,6 @@ estimate with minimum interval length applied
 ** experimentation on real-world data
 * Conclusion
 \newpage
-\nocite{*}
 \printbibliography
 \newpage
 #+BEGIN_appendices
@@ -229,7 +305,26 @@ estimate with minimum interval length applied
  download package\\
  run \texttt{./configure --prefix=/usr}, followed by \texttt{make \&\& make install} (may require sudo)
  this installs muparser so that headers can be found in \texttt{/usr/include}
-    
-    sudo apt-get install libgsl0-dev check 
-
+ \begin{verbatimtab}   
+ sudo apt-get install libgsl0-dev check 
+ \end{verbatimtab}
+* Usage
+** Creating functions for experimentation
+   Generate 10 random functions using gaussians, and output the transforms as
+   well so they can be plotted
+   \begin{verbatimtab}
+   ./launcher -g ../data/params.txt -r -t 2 -c 10
+   \end{verbatimtab}
+   Generate two streams from each of these generated functions using the
+   gaussian generator
+   \begin{verbatimtab}
+   ./launcher -g ../data/params.txt -f rand -n 2 -c 10
+   \end{verbatimtab}
+   Generate stuttered streams from files in this directory, so that you can
+   perform model fitting to find the best parameters to use on the generated
+   set.
+   \begin{verbatimtab}
+   ./launcher -x ../data/exp_params.txt -p ../data/params.txt -c 10 -n 2 -s -i .
+   \end{verbatimtab}
+   
 #+END_appendices
