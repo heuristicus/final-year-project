@@ -18,3 +18,8 @@ GNU Scientific Library, gsl (http://www.gnu.org/software/gsl), and check
 system, you should be able to install the required libraries using:
 
 `apt-get install check libgsl0-dev libmuparser-dev`
+
+If you wish to perform experiments, and use the provided t-test code, then you
+will also require alglib (http://www.alglib.net/), which can be installed with
+
+`apt-get install libalglib-dev`
