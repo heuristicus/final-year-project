@@ -1,3 +1,9 @@
+2013-03-06  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* generator.c: Muparser generation code can now generate multiple sets of streams
+	from the same expression by passing a number to the -c switch. Now uses an updated
+	output file style to match the one used by the random function generator.
+
 2013-03-03  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* file_util.c: Fixed memory leak caused by lost pointer references in the

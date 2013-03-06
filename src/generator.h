@@ -30,9 +30,10 @@ void run_events_nonhom(muParserHandle_t hparser, double lambda, double time_delt
 		       int events, char* outfile, int outswitch);
 void run_time_nstreams(muParserHandle_t hparser, double lambda, double runtime,
 		       double_arr* time_delta, int nstreams, char* outfile, int outswitch);
-void generate(char* paramfile, char* outfile, int nruns, int output_switch);
+void generate(char* paramfile, char* outfile, int nfuncs, int nstreams, int output_switch);
 void _generate(paramlist* params, char* outfile, double interval_time, double lambda, 
-	       double_arr* time_delta, int output_switch, int nruns, char* expr);
+	       muParserHandle_t hparser, double_arr* time_delta, int
+	       output_switch, int nstreams);
 gauss_vector* _generate_gaussian(char* infile, double stdev, double start,
 				 double interval, double gen_step,
 				 double resolution, double multiplier);

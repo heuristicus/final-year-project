@@ -152,7 +152,7 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* extra_
 	    generate_gaussian_data(paramfile, infile, outfile, args->nfuncs, args->writing);
 	} else if (generator_type == NULL || strcmp(generator_type, "mup") == 0){
 	    printf("Generating event stream with expression from parameter file.\n");
-	    generate(paramfile, outfile, args->nstreams, args->writing);
+	    generate(paramfile, outfile, args->nfuncs, args->nstreams, args->writing);
 	} else if (strcmp(generator_type, "rand") == 0){
 	    printf("Generating event stream with random functions.\n");
 	    generate_from_gaussian(paramfile, outfile, infile, args->nstreams, args->nfuncs);

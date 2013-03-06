@@ -18,9 +18,10 @@ int check_expr_vars(muParserHandle_t hparser, struct paramlist* params);
 double* parser_tptr(muParserHandle_t hparser);
 void view_expr(muParserHandle_t hparser);
 
-void generate(char* paramfile, char* outfile, int nstreams, int output_switch)
+void generate(char* paramfile, char* outfile, int nfuncs, int nstreams, int output_switch)
 {
     paramlist* params = get_parameters(paramfile);
+    char* prefix = get_string_param(params, "expression_outfile");
 
     if (outfile == NULL){
 	outfile = get_string_param(params, "outfile");
@@ -51,13 +52,38 @@ void generate(char* paramfile, char* outfile, int nstreams, int output_switch)
     char* expression = get_string_param(params, "expression");
     char* stream_ext = get_string_param(params, "stream_ext");
     
-    char* out = malloc(strlen(outfile) + strlen(stream_ext) + 5);
-    sprintf(out, "%s%s", outfile, stream_ext);
+
+    muParserHandle_t hparser = mupCreate(0);
+    mupSetVarFactory(hparser, var_factory, NULL);
+    mupSetErrorHandler(hparser, on_error);
     
-    _generate(params, out, interval_time, lambda, time_delta, output_switch,
-	      nstreams, expression);
+    mupSetExpr(hparser, expression);
+
+    if (!check_expr_vars(hparser, params) || mupError(hparser)){
+	printf("Expression is invalid. Check that you have defined all the variables.\n");
+	mupRelease(hparser);
+
+	free_list(params);
+	free(time_delta);
+	exit(1);
+    }
+
+    char* out = malloc(strlen(prefix) + strlen(outfile) + strlen(stream_ext) + 10);
+
     
+    int i;
+    
+    for (i = 0; i < nfuncs; ++i) {
+	printf("Generating stream set %d.\n", i);
+	sprintf(out, "%s_%d_%s%s", prefix, i, outfile, stream_ext);
+	_generate(params, out, interval_time, lambda, hparser, time_delta, output_switch,
+		  nstreams);
+    }
+
     free(out);
+    mupRelease(hparser);
+    free_double_arr(time_delta);
+    free_list(params);
 }
 
 /*
@@ -66,7 +92,7 @@ void generate(char* paramfile, char* outfile, int nstreams, int output_switch)
  * The order in which the arguments are is defined inside start.c
  */
 void _generate(paramlist* params, char* outfile, double interval_time, double lambda, 
-	       double_arr* time_delta, int output_switch, int nstreams, char* expr)
+	       muParserHandle_t hparser, double_arr* time_delta, int output_switch, int nstreams)
 {
 #ifdef VERBOSE
     printf("Number of runs: %d\nLambda: %lf\nInterval time: %lf\nTime deltas: ", nstreams, 
@@ -84,32 +110,7 @@ void _generate(paramlist* params, char* outfile, double interval_time, double la
     printf("Log verbosity: %d\n", outswitch);
 #endif
 
-    muParserHandle_t hparser = mupCreate(0);
-    mupSetVarFactory(hparser, var_factory, NULL);
-    mupSetErrorHandler(hparser, on_error);
-    
-    mupSetExpr(hparser, expr);
-
-    if (!check_expr_vars(hparser, params) || mupError(hparser)){
-	printf("Expression is invalid. Check that you have defined all the variables.\n");
-	mupRelease(hparser);
-
-	if (generated_outfile)
-	    free(outfile);
-
-	free_list(params);
-	free(time_delta);
-	exit(1);
-    }
-    
     run_time_nstreams(hparser, lambda, interval_time, time_delta, nstreams, outfile, output_switch);
-    
-    mupRelease(hparser);
-
-    if (generated_outfile)
-	free(outfile);
-
-    free(time_delta);
 }
 
 /*
@@ -507,10 +508,10 @@ void run_time_nstreams(muParserHandle_t hparser, double lambda, double end_time,
 		       double_arr* time_delta, int nstreams, char* outfile, int outswitch)
 {
     int i;
-    char *out = malloc(strlen(outfile) + 10);
+    char* out = malloc(strlen(outfile) + 20);
     for (i = 0; i < nstreams; ++i){
 	printf("Generating event stream %d\n", i);
-	sprintf(out, "%s%d.dat", outfile, i); // save each stream to a separate file
+	sprintf(out, "%s%d", outfile, i); // save each stream to a separate file
 	run_time_nonhom(hparser, lambda, time_delta->data[i], 0, end_time, out, outswitch);
     }
     free(out);
@@ -565,46 +566,48 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
     
     double** eptr = &et;
     double** lptr = &lv;
-
     int size = run_to_time_non_homogeneous(hparser, lambda, time_delta, start_time,\
 					   end_time, eptr, lptr, DEFAULT_ARR_SIZE);
-
     if (outswitch > 0){
+	char* out = malloc(strlen(outfile) + strlen("aggregated.dat") + 10);
 	if (outswitch >= 1){
-	    double_to_file(outfile, "w", *eptr, size);
+	    sprintf(out, "%s.dat", outfile);
+	    //printf("Event data output to %s\n", out);
+	    double_to_file(out, "w", *eptr, size);
 	} 
 	if (outswitch >= 2){
-	    mult_double_to_file(outfile, "w", *eptr, *lptr, size);
+	    sprintf(out, "%s_func.dat", outfile);
+	    //printf("Function data output to %s\n", out);
+	    mult_double_to_file(out, "w", *eptr, *lptr, size);
 	} 
 	if (outswitch >= 3){
+	    sprintf(out, "%s_bins.dat", outfile);
 	    int num_intervals = (end_time - start_time) / DEFAULT_WINDOW_SIZE;
 
 	    int* bin_counts = sum_events_in_interval(*eptr, size, start_time, end_time, num_intervals);
 	    double* midpoints = get_interval_midpoints(start_time, end_time, num_intervals);
     
-	    int_dbl_to_file(outfile, "w", midpoints, bin_counts, num_intervals);
+	    int_dbl_to_file(out, "w", midpoints, bin_counts, num_intervals);
 	    free(midpoints);
 	    free(bin_counts);
+	    //printf("Bin data output to %s\n", out);
 	}
 	if (outswitch >= 4){
-	    char *tmp = malloc(strlen(outfile) + 4 + strlen(".dat")); // space for extra chars and null terminator
-	    sprintf(tmp, "%s.dat", outfile);
-	    double_to_file(tmp, "w", *eptr, size);
-	
-	    sprintf(tmp, "%s_ad%s", outfile, ".dat");
-
-	    mult_double_to_file(tmp, "w", *eptr, *lptr, size);
+	    sprintf(out, "%s_aggregated.dat", outfile);
+	    double_to_file(out, "w", *eptr, size);
+	    mult_double_to_file(out, "a", *eptr, *lptr, size);
 
 	    int num_intervals = (end_time - start_time) / DEFAULT_WINDOW_SIZE;
 
 	    int* bin_counts = sum_events_in_interval(*eptr, size, start_time, end_time, num_intervals);
 	    double* midpoints = get_interval_midpoints(start_time, end_time, num_intervals);
     
-	    int_dbl_to_file(tmp, "a", midpoints, bin_counts, num_intervals);
+	    int_dbl_to_file(out, "a", midpoints, bin_counts, num_intervals);
 	    free(midpoints);
 	    free(bin_counts);
-	    free(tmp);
+	    //printf("Aggregated data output to %s\n", out);
 	}
+	free(out);
     }
     
 
