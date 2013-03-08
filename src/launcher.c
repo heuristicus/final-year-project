@@ -178,8 +178,9 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* extra_
 	if (args->nstreams > 1){
 	    printf("Running estimates of multiple (%d) streams.\n", args->nstreams);
 	    tdelta_result** r = multi_estimate(paramfile, infile, outfile, 
-					      args->nstreams, args->nfuncs, 
-					      args->writing, estimator_type, args->stutter);
+					       args->nstreams, args->nfuncs, 
+					       args->writing, estimator_type,
+					       args->stutter, args->rfunc);
 	    int i;
 	    
 	    for (i = 0; i < args->nfuncs; ++i) {
@@ -188,7 +189,8 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* extra_
 	    free(r);
 	} else {
 	    printf("Estimating single stream.\n");
-	    void* result = estimate(paramfile, infile, outfile, estimator_type, args->writing);
+	    void* result = estimate(paramfile, infile, outfile, estimator_type,
+				    args->writing, args->rfunc);
 	    if (strcmp(estimator_type, "gauss") == 0)
 		free_gauss_vector((gauss_vector*)result);
 	    else
@@ -203,7 +205,8 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* extra_
 	if (args->stutter == 1){
 	    stutter_stream(infile, paramfile, extra_paramfile, args->nfuncs, args->nstreams);
 	} else {
-	    run_experiments(paramfile, extra_paramfile, infile, outfile, args->nstreams, args->nfuncs, args->writing);
+	    run_experiments(paramfile, extra_paramfile, infile, outfile,
+			    args->nstreams, args->nfuncs, args->writing, args->rfunc);
 	}
     } else {
 	printf("No action specified. You can run either an estimator, a generator or"\

@@ -22,10 +22,6 @@
     "Options related to generation.\n\n"\
     "\t -g, --generate\n"						\
     "\t\t Used to generate event streams or gaussian data.\n\n"       \
-    "\t -r\n"\
-    "\t\tUsed to generate random functions via gaussians or when used with the -i"\
-    " switch,\n\t\tcreate gaussians with means centred on the points specified in the given"\
-    " file,\n\t\twhich should contain one dimensional data.\n\n"\
     "\t -f\n"\
     "\t\tUsed to specify the function to use when generating event"\
     " streams.\n\t\trand will generate a random function using gaussians and"\
@@ -60,6 +56,12 @@
     "\t\tData will be output to this file.\n\n"			\
     "\t -p or --paramfile\n"						\
     "\t\tSpecify the parameter file in which to find default parameters when experimenting.\n\n"\
+    "\t -r\n"\
+    "\t\tSwitches the system to use randomly generated functions. The generator will produce"\
+    "\t\tfunctions randomly generated using gaussians, or if the -i switch is received, will read"\
+    "\t\ta file containing 1-d data and centre gaussians on those points. Passing this switch"\
+    "\t\twhen using the estimators will set them to read data from files generated using the"\
+    "\t\trandom function generator as opposed to the default one.\n\n"	\
     "\t -t, --outtype\n"						\
     "\t\tUsed to specify how much data to ouput to file when estimating or generating."\
     "\n\t\tA value of zero will output no files at all. 1 will output the most"\

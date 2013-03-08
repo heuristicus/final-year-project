@@ -10,7 +10,7 @@
 #include "general_util.h"
 
 void run_experiments(char* exp_params, char* def_params, char* indir, char* outdir,
-		     int num_streams, int num_functions, int output_switch);
+		     int num_streams, int num_functions, int output_switch, int rfunc);
 double_arr* parse_double_range(string_arr* split_param_string);
 int_arr* parse_int_range(string_arr* split_param_string);
 double_arr* parse_param(paramlist* params, char* param_to_parse);

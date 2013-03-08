@@ -10,7 +10,7 @@ exp_set* experiment_setup(paramlist* exp_params, paramlist* def_params);
 void execute_experiments(paramlist* exp_params, paramlist* def_params,
 			 char* in_dir, char* out_dir, exp_set* experiments,
 			 int num_streams, int num_functions,
-			 int output_switch);
+			 int output_switch, int rfunc);
 void analyse_multi(char* outfile, char* in_dir, paramlist* params,
 		   tdelta_result** results, int num_streams, int num_functions,
 		   double_arr* time_delays);
@@ -22,7 +22,7 @@ double_arr* compute_stutter_intervals(double stutter_step, double stutter_interv
 
 void run_experiments(char* exp_paramfile, char* def_paramfile, char* indir,
 		     char* outdir, int num_streams, int num_functions,
-		     int output_switch)
+		     int output_switch, int rfunc)
 {
     paramlist* exp_list = get_parameters(exp_paramfile);
     paramlist* def_list = get_parameters(def_paramfile);
@@ -73,7 +73,7 @@ void run_experiments(char* exp_paramfile, char* def_paramfile, char* indir,
 
     exp_set* experiments = experiment_setup(exp_list, def_list);
     execute_experiments(exp_list, def_list, indir, outdir, experiments,
-			num_streams, num_functions, output_switch);
+			num_streams, num_functions, output_switch, rfunc);
 
     free_list(exp_list);
     free_list(def_list);
@@ -206,17 +206,25 @@ exp_set* experiment_setup(paramlist* exp_list, paramlist* def_list)
  */
 void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 			 char* out_dir, exp_set* experiments, int num_streams,
-			 int num_functions, int output_switch)
+			 int num_functions, int output_switch, int rfunc)
 {
     int i, j, k;
     int expcount = 0;
     char* tmp = NULL;
     int multiple = 0; // Are we estimating the time delay or just a single stream (function)
-    char* function_fname = get_string_param(def_list, "function_outfile");
     char* fname = get_string_param(def_list, "outfile"); // default generator output filename
     char* pref = get_string_param(def_list, "stream_ext"); // default extension
     int stuttered = strcmp(get_string_param(exp_list, "run_stuttered"), "yes") == 0;
     double_arr* time_delays = NULL;
+
+    char* function_fname;
+
+    if (rfunc){
+	function_fname = get_string_param(def_list, "function_outfile");
+    } else {
+	function_fname = get_string_param(def_list, "expression_outfile");
+    }
+
     
     // Go through all of the experiments that are in the set received
     for (i = 0; i < experiments->len; ++i) {
@@ -344,7 +352,7 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 		    tdelta_result** results = _multi_estimate(def_list, in_dir,
 							      output_file, num_streams,
 							      num_functions, 1, est_type,
-							      stuttered);
+							      stuttered, rfunc);
 		    sprintf(output_file, "%s/%s", experiment_directory, "results.txt");
 		    // Analyse the results and output them to a file in the experiment directory
 		    analyse_multi(output_file, in_dir, def_list, results, num_streams,
@@ -383,7 +391,7 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 			else
 			    sprintf(infname, "%s/%s_%d_%s%s%d.dat", in_dir, function_fname, i, fname, pref, 0);
 
-			void* est_res = _estimate(def_list, infname, output_file, est_type, output_switch);
+			void* est_res = _estimate(def_list, infname, output_file, est_type, output_switch, rfunc);
 
 			sprintf(infname, "%s/%s_%d_%s%s%d", in_dir, function_fname, i, fname, pref, 0);
 			if (stuttered){

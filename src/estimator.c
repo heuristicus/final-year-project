@@ -19,15 +19,17 @@ static char *gauss_params[] = {"est_start_time", "est_interval_time", "gauss_std
  * Runs the specified estimator using the provided parameter and output files. Performs
  * checks on the required parameters and does not run if they are not specified in the parameter file.
  */
-void* estimate(char* paramfile, char* infile, char* outfile, char* estimator_type, int output_switch)
+void* estimate(char* paramfile, char* infile, char* outfile, char* estimator_type,
+	       int output_switch, int rfunc)
 {
     paramlist* params = get_parameters(paramfile);
-    void* result = _estimate(params, infile, outfile, estimator_type, output_switch);
+    void* result = _estimate(params, infile, outfile, estimator_type, output_switch, rfunc);
     free_list(params);
     return result;
 }
 
-void* _estimate(paramlist* params, char* infile, char* outfile, char* estimator_type, int output_switch)
+void* _estimate(paramlist* params, char* infile, char* outfile, char*
+		estimator_type, int output_switch, int rfunc)
 {
     void* result = NULL;
     int alloced = 0;
@@ -35,7 +37,12 @@ void* _estimate(paramlist* params, char* infile, char* outfile, char* estimator_
     if (infile == NULL){
 	char* fname = get_string_param(params, "outfile"); // default generator output filename
 	char* pref = get_string_param(params, "stream_ext"); // default extension
-	char* function_fname = get_string_param(params, "function_outfile");    
+	char* function_fname;
+	if (rfunc){
+	    function_fname = get_string_param(params, "function_outfile");
+	} else {
+	    function_fname = get_string_param(params, "expression_outfile");
+	}
 	infile = malloc(strlen(function_fname) + strlen(fname) + strlen(pref) + 10);
 	sprintf(infile, "%s_0_%s%s0.dat", function_fname, fname, pref);
 	alloced = 1;
@@ -150,12 +157,12 @@ gauss_vector* run_gauss(paramlist* params, char* infile, char* outfile,
 
 tdelta_result** multi_estimate(char* paramfile, char* in_dir, char* outfile,
 			       int nstreams, int nfuncs, int output_switch,
-			       char* estimator_type, int stuttered)
+			       char* estimator_type, int stuttered, int rfunc)
 {
     paramlist* params = get_parameters(paramfile);
     
     tdelta_result** ret =  _multi_estimate(params, in_dir, outfile, nstreams, nfuncs,
-					   output_switch, estimator_type, stuttered);
+					   output_switch, estimator_type, stuttered, rfunc);
     free_list(params);
     return ret;
 }
@@ -168,7 +175,7 @@ tdelta_result** multi_estimate(char* paramfile, char* in_dir, char* outfile,
  */
 tdelta_result** _multi_estimate(paramlist* params, char* in_dir, char* outfile,
 				int nstreams, int nfuncs, int output_switch,
-				char* estimator_type, int stuttered)
+				char* estimator_type, int stuttered, int rfunc)
 {
     char* fname = get_string_param(params, "outfile"); // default generator output filename
     char* pref = get_string_param(params, "stream_ext"); // default extension
@@ -176,7 +183,13 @@ tdelta_result** _multi_estimate(paramlist* params, char* in_dir, char* outfile,
     char* est_delta = get_string_param(params, "estimate_delta");
     double start = get_double_param(params, "est_start_time");
     int gauss = strcmp(estimator_type, "gauss") == 0;
-    char* function_fname = get_string_param(params, "function_outfile");
+    char* function_fname;
+
+    if (rfunc){
+	function_fname = get_string_param(params, "function_outfile");
+    } else {
+	function_fname = get_string_param(params, "expression_outfile");
+    }
 
     if (step <= 0)
 	step = DEFAULT_STEP;
@@ -225,7 +238,7 @@ tdelta_result** _multi_estimate(paramlist* params, char* in_dir, char* outfile,
 		
 	results[i] = do_multi_estimate(params, infname, outname, step, start,
 				       est_delta, nstreams, output_switch,
-				       estimator_type, stuttered);
+				       estimator_type, stuttered, rfunc);
     }
     free(outname);
     free(infname);
@@ -235,7 +248,7 @@ tdelta_result** _multi_estimate(paramlist* params, char* in_dir, char* outfile,
 
 tdelta_result* do_multi_estimate(paramlist* params, char* infile, char* outfile, double step,
 		       double start, char* est_delta, int nstreams, int output_switch,
-				 char* estimator_type, int stuttered)
+				 char* estimator_type, int stuttered, int rfunc)
 {
     double_arr* delays = NULL;// Will be used to store time delays
     int gauss = strcmp(estimator_type, "gauss") == 0;
@@ -264,7 +277,7 @@ tdelta_result* do_multi_estimate(paramlist* params, char* infile, char* outfile,
 	// to mess around using different functions, since the _estimate function returns
 	// us a void pointer to the relevant est_arr or gauss_vector struct. We will later
 	// cast these to their original types.
-	estimates[i] = _estimate(params, infname, outname, estimator_type, output_switch);
+	estimates[i] = _estimate(params, infname, outname, estimator_type, output_switch, rfunc);
     }
 
     double normaliser = 1;

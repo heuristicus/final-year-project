@@ -12,20 +12,22 @@
 
 #define EST_TYPE_ERROR "%s is not a valid estimator. Try -a [ols|iwls|pc|base|gauss].\n"
 
-void* estimate(char* paramfile, char* infile, char* outfile, char* estimator_type, int output_switch);
-void* _estimate(paramlist* params, char* infile, char* outfile, char* estimator_type, int output_switch);
+void* estimate(char* paramfile, char* infile, char* outfile, char* estimator_type,
+	       int output_switch, int rfunc);
+void* _estimate(paramlist* params, char* infile, char* outfile, char* estimator_type,
+		int output_switch, int rfunc);
 est_arr* run_ols(paramlist* params, char* infile, char* outfile);
 est_arr* run_iwls(paramlist* params, char* infile, char* outfile);
 est_arr* run_pc(paramlist* params, char* infile, char* outfile);
 est_arr* run_base(paramlist* params, char* infile, char* outfile);
 gauss_vector* run_gauss(paramlist* params, char* infile, char* outfile, int output_switch);
 tdelta_result** multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, int nfuncs,
-			       int output_switch, char* estimator_type, int stuttered);
+			       int output_switch, char* estimator_type, int stuttered, int rfunc);
 tdelta_result** _multi_estimate(paramlist* params, char* infile, char* outfile, int nstreams, int nfuncs,
-				int output_switch, char* estimator_type, int stuttered);
+				int output_switch, char* estimator_type, int stuttered, int rfuncl);
 tdelta_result* do_multi_estimate(paramlist* params, char* infile, char* outfile, double step,
 				 double start, char* est_delta, int nstreams, int output_switch,
-				 char* estimator_type, int stuttered);
+				 char* estimator_type, int stuttered, int rfunc);
 
 // Use these rather than the functions below.
 est_arr* estimate_OLS(paramlist* params, char *infile, char *outfile);
