@@ -8,7 +8,7 @@ char *gauss_params[] = {"gauss_est_stdev", "est_start_time", "est_interval_time"
  * gaussian transform of the kernels.
  */
 double_multi_arr* estimate_gaussian(paramlist* params, char* infile, char* outfile,
-				    int output_switch)
+				    int output_switch, int normalise)
 {
     if (!has_required_params(params, gauss_params, sizeof(gauss_params)/sizeof(char*))){
 	printf("Some parameters required to perform gaussian estimation are missing."\
@@ -20,7 +20,9 @@ double_multi_arr* estimate_gaussian(paramlist* params, char* infile, char* outfi
     double interval = get_double_param(params, "est_interval_time");
     double resolution = get_double_param(params, "gauss_est_resolution");
 
-    gauss_vector* G = _estimate_gaussian_raw(infile, outfile, start, interval, stdev, resolution);
+    double_arr* ev = get_event_data_all(infile);
+
+    gauss_vector* G = gen_gaussian_vector_from_array(ev->data, ev->len, stdev, 1, 0);
     double_multi_arr* T = gauss_transform(G, start, start + interval, resolution);
 
     if (outfile != NULL && output_switch > 0){
@@ -32,13 +34,18 @@ double_multi_arr* estimate_gaussian(paramlist* params, char* infile, char* outfi
 		shift = -min;
 	    }
 	    sprintf(out, "%s_sum.dat", outfile);
-	    output_gauss_transform(out, "w", T->data, shift, T->lengths[0], 1);
+	    double normaliser = 1;
+	    if (normalise)
+		normaliser = find_normaliser(params, G, ev, "gauss");
+	    output_gauss_transform(out, "w", T->data, shift, T->lengths[0], normaliser);
 	}
 	if (output_switch >= 3){
 	    sprintf(out, "%s_contrib.dat", outfile);
 	    output_gaussian_contributions(out, "w", G, start, start + interval, resolution, 0);
 	}
     }
+
+    free_double_arr(ev);
 
     free_gauss_vector(G);
 
@@ -51,7 +58,7 @@ double_multi_arr* estimate_gaussian(paramlist* params, char* infile, char* outfi
  * in their raw form.
  */
 gauss_vector* estimate_gaussian_raw(paramlist* params, char* infile, char* outfile,
-				    int output_switch)
+				    int output_switch, int normalise)
 {
     if (!has_required_params(params, gauss_params, sizeof(gauss_params)/sizeof(char*))){
 	printf("Some parameters required to perform gaussian estimation are missing."\
@@ -64,7 +71,9 @@ gauss_vector* estimate_gaussian_raw(paramlist* params, char* infile, char* outfi
     double interval = get_double_param(params, "est_interval_time");
     double resolution = get_double_param(params, "gauss_est_resolution");
 
-    gauss_vector* G = _estimate_gaussian_raw(infile, outfile, start, interval, stdev, resolution);
+    double_arr* ev = get_event_data_all(infile);
+
+    gauss_vector* G = gen_gaussian_vector_from_array(ev->data, ev->len, stdev, 1, 0);
  
     if (outfile != NULL && output_switch > 0){
 	char* out = malloc(strlen(outfile) + strlen("_contrib.dat") + 3);
@@ -77,7 +86,10 @@ gauss_vector* estimate_gaussian_raw(paramlist* params, char* infile, char* outfi
 		shift = -min;
 	    }
 	    sprintf(out, "%s_sum.dat", outfile);
-	    output_gauss_transform(out, "w", T->data, shift, T->lengths[0], 1);
+	    double normaliser = 1;
+	    if (normalise)
+		normaliser = find_normaliser(params, G, ev, "gauss");
+	    output_gauss_transform(out, "w", T->data, shift, T->lengths[0], normaliser);
 	}
 	if (output_switch >= 3){
 	    sprintf(out, "%s_contrib.dat", outfile);
@@ -86,17 +98,7 @@ gauss_vector* estimate_gaussian_raw(paramlist* params, char* infile, char* outfi
 	}
     }
 
-    return G;
-}
-
-gauss_vector* _estimate_gaussian_raw(char* infile, char* outfile, double start,
-				     double interval_length, double stdev, double resolution)
-{
-    double_arr* ev = get_event_data_all(infile);
-
-    gauss_vector* G = gen_gaussian_vector_from_array(ev->data, ev->len, stdev, 1, 0);
-
     free_double_arr(ev);
-    
+
     return G;
 }

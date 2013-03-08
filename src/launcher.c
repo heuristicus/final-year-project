@@ -190,7 +190,7 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* extra_
 	} else {
 	    printf("Estimating single stream.\n");
 	    void* result = estimate(paramfile, infile, outfile, estimator_type,
-				    args->writing, args->rfunc);
+				    args->writing, args->rfunc, 1);
 	    if (strcmp(estimator_type, "gauss") == 0)
 		free_gauss_vector((gauss_vector*)result);
 	    else
@@ -203,7 +203,8 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* extra_
 	    exit(1);
 	}
 	if (args->stutter == 1){
-	    stutter_stream(infile, paramfile, extra_paramfile, args->nfuncs, args->nstreams);
+	    stutter_stream(infile, paramfile, extra_paramfile, args->nfuncs,
+			   args->nstreams, args->rfunc);
 	} else {
 	    run_experiments(paramfile, extra_paramfile, infile, outfile,
 			    args->nstreams, args->nfuncs, args->writing, args->rfunc);

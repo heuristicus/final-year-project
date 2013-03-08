@@ -566,8 +566,9 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
 {
     double_arr* events = run_to_time_non_homogeneous(hparser, lambda, time_delta, start_time, \
 						     end_time, DEFAULT_ARR_SIZE);
+
     if (outswitch > 0){
-	char* out = malloc(strlen(outfile) + strlen("aggregated.dat") + 10);
+	char* out = malloc(strlen(outfile) + strlen("_function.dat") + 10);
 	if (outswitch >= 1){
 	    sprintf(out, "%s.dat", outfile);
 	    //printf("Event data output to %s\n", out);
@@ -675,6 +676,7 @@ double_arr* run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda,
 	}
 	
     }
+    ret->len = i;
     return ret;
 }
 

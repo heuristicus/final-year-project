@@ -20,16 +20,16 @@ static char *gauss_params[] = {"est_start_time", "est_interval_time", "gauss_std
  * checks on the required parameters and does not run if they are not specified in the parameter file.
  */
 void* estimate(char* paramfile, char* infile, char* outfile, char* estimator_type,
-	       int output_switch, int rfunc)
+	       int output_switch, int rfunc, int normalise)
 {
     paramlist* params = get_parameters(paramfile);
-    void* result = _estimate(params, infile, outfile, estimator_type, output_switch, rfunc);
+    void* result = _estimate(params, infile, outfile, estimator_type, output_switch, rfunc, normalise);
     free_list(params);
     return result;
 }
 
 void* _estimate(paramlist* params, char* infile, char* outfile, char*
-		estimator_type, int output_switch, int rfunc)
+		estimator_type, int output_switch, int rfunc, int normalise)
 {
     void* result = NULL;
     int alloced = 0;
@@ -70,7 +70,7 @@ void* _estimate(paramlist* params, char* infile, char* outfile, char*
     } else if (strcmp("base", estimator_type) == 0){
 	result = run_base(params, infile, outfile);
     } else if (strcmp("gauss", estimator_type) == 0){
-	result = run_gauss(params, infile, outfile, output_switch);
+	result = run_gauss(params, infile, outfile, output_switch, normalise);
     } else {
 	printf(EST_TYPE_ERROR, estimator_type);
     }
@@ -143,10 +143,10 @@ est_arr* run_base(paramlist* params, char* infile, char* outfile)
 }
 
 gauss_vector* run_gauss(paramlist* params, char* infile, char* outfile,
-			    int output_switch)
+			int output_switch, int normalise)
 {
     if (has_required_params(params, gauss_params, sizeof(gauss_params)/sizeof(char*))){
-	return estimate_gaussian_raw(params, infile, outfile, output_switch);
+	return estimate_gaussian_raw(params, infile, outfile, output_switch, normalise);
     } else {
 	print_string_array("Some parameters required for gaussian estimates are missing. " \
 			   "Ensure that your parameter file contains the following entries and try again.",
@@ -276,8 +276,9 @@ tdelta_result* do_multi_estimate(paramlist* params, char* infile, char* outfile,
 	// Since we are storing data in a void pointer, we do not need to do anything
 	// to mess around using different functions, since the _estimate function returns
 	// us a void pointer to the relevant est_arr or gauss_vector struct. We will later
-	// cast these to their original types.
-	estimates[i] = _estimate(params, infname, outname, estimator_type, output_switch, rfunc);
+	// cast these to their original types. Get non-normalised functions.
+	// We normalise the result later.
+	estimates[i] = _estimate(params, infname, outname, estimator_type, output_switch, rfunc, 0);
     }
 
     double normaliser = 1;

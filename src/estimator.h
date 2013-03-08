@@ -13,14 +13,14 @@
 #define EST_TYPE_ERROR "%s is not a valid estimator. Try -a [ols|iwls|pc|base|gauss].\n"
 
 void* estimate(char* paramfile, char* infile, char* outfile, char* estimator_type,
-	       int output_switch, int rfunc);
+	       int output_switch, int rfunc, int normalise);
 void* _estimate(paramlist* params, char* infile, char* outfile, char* estimator_type,
-		int output_switch, int rfunc);
+		int output_switch, int rfunc, int normalise);
 est_arr* run_ols(paramlist* params, char* infile, char* outfile);
 est_arr* run_iwls(paramlist* params, char* infile, char* outfile);
 est_arr* run_pc(paramlist* params, char* infile, char* outfile);
 est_arr* run_base(paramlist* params, char* infile, char* outfile);
-gauss_vector* run_gauss(paramlist* params, char* infile, char* outfile, int output_switch);
+gauss_vector* run_gauss(paramlist* params, char* infile, char* outfile, int output_switch, int normalise);
 tdelta_result** multi_estimate(char* paramfile, char* infile, char* outfile, int nstreams, int nfuncs,
 			       int output_switch, char* estimator_type, int stuttered, int rfunc);
 tdelta_result** _multi_estimate(paramlist* params, char* infile, char* outfile, int nstreams, int nfuncs,
@@ -34,7 +34,8 @@ est_arr* estimate_OLS(paramlist* params, char *infile, char *outfile);
 est_arr* estimate_IWLS(paramlist* params, char *infile, char *outfile);
 est_arr* estimate_piecewise(paramlist* params, char *event_file, char *output_file);
 est_arr* estimate_baseline(paramlist* params, char *event_file, char *output_file);
-double_multi_arr* estimate_gaussian(paramlist* params, char* infile, char* outfile, int output_switch);
+double_multi_arr* estimate_gaussian(paramlist* params, char* infile, char* outfile,
+				    int output_switch, int normalise);
 
 // Easier to use functions above than these.
 est_arr* _estimate_baseline(char *event_file, char *output_file, double interval_start, 
@@ -50,13 +51,13 @@ est_arr* _estimate_OLS(char* infile, char* outfile, double start_time, double en
 est_arr* _estimate_IWLS(char* infile, char* outfile, double start_time, double end_time,
 			int num_subintervals, int iterations, double_arr* event_data);
 double_multi_arr* _estimate_gaussian(char* infile, char* outfile, double start,
-			double interval_length, double stdev, double resolution);
+				     double interval_length, double stdev, double resolution,
+				     int normalise);
 
 double** get_subintervals(double start_time, double end_time, int num_subintervals);
 void free_pointer_arr(void **arr, int length);
-gauss_vector* _estimate_gaussian_raw(char* infile, char* outfile, double start,
-				     double interval_length, double stdev, double resolution);
-gauss_vector* estimate_gaussian_raw(paramlist* params, char* infile, char* outfile, int output_switch);
+gauss_vector* estimate_gaussian_raw(paramlist* params, char* infile, char* outfile,
+				    int output_switch, int normalise);
 
 double area_at_point_gauss(gauss_vector* f1, gauss_vector* f2, double x, double delay);
 double area_at_point_base(est_arr* f1, est_arr* f2, double x, double delay);

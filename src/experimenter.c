@@ -391,7 +391,7 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 			else
 			    sprintf(infname, "%s/%s_%d_%s%s%d.dat", in_dir, function_fname, i, fname, pref, 0);
 
-			void* est_res = _estimate(def_list, infname, output_file, est_type, output_switch, rfunc);
+			void* est_res = _estimate(def_list, infname, output_file, est_type, output_switch, rfunc, 1);
 
 			sprintf(infname, "%s/%s_%d_%s%s%d", in_dir, function_fname, i, fname, pref, 0);
 			if (stuttered){
@@ -415,12 +415,12 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 			double avg_goodness = total_goodness/num_functions;
 			if (avg_goodness > best_goodness_value){
 			    best_goodness_value = avg_goodness;
-			    best_goodness_exp = expcount;
+			    best_goodness_exp = sepcount;
 			}
 
-			printf("Average goodness for experiment %d: %lf\n", expcount, avg_goodness);
+			printf("Average goodness for experiment %d: %lf\n", sepcount, avg_goodness);
 			fprintf(fp, "avg: %lf\n", avg_goodness);
-			fprintf(fp1, "%d %lf\n", expcount, avg_goodness);
+			fprintf(fp1, "%d %lf\n", sepcount, avg_goodness);
 			fclose(fp);
 		    }
 		
@@ -677,14 +677,22 @@ int parameters_coherent(paramlist* experiment, paramlist* def, char** check, int
  * given input directory, and creates new files in the directory containing this
  * stuttered data. This function performs some setup operations.
  */
-void stutter_stream(char* indir, char* exp_paramfile, char* def_paramfile, int nfuncs, int nstreams)
+void stutter_stream(char* indir, char* exp_paramfile, char* def_paramfile, int nfuncs, int nstreams, int rfunc)
 {    
     paramlist* def_params = get_parameters(def_paramfile);
     paramlist* exp_params = get_parameters(exp_paramfile);
     
     char* fname = get_string_param(def_params, "outfile"); // default generator output filename
     char* pref = get_string_param(def_params, "stream_ext"); // default extension
-    char* function_fname = get_string_param(def_params, "function_outfile");
+    char* function_fname;
+    if (rfunc){
+	function_fname = get_string_param(def_params, "function_outfile");
+    } else {
+	function_fname = get_string_param(def_params, "expression_outfile");
+    }
+
+    printf("rfunc %d, fname %s\n", rfunc, function_fname);
+
     double start_time = get_double_param(def_params, "start_time");
     double interval_time = get_double_param(def_params, "interval_time");
     int uniform = strcmp(get_string_param(exp_params, "uniform_stuttering"), "yes") == 0;
