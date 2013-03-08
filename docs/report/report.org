@@ -23,6 +23,8 @@
 #+LaTeX_HEADER: \usepackage{moreverb}
 #+LaTeX_HEADER: \usepackage[center]{caption}
 #+LaTeX_HEADER: \usepackage{subcaption}
+#+LaTeX_HEADER: \usepackage{tikz}
+#+LaTeX_HEADER: \usetikzlibrary{positioning}
 #+LaTeX_HEADER: \bibliography{fyp}
 #+LATEX_HEADER: \defaultfontfeatures{Mapping=tex-text}
 #+LATEX_HEADER: \setromanfont[Ligatures={Common},Numbers={Lining}]{Linux Libertine}
@@ -181,6 +183,7 @@ coming from images of the source due to the bending of light. Light from one
 source may have had to travel a slightly longer distance than that from the
 other, and while photons travel extremely fast, over astronomical distances the
 delay can become quite large. 
+- strong lensing p86
 - Talk generally about the problem of time delay estimation
 - refer to physics papers attempting to make estimates of the delay
 - talk about time delay estimation in particular, refer to kundic et al, many others
@@ -226,13 +229,51 @@ basic form, Poisson processes have the following important properties
 4. No counted occurrences are simultaneous.
    - For all events that occur in the duration of the process, no two events
      will occur at the same time.
-Note the rate parameter cannot be below zero
-   - where do they occur
-   - what can they be used for
-   - Times for a homogeneous poisson process can be generated using
-     the formula $\log\frac{-U}{\lambda}$
-** Linear Regression
+
+The most important thing about Poisson processes is the \emph{rate parameter},
+$\lambda$. This value represents the number of events that occur in each time
+interval. As we are counting events, it is clear that the rate parameter can
+never go below zero---there cannot be a negative number of occurrences in a
+given time interval. There are two types of Poisson processes,
+\emph{homogeneous} and \emph{non-homogeneous}. In a homogeneous Poisson process (HPP),
+the rate parameter is constant throughout the running of the process. This means
+that in every interval, the same number of events are likely to occur. In
+contrast, a non-homogeneous Poisson process (NHPP) has a rate parameter which
+varies. This means that the rate at which events occur varies during the running
+time of the process.
+** Function Estimation
+*** Linear Regression
+Linear regression is a statistical technique used to fit lines or curves to data
+points in order to find some sort of relationship between them. The number of
+variables in the data is important. One of the variables is called a \emph{dependent}
+variable. We want to find the relationship between this variable and the other
+variables, called \emph{independent} variables. What makes one variable
+dependent and another independent? Consider the expression $y=f(x)$. If $f(x)$
+is some function of the variable $x$, then we know that the value of $y$ depends
+on the value of $x$. This is where the names come from. In this simple example,
+$x$ is the independent variable, and $y$ is the dependent variable. There can be
+multiple independent variables.
+
+ Linear regression is used in many different fields to find the trend between
+ variables. It is heavily used in economics to make predictions about what
+ happens in many economical situations. Finding trends in data is useful to many
+ people in different ways.
+*** Kernel Density Estimation
+This is another method which can be used to estimate functions, but which
+applies specifically to the probability density function of random
+variables. This technique uses \emph{kernels} to estimate the function
+densities. 
 * Simulation of Photon Streams
+The first step in building the system was the development of a photon stream
+simulator. The ability to simulate photon streams means that the system can be
+tested on many different stream types, so that we are able to determine where
+its strengths and weaknesses lie. While many simulation tools are very complex,
+our system does not require complex simulation of quasars or the movement of
+photons, as we are only interested in their arrival time. A quasar can be
+represented by some random variable $X$, which changes over time. This means
+that a NHPP can be used to create similar effects. In order to simulate arrival
+times, a function that describes how the rate parameter $\lambda$ changes over
+time is needed. 
 ** Function Generation
 ** Generating Streams from Functions
 * Function Estimation
@@ -279,12 +320,128 @@ estimate with minimum interval length applied
 ** Probability Mass Function Method
 * System
 ** System Structure
+   \begin{figure}
+   \centering
+   \pgfdeclarelayer{background}
+   \pgfdeclarelayer{foreground}
+   \pgfsetlayers{background,main,foreground}
+   % horizontal separation
+   \def \hnsep {0.5}
+   \tikzstyle{sub}=[draw, fill=blue!20, text width=5em, 
+   text centered, minimum height=2.5em, node distance=1.5cm]
+
+   \begin{tikzpicture}
+   \node (param) at (0,3.5) [sub] {Parameter file};
+   % libs group
+   \node (math) at (2,6) [sub] {Math};
+   \node (gut) [sub, right=\hnsep of math] {General};
+   \node (file) [sub, right=\hnsep of gut] {File};
+   \node (plist) [sub, right=\hnsep of file] {Parameter List};
+   \node (lib) [below right=0.25cm and -0.65 of gut] {\textbf{Libraries}};
+   % generator group
+   \node (hom) at (2,1) [sub] {HPP};
+   \node (nhm) [sub, below of=hom] {NHPP};
+   \node (rfunc) [sub, below of=nhm] {Random Function};
+   \node (gauss) [sub, below of=rfunc] {Gaussian};
+   \node (gen) [below of=gauss, font=\small] {\textbf{Generators}};
+   \node (strout) [sub, below of=gen] {Stream Data};
+   % estimator group
+   \node (ln) at (6,0) [sub] {Linear};
+   \node (pc) [sub, below of=ln] {Piecewise};
+   \node (bl) [sub, below of=pc] {Baseline};
+   \node (kd) [sub, below of=bl] {Kernel Density};
+   \node (td) [sub, below of=kd] {Time Delta};
+   \node (est) [below of=td, font=\small] {\textbf{Estimators}};
+   \node (estout) [sub, below of=est] {Estimator Output};
+   % experimenter
+   \node (expparam) at (11.5,2) [sub] {Experiment Parameters};
+   \node (exp) at (10,0) [sub] {Harness};
+   \node (explbl) [below of=exp, font=\small] {\textbf{Experimenter}};
+   \node (expout) [sub, below of=explbl] {Experiment Results};
+   % Draw the rest on the background layer
+   \begin{pgfonlayer}{background}
+   % Estimator background
+   \path (ln.north west)+(-0.2,0.2) node (a) {};
+   \path (est.south -| ln.east)+(+0.2,-0.2) node (b) {};
+   \path[fill=blue!10,rounded corners, draw=black!50, dashed]
+   (a) rectangle (b);
+   % generator background
+   \path (hom.north west)+(-0.2,0.2) node (c) {};
+   \path (gen.south -| hom.east)+(+0.2,-0.2) node (d) {};
+   \path[fill=blue!10,rounded corners, draw=black!50, dashed]
+   (c) rectangle (d);
+   % libs background
+   \path (math.north west)+(-0.2,0.2) node (e) {};
+   \path (lib.south -| plist.east)+(+0.2,-0.2) node (f) {};
+   \path[fill=blue!10,rounded corners, draw=black!50, dashed]
+   (e) rectangle (f);
+   % experimenter background
+   \path (exp.north west)+(-0.2,0.2) node (g) {};
+   \path (explbl.south -| exp.east)+(+0.2,-0.2) node (h) {};
+   \path[fill=blue!10,rounded corners, draw=black!50, dashed]
+   (g) rectangle (h);
+   
+   % path from expparam to experiments
+   \coordinate [above=1.51 of exp] (expln) {};
+   \coordinate [above=1 of exp] (tpexp) {};
+   \draw [dashed,line width=1pt] (expparam.west) -- (expln);
+   % path from experiments to exp out
+   \draw [->,line width=1pt] (explbl.south)+(0,-0.2) -- (expout.north);
+
+   % library arrows
+   \path (ln.north)+(0,0.05) node (esttop){};    
+   \coordinate [above=0.2cm of hom] (gentop) {};
+   \coordinate [below=2cm of lib] (lsplit) {};
+   \coordinate [below=0.2cm of lib] (blwlib) {};
+   \coordinate [above=0.2cm of exp] (abvexp) {};
+   \draw [-,line width=1pt] (blwlib) -- (lsplit);
+   \draw [->,line width=1pt] (lsplit) -- (esttop);
+   \draw [->,line width=1pt] (lsplit) -| (abvexp);
+   \draw [->,line width=1pt] (lsplit) -| (gentop);
+
+   % path from param to library link
+   \coordinate [above=0.8cm of lsplit] (tt) {};
+   \draw [dashed,line width=1pt] (param.east) -- (tt);
+   
+   % estimator arrows
+   \draw [->] (ln.south) -- (pc.north);
+   \draw [->] (pc.south) -- (bl.north);
+   \coordinate [below=0.2 of est] (blest) {};
+   \draw [->,line width=1pt] (blest)--(estout);
+   \coordinate [right=0.9 of estout] (restout) {};
+   \draw [dashed,line width=1pt] (estout.east) -- (restout);
+   \draw [dashed,line width=1pt] (restout) |- (tpexp);
+   
+   % generator arrows
+   \coordinate [above= 1 of ln] (abvln) {}; %above length est
+   \coordinate [below=0.2 of gen] (bgen) {};
+   \coordinate [right=0.9 of strout] (rstrout) {};
+   \draw [->,line width=1pt] (bgen) -- (strout);
+   \draw [->] (hom.south) -- (nhm.north);
+   \draw [dashed,line width=1pt] (strout.east) -- (rstrout);
+   \draw [dashed,line width=1pt] (rstrout) |- (abvln);
+   
+   \end{pgfonlayer}
+   %\node (lib) at (0,0) [sub] {Libraries};
+   %\node (est) at (1.5,-1) [sub] {Estimators};
+   %\node (gen) at (-1.5,-1) [sub] {Generators};
+   %\draw [->] (lib.east) -| (est.north);
+   %\draw [->] (lib.west) -| (gen.north);
+   \end{tikzpicture}
+   \caption{System structure}
+   \label{fig:sysstruct}
+   \end{figure}
 *** Overall Structure
 *** Estimators
 *** Generators
 *** Experimenter
 ** Development
 *** Development Process
+- first draft up code in notebook to get down the concept
+- write a basic code skeleton and add tests to make sure that it works as
+  intended - particularly for mathematics and the like
+- flesh out the code and integrate it with the system
+- make code as modular as possible to make it easy to add stuff in later
 *** Version Control
     - branching strategy
     - commit frequency
@@ -296,6 +453,7 @@ estimate with minimum interval length applied
 ** experimentation on simulated data
 ** experimentation on real-world data
 * Conclusion
+** Future Work and Improvements
 \newpage
 \printbibliography
 \newpage
