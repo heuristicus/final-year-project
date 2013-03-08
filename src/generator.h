@@ -20,20 +20,21 @@ void generate_event_times_homogeneous(double lambda, double time, int max_events
 void run_to_event_limit_non_homogeneous(muParserHandle_t hparser, double lambda,
 					double start_time, int max_events,
 					double* event_times, double* lambda_vals);
-int run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda,
+double_arr* run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda,
 				double time_delta, double start_time, 
-				double time_to_run, double** event_times,
-				double** lambda_vals, int arr_len);
+				double time_to_run, int arr_len);
 void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
-		     double start_time, double runtime, char* outfile, int outswitch);
+		     double start_time, double runtime, char* outfile, int outswitch,
+		     double step, double output_interval);
 void run_events_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
 		       int events, char* outfile, int outswitch);
 void run_time_nstreams(muParserHandle_t hparser, double lambda, double runtime,
-		       double_arr* time_delta, int nstreams, char* outfile, int outswitch);
+		       double_arr* time_delta, int nstreams, char* outfile,
+		       int outswitch, double step, double output_interval);
 void generate(char* paramfile, char* outfile, int nfuncs, int nstreams, int output_switch);
 void _generate(paramlist* params, char* outfile, double interval_time, double lambda, 
 	       muParserHandle_t hparser, double_arr* time_delta, int
-	       output_switch, int nstreams);
+	       output_switch, int nstreams, double step, double output_interval);
 gauss_vector* _generate_gaussian(char* infile, double stdev, double start,
 				 double interval, double gen_step,
 				 double resolution, double multiplier);

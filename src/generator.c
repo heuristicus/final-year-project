@@ -5,7 +5,6 @@
 #include "general_util.h"
 
 #define DEFAULT_ARR_SIZE 50
-#define DEFAULT_WINDOW_SIZE 1.0
 #define PARSER_MAXVARS 10
 
 static int generated_outfile = 0;
@@ -32,9 +31,7 @@ void generate(char* paramfile, char* outfile, int nfuncs, int nstreams, int outp
    	}
     }
     
-    if (has_required_params(params, generator_params, sizeof(generator_params)/sizeof(char*))){
-	
-    } else {
+    if (!has_required_params(params, generator_params, sizeof(generator_params)/sizeof(char*))){
 	print_string_array("Some parameters required for generating streams are missing. " \
 			   "Ensure that your parameter file contains the following entries"\
 			   " and try again. If you have not defined the expression to use, "\
@@ -51,7 +48,8 @@ void generate(char* paramfile, char* outfile, int nfuncs, int nstreams, int outp
     double_arr* time_delta = get_double_list_param(params, "timedelta");
     char* expression = get_string_param(params, "expression");
     char* stream_ext = get_string_param(params, "stream_ext");
-    
+    double output_interval = get_double_param(params, "output_interval");
+    double step = get_double_param(params, "output_step");
 
     muParserHandle_t hparser = mupCreate(0);
     mupSetVarFactory(hparser, var_factory, NULL);
@@ -77,7 +75,7 @@ void generate(char* paramfile, char* outfile, int nfuncs, int nstreams, int outp
 	printf("Generating stream set %d.\n", i);
 	sprintf(out, "%s_%d_%s%s", prefix, i, outfile, stream_ext);
 	_generate(params, out, interval_time, lambda, hparser, time_delta, output_switch,
-		  nstreams);
+		  nstreams, step, output_interval);
     }
 
     free(out);
@@ -92,11 +90,12 @@ void generate(char* paramfile, char* outfile, int nfuncs, int nstreams, int outp
  * The order in which the arguments are is defined inside start.c
  */
 void _generate(paramlist* params, char* outfile, double interval_time, double lambda, 
-	       muParserHandle_t hparser, double_arr* time_delta, int output_switch, int nstreams)
+	       muParserHandle_t hparser, double_arr* time_delta, int output_switch,
+	       int nstreams, double step, double output_interval)
 {
 #ifdef VERBOSE
-    printf("Number of runs: %d\nLambda: %lf\nInterval time: %lf\nTime deltas: ", nstreams, 
-	   lambda, interval_time);
+    printf("Number of runs: %d\nLambda: %lf\nInterval time: %lf\nTime deltas: ",
+	   nstreams, lambda, interval_time);
     int i;
 
     for (i = 0; i < tdlen; ++i) {
@@ -110,7 +109,8 @@ void _generate(paramlist* params, char* outfile, double interval_time, double la
     printf("Log verbosity: %d\n", outswitch);
 #endif
 
-    run_time_nstreams(hparser, lambda, interval_time, time_delta, nstreams, outfile, output_switch);
+    run_time_nstreams(hparser, lambda, interval_time, time_delta, nstreams,
+		      outfile, output_switch, step, output_interval);
 }
 
 /*
@@ -505,14 +505,16 @@ void on_error(muParserHandle_t hparser)
  * *IMPORTANT* The value of lambda MUST exceed the maximum value of the function! *IMPORTANT*
  */
 void run_time_nstreams(muParserHandle_t hparser, double lambda, double end_time,
-		       double_arr* time_delta, int nstreams, char* outfile, int outswitch)
+		       double_arr* time_delta, int nstreams, char* outfile,
+		       int outswitch, double step, double output_interval)
 {
     int i;
     char* out = malloc(strlen(outfile) + 20);
     for (i = 0; i < nstreams; ++i){
 	printf("Generating event stream %d\n", i);
 	sprintf(out, "%s%d", outfile, i); // save each stream to a separate file
-	run_time_nonhom(hparser, lambda, time_delta->data[i], 0, end_time, out, outswitch);
+	run_time_nonhom(hparser, lambda, time_delta->data[i], 0, end_time, out,
+			outswitch, step, output_interval);
     }
     free(out);
 }
@@ -559,32 +561,35 @@ char* select_output_file(char* cur_out, char* param_out)
  * 
  */
 void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
-		     double start_time, double end_time, char *outfile, int outswitch)
+		     double start_time, double end_time, char *outfile, int outswitch,
+		     double step, double output_interval)
 {
-    double* et = malloc(DEFAULT_ARR_SIZE * sizeof(double));
-    double* lv = malloc(DEFAULT_ARR_SIZE * sizeof(double));
-    
-    double** eptr = &et;
-    double** lptr = &lv;
-    int size = run_to_time_non_homogeneous(hparser, lambda, time_delta, start_time,\
-					   end_time, eptr, lptr, DEFAULT_ARR_SIZE);
+    double_arr* events = run_to_time_non_homogeneous(hparser, lambda, time_delta, start_time, \
+						     end_time, DEFAULT_ARR_SIZE);
     if (outswitch > 0){
 	char* out = malloc(strlen(outfile) + strlen("aggregated.dat") + 10);
 	if (outswitch >= 1){
 	    sprintf(out, "%s.dat", outfile);
 	    //printf("Event data output to %s\n", out);
-	    double_to_file(out, "w", *eptr, size);
+	    double_to_file(out, "w", events->data, events->len);
 	} 
 	if (outswitch >= 2){
 	    sprintf(out, "%s_func.dat", outfile);
-	    //printf("Function data output to %s\n", out);
-	    mult_double_to_file(out, "w", *eptr, *lptr, size);
-	} 
+	    FILE *fp = fopen(out, "w");
+	    double time = start_time;
+	    mupDefineVar(hparser, "t", &time); // Set the address muparser uses for variable t
+	    while (time < end_time){
+		fprintf(fp, "%lf %lf\n", time + time_delta, mupEval(hparser));
+		time += step;
+	    }
+	    fclose(fp);
+	    printf("Function data output to %s\n", out);
+	}
 	if (outswitch >= 3){
 	    sprintf(out, "%s_bins.dat", outfile);
-	    int num_intervals = (end_time - start_time) / DEFAULT_WINDOW_SIZE;
+	    int num_intervals = (end_time - start_time) / output_interval;
 
-	    int* bin_counts = sum_events_in_interval(*eptr, size, start_time, end_time, num_intervals);
+	    int* bin_counts = sum_events_in_interval(events->data, events->len, start_time, end_time, num_intervals);
 	    double* midpoints = get_interval_midpoints(start_time, end_time, num_intervals);
     
 	    int_dbl_to_file(out, "w", midpoints, bin_counts, num_intervals);
@@ -592,27 +597,9 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
 	    free(bin_counts);
 	    //printf("Bin data output to %s\n", out);
 	}
-	if (outswitch >= 4){
-	    sprintf(out, "%s_aggregated.dat", outfile);
-	    double_to_file(out, "w", *eptr, size);
-	    mult_double_to_file(out, "a", *eptr, *lptr, size);
-
-	    int num_intervals = (end_time - start_time) / DEFAULT_WINDOW_SIZE;
-
-	    int* bin_counts = sum_events_in_interval(*eptr, size, start_time, end_time, num_intervals);
-	    double* midpoints = get_interval_midpoints(start_time, end_time, num_intervals);
-    
-	    int_dbl_to_file(out, "a", midpoints, bin_counts, num_intervals);
-	    free(midpoints);
-	    free(bin_counts);
-	    //printf("Aggregated data output to %s\n", out);
-	}
 	free(out);
     }
-    
-
-    free(*eptr);
-    free(*lptr);
+    free_double_arr(events);
 }
 
 /* 
@@ -649,10 +636,9 @@ void generate_event_times_homogenous(double lambda, double time, int max_events,
  * Returns the final array location in which there is something 
  * stored.
  */
-int run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda, 
+double_arr* run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda, 
 				double time_delta, double start_time, 
-				double end_time, double **event_times, 
-				double **lambda_vals, int arr_len)
+				double end_time, int arr_len)
 {
     init_rand(0.0);
             
@@ -660,6 +646,7 @@ int run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda,
     double shifted_time = time_delta + start_time;
     double rand, non_hom_lambda, hom_out;
     int i = 0, arr_max = arr_len;
+    double_arr* ret = init_double_arr(arr_len);
     
     mupDefineVar(hparser, "t", &shifted_time); // Set the address muparser uses for variable t
 
@@ -675,26 +662,20 @@ int run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda,
 	    // Number of events may exceed the number of array locations initally assigned
 	    // so may need to reallocate memory to store more.
 	    if (i >= arr_max){
-		//printf("array length %d exceeds initial max %d\n", i, arr_len);
-		*event_times = realloc(*event_times, i * 2 * sizeof(double)); // twice the original size.
-		*lambda_vals = realloc(*lambda_vals, i * 2 * sizeof(double)); // twice the original size.
-		if (!lambda_vals || !event_times){// exit if allocation failed.
+		//printf("array length %d exceeds initial max %d\n", i,	arr_len);
+		ret->data = realloc(ret->data, i * 2 * sizeof(double));
+		if (!ret->data){// exit if allocation failed.
 		    printf("Memory reallocation for arrays failed. Exiting.\n");
 		    exit(1);
 		}
 		arr_max = i * 2;
-
 	    }
-	    //printf("putting in arrays\n");
-	    event_times[0][i] = base_time;
-	    lambda_vals[0][i] = non_hom_lambda;
+	    ret->data[i] = base_time;
 	    ++i;
 	}
 	
     }
-
-    return i;
-    
+    return ret;
 }
 
 /* 

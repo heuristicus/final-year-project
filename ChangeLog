@@ -1,5 +1,11 @@
 2013-03-08  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
+	* generator.c: Modified old generator code so that it returns a double_arr struct
+	rather than messing around with pointers. Function data is output independently of
+	event generation so that the graph is not jagged. When generating with the muparser
+	generator, function output step and interval are defined by output_step and output_interval
+	in the default parameter file.
+
 	* estimator.c: The estimation functions now take a flag which sets how they construct
 	file names to read from. If the -r switch is passed, the function_outfile parameter
 	will be used in the filename. Otherwise, the expression_outfile parameter will be used.

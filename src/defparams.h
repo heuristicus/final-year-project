@@ -13,6 +13,7 @@
 #define DEFAULT_GAUSS_GEN_OUT "gauss_out"
 #define DEFAULT_GAUSS_EST_OUT "gauss_est_out"
 #define DEFAULT_STEP 1.0
+#define DEFAULT_OUTPUT_INTERVAL 1.0
 
 // input
 #define DEFAULT_INFILE "output_stream_0.dat"
@@ -93,6 +94,6 @@
 #define DEFAULT_EXP_GAUSSIAN_TYPE "delay"
 #define DEFAULT_EXP_BASE_MAX_BREAK 15
 #define DEFAULT_EXP_GAUSS_EST_STDEV 1
-#define DEFAULT_EXP_TDELTA "0.0,-10.0,20.0"
+#define DEFAULT_EXP_TDELTA "0.0,10.0,20.0"
 
 #endif

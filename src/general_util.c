@@ -309,6 +309,9 @@ void create_defparam(char* filename)
 	    " output files. With a step of 1,\n# data in interval [0,5] is gathered"\
 	    " at 0, 1, 2, 3, 4 and 5 along the axis.", "output_step",
 	    DEFAULT_STEP);
+    fprintf(fp, "%s\n%s %lf\n\n", "# When outputting the bin data when generating" \
+	    " streams (with -t 3 switch), what\n# interval length to use to display"\
+	    " bin counts ", "output_interval", DEFAULT_OUTPUT_INTERVAL);
     fprintf(fp, "%s %s\n", "# base_est_outfile", DEFAULT_BASE_OUT);
     fprintf(fp, "%s\n%s %s\n\n", "# File to output gaussian estimate data to.", 
 	    "gauss_est_outfile", DEFAULT_GAUSS_EST_OUT);
