@@ -122,7 +122,6 @@ exp_set* experiment_setup(paramlist* exp_list, paramlist* def_list)
     }
 
     int j;
-    int missing = 0;
     int req = 0;
     int baselen = base_strings->len;
 
@@ -155,11 +154,13 @@ exp_set* experiment_setup(paramlist* exp_list, paramlist* def_list)
 
 	    // Check whether parameters being modified exist in both parameter files.
 	    if (!parameters_coherent(exp_list, def_list, testparams->data, testparams->len)){
-	    	missing = 1;
+		printf("Some parameters you were trying to experiment on were not defined" \
+	       " in one of the parameter files. Please add them and try again.\n");
+		exit(1);
+
 	    } else {
 	    	printf("OK\n");
 	    }
-	    printf("allocating\n");
 	    // Allocate memory and define lengths for the tuple array which is used
 	    // to store parameters being experimented on.
 	    exval->exps[i] = malloc(sizeof(exp_tuple_arr));
@@ -182,11 +183,6 @@ exp_set* experiment_setup(paramlist* exp_list, paramlist* def_list)
 	}
     }
 
-    if (missing){
-	printf("Some parameters you were trying to experiment on were not defined"\
-	       " in one of the parameter files. Please add them and try again.\n");
-	exit(1);
-    }
     if (req == 0){
 	printf("No experiments requested. Exiting.\n");
 	exit(1);
@@ -325,7 +321,17 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 		}
 
 	    }
-			
+
+	    char* tname = malloc(strlen(output_directory) + strlen("exp_params.txt") + 5);
+	    sprintf(tname, "%s/exp_params.txt", output_directory);
+	    list_to_file(tname, "w", exp_list);
+	    free(tname);
+
+	    /* double_arr** exp_delays = NULL; */
+	    /* if (multiple){ */
+	    /* 	exp_delays = malloc(sizeof(double_arr*) * num_functions); */
+	    /* } */
+	    
 	    // Go through all parameter combinations, running the estimator with each combination
 	    do {
 		// Update the experiment directory with the current experiment number, and create it.
@@ -353,7 +359,7 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 							      output_file, num_streams,
 							      num_functions, 1, est_type,
 							      stuttered, rfunc);
-		    sprintf(output_file, "%s/%s", experiment_directory, "results.txt");
+		    sprintf(output_file, "%s/results.txt", experiment_directory);
 		    // Analyse the results and output them to a file in the experiment directory
 		    analyse_multi(output_file, in_dir, def_list, results, num_streams,
 				  num_functions, time_delays);
@@ -509,7 +515,6 @@ double compare_stuttered_bins(paramlist* def_list, paramlist* exp_list, char* in
     
     int i;
     double* sums = malloc(sizeof(double) * (int)interval);
-    FILE *fp = fopen("check", "w");
     int interval_num = 0;
     double pdf_sum = 0;
     if (gauss){
@@ -523,7 +528,6 @@ double compare_stuttered_bins(paramlist* def_list, paramlist* exp_list, char* in
 	else
 	    sums[i] = estimate_at_point(estimate, midpoints[i]);
 	//		printf("sum is %lf\n", sums[i]);
-			fprintf(fp, "%lf %lf %d %d\n", midpoints[i], sums[i], bins[i], st_bins[i]);
 	if (midpoints[i] > stutter_intervals->data[interval_num * 2] 
 	    && midpoints[i] < stutter_intervals->data[interval_num * 2 + 1]){
 	    //	    	    printf("midpoint %d (%lf) is inside a stutter interval\n", i, midpoints[i]);
@@ -537,7 +541,6 @@ double compare_stuttered_bins(paramlist* def_list, paramlist* exp_list, char* in
 	}
     }
 
-    fclose(fp);
     //    printf("num subintervals is %d\n", num_subintervals);
     free(infname);
     free_double_arr(st_events);
@@ -571,19 +574,20 @@ void analyse_multi(char* outfile, char* in_dir, paramlist* params,
 	    est_deltas->data[j][i] = results[i]->delays->data[j];
 	}
 
-	char* fout = get_string_param(params, "function_outfile");
-	char* orig_name = malloc(strlen(in_dir) + strlen(fout) + strlen(".dat") + 5);
-	sprintf(orig_name, "%s/%s_%d.dat", in_dir, fout, i);
-	gauss_vector* orig = read_gauss_vector(orig_name);
+	/* char* fout = get_string_param(params, "function_outfile"); */
+	/* char* orig_name = malloc(strlen(in_dir) + strlen(fout) + strlen(".dat") + 5); */
+	/* sprintf(orig_name, "%s/%s_%d.dat", in_dir, fout, i); */
+	/* gauss_vector* orig = read_gauss_vector(orig_name); */
 			
-	fprintf(fp, "Function RSS: %lf\n", get_twofunction_RSS(orig, results[i]->final_estimate));
-	fprintf(fp, "Function TSS: %lf\n", get_twofunction_TSS(orig, results[i]->final_estimate));
-	fprintf(fp, "Function ESS: %lf\n", get_twofunction_ESS(orig, results[i]->final_estimate));
-	fprintf(fp, "Function RMS: %lf\n", get_twofunction_RMS(orig, results[i]->final_estimate));
+	/* fprintf(fp, "Function RSS: %lf\n", get_twofunction_RSS(orig, results[i]->final_estimate)); */
+	/* fprintf(fp, "Function TSS: %lf\n", get_twofunction_TSS(orig, results[i]->final_estimate)); */
+	/* fprintf(fp, "Function ESS: %lf\n", get_twofunction_ESS(orig, results[i]->final_estimate)); */
+	/* fprintf(fp, "Function RMS: %lf\n", get_twofunction_RMS(orig, results[i]->final_estimate)); */
 
-	fprintf(fp, "\n\n");
+	/* fprintf(fp, "\n\n"); */
     }
 
+    fprintf(fp, "\n\n");
     for (i = 0; i < num_streams; ++i) {
 	fprintf(fp, "Stream %d\n", i);
 	fprintf(fp, "Actual: %lf\n", time_delays->data[i]);
@@ -752,7 +756,7 @@ void stutter_stream(char* indir, char* exp_paramfile, char* def_paramfile, int n
 	    sprintf(outname, "%s/%s_%d_%s%s%d_stuttered.dat", indir, function_fname,
 		    i, fname, pref, j);
 	    events = get_event_data_all(infname);
-	    
+
 	    if (uniform)
 		stutter_intervals = compute_stutter_intervals(step, interval, start_time, interval_time);
 
@@ -808,13 +812,13 @@ void _stutter_stream(char* outfile, double_arr* events, double_arr* intervals)
 
     //    printf("start %lf, end %lf\n", intervals->data[interval_num * 2], intervals->data[interval_num * 2 + 1]);
     for (i = 0; i < events->len; ++i) {
-	if (interval_num + 1 == intervals->len/2) {
+	if (interval_num == intervals->len/2) {
 	    fprintf(fp, "%lf\n", events->data[i]);
 	    continue;
 	} else if (events->data[i] >= intervals->data[interval_num * 2] 
 	    && events->data[i] < intervals->data[interval_num * 2 + 1]){
 	    interval_count++;
-	    //printf("inside interval %lf\n", events->data[i]);
+//	    printf("inside interval: %lf\n", events->data[i]);
 	    // The current event is inside one of the intervals where we delete data.
 	    continue;
 	} else if (events->data[i] > intervals->data[interval_num * 2 + 1]){
@@ -823,7 +827,7 @@ void _stutter_stream(char* outfile, double_arr* events, double_arr* intervals)
 	    //	    printf("Event outside interval: %lf, Moving to interval %d\n", events->data[i], interval_num + 1);
 	    // The interval was passed, so move to the next one.
 	    interval_num++;
-	    //	    printf("start %lf, end %lf\n", intervals->data[interval_num * 2], intervals->data[interval_num * 2 + 1]);
+//	    printf("start %lf, end %lf\n", intervals->data[interval_num * 2], intervals->data[interval_num * 2 + 1]);
 	}
 	fprintf(fp, "%lf\n", events->data[i]);
     }

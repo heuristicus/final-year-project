@@ -278,7 +278,7 @@ tdelta_result* do_multi_estimate(paramlist* params, char* infile, char* outfile,
 	// us a void pointer to the relevant est_arr or gauss_vector struct. We will later
 	// cast these to their original types. Get non-normalised functions.
 	// We normalise the result later.
-	estimates[i] = _estimate(params, infname, outname, estimator_type, output_switch, rfunc, 0);
+	estimates[i] = _estimate(params, infname, outname, estimator_type, output_switch, rfunc, 1);
     }
 
     double normaliser = 1;

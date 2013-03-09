@@ -536,10 +536,10 @@ double find_min_value(double* data, int len)
 
 int find_min_value_int(int* data, int len)
 {
-        if (data == NULL || len <= 0){
+    if (data == NULL || len <= 0){
 	return 0;
     }
-    
+
     int i;
     int min = INT_MAX;
     

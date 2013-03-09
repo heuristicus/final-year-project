@@ -635,7 +635,9 @@ void list_to_file(char* filename, char* mode, paramlist* param)
 	return;
     }
 
-    for (i = 0; i < list_length(l); ++i) {
+    int len = list_length(l);
+
+    for (i = 0; i < len; ++i) {
 	fprintf(fp, "%s %s\n", l->par, l->val);
 	l = l->next;
     }

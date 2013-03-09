@@ -30,7 +30,7 @@ double_multi_arr* combine_functions(est_arr** estimates, double_arr* time_delay,
     // need to fix this to work with combinations at any point and
     // any interval. This currently only works for stuff which starts
     // at zero and when the delay is non-negative(?).
-    int memsize = interval_time - start - 2 * max_delay / step + 10;
+    int memsize = ((interval_time - start - 2 * max_delay) / step) + 10;
 
 
     double* times = malloc((memsize + 10) * sizeof(double));
@@ -91,12 +91,18 @@ double_multi_arr* combine_gauss_vectors(gauss_vector** V, double_arr* time_delay
 
     double max_delay = largest_value_in_arr(time_delay->data, num_vectors);
 //    printf("max delay %lf\n", max_delay);
-    int memsize = (int)(interval_time - start - 2 * max_delay) / step + 1;
-//    printf("memsize is %d\n", memsize);
-    double_multi_arr* res = init_multi_array(2, memsize);
-    
+
+
     double current = max_delay, end = interval_time - start - max_delay, sum;
 //    printf("Combining function between %lf and %lf.\n", current, end);
+
+    int memsize = ((interval_time - start - 2 * max_delay) / step) + 10;
+//    printf("memsize is %d\n", memsize);
+
+    double* times = malloc((memsize + 10) * sizeof(double));
+    double* sums = malloc((memsize + 10) * sizeof(double));
+
+
     int i, vector_num;
     for (i = 0; current <= end; ++i, current += step) {
 //	printf("current is %lf\n", current);
@@ -107,11 +113,21 @@ double_multi_arr* combine_gauss_vectors(gauss_vector** V, double_arr* time_delay
 //		printf("sum is now %lf\n", sum);
 		
 	}
-	res->data[0][i] = current;
+	times[i] = current;
 	// must apply the same normalisation that is being applied to the gaussians in the estimate?
 	// does not apply if the normalisation is calculated later and then applied.
-	res->data[1][i] = sum / (num_vectors + normaliser);
+	sums[i] = (sum / num_vectors) / normaliser;
     }
+
+    double_multi_arr* res = malloc(sizeof(double_multi_arr));
+    res->len = 2;
+    res->lengths = malloc(2 * sizeof(int));
+    res->lengths[0] = i;
+    res->lengths[1] = i;
+    res->data = malloc(2 * sizeof(double*));
+    res->data[0] = times;
+    res->data[1] = sums;
+    
 
     return res;
 }

@@ -90,12 +90,13 @@ gauss_vector* estimate_gaussian_raw(paramlist* params, char* infile, char* outfi
 	    if (normalise)
 		normaliser = find_normaliser(params, G, ev, "gauss");
 	    output_gauss_transform(out, "w", T->data, shift, T->lengths[0], normaliser);
+	    free_double_multi_arr(T);
 	}
 	if (output_switch >= 3){
 	    sprintf(out, "%s_contrib.dat", outfile);
 	    output_gaussian_contributions(out, "w", G, start, start + interval, resolution, 0);
-	    free(out);
 	}
+	free(out);
     }
 
     free_double_arr(ev);

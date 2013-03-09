@@ -68,6 +68,9 @@ void generate(char* paramfile, char* outfile, int nfuncs, int nstreams, int outp
 
     char* out = malloc(strlen(prefix) + strlen(outfile) + strlen(stream_ext) + 10);
 
+    if (nfuncs > 1){
+	list_to_file("gen_params.txt", "w", params);
+    }
     
     int i;
     
@@ -141,6 +144,10 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile,
 
     if (outfile == NULL){
 	outfile = get_string_param(params, "outfile");
+    }
+
+    if (nfuncs > 1){
+	list_to_file("gen_params.txt", "w", params);
     }
 
     char* infname = malloc(strlen(funcfile) + 5);
@@ -579,7 +586,7 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
 	    FILE *fp = fopen(out, "w");
 	    double time = start_time;
 	    mupDefineVar(hparser, "t", &time); // Set the address muparser uses for variable t
-	    while (time < end_time){
+	    while (time <= end_time){
 		fprintf(fp, "%lf %lf\n", time + time_delta, mupEval(hparser));
 		time += step;
 	    }

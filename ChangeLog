@@ -1,3 +1,20 @@
+2013-03-09  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* experimenter.c: Fixed issue where the last interval to be stuttered would not be
+	correctly taken into account.
+
+	* file_util.c: Fixed issue where parameter lists were not being output correctly to file
+	due to length being updated at each call.
+
+	* generator.c: Generator outputs the parameters used to generate the streams to the
+	current directory if the number of functions generated is greater than 1.
+
+	* src/Makefile.am: Renamed launcher to deltastream.
+
+	* combinefunction.c: Fixed issue where combination was not correctly using the normaliser
+	when combining gaussian vectors. Fixed issue where negative memory was being allocated
+	to double arrays for data storage.
+
 2013-03-08  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* estimator_gaussian.c: Both functions take a parameter to indicate whether to normalise
