@@ -71,7 +71,13 @@ void generate(char* paramfile, char* outfile, int nfuncs, int nstreams, int outp
     if (nfuncs > 1){
 	list_to_file("gen_params.txt", "w", params);
     }
-    
+
+    if (nstreams > time_delta->len){
+	printf("Number of streams specified (%d) is greater than number of timedelta values (%d)."\
+	       " Please reduce the number of streams or add more timedelta values.\n", nstreams, time_delta->len);
+	exit(1);
+    }
+
     int i;
     
     for (i = 0; i < nfuncs; ++i) {
@@ -121,7 +127,7 @@ void _generate(paramlist* params, char* outfile, double interval_time, double la
  * which follow a given scheme, defined by parameters in the paramfile.
  */
 void generate_from_gaussian(char* paramfile, char* outfile, char* infile,
-				  int nstreams, int nfuncs)
+			    int nstreams, int nfuncs, int output_type)
 {
     int i;
     paramlist* params = get_parameters(paramfile);
@@ -150,7 +156,24 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile,
 	list_to_file("gen_params.txt", "w", params);
     }
 
+    if (nstreams > time_delta->len){
+	printf("Number of streams specified (%d) is greater than number of timedelta values (%d)."\
+	       " Please reduce the number of streams or add more timedelta values.\n", nstreams, time_delta->len);
+	exit(1);
+    }
+
     char* infname = malloc(strlen(funcfile) + 5);
+    sprintf(infname, "%s_%d.dat", funcfile, i);
+    FILE* fp = NULL;
+    
+    if ((fp = fopen(infname, "r")) == NULL){
+	if (errno == ENOENT) {
+	    printf("File %s not found. Generating gaussian data.\n", infname);
+	    generate_gaussian_data(paramfile, NULL, NULL, 5, output_type);
+	}
+    } else {
+	fclose(fp);
+    }
 
     for (i = 0; i < nfuncs; ++i) {
 	sprintf(infname, "%s_%d.dat", funcfile, i);
@@ -174,16 +197,17 @@ void _generate_from_gaussian(paramlist* params, char* outfile, char* infile,
 			     double_arr* time_delta, int nstreams)
 {
     int i;
-    gauss_vector* G;
+    gauss_vector* G = NULL;
 
     if (infile == NULL){
-	double multiplier = get_double_param(params, "gauss_func_multiplier");
-	if (multiplier == 0){
-	    printf("WARNING: Multiplier for function generation is zero! Your functions" \
-		   " will probably be completely flat!\n");
-	}
-	G = gen_gaussian_vector_uniform(stdev, start, interval, step, multiplier);
-	printf("No input file specified. Generating random function.\n");
+	// Should always be passed an input file - exit if not.
+	printf("Expected input file to _generate_from_gaussian. Exiting.\n");
+	exit(1);
+	/* double multiplier = get_double_param(params, "gauss_func_multiplier"); */
+	/* if (multiplier == 0){ */
+	/*     printf("WARNING: Multiplier for function generation is zero! Your functions" \ */
+	/* 	   " will probably be completely flat!\n"); */
+	/* } */
     } else {
 	G = read_gauss_vector(infile);
 	printf("Reading from %s.\n", infile);

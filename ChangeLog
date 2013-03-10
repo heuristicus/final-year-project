@@ -1,3 +1,25 @@
+2013-03-10  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* generator.c: Check that the number of streams sent to the generator is not greater than
+	the number of timedelta values that exist in the parameter file. Pre-generating raw files
+	is no longer necessary. Using a command like
+	      ./deltastream -g data/params.txt -f rand -t 3 -n 2 -c 5
+	will automatically generate the number of random functions required and output the data to
+	the current directory, and then read from the freshly generated files to generate streams.
+	
+	* estimator_delta.c: PMF estimator no longer normalises the values received from
+	combining functions - these values are normalised by the function combination done
+	prior to the pmf checks.
+
+	* math_util.c: Implemented a function for checking that a double is less than or equal
+	to another with some precision.
+
+	* combinefunction.c: Fixed error with combining functions where the functions would be
+	combined one step shorter than necessary due to double precision issues. Using the new
+	function in math_util to make sure this does not happen.
+
+	* experimenter.c: Error for each stream is calculated and output to results file.
+
 2013-03-09  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* experimenter.c: Fixed issue where the last interval to be stuttered would not be

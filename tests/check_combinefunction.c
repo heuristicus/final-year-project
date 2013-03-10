@@ -88,7 +88,7 @@ START_TEST(test_combine_gauss_vectors)
     delay->data = td;
     double start = 0, interval = 8, step = 1;
     
-    double_multi_arr* comb = combine_gauss_vectors(V, delay, start, interval, step, 2);
+    double_multi_arr* comb = combine_gauss_vectors(V, delay, start, interval, step, 1, 2);
 
     // values for mean 2 from 0-8
     /* double m2[] = {0.800737402, 0.945959468, 1.0, 0.945959468, 0.800737402, */
@@ -114,11 +114,11 @@ START_TEST(test_combine_gauss_vectors)
 	fail_unless(epsck(comb->data[1][i], sums[i]), NULL);
     }
 
-    fail_unless(combine_gauss_vectors(NULL, delay, start, interval, step, 2) == NULL, NULL);
-    fail_unless(combine_gauss_vectors(V, NULL, start, interval, step, 2) == NULL, NULL);
-    fail_unless(combine_gauss_vectors(V, delay, start, 0, step, 2) == NULL, NULL);
-    fail_unless(combine_gauss_vectors(V, delay, start, interval, 0, 2) == NULL, NULL);
-    fail_unless(combine_gauss_vectors(V, delay, start, interval, step, 0) == NULL, NULL);
+    fail_unless(combine_gauss_vectors(NULL, delay, start, interval, step, 1, 2) == NULL, NULL);
+    fail_unless(combine_gauss_vectors(V, NULL, start, interval, step, 1, 2) == NULL, NULL);
+    fail_unless(combine_gauss_vectors(V, delay, start, 0, step, 1, 2) == NULL, NULL);
+    fail_unless(combine_gauss_vectors(V, delay, start, interval, 0, 1, 2) == NULL, NULL);
+    fail_unless(combine_gauss_vectors(V, delay, start, interval, step, 1, 0) == NULL, NULL);
 }
 END_TEST
 

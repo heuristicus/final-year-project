@@ -67,6 +67,7 @@ double largest_value_in_arr(double* arr, int len);
 double abs_max(double a, double b);
 int dbl_less_than(double a, double b, double precision);
 int dbl_equal(double a, double b, double precision);
+int dbl_leq(double a, double b, double precision);
 double get_twofunction_RSS(gauss_vector* original, double_multi_arr* estimated);
 double get_twofunction_ESS(gauss_vector* original, double_multi_arr* estimated);
 double get_twofunction_TSS(gauss_vector* original, double_multi_arr* estimated);

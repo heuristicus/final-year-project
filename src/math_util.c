@@ -389,7 +389,8 @@ double_multi_arr* shifted_transform(gauss_vector* V, double start, double interv
 }
 
 /*
- * Generates a vector of specified length with each point p ~ N(0,1)
+ * Generates a vector of specified length with each point p ~ [-1,1]
+ * random_vector(int len, double multiplier)
  */
 double* random_vector(int len, double multiplier)
 {
@@ -403,7 +404,7 @@ double* random_vector(int len, double multiplier)
     int i;
     
     for (i = 0; i < len; ++i) {
-	V[i] = gsl_ran_ugaussian(r) * multiplier;
+	V[i] = (gsl_rng_uniform(r) * 2 - 1) * multiplier;
     }
 
     return V;
@@ -605,12 +606,12 @@ double sum_log_pdfs(int* counts, double* lambdas, double normaliser, int len)
     
     int i;
     double sum = 0;
-//    printf("Using normaliser %lf\n", normaliser);
     
     for (i = 0; i < len; ++i) {
-	sum += log_pdf(counts[i], lambdas[i], normaliser);
-//	printf("count %d, normalised lambda %lf, pmf %lf, sum now %lf\n",
-//              counts[i], lambdas[i]/normaliser, res, sum);
+	double res = log_pdf(counts[i], lambdas[i], normaliser);
+	sum += res;
+	/* printf("count %d, normalised lambda %lf, pmf %lf, sum now %lf\n", */
+        /*       counts[i], lambdas[i]/normaliser, res, sum); */
     }
 
     return sum;
@@ -640,8 +641,8 @@ double sum_array_interval(double* times, double* values, double start, double en
 	sum += values[i];
     }
 
-    /* printf("sum is %lf\n", sum); */
-    /* printf("normalised sum is %lf\n", sum/normaliser); */
+//    printf("sum is %lf\n", sum);
+//    printf("normalised sum is %lf\n", sum/normaliser);
 
     return sum / normaliser;
 }
@@ -714,6 +715,14 @@ int dbl_equal(double a, double b, double precision)
     double diff = fabs(b - a);
 
     return diff < precision;
+}
+
+/*
+ * Checks a <= b with a certain precision.
+ */
+int dbl_leq(double a, double b, double precision)
+{
+    return dbl_less_than(a, b, precision) || dbl_equal(a, b, precision);
 }
 
 /*

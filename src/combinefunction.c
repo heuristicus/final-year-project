@@ -45,7 +45,8 @@ double_multi_arr* combine_functions(est_arr** estimates, double_arr* time_delay,
      */
     int i;
 
-    for (i = 0, time = max_delay; time <= end; time += step, ++i) {
+    for (i = 0, time = max_delay; dbl_leq(time, end, 0.0001); time += step, ++i) {
+//	printf("time is %.30lf\n", time);
 	double total = 0;
 	for (estimate_num = 0; estimate_num < num_estimates; ++estimate_num) {
 	    total += estimate_at_point(estimates[estimate_num], time - time_delay->data[estimate_num]);
@@ -53,7 +54,9 @@ double_multi_arr* combine_functions(est_arr** estimates, double_arr* time_delay,
 	
 	times[i] = time;
 	sums[i] = total/num_estimates;
+//	printf("sum at time %lf is %lf\n", times[i], sums[i]);
     }
+//    printf("time is %.30lf\n", time);
 
     double_multi_arr* combination = malloc(sizeof(double_multi_arr));
     combination->len = 2;
@@ -104,7 +107,7 @@ double_multi_arr* combine_gauss_vectors(gauss_vector** V, double_arr* time_delay
 
 
     int i, vector_num;
-    for (i = 0; current <= end; ++i, current += step) {
+    for (i = 0; dbl_leq(current, end, 0.0001); ++i, current += step) {
 //	printf("current is %lf\n", current);
 	sum = 0;
 	for (vector_num = 0; vector_num < num_vectors; ++vector_num) {

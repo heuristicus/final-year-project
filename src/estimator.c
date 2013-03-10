@@ -171,7 +171,7 @@ tdelta_result** multi_estimate(char* paramfile, char* in_dir, char* outfile,
  * Estimate a series of streams. Constructs the file to read data from by using
  * parameters used to output the data from the generator, and then runs estimators
  * on each file. Data is then stored and once all estimates have been made the data
- * is combined to make a single estimate. The i
+ * is combined to make a single estimate.
  */
 tdelta_result** _multi_estimate(paramlist* params, char* in_dir, char* outfile,
 				int nstreams, int nfuncs, int output_switch,
@@ -276,8 +276,7 @@ tdelta_result* do_multi_estimate(paramlist* params, char* infile, char* outfile,
 	// Since we are storing data in a void pointer, we do not need to do anything
 	// to mess around using different functions, since the _estimate function returns
 	// us a void pointer to the relevant est_arr or gauss_vector struct. We will later
-	// cast these to their original types. Get non-normalised functions.
-	// We normalise the result later.
+	// cast these to their original types.
 	estimates[i] = _estimate(params, infname, outname, estimator_type, output_switch, rfunc, 1);
     }
 

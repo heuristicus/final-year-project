@@ -155,7 +155,7 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* extra_
 	    generate(paramfile, outfile, args->nfuncs, args->nstreams, args->writing);
 	} else if (strcmp(generator_type, "rand") == 0){
 	    printf("Generating event stream with random functions.\n");
-	    generate_from_gaussian(paramfile, outfile, infile, args->nstreams, args->nfuncs);
+	    generate_from_gaussian(paramfile, outfile, infile, args->nstreams, args->nfuncs, args->writing);
 	} else {
 	    printf("something bad happened.\n");
 	}

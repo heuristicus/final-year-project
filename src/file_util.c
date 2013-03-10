@@ -537,6 +537,33 @@ void output_double_multi_arr(char* filename, char* mode, double_multi_arr* arr)
 }
 
 /*
+ * Outputs a double multi_arr to file, with the index of the data being printed before
+ * the data.
+ */
+void output_double_multi_arr_numbered(char* filename, char* mode, double_multi_arr* arr)
+{
+    int minlen = find_min_value_int(arr->lengths, arr->len);
+    FILE *fp = fopen(filename, mode);
+    int i, j;
+    
+    printf("Outputting to %s.\n", filename);
+    
+    for (i = 0; i < minlen; ++i) {
+	fprintf(fp, "%d ", i);
+	for (j = 0; j < arr->len; ++j) {
+	    if (j + 1 == arr->len){
+		fprintf(fp, "%lf\n", arr->data[j][i]);
+	    } else {
+		fprintf(fp, "%lf ", arr->data[j][i]);
+	    }
+	}
+    }
+    fprintf(fp, "\n\n");
+
+    fclose(fp);
+}
+
+/*
  * Creates a file with the filename specified in the directory given. If the
  * directory does not exist it is created. If all goes well, returns zero, 
  * else returns -1. The directory is created with read, write and execute 

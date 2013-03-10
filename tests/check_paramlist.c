@@ -25,7 +25,7 @@ START_TEST (test_add)
 
     // Check that adding the previously given variable does not modify the list
     fail_unless(b == add(b, "node2", "again"), NULL);
-    fail_unless(length(b) == 2, NULL);
+    fail_unless(list_length(b) == 2, NULL);
 }
 END_TEST
 
@@ -71,15 +71,15 @@ END_TEST
 START_TEST (test_len)
 {
     paramlist* a = NULL;
-    fail_unless(length(a) == 0, NULL);
+    fail_unless(list_length(a) == 0, NULL);
     a = init_list("node1", "1");
-    fail_unless(length(a) == 1, NULL);
+    fail_unless(list_length(a) == 1, NULL);
     a = add(a, "node2", "2");
-    fail_unless(length(a) == 2, NULL);
+    fail_unless(list_length(a) == 2, NULL);
     a = add(a, "node3", "3");
-    fail_unless(length(a) == 3, NULL);
+    fail_unless(list_length(a) == 3, NULL);
     a = add(a, "node4", "4");
-    fail_unless(length(a) == 4, NULL);
+    fail_unless(list_length(a) == 4, NULL);
 }
 END_TEST
 

@@ -42,7 +42,7 @@ double_multi_arr* nonhom_from_gaussian(gauss_vector* G, double lambda,
 				       double start, double interval,
 				       double time_delta, double shift);
 void generate_from_gaussian(char* paramfile, char* outfile, char* infile,
-			    int nfuncs, int nstreams);
+			    int nfuncs, int nstreams, int output_type);
 void _generate_from_gaussian(paramlist* params, char* outfile, char* infile,
 			     double stdev, double start, double interval,
 			     double step, double resolution, char* stream_ext,

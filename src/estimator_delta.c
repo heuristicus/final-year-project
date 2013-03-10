@@ -61,9 +61,9 @@ double estimate_delay_pmf(paramlist* params, char* outfile, double_arr* base_eve
 	exit(1);
     }
 
-    /* printf("Estimating delay with pmf method.\n Combine step %lf, Combine interval"\ */
-    /* 	   " [%lf %lf], Bins %d, Max delay %lf, Step %lf\n", */
-    /* 	   combine_step, combine_start, combine_end, num_bins, max_delay, delta_step_coarse); */
+    printf("Estimating delay with pmf method.\n Combine step %lf, Combine interval"\
+    	   " [%lf %lf], Bins %d, Max delay %lf, Step %lf, normaliser %lf\n",
+    	   combine_step, combine_start, combine_interval + combine_start, num_bins, max_delay, delta_step_coarse, normaliser);
 
     double result = _estimate_delay_pmf(outfile, base_events, f2_events, f1, f2,
 					combine_start, combine_interval, combine_step,
@@ -138,8 +138,8 @@ double _estimate_delay_pmf(char* outfile, double_arr* base_events, double_arr* f
 	store[1] = (est_arr*)f2;
     }
 
-    printf("cstart %lf cend %lf cint %lf cstep %lf nbins %d startd %lf endd %lf maxd %lf dstep %lf norm %lf\n", 
-	   combine_start, combine_end, combine_interval, combine_step, num_bins, start_delta, end_delta, max_delay, delta_step, normaliser);
+    /* printf("cstart %lf cend %lf cint %lf cstep %lf nbins %d startd %lf endd %lf maxd %lf dstep %lf norm %lf\n",  */
+    /* 	   combine_start, combine_end, combine_interval, combine_step, num_bins, start_delta, end_delta, max_delay, delta_step, normaliser); */
 
     double_arr* time_delay = init_double_arr(2);
     time_delay->data[0] = 0;
@@ -161,7 +161,7 @@ double _estimate_delay_pmf(char* outfile, double_arr* base_events, double_arr* f
     int skip_bins = (int) max_delay/bin_length;
     int i, j = 0;
 
-    printf("binlen %lf skipbin %d\n", bin_length, skip_bins);
+//    printf("binlen %lf skipbin %d\n", bin_length, skip_bins);
 
     while (current_delta <= end_delta){
 	// get the combined function with the delay applied
@@ -189,10 +189,9 @@ double _estimate_delay_pmf(char* outfile, double_arr* base_events, double_arr* f
 	    // find the sum of lambda values for each subinterval
 //	    printf("subinterval start %lf, subinterval end %lf\n", i * bin_length, (i + 1) * bin_length);
 	    // The lambda sums must be normalised so that they are on the same scale as the bin counts.
-	    // Otherwise, the result will be completely useless.
 	    lambda_sums[i] = sum_array_interval(combined->data[0], combined->data[1],
 					     i * bin_length, (i + 1) * bin_length,
-						normaliser, combined->lengths[0]);
+						1, combined->lengths[0]);
 //	    printf("sum of lambdas in interval %lf\n", lambda_sums[i]);
 	}
 
@@ -218,9 +217,9 @@ double _estimate_delay_pmf(char* outfile, double_arr* base_events, double_arr* f
 	/* fclose(fp3); */
 	/* free(ls); */
 	/* free(cb); */
-
-	int s2_shift = (int)((max_delay - current_delta)/bin_length);
-	printf("s2 shift is %d. Number of bins being checked %d\n", s2_shift, num_bins - 2 * skip_bins);
+//	printf("maxdel-curdel %.30f, resulting shift %.30lf\n", max_delay - current_delta, ((max_delay - current_delta)/bin_length));
+	int s2_shift = (int)(ceil((max_delay - current_delta)/bin_length));
+//	printf("s2 shift is %d. Number of bins being checked %d\n", s2_shift, num_bins - 2 * skip_bins);
 
 	/* for (i = 0; i < num_bins - 2 * skip_bins; ++i) { */
 	/*     printf("Counts 1 %d counts 2 %d, comparing %lf from 1 with %lf from 2, lambda is %lf\n", */
