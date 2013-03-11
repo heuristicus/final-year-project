@@ -671,3 +671,69 @@ void list_to_file(char* filename, char* mode, paramlist* param)
 
     fclose(fp);
 }
+
+/*
+ * Copies the content of filename to destname using the cp command, called by
+ * execl.
+ */
+int copy_file(char* filename, char* destname)
+{
+//    int exit_status;
+    pid_t pid;
+    int status;
+    
+    if (!filename || !destname)
+	return -1;
+    
+    printf("Copying %s to %s\n", filename, destname);
+    pid = fork();
+    
+    if (pid == 0){
+	execl("/bin/cp", "/bin/cp", filename, destname, (char*)0);
+    } if (pid < 0){
+	return -1;
+    } else {
+	wait(&status); // wait for child to exit
+    }
+    return 1;
+}
+
+/*
+ * Copies files containing gaussian vectors created by the gaussian generator into
+ * the number of files specified. Passing 5 to the number parameter will create
+ * 5 copies of the files which have the given base name. Zero return if everything
+ * went well. The filename to copy from is assumed to be the zeroth file generated,
+ * and so should look something like filename_0.dat. The base name provided should be
+ * filename.
+ */
+int copy_gauss_files(char* base_name, int number, int output_type)
+{
+    char* fname = malloc(strlen(base_name) + strlen("contrib.dat") + 10);
+    char* outfname = malloc(strlen(base_name) + strlen("contrib.dat") + 10);
+    int i, j;
+    const char* suffixes[] = {"", "_sum", "_contrib"};
+    int suflen = sizeof(suffixes)/sizeof(char*);
+    
+    // Each output type has a different suffix. Loop through all the possible
+    // output files. Make sure that we don't try to access random stuff by
+    // limiting the number of loops to the number of suffixes.
+    for (i = 0; i < output_type && i < suflen; ++i) {
+	// Create the file to copy from
+	sprintf(fname, "%s_0%s.dat", base_name, suffixes[i]);	    
+	if (!file_exists(fname)){
+	    printf("Error copying file %s.\n", fname);
+	    perror("Error:");
+	    exit(1);
+	} else {
+	    for (j = 1; j < number; ++j) {
+		// Create the file to copy to, with the number incremented.
+		sprintf(outfname, "%s_%d%s.dat", base_name, j, suffixes[i]);
+		copy_file(fname, outfname);
+	    }
+	}
+    }
+
+    free(fname);
+    free(outfname);
+    return 0;
+}

@@ -10,24 +10,30 @@
 #include "file_util.h"
 #include "defparams.h"
 
-#define PROG_DESC "This program simulates photon arrival times using a poisson process."
+#define PROG_DESC "This program simulates photon arrival times using a poisson process,\n"\
+    "and can be used to estimate functions from these realisation, as well as the time delay\n"\
+    "between them."
 #define OPT_INFO "OPTIONS\n\n"						\
     "Options related to estimation.\n\n"\
     "\t -e,  --estimate\n"						\
-    "\t\tEstimate the underlying function from a given set of photon stream data."\
-    "\n\t\tRequires parameter file.\n\n"					\
+    "\t\t Estimate the underlying function from a given set of photon stream data.\n"\
+    "\t\t Requires parameter file.\n\n"					\
     "\t -a, --estimator\n"						\
-    "\t\tThe estimation algorithm to use. Options are IWLS (iwls), OLS (ols),"	\
-    " Piecewise (pc),\n\t\tBaseline (base). Used with the -e switch.\n\n"	\
+    "\t\t The estimation algorithm to use. Options are IWLS (iwls), OLS (ols),\n"\
+    "\t\t Piecewise (pc), Baseline (base). Used with the -e switch.\n\n" \
     "Options related to generation.\n\n"\
     "\t -g, --generate\n"						\
     "\t\t Used to generate event streams or gaussian data.\n\n"       \
     "\t -f\n"\
-    "\t\tUsed to specify the function to use when generating event"\
-    " streams.\n\t\trand will generate a random function using gaussians and"\
-    " use that to\n\t\tgenerate events. When this switch is not passed, or mup"\
-    " is given to it,\n\t\tit uses the expression specified in the parameter file"\
-    " to generate.\n\n"\
+    "\t\t Used to specify the function to use when generating event streams.\n"\
+    "\t\t rand will generate a random function using gaussians and use that to\n"\
+    "\t\t generate events. When this switch is not passed, or mup is given to it,\n"\
+    "\t\t it uses the expression specified in the parameter file to generate.\n\n"\
+    "\t -u --duplicate\n"\
+    "\t\t If you want to generate multiple sets of streams from the same function, set\n"\
+    "\t\t this switch when using the gaussian random generator (-f rand). The default\n"\
+    "\t\t generator has this behaviour automatically. Not passing this switch will generate\n"\
+    "\t\t the number of distinct functions specified by the -c switch."\
     "Options related to experimentation.\n\n"\
     "\t -x, --experiment\n"						\
     "\t\t Run an experiment. Requires parameter file.\n\n"\
@@ -37,9 +43,9 @@
     "\t\t intervals is removed."									\
     "General options.\n\n"\
     "\t -c, --count\n"							\
-    "\t\tSpecify the number of functions to generate data from. This can be used\n"\
-    "\t\tto generate or estimate streams from multiple functions at the same time.\n"\
-    "\t\tDefaults to 1.\n\n"\
+    "\t\t Specify the number of functions to generate data from. This can be used\n"\
+    "\t\t to generate or estimate streams from multiple functions at the same time.\n"\
+    "\t\t Defaults to 1.\n\n"\
     "\t -d, --defparam\n"						\
     "\t\t Creates a default parameter file with the given name. To create a\n"\
     "\t\t default experiment parameter file, use something like\n"\
@@ -48,37 +54,37 @@
     "\t -h, --help\n"							\
     "\t\t Display this message.\n\n"					\
     "\t -n, --nstreams\n"						\
-    "\t\tUsed to specify how many streams to generate from each function. Defaults to 1.\n\n"\
+    "\t\t Used to specify how many streams to generate from each function. Defaults to 1.\n\n"\
     "\t -i, --infile\n"						\
-    "\t\tSpecify the file to use as input to the subsystem. Usually specifies a file"\
-    "\n\t\tcontaining event data.\n\n"								\
+    "\t\t Specify the file to use as input to the subsystem. Usually specifies a file\n"\
+    "\t\t containing event data.\n\n"								\
     "\t -o, --outfile\n"						\
-    "\t\tData will be output to this file.\n\n"			\
+    "\t\t Data will be output to this file.\n\n"			\
     "\t -p or --paramfile\n"						\
-    "\t\tSpecify the parameter file in which to find default parameters when experimenting.\n\n"\
+    "\t\t Specify the parameter file in which to find default parameters when experimenting.\n\n"\
     "\t -r\n"\
-    "\t\tSwitches the system to use randomly generated functions. The generator will produce"\
-    "\t\tfunctions randomly generated using gaussians, or if the -i switch is received, will read"\
-    "\t\ta file containing 1-d data and centre gaussians on those points. Passing this switch"\
-    "\t\twhen using the estimators will set them to read data from files generated using the"\
-    "\t\trandom function generator as opposed to the default one.\n\n"	\
+    "\t\t Switches the system to use randomly generated functions. The generator will produce\n"\
+    "\t\t functions randomly generated using gaussians, or if the -i switch is received, will read\n"\
+    "\t\t a file containing 1-d data and centre gaussians on those points. Passing this switch\n"\
+    "\t\t when using the estimators will set them to read data from files generated using the\n"\
+    "\t\t random function generator as opposed to the default one.\n\n"	\
     "\t -t, --outtype\n"						\
-    "\t\tUsed to specify how much data to ouput to file when estimating or generating."\
-    "\n\t\tA value of zero will output no files at all. 1 will output the most"\
-    "\n\t\tuseful data for the specific task, and anything above that will output more specific"\
-    "\n\t\tinformation. Each level outputs its own data and anything from levels below it."\
-    "\n\n\t\tBasic stream generation (each level outputs only that data):"\
-    "\n\t\t\t1 - Events only."\
-    "\n\t\t\t2 - Events and lambda values."\
-    "\n\t\t\t3 - Bin counts only."\
-    "\n\t\t\t4 - Events, lambda values to one file, bin counts to another."\
-    "\n\n\t\tGaussian function generation:"		     \
-    "\n\t\t\t1 - mean, stdev, weight of gaussians."	\
-    "\n\t\t\t2 - sum of gaussians at points along x."		\
-    "\n\t\t\t3 - contribution of individual gaussians.\n\n"	\
-    "\t\tDelta Estimation:"						\
-    "\n\t\t\t1 - value computed by the function for each guess at delta" \
-    "\n\t\t\t2 - lambda sums at best estimate, bin data.\n\n"
+    "\t\t Used to specify how much data to ouput to file when estimating or generating.\n"\
+    "\t\t A value of zero will output no files at all. 1 will output the most\n"\
+    "\t\t useful data for the specific task, and anything above that will output more specific\n"\
+    "\t\t information. Each level outputs its own data and anything from levels below it.\n\n"\
+    "\t\t Basic stream generation (each level outputs only that data):\n"\
+    "\n\t\t\t 1 - Events only."\
+    "\n\t\t\t 2 - Events and lambda values."\
+    "\n\t\t\t 3 - Bin counts only."\
+    "\n\t\t\t 4 - Events, lambda values to one file, bin counts to another."\
+    "\n\n\t\t Gaussian function generation:"		     \
+    "\n\t\t\t 1 - mean, stdev, weight of gaussians."	\
+    "\n\t\t\t 2 - sum of gaussians at points along x."		\
+    "\n\t\t\t 3 - contribution of individual gaussians.\n\n"	\
+    "\t\t Delta Estimation:"						\
+    "\n\t\t\t 1 - value computed by the function for each guess at delta" \
+    "\n\t\t\t 2 - lambda sums at best estimate, bin data.\n\n"
 #define VERSION "deltastream alpha v0.6"
 #define BUGREPORT "Report bugs to mxs968@cs.bham.ac.uk"
 

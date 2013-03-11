@@ -123,11 +123,14 @@ void _generate(paramlist* params, char* outfile, double interval_time, double la
 }
 
 /*
- * Generates a series of event streams from a number of functions. The functions must have filenames
- * which follow a given scheme, defined by parameters in the paramfile.
+ * Generates a series of event streams from a number of functions. The functions
+ * must have filenames which follow a given scheme, defined by parameters in the
+ * paramfile. The copy_base parameter specifies whether to copy a single generated
+ * function into multiple functions. This has the effect of generating multiple stream
+ * pairs from the same function.
  */
 void generate_from_gaussian(char* paramfile, char* outfile, char* infile,
-			    int nstreams, int nfuncs, int output_type)
+			    int nstreams, int nfuncs, int output_type, int copy_base)
 {
     int i;
     paramlist* params = get_parameters(paramfile);
@@ -169,7 +172,17 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile,
     if ((fp = fopen(infname, "r")) == NULL){
 	if (errno == ENOENT) {
 	    printf("File %s not found. Generating gaussian data.\n", infname);
-	    generate_gaussian_data(paramfile, NULL, NULL, 5, output_type);
+	    if (copy_base){
+		generate_gaussian_data(paramfile, NULL, NULL, 1, output_type);
+		copy_gauss_files(funcfile, nfuncs, output_type);
+	    } else {
+		generate_gaussian_data(paramfile, NULL, NULL, nfuncs, output_type);
+	    }
+	    
+	} else {
+	    printf("Could not access file %s. Exiting.\n", infname);
+	    perror("Error");
+	    exit(1);
 	}
     } else {
 	fclose(fp);

@@ -16,6 +16,7 @@ static struct option opts[] =
 	{"nstreams",    required_argument, 0, 'n'},
 	{"count",    required_argument, 0, 'c'},
 	{"outtype",    required_argument, 0, 't'},
+	{"duplicate",    no_argument, 0, 'u'},
 	{"help", no_argument, 0, 'h'},
 	{0, 0, 0, 0}
     };
@@ -39,7 +40,7 @@ int main(int argc, char *argv[])
 	exit(1);
     }
         
-    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:f:hrt:rp:c:s", opts, &opt_ind)) != -1){
+    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:f:hrt:rp:c:su", opts, &opt_ind)) != -1){
     	switch(c){
     	case 'e': // estimate
     	    args->est = 1;
@@ -87,6 +88,8 @@ int main(int argc, char *argv[])
     	    break;
 	case 'r': // switch to generate random functions. Used with -g
 	    args->rfunc = 1;
+	case 'u': // duplicate functions when generating gaussians
+	    args->dup = 1;
     	    break;
 	case 't': // specify output type when generating random functions
 	    args->writing = atoi(optarg);
@@ -155,7 +158,8 @@ void run_requested_operations(launcher_args* args, char* paramfile, char* extra_
 	    generate(paramfile, outfile, args->nfuncs, args->nstreams, args->writing);
 	} else if (strcmp(generator_type, "rand") == 0){
 	    printf("Generating event stream with random functions.\n");
-	    generate_from_gaussian(paramfile, outfile, infile, args->nstreams, args->nfuncs, args->writing);
+	    generate_from_gaussian(paramfile, outfile, infile, args->nstreams, args->nfuncs,
+				   args->writing, args->dup);
 	} else {
 	    printf("something bad happened.\n");
 	}
@@ -230,6 +234,7 @@ launcher_args* make_arg_struct()
     a->writing = 1;
     a->rfunc = 0;
     a->stutter = 0;
+    a->dup = 0;
 
     return a;
 }

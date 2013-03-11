@@ -9,6 +9,7 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -46,5 +47,7 @@ int file_exists(char* filename);
 int dir_exists(char* dirname);
 int create_dir(char* dirname);
 void list_to_file(char* filename, char* mode, paramlist* param);
+int copy_file(char* filename, char* destname);
+int copy_gauss_files(char* base_name, int number, int output_type);
 
 #endif
