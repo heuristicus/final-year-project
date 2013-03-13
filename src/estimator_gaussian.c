@@ -24,7 +24,6 @@ double_multi_arr* estimate_gaussian(paramlist* params, char* infile, char* outfi
 
     gauss_vector* G = gen_gaussian_vector_from_array(ev->data, ev->len, stdev, 1, 0);
     double_multi_arr* T = gauss_transform(G, start, start + interval, resolution);
-
     if (outfile != NULL && output_switch > 0){
 	char* out = malloc(strlen(outfile) + strlen("_contrib.dat") + 3);
 	if (output_switch >= 1){
@@ -74,7 +73,6 @@ gauss_vector* estimate_gaussian_raw(paramlist* params, char* infile, char* outfi
     double_arr* ev = get_event_data_all(infile);
 
     gauss_vector* G = gen_gaussian_vector_from_array(ev->data, ev->len, stdev, 1, 0);
- 
     if (outfile != NULL && output_switch > 0){
 	char* out = malloc(strlen(outfile) + strlen("_contrib.dat") + 3);
 	if (output_switch >= 1){

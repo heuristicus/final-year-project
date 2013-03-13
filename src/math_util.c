@@ -361,7 +361,7 @@ double_multi_arr* gauss_transform(gauss_vector* G, double start, double end, dou
     int memsize = ((end - start)/resolution) + 1;
     double_multi_arr* ret = init_multi_array(2, memsize);
     
-    for (i = 0, current = start; current <= end && i < memsize; current += resolution, i++) {
+    for (i = 0, current = start; dbl_leq(current, end, 0.0001) && i < memsize; current += resolution, i++) {
 	ret->data[0][i] = current;
 	ret->data[1][i] = sum_gaussians_at_point(current, G);
     }

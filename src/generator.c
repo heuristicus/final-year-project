@@ -169,8 +169,8 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile,
     sprintf(infname, "%s_%d.dat", funcfile, i);
     FILE* fp = NULL;
     
-    if ((fp = fopen(infname, "r")) == NULL){
-	if (errno == ENOENT) {
+    if ((fp = fopen(infname, "r")) == NULL || copy_base){
+	if (errno == ENOENT || copy_base) {
 	    printf("File %s not found. Generating gaussian data.\n", infname);
 	    if (copy_base){
 		generate_gaussian_data(paramfile, NULL, NULL, 1, output_type);
@@ -227,7 +227,6 @@ void _generate_from_gaussian(paramlist* params, char* outfile, char* infile,
     }
 
     double_multi_arr* T = gauss_transform(G, start, start+interval, resolution);
-    
     double max = find_max_value(T->data[1], T->lengths[1]);
     double min = find_min_value(T->data[1], T->lengths[1]);
     double lambda = ceil(-min + max);

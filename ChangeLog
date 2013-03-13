@@ -1,3 +1,18 @@
+2013-03-13  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* scripts: Added scripts to automatically run experiments, most are still works in
+	progress but have the basic functionality required.
+
+2013-03-12  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* generator.c: Minor improvement to file copying.
+
+	* math_util.c: Fix to double precision issue with gauss_transform function which caused
+	incorrect data to be output.
+
+	* experimenter.c: Experiment numbers are output based on the experiment that is running,
+	not the overall count.
+
 2013-03-11  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* launcher.c: Added the -u switch, updated information to detail its usage.

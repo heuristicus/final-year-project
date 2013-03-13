@@ -60,15 +60,15 @@ void run_experiments(char* exp_paramfile, char* def_paramfile, char* indir,
 	    exit(1);
 	}
     } else {
-	printf("The directory already exists. Proceeding may overwrite all data inside it."\
-	       "Continue? (y(es) or n(o))\n");
-	char read = getchar();
-	if (read == 'y'){
-	    printf("Continuing...\n");
-	} else {
-	    printf("Aborted.\n");
-	    exit(1);
-	}
+	/* printf("The directory already exists. Proceeding may overwrite all data inside it."\ */
+	/*        "Continue? (y(es) or n(o))\n"); */
+	/* char read = getchar(); */
+	/* if (read == 'y'){ */
+	/*     printf("Continuing...\n"); */
+	/* } else { */
+	/*     printf("Aborted.\n"); */
+	/*     exit(1); */
+	/* } */
     }
 
     exp_set* experiments = experiment_setup(exp_list, def_list);
@@ -232,7 +232,7 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 
 	// Some parameters we need to read from the paramfile vary depending on the
 	// estimator name, so use this to get them.
-	tmp = malloc(strlen(experiments->exp_names[i]) + strlen("_estimator") + 5);
+	tmp = malloc(strlen(experiments->exp_names[i]) + strlen("_estimator") + 10);
 	sprintf(tmp, "%s_type", experiments->exp_names[i]);
 	if (strcmp(get_string_param(exp_list, tmp), "delay") == 0){
 	    multiple = 1;
@@ -259,7 +259,7 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 	
 	// This is the top level directory to which we will output data from
 	// this set of experiments
-	char* output_directory = malloc(strlen(experiments->exp_names[i]) + strlen(out_dir) + strlen("experiment") + 5);
+	char* output_directory = malloc(strlen(experiments->exp_names[i]) + strlen(out_dir) + strlen("experiment") + 10);
 	sprintf(output_directory, "%s/%s", out_dir, experiments->exp_names[i]);
 	if (!create_dir(output_directory)){
 	    printf("Something went wrong when creating directory %s.\n", output_directory);
@@ -372,9 +372,11 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 		    free(results);
 		} else {
 		    printf("Estimating functions.\n");
-		    char* infname = infname = malloc(strlen(in_dir) + strlen(function_fname)
-						     + strlen(fname) + strlen(pref) + strlen(".dat")
-						     + strlen("stuttered") + 10);
+		    
+		    char* infname = malloc(strlen(in_dir) + strlen(function_fname) +
+					   strlen(fname) + strlen(pref) + strlen(".dat") +
+					   strlen(experiment_directory) + 
+					   strlen("goodness.txt") + 10);
 		    int i;
 		
 		    FILE *fp;
@@ -388,7 +390,6 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 			fprintf(fp, "experiment_%d\n", expcount);
 			
 		    }
-		    
 		    for (i = 0; i < num_functions; ++i) {
 			// Filenames are different if the data is stuttered
 			sprintf(output_file, "%s/exp_func_%d", experiment_directory, i);
@@ -403,7 +404,7 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 			if (stuttered){
 			    double goodness = compare_stuttered_bins(def_list, exp_list, infname, est_res, gauss, est_type, stutter_intervals);
 			    if (goodness > function_bests->data[1][i]){
-				function_bests->data[0][i] = expcount;
+				function_bests->data[0][i] = sepcount;
 				function_bests->data[1][i] = goodness;
 			    }
 			    total_goodness += goodness;
