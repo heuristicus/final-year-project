@@ -80,6 +80,8 @@ void generate(char* paramfile, char* outfile, int nfuncs, int nstreams, int outp
 
     int i;
     
+    init_rand(0.0);
+
     for (i = 0; i < nfuncs; ++i) {
 	printf("Generating stream set %d.\n", i);
 	sprintf(out, "%s_%d_%s%s", prefix, i, outfile, stream_ext);
@@ -134,6 +136,10 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile,
 {
     int i;
     paramlist* params = get_parameters(paramfile);
+    
+    // Initialise random number generator here so that fast regeneration does not produce
+    // duplicates.
+    init_rand(0.0);
     
     double stdev = get_double_param(params, "gauss_stdev");
     double start = get_double_param(params, "start_time");
@@ -216,16 +222,11 @@ void _generate_from_gaussian(paramlist* params, char* outfile, char* infile,
 	// Should always be passed an input file - exit if not.
 	printf("Expected input file to _generate_from_gaussian. Exiting.\n");
 	exit(1);
-	/* double multiplier = get_double_param(params, "gauss_func_multiplier"); */
-	/* if (multiplier == 0){ */
-	/*     printf("WARNING: Multiplier for function generation is zero! Your functions" \ */
-	/* 	   " will probably be completely flat!\n"); */
-	/* } */
     } else {
 	G = read_gauss_vector(infile);
 	printf("Reading from %s.\n", infile);
     }
-
+    
     double_multi_arr* T = gauss_transform(G, start, start+interval, resolution);
     double max = find_max_value(T->data[1], T->lengths[1]);
     double min = find_min_value(T->data[1], T->lengths[1]);
@@ -255,8 +256,6 @@ void _generate_from_gaussian(paramlist* params, char* outfile, char* infile,
 double_multi_arr* nonhom_from_gaussian(gauss_vector* G, double lambda, 
 				       double start, double interval, double time_delta, double shift)
 {
-    init_rand(0.0);
-
     double base_time = start;
     double shifted_time = time_delta + start;
     double end = start + interval;
@@ -321,6 +320,8 @@ void generate_gaussian_data(char* paramfile, char* infile, char* outfile,
     double step = get_double_param(params, "gauss_generation_step");
     double resolution = get_double_param(params, "gauss_resolution");
     double multiplier = get_double_param(params, "gauss_func_multiplier");
+
+    init_rand(0.0);
 
     if (strcmp(get_string_param(params, "simple_stdev"), "no") == 0){
 	alpha = get_double_param(params, "stdev_alpha");
@@ -655,8 +656,6 @@ void run_time_nonhom(muParserHandle_t hparser, double lambda, double time_delta,
 void generate_event_times_homogenous(double lambda, double time, int max_events,
 				     double *event_times)
 {
-    init_rand(0.0);
-        
     double run_time = 0;
     int i = 0;
     
@@ -684,8 +683,6 @@ double_arr* run_to_time_non_homogeneous(muParserHandle_t hparser, double lambda,
 				double time_delta, double start_time, 
 				double end_time, int arr_len)
 {
-    init_rand(0.0);
-            
     double base_time = start_time;
     double shifted_time = time_delta + start_time;
     double rand, non_hom_lambda, hom_out;
@@ -749,8 +746,6 @@ void run_to_event_limit_non_homogeneous(muParserHandle_t hparser, double lambda,
 					double t_delta, int max_events, 
 					double *event_times, double *lambda_vals)
 {
-    init_rand(0.0);
-    
     double run_time = 0, func_in = t_delta + run_time;
     double rand, non_hom_lambda, hom_out;
     int i = 0;
@@ -789,8 +784,6 @@ void run_to_event_limit_non_homogeneous(muParserHandle_t hparser, double lambda,
 void generate_event_times_homogeneous(double lambda, double time,
 				      int max_events, double *event_times)
 {
-    init_rand(0.0);
-        
     double run_time = 0;
     int i = 0;
     

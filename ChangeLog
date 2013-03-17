@@ -1,3 +1,11 @@
+2013-03-17  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* estimator_IWLS.c: Fixed soul-destroyingly massive bug where beta estimates were not
+	being done properly due to commented line.
+
+	* generator.c: Random generator seeding moved to places where it does not reseed
+	when multiple functions are generated in the same call.
+
 2013-03-13  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* scripts: Added scripts to automatically run experiments, most are still works in

@@ -16,7 +16,6 @@ static double constraint_b_OLS(double* weights, double* midpoints, int* bin_coun
 static double constraint_b_IWLS(int* bin_counts, double* midpoints, double interval_time, int num_subintervals);
 static double* lambda_estimate(double* lambda, double* midpoints, double a, double b, double interval_time, int num_subintervals);
 static void weight_estimate(double* weights, double* lambda, int num_subintervals);
-
 /*
  * Helper function for OLS estimator. Extracts relevant parameters from a parameter list and
  * passes them to the estimator
@@ -348,7 +347,7 @@ static double beta_estimate(double* weights, double* midpoints, int* bin_counts,
     int i;
     
     for (i = 0; i < num_subintervals; ++i) {
-//	xdiffsum += weights[i] * (midpoints[i] - mean_x) * bin_counts[i];
+	xdiffsum += weights[i] * (midpoints[i] - mean_x) * bin_counts[i];
 //	printf("xdiffsum is %lf\n", xdiffsum);
 	squarediffsum += weights[i] * pow(midpoints[i] - mean_x, 2);
 //	printf("squarediffsum is %lf\n", squarediffsum);
