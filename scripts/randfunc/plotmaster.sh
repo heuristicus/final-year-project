@@ -1,7 +1,5 @@
 #!/bin/bash
 
-PLOT_DIR=/home/michal/Dropbox/study/university/final_year/final-year-project/plots
-
 usage (){
 cat <<EOF
 usage $0 options
@@ -35,36 +33,33 @@ if [ $# -eq 0 ]; then
     exit
 fi
 
-while getopts "sSlLpPbehE" opt; do
-    case $opt in
-	s)
-	    s=1
-	    ;;
-	S)
-	    S=1
-	    ;;
-	l)
-	    l=1
-	    ;;
-	L)
-	    L=1
-	    ;;
-	e)
-	    e=1
-	    ;;
-	E)
-	    E=1
-	    ;;
-	b)
-	    b=1
-	    ;;
-	h)
-	    usage
-	    ;;
-	\?)
-	    usage
-	    ;;
-    esac
+while getopts "sSlLpPbeh" opt; do
+  case $opt in
+    s)
+      s=1
+      ;;
+    S)
+      S=1
+      ;;
+    l)
+      l=1
+      ;;
+    L)
+      L=1
+      ;;
+    e)
+      e=1
+      ;;
+    b)
+      b=1
+      ;;
+    h)
+      usage
+      ;;
+    \?)
+      usage
+      ;;
+  esac
 done
 
 if [ $s ]; then
@@ -73,7 +68,7 @@ if [ $s ]; then
 	exit
     fi
 gnuplot<<EOF
-call "$PLOT_DIR/twostreams.plt" "$2" "$3" "$4"
+call "../plots/twostreams.plt" "$2" "$3" "$4"
 EOF
 texify $2
     exit
@@ -93,7 +88,7 @@ if [ $e ]; then
 	exit
     fi
 gnuplot <<EOF
-call "$PLOT_DIR/undef.plt" "$2" "$3" "$4"
+call "../plots/undef.plt" "$2" "$3" "$4"
 EOF
 texify $2
 fi
@@ -105,7 +100,7 @@ if [ $b ]; then
     fi
 gnuplot << EOF
 # $1 is the switch, so skip it $2 is the file to output to, $3 is all data from the generator, $4 is the data produced by the IWLS, $5 is the output from the baseline estimate
-call "$PLOT_DIR/blplot.plt" "$2" "$3" "$4" "$5"
+call "../plots/blplot.plt" "$2" "$3" "$4" "$5"
 
 EOF
 texify $2
@@ -119,20 +114,8 @@ if [ $S ]; then
     fi
 gnuplot << EOF
 # $2 is the file to output to, $3 is all data from the generator for stream 1, $4 is the estimate data for stream 1, $5 generator data from stream 2, $6 is estimate data for stream 2.
-call "$PLOT_DIR/multiest.plt" "$2" "$3" "$4" "$5" "$6"
+call "../plots/multiest.plt" "$2" "$3" "$4" "$5" "$6"
 
-EOF
-texify $2
-exit
-fi
-
-if [ $E ]; then
-    if [ $# -ne 3 ]; then
-	echo -e "Missing or excess arguments when plotting error.\nusage: `basename $0` -E outfile ERROR_DATA"
-	exit
-    fi
-gnuplot << EOF
-call "$PLOT_DIR/error.plt" "$2" "$3"
 EOF
 texify $2
 exit
