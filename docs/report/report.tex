@@ -1,4 +1,4 @@
-% Created 2013-03-12 Tue 22:50
+% Created 2013-03-21 Thu 11:48
 \documentclass[a4paper,11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -23,6 +23,10 @@
 \usepackage{moreverb}
 \usepackage[center]{caption}
 \usepackage{subcaption}
+\let\iint\relax % otherwise errors are thrown by amsmath. Defined in latexsym
+\let\iiint\relax
+\usepackage{amsmath}
+\usepackage{hyperref}
 \usepackage{tikz}
 \usetikzlibrary{positioning}
 \bibliography{fyp}
@@ -30,7 +34,7 @@
 \setromanfont[Ligatures={Common},Numbers={Lining}]{Linux Libertine}
 \providecommand{\alert}[1]{\textbf{#1}}
 
-\title{A Weighted Least Squares Method for Time Delay Estimation in Gravitationally Lensed Photon Streams}
+\title{Time Delay Estimation in Gravitationally Lensed Photon Stream Pairs}
 \author{\Large{Micha{\l} Staniaszek} \\\small{Supervisor: Peter Tiňo}}
 \date{\today}
 \hypersetup{
@@ -47,14 +51,16 @@
 \newpage
 \pagenumbering{roman}
 \begin{abstract}
-In this report, we present a system for the estimation of the time delay $\Delta
-t$ between multiple realisations of a Poisson process with the underlying
-function $\lambda(t)$, with particular application to gravitationally lensed
-photon streams. We build on the weighted least squares approach to develop a
-linear estimator which we use to estimate $\lambda(t)$. We then introduce a
-numerical and probabilistic method for estimating $\Delta t$ using the function
-estimates. Finally, we compare the performance of our linear estimator to kernel
-regression on simulated data and data from real quasars.
+In this report, we present a system for estimating the time delay $\Delta$
+between multiple realisations of a Poisson process with the underlying function
+$\lambda(t)$, with particular application to gravitationally lensed photon
+streams. We develop a linear estimator based on weighted least squares, and a
+kernel density estimator which we use to estimate $\lambda(t)$. We then
+introduce two methods for estimating the value of $\Delta$ using the function
+estimates, one using inter-function area, and another using probability density
+functions. Finally, we compare the performance of the two function estimation
+methods and time delay estimation methods on simulated data, and show that there
+is not a significant difference between the approaches.
 
 \vspace{1.0cm}\textbf{Keywords: }Poisson process, gravitational lensing,
  machine learning, linear estimation
@@ -295,17 +301,26 @@ on the value of $x$. This is where the names come from. In this simple example,
 $x$ is the independent variable, and $y$ is the dependent variable. There can be
 multiple independent variables.
 
- Linear regression is used in many different fields to find the trend between
- variables. It is heavily used in economics to make predictions about what
- happens in many economical situations. Finding trends in data is useful to many
- people in different ways.
+Linear regression is used in many different fields to find the trend between
+variables. It is heavily used in economics to make predictions about what
+happens in many economical situations. Finding trends in data is useful to many
+people in different ways.
 \subsubsection{Kernel Density Estimation}
 \label{sec-2-3-2}
 
 This is another method which can be used to estimate functions, but which
 applies specifically to the probability density function of random
 variables. This technique uses \emph{kernels} to estimate the function
-densities. 
+densities. A kernel is a function which has some parameters. To estimate
+functions, kernels are centred at certain points along the axis which is being
+estimated. The spread can be either at uniform intervals, each sample value,
+etc. Kernels may have a weight assigned to them. Varying the parameters of
+the kernels results in different properties of the estimate. There are many
+different kernels that can be used. Different kernels are used in different
+applications.
+\begin{itemize}
+\item Show some examples of different kernels
+\end{itemize}
 \section{Simulation of Photon Streams}
 \label{sec-3}
 
@@ -313,29 +328,139 @@ The first step in building the system was the development of a photon stream
 simulator. The ability to simulate photon streams means that the system can be
 tested on many different stream types, so that we are able to determine where
 its strengths and weaknesses lie. While many simulation tools are very complex,
-our system does not require complex simulation of quasars or the movement of
-photons, as we are only interested in their arrival time. A quasar can be
-represented by some random variable $X$, which changes over time. This means
-that a NHPP can be used to create similar effects. In order to simulate arrival
-times, a function that describes how the rate parameter $\lambda$ changes over
-time is needed.
+our system does not require simulation of the source objects or the movement of
+photons, as we are only interested in their arrival time. A source can be
+represented by some random variable $X$, which indicates the variability of the
+source with time. Different types of sources will have different types of
+characteristic functions---the variation in a quasar will be very different to
+that of an individual star, for example. A NHPP is an ideal way to represent
+this type of system. The function $\lambda(t)$ will represent the random
+variable, and the values output from the process will represent the arrival
+times of the photons. $\lambda(t)$ describes the variability of the source in
+time. In other words, it provides a rate parameter at each time $t$ for the
+duration of the simulation. To be able to simulate a wide variety of functions,
+it is necessary to have the capacity to generate functions with different
+characteristics.
 \subsection{Function Generation}
 \label{sec-3-1}
+
+To evaluate the performance of the function and time delay estimators, it will
+be necessary to test the accuracy of the estimates on different types of
+functions. To this end, the capability of generating random functions will be
+very useful. To generate random functions, we make use of \large{Gaussian
+kernels or just Gaussians?}. The generation process involves four simple steps:
+\begin{enumerate}
+\item Pick some value $\Delta t$ which represents the distance between the mean
+   $\mu$ of successive Gaussians.
+\item Define some value $\alpha$, where the standard deviation $\sigma$ of each
+   Gaussian is determined by $\alpha\cdot\Delta t$.
+\item For each Gaussian, choose some weight $w_i$, from a uniform distribution
+   between -1 and 1.
+\item Using some step $s$, sum all the Gaussians at each point on the x-axis which
+   we get from these $s$ values.
+\end{enumerate}
+
+The first step defines how spread out the Gaussians should be in the interval
+$[t_0, T]$ in which the function is to be generated. If the spread is large,
+then depending on the standard deviation of the Gaussians there will be many
+points on the interval where the value of the function is zero. On the other
+hand, with a low value of $\Delta t$, most points on the line should have some
+non-zero value.
+
+The $\alpha$ parameter determines the standard deviation $\sigma$ of all the Gaussians
+used to generate the function. The value of $\sigma$ is the one that affects the
+final function the most. Low values will result in each Gaussian covering only a
+small interval, so if the Gaussians are sufficiently spread out, the variation
+in the function will be much larger than if higher values of $\sigma$ are used.
+
+With just the above two steps, the functions generated would be very
+homogeneous, because each Gaussian has the same weight. With uniform Gaussians,
+there would be hills at each point where a Gaussian is centred, and very little
+to speak of in between, and the height of the function would never exceed a
+certain value. To introduce more variation, a weight $w_i$ is sampled uniformly
+from ($w_i \sim U(-1,1)$). Uniform sampling simply means that each value between
+-1 and 1 has an equal probability of being chosen. To further increase the
+variation in the functions that can be generated, some multiplier can be used,
+which scales the values of the weights, meaning that the function will have
+larger values over the whole interval.
+
+The final step is to calculate the values which will make up the
+function. Starting at the beginning of the interval $t_0$, we sum the values of
+all the Gaussians at points along the line until the end of the interval $T$ is
+reached. The points that are sampled are defined by $t_i=t_{i-1}+s$, where $s$
+is some sample step. The use of smaller sample steps results in a higher
+resolution. The sum of the Gaussians at time $t$ can be calculated by
+
+\begin{align}
+f(t) = \sum_{g\in G}w_g\cdot e^{-(t-\mu_g)^2/2\sigma_g^2}
+\end{align}
+
+Where $G$ is the set of Gaussians which make up the function, and $w_g$, $\mu_g$
+and $\sigma_g$ are the weight, mean and standard deviation respectively of the
+current Gaussian being processed.
 
 \begin{itemize}
 \item random functions using gaussian sums
 \item explain how the gaussians are placed, how the standard deviation is
-  calculated, what effect this has on the function shape
-  ($\sigma=\alpha\cdot\Delta t$)
-\item examples at various alpha values?
+   calculated, what effect this has on the function shape
+   ($\sigma=\alpha\cdot\Delta t$)
+\item examples at various alpha and delta t values?
+\item $w_t\cdot e^\frac{{x-\mu}^2}{2\sigma^2}$
 \end{itemize}
+
+In addition to the random function generation, it may sometimes be useful to
+generate a function from a known expression, and the system includes this
+functionality as well, which will be described below.
 \subsection{Generating Streams from Functions}
 \label{sec-3-2}
+
+   Once the function has been generated, we can use it to generate values for
+   the random variable $X$ which governs a NHPP. To generate a NHPP, it is
+   necessary to build on the generation of a HPP. It is well known that
+   probability of an event occurring follows an exponential distribution. The
+   rate parameter $\lambda$ determines how many events occur in a given time
+   interval. Knowing this, we can calculate the time of the next event by
+   sampling from this distribution. Generate a random value $U\sim U(0,1)$. The
+   time $t$ to the next event is defined by 
+   \begin{align}\label{eq:homlambda}
+   t=\frac{1}{\lambda}\log(U)
+   \end{align}
+   Using this calculation, it is possible to generate a realisation of a HPP for
+   any length of time. This provides a base which can be extended to generate
+   events from NHPPs. To generate events from the NHPP, we use a technique
+   called thinning. The basic concept behind thinning is to generate a large
+   amount of values, and then remove them based on some method. In the case of
+   the NHPP, we generate events with a rate parameter $\lambda$, where
+   $\lambda>\lambda(t)$ for $0<=t<=T$. In other words, the homogeneous lambda
+   value must be larger than the value of the function we are generating from at
+   any point. First, two random values are independently sampled from a uniform
+   distribution between 0 and 1, $U_1,U_2\sim U(0,1)$. $U_1$ is used in equation
+   \eqref{eq:homlambda} to find the next event time from the homogeneous process
+   governed by $\lambda$. Using the time $t$ generated from that, the value of
+   $\lambda(t)$ is found. Depending on the ratio between $\lambda(t)$ and
+   $\lambda$, the event is kept or discarded. When the value of $\lambda(t)$ is
+   close to that of $\lambda$, more events are kept because
+   $U_2\leq\frac{\lambda(t)}{\lambda}$ will be true more of the time.
 
 \begin{itemize}
 \item Need to generate event times - use Poisson process
 \item start with homogeneous
 \item extend homogeneous to non-homogeneous (explain math)
+\item Issues with the implementation - must have $\lambda>\lambda(t)$ for all
+  $0<=t<=T$.
+\end{itemize}
+\subsection{Implementation}
+\label{sec-3-3}
+
+    The implementation of the random and expression based function generators
+    form the first part of the \emph{generation} sub-system. This part of the
+    system deals with the generation of functions, and the generation of photon
+    streams from these functions. 
+\begin{itemize}
+\item gaussians as structs
+\item gauss vector structs
+\item functions into math library
+\item separation of functions so that they can be called externally and internally
 \end{itemize}
 \section{Function Estimation}
 \label{sec-4}
@@ -431,7 +556,7 @@ estimate with minimum interval length applied
 \item needs normalisation to get the proper estimate
 \item how the normalisation constant is found, using pmf stuff
 \end{itemize}
-\section{Time Delay Calculation}
+\section{Time Delay Estimation}
 \label{sec-5}
 
 \begin{itemize}
@@ -441,6 +566,36 @@ estimate with minimum interval length applied
 \subsection{Area Method}
 \label{sec-5-1}
 
+\begin{figure}
+%   \begin{center}
+%     \begin{tikzpicture}[scale=0.1]
+%       \def\fzero{est_out_func_0_0.dat}
+%       \def\fone{est_out_func_0_1.dat}
+%       \draw[thick] plot[smooth] file {\fzero};
+%       \draw[thick] plot[smooth] file {\fone};
+%       \fill[color = gray!60, opacity=0.1] plot[smooth] file {\fzero} --
+%       plot[smooth] file {\fone};
+% %      \fill[color = gray!60, opacity=0.1] plot[smooth] file {\fzero} --
+% %      plot[smooth] file {\fone};
+      
+% %      \fill[pattern color = gray, pattern = north east lines, opacity=0.8]
+%  %     plot[smooth] file {\fzero} --  plot[smooth] file {\fzero};
+%       % \begin{axis}[stack plots=y,thick,smooth,no markers]
+% %         \addplot+[black]              gnuplot{est_out_func_0_0.dat};
+% %         \addplot+[black,fill=blue!50] gnuplot{est_out_func_0_1.dat} 
+% %         \closedcycle;
+% %       \end{axis}
+% % %      \begin{axis}[xmin=0, xmax=100, ymin=0, ymax=25, legend columns=4]
+% %         % \addplot[mark=none,color=red] table[x index=0,y index=1,col
+% %         % sep=space] {est_out_func_0_0.dat};
+% %         % \addplot[mark=none, color=blue] table[x index=0,y index=1,col
+% %         % sep=space] {est_out_func_0_1.dat};
+% %         % \addplot[mark=none, color=green, opacity=0.5] table[x index=0,y index=1,col
+% %         % sep=space] {rfuncsum_2.dat};
+% % %      \end{axis}
+%     \end{tikzpicture}
+%   \end{center}
+\end{figure}
 \begin{itemize}
 \item use the area of the space between two functions, find the time delay which
   minimises the value
@@ -651,6 +806,8 @@ the flow of things?
 \label{sec-7}
 \subsection{experimentation on simulated data}
 \label{sec-7-1}
+
+Talk about why there is a window on the effective values.
 \subsubsection{Sine Functions}
 \label{sec-7-1-1}
 
