@@ -1,10 +1,16 @@
-EXP_PFILE=exp_params.txt
-DEF_PFILE=params.txt
-INDIR=/media/michal/Edison/fyp/sine/fine/exp_fine_param
-STREAM_DIR=fine_streams
-OUTDIR=/media/michal/Edison/fyp/sine/fine/exp_fine_td
+EXP_PFILE=/home/michal/Dropbox/study/university/final_year/final-year-project/src/exp_params.txt
+DEF_PFILE=/home/michal/Dropbox/study/university/final_year/final-year-project/src/params.txt
+INDIR=/media/michal/Edison/fyp/new/sine/preliminary/prelim_params
+STREAM_DIR=/media/michal/Edison/fyp/new/sine/preliminary/prelim_streams
+GOODNESS_LOC=/media/michal/Edison/fyp/new/sine/preliminary
+LAUNCHER_LOC=/home/michal/Dropbox/study/university/final_year/final-year-project/src/deltastream
+OUTDIR=/media/michal/Edison/fyp/new/sine/preliminary/prelim_time_delay
 FOLDER_PREFIX=alpha_
 BESTFILE=$OUTDIR/best_params.txt
+NSTREAMS=2
+NFUNCS=25
+
+ALPHA_VALUES=(005 01 015 03 06)
 
 while true; do
     echo -e "Running this script will edit some parameters in the files $EXP_PFILE and $DEF_PFILE.\nResults will be output to $OUTDIR, stream data will be read from $STREAM_DIR,\nbest parameter information will be read from $INDIR.\nAre you sure you want to run it?"
@@ -30,6 +36,7 @@ PSTR=(${NPARAM// / })
 ENAMES=(${PSTR[1]//,/ })
 
 for V in ${ENAMES[@]}; do
+    echo $V
     # Change the experiment type to do experiments on the delay and not just functions.
     sed -i "s/$V\_type [a-zA-Z]*/$V\_type delay/" $EXP_PFILE
 done
@@ -44,7 +51,7 @@ for TD_EST_TYPE in pmf area; do
     fi
     # Set the delta estimation method to the estimator type that we are using.
     sed -i "s/delta_est_method [a-zA-Z]*/delta_est_method $TD_EST_TYPE/" $DEF_PFILE
-    for ALPHA in 001 002 003 004 005 006 007 008 009 010 011 012 013 014 015; do
+    for ALPHA in ${ALPHA_VALUES[@]}; do
 	if [ ! -d "$OUTDIR/$TD_EST_TYPE/$FOLDER_PREFIX$ALPHA" ]; then
 	    mkdir $OUTDIR/$TD_EST_TYPE/$FOLDER_PREFIX$ALPHA
 	fi
@@ -56,7 +63,7 @@ for TD_EST_TYPE in pmf area; do
 		echo "alpha=$ALPHA, type=$TYPE" >> $BESTFILE
 	    fi
 	        # Extract the goodness and experiment number from the aggregate file
-	    RES="`cat agg_goodness_$TYPE.txt | grep -A 1 "alpha_$ALPHA" | sed '1d;'`"
+	    RES="`cat $GOODNESS_LOC/agg_goodness_$TYPE.txt | grep -A 1 "alpha_$ALPHA" | sed '1d;'`"
 	    GOODNESS_ARR=(${RES// / }) # split the above string on a space to get an array - exp num is at index 1
 	    EXP_NUM=${GOODNESS_ARR[1]}
 	        # Grep the parameters for the experiment type out of the experiment file
@@ -86,7 +93,7 @@ for TD_EST_TYPE in pmf area; do
 	    
 	    # At this point, we have an experiment parameter file modified to match the best parameters in the baseline and gaussian
 	    # experiments on stuttered streams. We can now run the experiments with the best parameters.
-	    ./deltastream -x $EXP_PFILE -p $DEF_PFILE -i $STREAM_DIR/$FOLDER_PREFIX$ALPHA -o $OUTDIR/$TD_EST_TYPE/$FOLDER_PREFIX$ALPHA -c 10 -n 2 -t 3
+	    $LAUNCHER_LOC -x $EXP_PFILE -p $DEF_PFILE -i $STREAM_DIR/$FOLDER_PREFIX$ALPHA -o $OUTDIR/$TD_EST_TYPE/$FOLDER_PREFIX$ALPHA -c $NFUNCS -n $NSTREAMS -t 3
 	done
     done
     LOOP=$[LOOP+1]

@@ -1,5 +1,5 @@
-INDIR=/media/michal/Edison/fyp/random/exp_rand_td
-OUTDIR=/media/michal/Edison/fyp/random/exp_rand_td_results
+INDIR=/media/michal/Edison/fyp/new/random/rand_time_delay
+OUTDIR=/media/michal/Edison/fyp/new/random/rand_results
 TOP_NUMS=(04 08 1 2 3)
 BOT_NUMS=(1 2 3 4 5)
 TD_EST_TYPES=(area pmf)
@@ -38,11 +38,12 @@ done
 
 # This groups data with the same top-level parameter into the same file for all estimators. Should make things easier to put into t-tests
 if [[ -n "$TT" ]]; then
-    for TOP_NUM in ${TOP_NUMS[@]}; do
-	echo "" > $OUTDIR/results/$TOP_PREFIX$TOP_NUM.txt
-	for EST_TYPE in ${TD_EST_TYPES[@]}; do # Two types of time delay estimators
-	    for TYPE in ${FUNC_EST_TYPES[@]}; do # Two types of function estimators
-		for BOT_NUM in ${BOT_NUMS[@]}; do # Subdirectories - different functions experimented with
+    for BOT_NUM in ${BOT_NUMS[@]}; do # Subdirectories - different functions experimented with
+	for TOP_NUM in ${TOP_NUMS[@]}; do
+	    echo "" > $OUTDIR/results/$TOP_PREFIX$TOP_NUM\_$BOT_PREFIX$BOT_NUM.txt
+	    for EST_TYPE in ${TD_EST_TYPES[@]}; do # Two types of time delay estimators
+		for TYPE in ${FUNC_EST_TYPES[@]}; do # Two types of function estimators
+
 		    RES="`grep -A $NUM_FUNCS "Estimate errors" $OUTDIR/results/data/$TYPE\_$EST_TYPE\_$TOP_PREFIX$TOP_NUM\_$BOT_PREFIX$BOT_NUM.txt | sed '1d'`"
 		    echo -e "td_est=$EST_TYPE, func_est=$TYPE, $BOT_NAME=$BOT_NUM\n$RES\n\n" >> $OUTDIR/results/$TOP_PREFIX$TOP_NUM\_$BOT_PREFIX$BOT_NUM.txt
 		done

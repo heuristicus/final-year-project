@@ -83,15 +83,22 @@ int* sum_events_in_interval(double* event_times, int num_events, double start_ti
 void init_rand(double seed)
 {
     if (! rand_initialised) {
-	if (seed == 0.0)
-	    seed = time(NULL);
+	//	if (seed == 0.0)
+	    //seed = time(NULL);
+	const double seeds[] = {1363649670, 1363649909, 1363650027, 1363650065, 1363650095, 1363650365, 1363650384, 1363650405, 1363650435, 1363650447, 1363650464, 1363650489, 13636504999, 1363650521, 1363650546, 1363650557, 1363650568, 1363650592, 1363650605, 1363650615};
 	
-
+	int size = sizeof(seeds)/sizeof(double);
+	
+	srand(time(NULL));
+	int index = (float)rand()/RAND_MAX * size;
+//	printf("index is %d\n", index);
+//	printf("seed is %lf\n", seeds[index]);
+	
 	gsl_rng_env_setup();
 
 	r = gsl_rng_alloc(gsl_rng_rand48);
-	gsl_rng_set(r, seed);
-	printf("Seed for this run: %lf\n", seed);
+	gsl_rng_set(r, seeds[index]);
+	//	printf("Seed for this run: %lf\n", seed);
 
 	rand_initialised = 1;
 	atexit(cleanup); // make sure we free the random number generator on exit
@@ -260,15 +267,15 @@ double evaluate_function(double a, double b, double x)
 double get_midpoint(double a, double b)
 {
 
-    if (a == b)
+    if (dbl_equal(a, b, 0.0000001))
 	return a;
     
-    double diff = abs(a - b);
-    
+    double diff = fabs(a - b);
+
     if (a < b)
-	return a + diff/2;
+	return a + diff/2.0;
     else
-	return b + diff/2;
+	return b + diff/2.0;
 }
 
 
@@ -632,14 +639,40 @@ double sum_array_interval(double* times, double* values, double start, double en
 //    printf("summing interval from %lf to %lf, normaliser %lf with len %d\n", start, end, normaliser, len);
     
     int i;
-    double current = times[0], sum = 0;
-    
-    for (i = 0; dbl_less_than(current, end, 0.0001) && i < len; ++i, current = times[i]) {
-	if (dbl_less_than(current, start, 0.0001))
+    i = 0;
+    int ln = len;
+    double current;
+    double en;
+    en = end;
+    current = times[0];
+    double sum;
+    sum = 0;
+
+    while (current < en && i < ln){//dbl_less_than(current, end, 0.0001) && i < ln){
+	//	printf("current is %.30lf, end is %.30lf, i is %d, value is %lf\n", current, end, i, values[i]);
+	if (dbl_less_than(current, start, 0.0001)){
+	    //  printf("continuing\n");
+	    i++;
+	    current = times[i];
 	    continue;
-//	printf("current is %.30lf, end is %.30lf, i is %d, value is %lf\n", current, end, i, values[i]);
+	}
+	
+	//	printf("value here is %lf\n", values[i]);
 	sum += values[i];
+	//		printf("sum now %.30lf\n", sum);
+	i++;
+	current = times[i];
     }
+
+	
+    
+/*     for (i = 0; dbl_less_than(current, end, 0.0001) && i < len; ++i, current = times[i]) { */
+/* 	if (dbl_less_than(current, start, 0.0001)) */
+/* 	    continue; */
+/* //	printf("current is %.30lf, end is %.30lf, i is %d, value is %lf\n", current, end, i, values[i]); */
+/* 	sum += values[i]; */
+	
+/*     } */
 
 //    printf("sum is %lf\n", sum);
 //    printf("normalised sum is %lf\n", sum/normaliser);
@@ -703,11 +736,16 @@ double abs_max(double a, double b)
  */
 int dbl_less_than(double a, double b, double precision)
 {
-    double diff = b - a;
+    double diff;
+    diff = b - a;
+    double pr = precision;
+    int p1 = diff > pr;
+    int p2 = diff > 0;
+    int ret = p1 && p2;
 
     /* printf("diff is %.30lf\n", diff); */
     /* printf("returning %d\n", diff > precision && diff > 0); */
-    return diff > precision && diff > 0;
+    return ret;
 }
 
 int dbl_equal(double a, double b, double precision)

@@ -1,10 +1,11 @@
-INDIR=/media/michal/Edison/fyp/sine/fine/exp_fine_td
-OUTDIR=/media/michal/Edison/fyp/sine/fine/exp_fine_td_results
+INDIR=/media/michal/Edison/fyp/new/sine/preliminary/prelim_time_delay
+OUTDIR=/media/michal/Edison/fyp/new/sine/preliminary/prelim_results
 TOP_NAME=alpha
 TOP_PREFIX=alpha_
-NUM_FUNCS=5
+NUM_FUNCS=25
  # Top level directories - this is usually the alpha parameter
-TOP_NUMS=(001 002 003 004 005 006 007 008 009 010 011 012 013 014 015)
+#TOP_NUMS=(001 002 003 004 005 006 007 008 009 010 011 012 013 014 015)
+TOP_NUMS=(005 01 015 03 06)
 TD_EST_TYPES=(area pmf)
 FUNC_EST_TYPES=(baseline gaussian)
 TOP_NUM_DIVISOR=100

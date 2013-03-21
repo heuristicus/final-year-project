@@ -1,3 +1,8 @@
+2013-03-18  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* math_util.c: Fixed midpoint calculation where abs was being used instead of fabs, which
+	resulted in incorrect calculations.
+
 2013-03-17  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* estimator_IWLS.c: Fixed soul-destroyingly massive bug where beta estimates were not
@@ -5,6 +10,23 @@
 
 	* generator.c: Random generator seeding moved to places where it does not reseed
 	when multiple functions are generated in the same call.
+
+	* scripts: Improvements to scripts for automatic running of random function experiments.
+	More use of arrays to make modifications simpler - only need to modify stuff at the top
+	of the script. More usage of variables defined at the top of scripts to control behaviour
+	and specify input and output files.
+
+	* scripts/randfunc/extract_results.sh: Fixed issue where output files were not correctly
+	created based on the function number.
+
+	* scripts/get_goodness.sh: Arrays used for storing values, loop order modified so that
+	data files can be overwritten.
+
+	* scripts/randfunc/runexp_batch.sh: Correction of loops, directory creation, correct
+	launcher call.
+
+	* scripts/randfunc/runtd_exp.sh: Modified to match needs of the time delay experiments,
+	abstraction of variables, directory creation.
 
 2013-03-13  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
