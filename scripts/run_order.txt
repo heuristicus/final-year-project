@@ -1,0 +1,1 @@
+genfunc_[rand | def] -> stutter_batch -> runexp_batch -> get_goodness -> runtd_exp -> extract_results
