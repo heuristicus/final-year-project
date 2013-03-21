@@ -172,7 +172,7 @@ double extend_estimate(double_arr* event_data, est_data *interval_estimate, doub
 	}
 
 	if (events == NULL) {
-	    printf("No events in interval - cannot extend.\n");
+//	    printf("No events in interval - cannot extend.\n");
 	    return start_time;
 	}
 

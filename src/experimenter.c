@@ -376,7 +376,7 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 		    char* infname = malloc(strlen(in_dir) + strlen(function_fname) +
 					   strlen(fname) + strlen(pref) + strlen(".dat") +
 					   strlen(experiment_directory) + 
-					   strlen("goodness.txt") + 10);
+					   strlen("goodness.txt") + 40);
 		    int i;
 		
 		    FILE *fp;
@@ -515,7 +515,13 @@ double compare_stuttered_bins(paramlist* def_list, paramlist* exp_list, char* in
 
     
     int i;
-    double* sums = malloc(sizeof(double) * (int)interval);
+    double_arr* sums;
+    
+    if (gauss)
+	sums = sum_gaussians_at_points(estimate, midpoints, (int)interval);
+    else
+	sums = estimate_at_points(estimate, midpoints, (int)interval);
+
     int interval_num = 0;
     double pdf_sum = 0;
     if (gauss){
@@ -524,17 +530,14 @@ double compare_stuttered_bins(paramlist* def_list, paramlist* exp_list, char* in
     
     for (i = 0; i < (int)interval; ++i) {
 	//		printf("midpoint %lf, Stuttered: %d, normal: %d\n", midpoints[i], st_bins[i], bins[i]);
-	if (gauss)
-	    sums[i] = sum_gaussians_at_point(midpoints[i], estimate);
-	else
-	    sums[i] = estimate_at_point(estimate, midpoints[i]);
+
 	//		printf("sum is %lf\n", sums[i]);
 	if (midpoints[i] > stutter_intervals->data[interval_num * 2] 
 	    && midpoints[i] < stutter_intervals->data[interval_num * 2 + 1]){
 	    //	    	    printf("midpoint %d (%lf) is inside a stutter interval\n", i, midpoints[i]);
-	    double thispdf = log_pdf(bins[i], sums[i], normaliser);
+	    double thispdf = log_pdf(bins[i], sums->data[i], normaliser);
 	    pdf_sum += thispdf;
-	    //	    	    printf("bin: %d, sum %lf. logpmf is %lf\n", bins[i], sums[i], thispdf);
+//	    printf("bin: %d, sum %lf. logpmf is %lf\n", bins[i], sums->data[i], thispdf);
 	} else if (midpoints[i] > stutter_intervals->data[interval_num * 2 + 1]){
 	    interval_num++;
 	    if (interval_num >= stutter_intervals->len/2)

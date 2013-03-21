@@ -11,11 +11,10 @@ static int generated_outfile = 0;
 static char* generator_params[] = {"nstreams", "lambda", "interval_time",
 				   "timedelta", "verbosity", "expression"};
 
-void on_error(muParserHandle_t hParser);
-muFloat_t* var_factory(const muChar_t* a_szName, void* pUserData);
-int check_expr_vars(muParserHandle_t hparser, struct paramlist* params);
-double* parser_tptr(muParserHandle_t hparser);
-void view_expr(muParserHandle_t hparser);
+static void on_error(muParserHandle_t hParser);
+static muFloat_t* var_factory(const muChar_t* a_szName, void* pUserData);
+static int check_expr_vars(muParserHandle_t hparser, struct paramlist* params);
+//static void view_expr(muParserHandle_t hparser);
 
 void generate(char* paramfile, char* outfile, int nfuncs, int nstreams, int output_switch)
 {
@@ -171,7 +170,7 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile,
 	exit(1);
     }
 
-    char* infname = malloc(strlen(funcfile) + 5);
+    char* infname = malloc(strlen(funcfile) + 10);
     sprintf(infname, "%s_%d.dat", funcfile, i);
     FILE* fp = NULL;
     
@@ -197,7 +196,7 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile,
     for (i = 0; i < nfuncs; ++i) {
 	sprintf(infname, "%s_%d.dat", funcfile, i);
 	_generate_from_gaussian(params, outfile, infname, stdev, start, interval,
-				step, resolution, stream_ext, time_delta, nstreams);
+				step, resolution, stream_ext, time_delta, nstreams, output_type);
     }
 
     free(infname);
@@ -213,7 +212,7 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile,
 void _generate_from_gaussian(paramlist* params, char* outfile, char* infile,
 			     double stdev, double start, double interval,
 			     double step, double resolution, char* stream_ext,
-			     double_arr* time_delta, int nstreams)
+			     double_arr* time_delta, int nstreams, int output_type)
 {
     int i;
     gauss_vector* G = NULL;
@@ -232,14 +231,30 @@ void _generate_from_gaussian(paramlist* params, char* outfile, char* infile,
     double min = find_min_value(T->data[1], T->lengths[1]);
     double lambda = ceil(-min + max);
 
-    char* out = malloc(strlen(outfile) + strlen(stream_ext) + 5 + strlen(".dat") + strlen(infile));
+    char* out = malloc(strlen(outfile) + strlen(stream_ext) + 5 + strlen("_bins.dat") + strlen(infile));
     char* intrunc = malloc(strlen(infile));
     snprintf(intrunc, strlen(infile) - 3, "%s", infile);
 
     for (i = 0; i < nstreams; ++i) {
 	sprintf(out, "%s_%s%s%d.dat", intrunc, outfile, stream_ext, i);
     	double_multi_arr* stream = nonhom_from_gaussian(G, lambda, start, interval, time_delta->data[i], -min);
-	output_double_multi_arr(out, "w", stream);
+	if (output_type >= 1){
+	    output_double_multi_arr(out, "w", stream);
+	}
+	if (output_type >= 3){
+	    sprintf(out, "%s_%s%s%d_bins.dat", intrunc, outfile, stream_ext, i);
+	    double output_interval = get_double_param(params, "output_interval");
+	    double end = start+interval;
+	    int num_intervals = (end - start) / output_interval;
+
+	    int* bin_counts = sum_events_in_interval(stream->data[0], stream->lengths[0], start, end, num_intervals);
+	    double* midpoints = get_interval_midpoints(start, end, num_intervals);
+    
+	    int_dbl_to_file(out, "w", midpoints, bin_counts, num_intervals);
+	    free(midpoints);
+	    free(bin_counts);
+	}
+
 	free_double_multi_arr(stream);
     }
 
@@ -397,6 +412,7 @@ void generate_gaussian_data(char* paramfile, char* infile, char* outfile,
 		free_double_multi_arr(func);
 		printf("Gaussian sum output to %s.\n", out);
 	    }
+
 	    if (output_type >= 3){
 		sprintf(out, "%s_%d_contrib.dat", outfile, i);
 		output_gaussian_contributions(out, "w", G, start, start + interval, resolution, 1);
@@ -438,7 +454,7 @@ gauss_vector* _generate_gaussian(char* infile, double stdev, double start,
  * variable specified in the parameter file, and that a variable t is
  * present in the equation.
  */
-int check_expr_vars(muParserHandle_t hparser, struct paramlist* params)
+static int check_expr_vars(muParserHandle_t hparser, struct paramlist* params)
 {
     char* tmp;
     int valid = 1;
@@ -485,28 +501,28 @@ int check_expr_vars(muParserHandle_t hparser, struct paramlist* params)
 /*
  * Display all variables in muparser, as well as their current values.
  */
-void view_expr(muParserHandle_t hparser)
-{
-    int nvars = mupGetExprVarNum(hparser);
+/* static void view_expr(muParserHandle_t hparser) */
+/* { */
+/*     int nvars = mupGetExprVarNum(hparser); */
         
-    int i;
-    const muChar_t* mu_vname = 0;
-    muFloat_t* vaddr = 0;
-    char* vname;
+/*     int i; */
+/*     const muChar_t* mu_vname = 0; */
+/*     muFloat_t* vaddr = 0; */
+/*     char* vname; */
 	    
-    for (i = 0; i < nvars; ++i){
-	// Get the variable name and value from the parser
-	mupGetExprVar(hparser, i, &mu_vname, &vaddr);
-	vname = (char*)mu_vname; // Cast to stop warnings
-	printf("Varname %s, value %lf\n", vname, (double)*vaddr);
-    }
-}
+/*     for (i = 0; i < nvars; ++i){ */
+/* 	// Get the variable name and value from the parser */
+/* 	mupGetExprVar(hparser, i, &mu_vname, &vaddr); */
+/* 	vname = (char*)mu_vname; // Cast to stop warnings */
+/* 	printf("Varname %s, value %lf\n", vname, (double)*vaddr); */
+/*     } */
+/* } */
 
 /*
  * Factory for creating new muparser variables. Space is automatically allocated
  * by the parser. Values can be retrieved by calling mupGetExprVar().
  */
-muFloat_t* var_factory(const muChar_t* varname, void* pUserData)
+static muFloat_t* var_factory(const muChar_t* varname, void* pUserData)
 {
   static muFloat_t var_buf[PARSER_MAXVARS];
   static int num_vars = 0;
@@ -527,7 +543,7 @@ muFloat_t* var_factory(const muChar_t* varname, void* pUserData)
  * Muparser error handler. Called whenever an error occurs when attempting to evaluate
  * a parsed expression.
  */
-void on_error(muParserHandle_t hparser)
+static void on_error(muParserHandle_t hparser)
 {
   printf("\nError when parsing equation:\n");
   printf("------\n");
@@ -781,23 +797,30 @@ void run_to_event_limit_non_homogeneous(muParserHandle_t hparser, double lambda,
  * Puts event times into the array passed in the parameters. 
  * Puts a -1 in the array location after the last event
  */
-void generate_event_times_homogeneous(double lambda, double time,
-				      int max_events, double *event_times)
+double_arr* generate_event_times_homogeneous(double lambda, double time)
 {
     double run_time = 0;
     int i = 0;
+    double_arr* ret = init_double_arr(DEFAULT_ARR_SIZE);
+    int arr_max = DEFAULT_ARR_SIZE;
     
-    while ((run_time += homogeneous_time(lambda)) < time && i < max_events){
-	event_times[i] = run_time;
+    while ((run_time += homogeneous_time(lambda)) < time){
+	if (i >= arr_max){
+	    ret->data = realloc(ret->data, i * 2 * sizeof(double));
+	    if (!ret->data){// exit if allocation failed.
+		printf("Memory reallocation for arrays failed. Exiting.\n");
+		exit(1);
+	    }
+	    arr_max = i * 2;
+	}
+	ret->data[i] = run_time;
 	++i;
     }
 
-    if (i < max_events)
-	event_times[i] = -1.0;
-    
+    return ret;
 }
 
-/* knuth method. Generates time to next event in a homogeneous poisson process. */
+/* Generates time to next event in a homogeneous poisson process. */
 double homogeneous_time(double lambda)
 {
     return -log(get_uniform_rand()) / lambda;

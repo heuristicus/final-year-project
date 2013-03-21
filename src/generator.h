@@ -15,8 +15,7 @@
 
 // generator.c
 double homogeneous_time(double lambda);
-void generate_event_times_homogeneous(double lambda, double time, int max_events,
-				      double* event_times);
+double_arr* generate_event_times_homogeneous(double lambda, double time);
 void run_to_event_limit_non_homogeneous(muParserHandle_t hparser, double lambda,
 					double start_time, int max_events,
 					double* event_times, double* lambda_vals);
@@ -46,7 +45,7 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile,
 void _generate_from_gaussian(paramlist* params, char* outfile, char* infile,
 			     double stdev, double start, double interval,
 			     double step, double resolution, char* stream_ext,
-			     double_arr* time_delta, int nstreams);
+			     double_arr* time_delta, int nstreams, int output_type);
 void generate_gaussian_data(char* paramfile, char* infile, char* outfile,
 			    int number, int output_type);
 

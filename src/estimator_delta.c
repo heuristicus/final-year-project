@@ -61,9 +61,11 @@ double estimate_delay_pmf(paramlist* params, char* outfile, double_arr* base_eve
 	exit(1);
     }
 
+#ifdef VERBOSE
     printf("Estimating delay with pmf method.\n Combine step %lf, Combine interval"\
     	   " [%lf %lf], Bins %d, Max delay %lf, Step %lf, normaliser %lf\n",
     	   combine_step, combine_start, combine_interval + combine_start, num_bins, max_delay, delta_step_coarse, normaliser);
+#endif
 
     double result = _estimate_delay_pmf(outfile, base_events, f2_events, f1, f2,
 					combine_start, combine_interval, combine_step,
@@ -71,9 +73,11 @@ double estimate_delay_pmf(paramlist* params, char* outfile, double_arr* base_eve
 					delta_step_coarse, normaliser, type, output_switch);
 
     if (hc){
+#ifdef VERBOSE
 	printf("Initial result is %lf. Improving estimate using finer step of %lf"\
 	       " in range [%lf, %lf].\n", result, delta_step_fine, result - fine_range,
 	       result + fine_range);
+#endif
 	char* hout = malloc(strlen(outfile) + strlen("_hier") + 5);
 	sprintf(hout, "%s_hier", outfile);
 	double hres = _estimate_delay_pmf(hout, base_events, f2_events, f1, f2,
@@ -138,13 +142,15 @@ double _estimate_delay_pmf(char* outfile, double_arr* base_events, double_arr* f
 	store[1] = (est_arr*)f2;
     }
 
-    /* printf("cstart %lf cend %lf cint %lf cstep %lf nbins %d startd %lf endd %lf maxd %lf dstep %lf norm %lf\n",  */
-    /* 	   combine_start, combine_end, combine_interval, combine_step, num_bins, start_delta, end_delta, max_delay, delta_step, normaliser); */
+#ifdef VERBOSE
+    printf("cstart %lf cend %lf cint %lf cstep %lf nbins %d startd %lf endd %lf maxd %lf dstep %lf norm %lf\n",
+    	   combine_start, combine_end, combine_interval, combine_step, num_bins, start_delta, end_delta, max_delay, delta_step, normaliser);
+#endif
 
     double_arr* time_delay = init_double_arr(2);
     time_delay->data[0] = 0;
     double_multi_arr* combined = NULL;
-    double_multi_arr* delay_pmfs = init_multi_array(2, (int)((end_delta - start_delta)/delta_step));
+    double_multi_arr* delay_pmfs = init_multi_array(2, (int)((end_delta - start_delta)/delta_step)+1);
 
     // PMF sums will be calculated for both streams.
     int* bin_counts1 = sum_events_in_interval(base_events->data, base_events->len, combine_start,
@@ -161,8 +167,6 @@ double _estimate_delay_pmf(char* outfile, double_arr* base_events, double_arr* f
     int skip_bins = (int) max_delay/bin_length;
     int i, j = 0;
 
-//    printf("binlen %lf skipbin %d\n", bin_length, skip_bins);
-
     while (current_delta <= end_delta){
 	// get the combined function with the delay applied
 	// compare the combined function to the bin counts of the stream by calculating the pmf for each interval
@@ -171,7 +175,7 @@ double _estimate_delay_pmf(char* outfile, double_arr* base_events, double_arr* f
 	// sum the values of lambda within this interval at each time. This will be one lambda per second, probably,
 	// since each lambda represents the number of arrivals per single time step
 	// finally, find the poisson pmf of the two values - gsl_ran_poisson_pdf(bin count, lambda sum for bin)
-	printf("current delta %lf\n", current_delta);
+	//	printf("current delta %lf\n", current_delta);
 	time_delay->data[1] = current_delta;
 	if (strcmp(type, "gauss") == 0){
       	    combined = combine_gauss_vectors((gauss_vector**)store, time_delay,
@@ -187,51 +191,31 @@ double _estimate_delay_pmf(char* outfile, double_arr* base_events, double_arr* f
 
 	for (i = 0; i < num_bins; ++i) {
 	    // find the sum of lambda values for each subinterval
-//	    printf("subinterval start %lf, subinterval end %lf\n", i * bin_length, (i + 1) * bin_length);
+
 	    // The lambda sums must be normalised so that they are on the same scale as the bin counts.
 	    lambda_sums[i] = sum_array_interval(combined->data[0], combined->data[1],
 					     i * bin_length, (i + 1) * bin_length,
 						1, combined->lengths[0]);
-//	    printf("sum of lambdas in interval %lf\n", lambda_sums[i]);
+#ifdef VERBOSE
+	    printf("subinterval start %lf, subinterval end %lf\n", i * bin_length, (i + 1) * bin_length);
+	    printf("sum of lambdas in interval %lf\n", lambda_sums[i]);
+#endif
 	}
 
-	/* char* cb = malloc(15); */
-	/* sprintf(cb, "cfunc%lf", current_delta); */
-
-	/* FILE *fp1 = fopen(cb, "w"); */
-
-	/* for (i = 0; i < combined->lengths[0]; ++i) { */
-	/*     fprintf(fp1, "%lf %lf\n", combined->data[0][i], combined->data[1][i]); */
-	/* } */
-
-	/* fclose(fp1); */
-	
-	/* char* ls = malloc(15); */
-	/* sprintf(ls, "lsums%.0lf", current_delta); */
-	/* FILE *fp3 = fopen(ls, "w"); */
-	
-	/* for (i = 0; i < num_bins; ++i) { */
-	/*     fprintf(fp3, "%lf %lf\n", midpoints[i], lambda_sums[i]); */
-	    
-	/* } */
-	/* fclose(fp3); */
-	/* free(ls); */
-	/* free(cb); */
-//	printf("maxdel-curdel %.30f, resulting shift %.30lf\n", max_delay - current_delta, ((max_delay - current_delta)/bin_length));
 	int s2_shift = (int)(ceil((max_delay - current_delta)/bin_length));
 //	printf("s2 shift is %d. Number of bins being checked %d\n", s2_shift, num_bins - 2 * skip_bins);
 
-	/* for (i = 0; i < num_bins - 2 * skip_bins; ++i) { */
-	/*     printf("Counts 1 %d counts 2 %d, comparing %lf from 1 with %lf from 2, lambda is %lf\n", */
-	/* 	   (bin_counts1+skip_bins)[i], (bin_counts2+s2_shift)[i], */
-	/* 	   (midpoints+skip_bins)[i], (midpoints+s2_shift)[i], */
-	/* 	   (lambda_sums+skip_bins)[i]); */
-	/* } */
+#ifdef VERBOSE2
+	for (i = 0; i < num_bins - 2 * skip_bins; ++i) {
+	    printf("Counts 1 %d counts 2 %d, comparing %lf from 1 with %lf from 2, lambda is %lf\n",
+		   (bin_counts1+skip_bins)[i], (bin_counts2+s2_shift)[i],
+		   (midpoints+skip_bins)[i], (midpoints+s2_shift)[i],
+		   (lambda_sums+skip_bins)[i]);
+	}
+#endif
 
-//	printf("s1\n");
 	double total1 = sum_log_pdfs(bin_counts1 + skip_bins, lambda_sums + skip_bins, 1, num_bins - 2 * skip_bins);
 	// need to shift bin_counts2 so that the correct intervals line up for the given delay
-//	printf("s2\n");
 	double total2 = sum_log_pdfs(bin_counts2 + s2_shift, lambda_sums + skip_bins, 1, num_bins - 2 * skip_bins);
 	double cumulative = total1 + total2;
 	delay_pmfs->data[0][j] = current_delta;
@@ -239,12 +223,12 @@ double _estimate_delay_pmf(char* outfile, double_arr* base_events, double_arr* f
 
 //	printf("pmf sum is %lf\n", total);
 	if (cumulative > best_value){
-	    printf("New value %lf is less than old %lf. guess updated to %lf\n", cumulative, best_value, current_delta);
+	    //	    printf("New value %lf is less than old %lf. guess updated to %lf\n", cumulative, best_value, current_delta);
 	    best_value = cumulative;
 	    best_delta = current_delta;
 	    memcpy(best_lambda_sums, lambda_sums, sizeof(double) * num_bins);
 	} else {
-	    printf("New value %lf is larger than old %lf. guess remains at %lf\n", cumulative, best_value, best_delta);
+	    //	    printf("New value %lf is larger than old %lf. guess remains at %lf\n", cumulative, best_value, best_delta);
 	}
 
 	current_delta += delta_step;
@@ -272,10 +256,6 @@ double _estimate_delay_pmf(char* outfile, double_arr* base_events, double_arr* f
 	    sprintf(out, "%s_pmf_bins.dat", outfile);
 	    fp = fopen(out, "w");
 	    for (i = 0; i < num_bins; ++i) {
-		//	printf("bin %d [%d, %d] has %d events\n", i, i * bin_length, (i + 1) * bin_length, bin_counts[i]);
-		/* bin_counts1[i] /= (combine_interval/ num_bins); */
-		/* bin_counts2[i] /= (combine_interval/num_bins); */
-	    
 		fprintf(fp, "%lf %d %d\n", midpoints[i], bin_counts1[i], bin_counts2[i]);
 	    }
 	    fclose(fp);
@@ -283,8 +263,6 @@ double _estimate_delay_pmf(char* outfile, double_arr* base_events, double_arr* f
 	
 	free(out);
     }
-
-    printf("number of bins that need to be skipped %d\n", skip_bins);
 
     free(midpoints);
     free(lambda_sums);
@@ -411,9 +389,11 @@ double estimate_delay_area(paramlist* params, char* outfile, void* f1, void* f2,
     double comp_start = get_double_param(params, "delta_est_area_start");
     double comp_end = comp_start + get_double_param(params, "delta_est_area_interval");
 
+#ifdef VERBOSE
     printf("Estimating delay using area method.\n Max delay: %lf, Step %lf,"\
-	   " Resolution %lf, Interval [%lf %lf]\n", max_delay, step, resolution,
-	   comp_start, comp_end);
+    	   " Resolution %lf, Interval [%lf %lf]\n", max_delay, step, resolution,
+    	   comp_start, comp_end);
+#endif
 
     double step_fine = 0;
     double fine_range = 0;
@@ -428,16 +408,19 @@ double estimate_delay_area(paramlist* params, char* outfile, void* f1, void* f2,
 					 resolution, step, type, output_switch);
 
     if (hc){
+#ifdef VERBOSE
     	printf("Initial result is %lf. Improving estimate using finer step of %lf" \
     	       " in range [%lf, %lf].\n", result, step_fine, result - fine_range,
     	       result + fine_range);
+#endif
     	double hres = _estimate_delay_area(outfile, f1, f2, comp_start, comp_end,
     					   result - fine_range, result + fine_range,
     					   max_delay, resolution, step_fine, type,
 					   output_switch);
-    	printf("Estimate revised to %lf from %lf.\n", hres, result);
     	result = hres;
     }
+
+    printf("Time delay estimated to be: %lf\n", result);
     
     return result;
 
@@ -463,7 +446,7 @@ double _estimate_delay_area(char* outfile, void* f1, void* f2, double comp_start
 
     double best_delta = 0;
     double best_value = INFINITY;
-    double guess;
+    double guess = 0;
 
     double current = start_delta;
     double norm_start = comp_start + max_delay, norm_end = comp_end - max_delay;
@@ -484,11 +467,15 @@ double _estimate_delay_area(char* outfile, void* f1, void* f2, double comp_start
 	if (outfile != NULL)
 	    fprintf(fp, "%lf %lf\n", current, guess);
 	if (guess < best_value){
+#ifdef VERBOSE
 	    printf("New value %lf is less than old %lf. guess updated to %lf\n", guess, best_value, current);
+#endif
 	    best_value = guess;
 	    best_delta = current;
 	} else {
+#ifdef VERBOSE
 	    printf("New value %lf is larger than old %lf. guess remains at %lf\n", guess, best_value, best_delta);
+#endif
 	}
 	current += step;
     }

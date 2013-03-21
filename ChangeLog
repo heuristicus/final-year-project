@@ -1,7 +1,21 @@
+2013-03-21  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* generator.c: Minor additions to homogeneous Poisson generator to use for examples later
+
+	* estimator_delta.c: Verbose flags on printlines, obsolete code removed.
+
 2013-03-18  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* math_util.c: Fixed midpoint calculation where abs was being used instead of fabs, which
 	resulted in incorrect calculations.
+
+	* general_util.c: Estimate at point function returns zero if function is < 0 at the given
+	point to avoid issues later on.
+
+	* experimenter.c: Compare stuttered bins function modified slightly so sums are calculated
+	before entering the pdf calculation loop.
+
+	* generator.c: Gaussian generator takes into account the output type requested.
 
 2013-03-17  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 

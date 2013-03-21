@@ -83,21 +83,11 @@ int* sum_events_in_interval(double* event_times, int num_events, double start_ti
 void init_rand(double seed)
 {
     if (! rand_initialised) {
-	//	if (seed == 0.0)
-	    //seed = time(NULL);
-	const double seeds[] = {1363649670, 1363649909, 1363650027, 1363650065, 1363650095, 1363650365, 1363650384, 1363650405, 1363650435, 1363650447, 1363650464, 1363650489, 13636504999, 1363650521, 1363650546, 1363650557, 1363650568, 1363650592, 1363650605, 1363650615};
-	
-	int size = sizeof(seeds)/sizeof(double);
-	
-	srand(time(NULL));
-	int index = (float)rand()/RAND_MAX * size;
-//	printf("index is %d\n", index);
-//	printf("seed is %lf\n", seeds[index]);
-	
-	gsl_rng_env_setup();
+	if (seed == 0.0)
+	    seed = time(NULL);
 
 	r = gsl_rng_alloc(gsl_rng_rand48);
-	gsl_rng_set(r, seeds[index]);
+	gsl_rng_set(r, seed);
 	//	printf("Seed for this run: %lf\n", seed);
 
 	rand_initialised = 1;

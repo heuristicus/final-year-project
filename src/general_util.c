@@ -758,7 +758,9 @@ double estimate_at_point(est_arr* estimate, double time)
     if (idata == NULL)
 	return 0;
     
-    return idata->est_a + idata->est_b * time;
+    double val = idata->est_a + idata->est_b * time;
+    
+    return val < 0 ? 0 : val;
 }
 
 /*
