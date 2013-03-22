@@ -1,4 +1,6 @@
+# Directory containing time delay experiment data
 INDIR=/media/michal/Edison/fyp/new/sine/preliminary/prelim_time_delay
+# Directory to which results should be output
 OUTDIR=/media/michal/Edison/fyp/new/sine/preliminary/prelim_results
 TOP_NAME=alpha
 TOP_PREFIX=alpha_
@@ -25,8 +27,8 @@ for EST_TYPE in ${TD_EST_TYPES[@]}; do # Two types of time delay estimators
 	    # Extract the first stream estimate information from the input directory, stripping the text
 	    RES="`grep -A 4 "Stream 1" $INDIR/$EST_TYPE/$TOP_PREFIX$TOP_NUM/$TYPE/experiment_0/results.txt | sed '1d;s/Actual: //g;s/Mean est: //g;s/Est stdev: //g;s/Mean error: //g' | tr '\n' '\t'`"
 	    # Write the results of this experiment into the file
-	    REAL_TOP=$((10#$TOP_NUM))
-	    RR=$(echo "scale=2;$REAL_TOP/100" | bc)
+	    # Folders are named 005, 01, etc, which are the values after the decimal point, so we put a point in front.
+	    RR=0.$TOP_NUM
 	    echo -e "$RR\t$RES" >> $OUTDIR/$TYPE\_$EST_TYPE.txt
 #	    echo -e "\n\n"
 	    # Copy the data out of the experiment directories and into a results directory for easier access.

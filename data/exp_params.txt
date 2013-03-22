@@ -57,7 +57,7 @@ run_stuttered yes
 num_streams 2
 
 # Specify the number of functions in the data set being used for the experiments.
-num_functions 10
+num_functions 1
 
 # Here, you can specify the names for experiments that you want to run. Parameters
 # to test can be added to these experiments by adding a [name]_params parameter
@@ -86,18 +86,13 @@ gaussian_type function
 ################################################################################
 #                             Experiment Parameters                            #
 ################################################################################
-base_max_breakpoints 5,7,...,20
-base_max_extension 5,7,...,20
-base_pmf_threshold 0.01,0.02,...,0.15
 base_iwls_subintervals 2,4,...,10
+base_pmf_threshold 0.01,0.02,...,0.15
+base_max_extension 5,7,...,20
+base_max_breakpoints 5,7,...,20
+gauss_est_stdev 0.5,1.0,...,20
 
-gauss_est_stdev 1,2,...,20
+timedelta 0,15
 
-################################################################################
-#                                    Analysis                                  #
-################################################################################
-# The time delta between streams in the input directory - should be the same
-# for each input set. Ensure that there are the same number of values as you
-# have streams.
-timedelta 0.0,-10.0,20.0
+
 

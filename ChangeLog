@@ -1,3 +1,9 @@
+2013-03-22  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* scripts/extract_results.sh: Script adds 0. onto the front of the folder numbers (005 01 03, etc)
+	provided at the top of the script. This allows the correct values of alpha to be put into
+	output files.
+
 2013-03-21  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* generator.c: Minor additions to homogeneous Poisson generator to use for examples later
