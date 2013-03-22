@@ -1,4 +1,4 @@
-% Created 2013-03-21 Thu 23:01
+% Created 2013-03-22 Fri 22:50
 \documentclass[a4paper,11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -35,7 +35,7 @@
 \providecommand{\alert}[1]{\textbf{#1}}
 
 \title{Time Delay Estimation in Gravitationally Lensed Photon Stream Pairs}
-\author{\Large{Micha{\l} Staniaszek} \\\small{Supervisor: Peter Tiňo}}
+\author{\Large{Micha{\l} Staniaszek} \\\small{Supervisor: Peter Ti{\v{n}}o}}
 \date{\today}
 \hypersetup{
   pdfkeywords={},
@@ -356,7 +356,7 @@ kernels or just Gaussians?}. The generation process involves four simple steps:
    Gaussian is determined by $\alpha\cdot\Delta t$.
 \item For each Gaussian, choose some weight $w_i$, from a uniform distribution
    between -1 and 1.
-\item Using some step $s$, sum all the Gaussians at each point on the x-axis which
+\item Using some step $s$, sum all the Gaussians at each point on the $x$-axis which
    we get from these $s$ values.
 \end{enumerate}
 
@@ -568,7 +568,7 @@ Now that we know what we are looking for, we define estimators $\hat{\alpha}$
 and $\hat{\beta}$, which we will use to estimate values of $\alpha$ and $\beta$
 to find the minimum.
 \begin{equation}
-\hat{\beta}&=\frac{\sum_{k=1}^N
+\hat{\beta}=\frac{\sum_{k=1}^N
 w_k(x_k-\bar{x})(Y_k-\bar{Y})}{\displaystyle \sum_{k=1}^N w_k(x_k-\bar{x})^2}=\frac{\displaystyle\sum_{k=1}^N w_k(x_k-\bar{x})Y_k}{\sum_{k=1}^N w_k(x_k-\bar{x})^2}
 \end{equation}
 
@@ -634,7 +634,7 @@ $\lambda$, which can be done using \cite{massey1996estimating}
 \end{align}
 The weights can then be updated using
 \begin{equation}
-\hat{w_k}=\frac{\displaystyle \frac{N}{\hat{\lambda}_k}}{\displaystyle \sum_{k-1}^N\left(\frac{1}{\hat{\lambda}_k}\right)}}
+\hat{w_k}=\frac{\displaystyle \frac{N}{\hat{\lambda}_k}}{\displaystyle \sum_{k-1}^N\left(\frac{1}{\hat{\lambda}_k}\right)}
 \end{equation}
 which has some desirable properties \cite{massey1996estimating}. Minimum
 variance estimator among linear functions of the observations $Y_k$ that are
@@ -658,6 +658,37 @@ which are not straight lines.
 \subsubsection{Piecewise Iterative Weighted Least Squares}
 \label{sec-4-1-3}
 
+It is clear that the IWLS estimator alone is not sufficient to complete our
+task. In order to have a reasonable estimate of the characteristic function, we
+need to be able to estimate a function which is not a straight line. During the
+development process, we considered the possibility of approximating a function
+by multiple straight-line estimates. This type of function is known as a
+piecewise linear function. Extending the approach presented in the previous two
+sections, we take the interval $[0,T]$, and split it into several
+sub-intervals. Then, the function underlying each of these sub-intervals is
+estimated using IWLS. We also add some minor extensions in an attempt to improve
+the quality of the estimates. Sub-intervals are estimated starting from the
+first, and moving to the next once the process is complete. However, since the
+number of sub-intervals that the interval is split into is somewhat arbitrary,
+we implemented an estimate extension strategy. When the estimate is completed,
+a short interval after the sub-interval being estimated is checked to see how
+well the estimate matches it. The check is performed using probability density
+functions (PDF). The extension interval is split into several bins, and the likelihood
+of obtaining the bin counts of those bins given the function estimate is
+checked. We use a simple threshold function which only permits the extension of
+the estimate if for each bin the PDF calculated does not fall below a certain
+value. The calculation of PDFs depends on the type of probability distribution
+being used to check the data. In our case, this is a Poisson distribution, and we
+use
+\begin{equation}
+P(X=k)=\frac{\lambda^ke^{-\lambda}}{k!}
+\end{equation}
+to calculate the probability of getting a value $k$ for the bin count with a
+rate parameter $lambda$. While this technique is an improvement on using
+straight lines to estimate functions which are curves, it is still not
+sufficient, as the resulting function estimate is piecewise disjoint---the
+estimate for each interval does not connect smoothly into the next. There are
+jumps between intervals.
 \begin{itemize}
 \item explain intuition behind the technique. Split the whole interval into some
   finite number of sub-intervals and estimate the function of each interval in
@@ -709,6 +740,15 @@ estimate with minimum interval length applied
 \subsubsection{Baseline}
 \label{sec-4-1-4}
 
+In the previous section, we introduced a piecewise method for function
+estimation. In this section we present the final modification to that estimator
+which completes the baseline estimator. As mentioned, the piecewise IWLS
+estimator gives us a piecewise disjoint estimate of the function, but we would
+like one which is piecewise continuous. In order to do this, the end of each
+interval estimate must meet the start of the next. To do so, we calculate the
+midpoint between the start and end of the estimates at each breakpoint, and then
+modify the estimates to make the functions meet at that point. This leaves us
+with a continuous function that forms our estimate of the function.
 \begin{itemize}
 \item improvement on the piecewise method by making sure that the function is
   continuous, i.e. the start of the function at each interval is the end of the
@@ -720,6 +760,30 @@ estimate with minimum interval length applied
 \subsection{Kernel Density Estimation}
 \label{sec-4-2}
 
+For comparison to the baseline estimator, a kernel density estimator was also
+implemented. A kernel density estimator works by estimating the function using
+multiple functions called kernels. We use a gaussian kernel 
+\begin{align}
+K(\mu,\sigma)=e^{-(t-\mu_g)^2/2\sigma_g^2}
+\end{align}
+to estimate the function. There are methods which involve centering the kernels
+at uniform intervals along the $x$-axis, but for our purposes centering kernels at
+each arrival time is the best technique \cite{cuevas2006accurate}. Once a kernel
+has been centred on each arrival time, the values of the kernels are summed at
+given points along the $x$-axis to form a function estimate. However, this is not
+the final step in the process. Depending on the standard deviation of the
+kernels used, the function estimate produced will not match the actual
+function. As with the normalisation constants used in the OLS estimator, we must
+divide the resulting values by some normalisation constant. The calculation for
+the kernel density estimate is slightly more complex than that of the OLS
+estimator. The normalisation constant is estimated by using the Poisson PDF. A
+range of possible normalisation constants is checked, and the one chosen is the
+point at which
+\begin{equation}
+\sum_{n=1}^N\frac{\lambda(t)^ke^{-\lambda(t)}}{k!}
+\end{equation}
+is minimised. Dividing through all the values by the normalisation constant
+gives us the normalised estimate of the function.
 \begin{itemize}
 \item explain how kernels are calculated, and how they are centred
 \item explain the effect of the standard deviation on the estimate
@@ -731,6 +795,14 @@ estimate with minimum interval length applied
 \section{Time Delay Estimation}
 \label{sec-5}
 
+Once we are able to estimate the characteristic function of photon streams, we
+can use these estimates to attempt to provide an estimate of the time delay
+between two streams. If the two streams come from the same source, then they
+should have the same characteristic function. Our estimates of the
+characteristic function will differ for both streams due to the fact that the
+number of photon arrivals will be different for each bin, but each should look
+relatively similar. In this section we present two methods for estimating the
+time delay between a pair of photon streams.
 \begin{itemize}
 \item basic explanation of what we want to do with this part of the system,
   referring to the introduction a little?
@@ -738,6 +810,23 @@ estimate with minimum interval length applied
 \subsection{Area Method}
 \label{sec-5-1}
 
+The first of the two methods uses a very simple metric to estimate the time
+delay. By taking the two function estimates, we can attempt to match up the two
+functions so that they ``fit together'' best. This goodness of fit can be
+determined by the area between the two functions. The point at which the area
+between the two is lowest is the natural point at which the two functions should
+match. Using the first estimate as a base, with its time delay set to zero, we
+guess at values of $\Delta$, and shift the second function by that value. Then,
+we calculate the inter-function area using
+    \begin{align}
+      d(\hat{\lambda}_1,\hat{\lambda}_2)&=\int(\hat{\lambda}_1(t)-\hat{\lambda}_2(t))^2\,dt\\
+      &\approx\frac{1}{N}\sum_{i=1}^N(\hat{\lambda}_1(t)-\hat{\lambda}_2(t))^2
+    \end{align}
+We make our estimate of $\Delta$ where the value of
+$d(\hat{\lambda}_1,\hat{\lambda}_2)$ is minimised. You will notice that to
+calculate the area between curves we must use an integral. In our case, an exact
+calculation is not necessary, and so we approximate it by a discrete calculation
+instead, which gives us a value which is good enough for our purposes.
 %\begin{figure}
 %   \begin{center}
 %     \begin{tikzpicture}[scale=0.1]
@@ -773,9 +862,73 @@ estimate with minimum interval length applied
   minimises the value
 \item show integral formula and then show the simplified discrete formula
 \end{itemize}
-\subsection{Probability Mass Function Method}
+\subsection{Probability Density Function Method}
 \label{sec-5-2}
 
+The second method of estimation is using probability density functions. As
+before, we guess a value of $\Delta$ between $-\Delta_{\text{max}}$ and
+$+\Delta_{\text{max}}$ and shift the second stream by that amount. However, we
+know that there must be a single characteristic function, and we want to see how
+well our estimate of that matches the bin counts in each stream. From the two
+stream estimates we have, $\hat{\lambda}_1$ and $\hat{\lambda}_2$ (which is
+shifted by $\Delta$), we make an ``average'' function $\bar{\lambda}$ by combining the
+two.
+\begin{equation}
+\bar{\lambda}(t)=\frac{\hat{\lambda}_1(t)+\hat{\lambda}_2(t+\Delta)}{2}
+\end{equation}
+The point on $\bar{\lambda}$ at time $t$ is the midpoint between the values of
+the two estimates at that time. Once we have $\bar{\lambda}$, we can assign some
+score to the current estimate of the value of $\Delta$.
+\begin{align}
+\begin{split}
+\log P(S_A,S_B\mid\bar{\lambda}(t))=\sum_{t=\Delta_{\text{max}}}^{T-\Delta_{\text{max}}}&\log P(S_A(t)\mid \bar{\lambda}(t))\\
+&+ \log P(S_B(t+\Delta)\mid \bar{\lambda}(t))
+\end{split}
+\end{align}
+Here, we calculate the probability that the function $\bar{\lambda}$ is the
+characteristic function of the two streams $S_A$ and $S_B$. The streams are
+split into bins, and the probability of the number of events in each bin given
+the value of $\lambda$ calculated for that bin is computed. 
+
+\textcolor{red}{Perhaps this should go in the previous section} It is important
+to note that the value of $\Delta_{\text{max}}$ defines the interval in which
+the probabilities are summed. The need for calculation only in some specific
+interval should be clear---if one function is shifted, and both functions have
+the same time interval, then there will be an interval of $\Delta$ on either end
+of the range in which only one of the functions has a value. As such, the
+functions are combined only in the interval in which both functions have
+values. In addition to this, since the value of $\Delta$ changes, the intervals
+in which there is an overlap between the two functions changes. Setting
+$\Delta=0$ minimises the value, and $\Delta=\pm\Delta_{\text{max}}$ maximises
+it. To be able to compare the scores of different values of $\Delta$, we must
+perform calculations on the interval in which the two functions have values for
+all possible values of $\Delta$. If the calculations were to be performed on
+different intervals or interval lengths each time, it would be necessary to
+scale the scores for the longer intervals to the shorter intervals, and this
+scaling would likely not result in an accurate representation of the actual
+score. Imposing this constraint on the intervals we can work with has an
+additional effect; the value of $\Delta_{\text{max}}$ can never exceed the
+interval length $T$ in which we are performing the estimate. We are left with
+the constraints $T_{\text{est}}=[t_0+\Delta_{\text{max}},
+T-\Delta_{\text{max}}],\,\Delta_{\text{max}}<T$ on the interval and the maximum
+value of $\Delta$.
+
+The calculation of $\lambda$ is slightly more complicated than just taking the
+value of lambda at the midpoint. Since we are considering a number of events
+occurring in a given time span, we must consider the value of lambda in that
+entire time interval. In order to do this, we integrate the value of lambda over
+the interval
+\begin{equation}
+\lambda_{a,b}=\int_a^b\lambda(t)\,dt
+\end{equation}
+However, as with the calculation of the area between curves, we do not need an
+exact value, only a good approximation, and so we use a discrete version of this
+equation where the value of $t$ is incremented by some finite step for each successive
+value. The smaller the value of the step the more accurate the approximation of
+$\lambda_{a,b}$ becomes. As with the previous estimator, the estimate is made in
+two stages, first with a coarse pass over the values of delta to compute an
+initial estimate, and then a finer second pass around the first estimated value
+in order to refine the estimate.
 \begin{itemize}
 \item calculate probability mass function at each point on the function and choose
   the time delay which maximises the value
@@ -978,17 +1131,96 @@ the flow of things?
 \end{itemize}
 \section{Evaluation}
 \label{sec-7}
-\subsection{experimentation on simulated data}
+
+The experiments done have two stages. First, the optimum parameter set for each
+function that is being experimented on is found using model selection. Model
+selection involves withholding some of the data from the estimator so that we
+can see how well a parameter set generalises if not all the data is
+available. Withholding data is done by removing the event data from intervals
+uniformly distributed across the interval that is being estimated. Each function
+is estimated, and the value of the function in the regions where data was
+removed is compared to the value that would be expected had all the data been
+present. This is done using log probabilities, taking the Poisson PDF at each
+point. The sum of these log probabilities gives the parameter set its score for
+that function. The optimum parameter set for that function is the set which
+maximises the sum. Once the optimum parameter set has been found, the time delay
+for the pair of streams is estimated, using all the data that is available. From
+this we receive estimates of the time delay on which it is possible to perform
+statistical analysis. The mean, standard deviation and error for each estimate
+on each function is calculated, and from this we can examine the effectiveness
+of the estimates. The aim of the experimentation is to compare the effectiveness
+of the time delay estimation with four combinations of estimators: gaussian
+area, gaussian pdf, baseline area and baseline pdf.
+Talk about why there is a window on the effective values.
+\subsection{Sine Functions}
 \label{sec-7-1}
 
-Talk about why there is a window on the effective values.
-\subsubsection{Sine Functions}
+The first experiment performed was on sinusoidal functions of the form
+$y=a-b\sin(\alpha t)$. An increase in the value of $\alpha$ increases the
+oscillation frequency, and a decrease reduces it. The value of $a$ indicates how
+much the wave is shifted along the $y$-axis, and $b$ determines the
+amplitude of the wave.
+\subsubsection{Preliminary Experiments}
 \label{sec-7-1-1}
 
+In the first set of experiments, we investigate the performance of the
+estimators on five values of $\alpha$: 0.05, 0.1, 0.15, 0.3 and 0.6. Figure
+\ref{fig:prelimexp} gives an indication of what the functions look like. For
+each value of $\alpha$, 25 pairs of streams were independently generated, each
+with an interval of 100 time units and a time delay of 10 time steps between the
+two streams. The Gaussian estimator was set to sample the kernels at a
+resolution of 0.3 time steps, and the standard deviation of the kernels was
+varied from 0.5 to 20, with a step of 0.5, resulting in 40 different
+experimental values. The baseline estimator was set to use 3 iterations of the
+IWLS estimator, and four other parameters were experimented on.
+\begin{description}
+\item[IWLS sub-intervals] 2, 4, 6, 8, 10
+\item[PDF threshold] 0.01 to 0.15 with steps of 0.01
+\item[Maximum extension] 5, 7, 9, 11, 13, 15, 17, 19, 20
+\item[Maximum breakpoints] As above
+\end{description} The parameters were co-varied, meaning that each value for one
+of the parameter settings was tested with all possible values of the other
+parameters, for a total of 6074 possible combinations, resulting in 151,850 runs
+of the function estimator.
+
+
+\begin{figure}
+\label{fig:prelimexp}
+\caption{Experiment sine functions}
+\end{figure}
+
+The results of the experiment were interesting but inconclusive.
+\begin{center}
+\begin{figure}
+\label{fig:prelimerror}
+\begin{subfigure}{0.5\textwidth}
+\includegraphics[width=\textwidth]{base_area_prelim}
+\caption{Baseline area}
+\label{fig:}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\includegraphics[width=\textwidth]{base_pmf_prelim}
+\caption{Baseline PDF}
+\label{fig:}
+\end{subfigure}\\
+\begin{subfigure}{0.5\textwidth}
+\includegraphics[width=\textwidth]{gauss_area_prelim}
+\caption{Gaussian area}
+\label{fig:}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\includegraphics[width=\textwidth]{gauss_pmf_prelim}
+\caption{Gaussian PDF}
+\label{fig:}
+\end{subfigure}
+\caption{Error on the preliminary experiments. Error bars show standard
+deviation of error. Performance appears to deteriorate when $\alpha>0.01$.}
+\end{figure}
+\end{center}
+\subsubsection{Refined experiments}
+\label{sec-7-1-2}
+
 \begin{itemize}
-\item $y=a-b\sin(\alpha t)$
-\item five values of $\alpha$: 0.05, 0.1, 0.15, 0.3, 0.6
-\item 50 pairs of realisations for each value of alpha
 \item first find optimal parameter setting to estimate the functions by using
      model selection
 \item Take the parameters from that and run the time delay estimator on the
@@ -996,15 +1228,13 @@ Talk about why there is a window on the effective values.
 \item Compare the means and standard deviations etc of the gaussian and baseline
      estimators to find out how good they are by using t-tests.
 \end{itemize}
-\subsubsection{Random Functions}
-\label{sec-7-1-2}
+\subsection{Random Functions}
+\label{sec-7-2}
 
 \begin{itemize}
 \item Streams in reality are not likely to follow sine curves, so additional
      experiments on randomly generated functions were also performed.
 \end{itemize}
-\subsection{experimentation on real-world data}
-\label{sec-7-2}
 \section{Conclusion}
 \label{sec-8}
 \subsection{Future Work and Improvements}
