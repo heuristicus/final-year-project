@@ -19,6 +19,7 @@ OPTIONS:
   -p   plot piecewise estimate graph
   -P   plot piecewise estimate with extra data
   -b   plot baseline estimate graph
+  -0   plot original function only
 EOF
 }
 
@@ -35,7 +36,7 @@ if [ $# -eq 0 ]; then
     exit
 fi
 
-while getopts "sSlLpPbehE" opt; do
+while getopts "sSlLpPbehEo" opt; do
     case $opt in
 	s)
 	    s=1
@@ -57,6 +58,9 @@ while getopts "sSlLpPbehE" opt; do
 	    ;;
 	b)
 	    b=1
+	    ;;
+        o)
+	    o=1
 	    ;;
 	h)
 	    usage
@@ -133,6 +137,18 @@ if [ $E ]; then
     fi
 gnuplot << EOF
 call "$PLOT_DIR/error.plt" "$2" "$3"
+EOF
+texify $2
+exit
+fi
+
+if [ $o ]; then
+    if [ $# -ne 3 ]; then
+	echo -e "Missing or excess arguments when plotting error.\nusage: `basename $0` -o outfile FUNC_DATA"
+	exit
+    fi
+gnuplot << EOF
+call "$PLOT_DIR/orig.plt" "$2" "$3"
 EOF
 texify $2
 exit
