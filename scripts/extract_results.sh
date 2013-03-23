@@ -1,13 +1,13 @@
 # Directory containing time delay experiment data
-INDIR=/media/michal/Edison/fyp/new/sine/preliminary/prelim_time_delay
+INDIR=/media/michal/Edison/fyp/new/sine/fine/fine_time_delay
 # Directory to which results should be output
-OUTDIR=/media/michal/Edison/fyp/new/sine/preliminary/prelim_results
+OUTDIR=/media/michal/Edison/fyp/new/sine/fine/fine_results
 TOP_NAME=alpha
 TOP_PREFIX=alpha_
 NUM_FUNCS=25
  # Top level directories - this is usually the alpha parameter
-#TOP_NUMS=(001 002 003 004 005 006 007 008 009 010 011 012 013 014 015)
-TOP_NUMS=(005 01 015 03 06)
+TOP_NUMS=(001 002 003 004 005 006 007 008 009 010 011 012 013 014 015)
+#TOP_NUMS=(005 01 015 03 06)
 TD_EST_TYPES=(area pmf)
 FUNC_EST_TYPES=(baseline gaussian)
 TOP_NUM_DIVISOR=100
