@@ -1,5 +1,5 @@
-#+TITLE: A Weighted Least Squares Method for Time Delay Estimation in Gravitationally Lensed Photon Streams
-#+AUTHOR: \Large{Micha{\l} Staniaszek} \\\small{Supervisor: Peter Tiňo}
+#+TITLE: Time Delay Estimation in Gravitationally Lensed Photon Stream Pairs
+#+AUTHOR: \Large{Micha{\l} Staniaszek} \\\small{Supervisor: Peter Ti{\v{n}}o}
 #+EMAIL:     mxs968@cs.bham.ac.uk
 #+DATE:      \today
 #+DESCRIPTION:
@@ -23,6 +23,10 @@
 #+LaTeX_HEADER: \usepackage{moreverb}
 #+LaTeX_HEADER: \usepackage[center]{caption}
 #+LaTeX_HEADER: \usepackage{subcaption}
+#+LaTeX_HEADER: \let\iint\relax % otherwise errors are thrown by amsmath. Defined in latexsym
+#+LaTeX_HEADER: \let\iiint\relax
+#+LaTeX_HEADER: \usepackage{amsmath}
+#+LaTeX_HEADER: \usepackage{hyperref}
 #+LaTeX_HEADER: \usepackage{tikz}
 #+LaTeX_HEADER: \usetikzlibrary{positioning}
 #+LaTeX_HEADER: \bibliography{fyp}
@@ -33,14 +37,16 @@
 \newpage
 \pagenumbering{roman}
 #+BEGIN_abstract
-In this report, we present a system for the estimation of the time delay $\Delta
-t$ between multiple realisations of a Poisson process with the underlying
-function $\lambda(t)$, with particular application to gravitationally lensed
-photon streams. We build on the weighted least squares approach to develop a
-linear estimator which we use to estimate $\lambda(t)$. We then introduce a
-numerical and probabilistic method for estimating $\Delta t$ using the function
-estimates. Finally, we compare the performance of our linear estimator to kernel
-regression on simulated data and data from real quasars.
+In this report, we present a system for estimating the time delay $\Delta$
+between multiple realisations of a Poisson process with the underlying function
+$\lambda(t)$, with particular application to gravitationally lensed photon
+streams. We develop a linear estimator based on weighted least squares, and a
+kernel density estimator which we use to estimate $\lambda(t)$. We then
+introduce two methods for estimating the value of $\Delta$ using the function
+estimates, one using inter-function area, and another using probability density
+functions. Finally, we compare the performance of the two function estimation
+methods and time delay estimation methods on simulated data, and show that there
+is not a significant difference between the approaches.
 
 \vspace{1.0cm}\textbf{Keywords: }Poisson process, gravitational lensing,
  machine learning, linear estimation
@@ -50,11 +56,11 @@ regression on simulated data and data from real quasars.
 \end{center}
 #+END_abstract
 \newpage
-#+begin_latex
+#+BEGIN_LaTeX
 \tableofcontents
 \newpage
 \pagenumbering{arabic}
-#+end_latex
+#+END_LaTeX
 * Introduction
 With continued advances in computing and sensing technologies, the amount of
 data that can be gathered from both everyday objects and scientific experiments
@@ -100,8 +106,8 @@ calculation of the time delay and its uses. In section [[Simulation of Photon
 Streams]] we introduce our method of generating photon streams from Poisson
 processes. Section [[Function Estimation]] shows our approach to estimating the
 underlying function of a given stream of photons. Our methods of calculating the
-time delays between multiple photon streams are explained in section [[Time Delay
-Calculation]]. Section [[System]] gives detailed information on the design and
+time delays between multiple photon streams are explained in section [[Time
+Delay Estimation]]. Section [[System]] gives detailed information on the design and
 development of the system, including the software and project management
 aspects. Finally, in section [[Evaluation]] we present experimental data from both
 simulated and real data and discuss the relative effectiveness of our methods.
@@ -163,6 +169,7 @@ produced. Microlensing works on even smaller scales than the other two classes,
 and can be used to detect planets and stars. It has also been proposed as a
 method to find objects such as black holes and brown dwarfs, which are otherwise
 difficult to detect \cite{schneider2006gravitational}.
+#+BEGIN_LaTeX
 \begin{figure}
 \centering
 \begin{subfigure}{0.4\textwidth}
@@ -182,6 +189,7 @@ a distant blue galaxy being distorted by the central galaxy LRG 3-757
 foreground galaxy \cite{eincross}.}
 \label{fig:stronglens}
 \end{figure}
+#+END_LaTeX
 *** Importance of the Time Delay
 In gravitationally lensed systems, there is a delay between photon streams
 coming from images of the source due to the bending of light. Light from one
@@ -259,43 +267,352 @@ on the value of $x$. This is where the names come from. In this simple example,
 $x$ is the independent variable, and $y$ is the dependent variable. There can be
 multiple independent variables.
 
- Linear regression is used in many different fields to find the trend between
- variables. It is heavily used in economics to make predictions about what
- happens in many economical situations. Finding trends in data is useful to many
- people in different ways.
+Linear regression is used in many different fields to find the trend between
+variables. It is heavily used in economics to make predictions about what
+happens in many economical situations. Finding trends in data is useful to many
+people in different ways.
 *** Kernel Density Estimation
 This is another method which can be used to estimate functions, but which
 applies specifically to the probability density function of random
 variables. This technique uses \emph{kernels} to estimate the function
-densities. 
+densities. A kernel is a function which has some parameters. To estimate
+functions, kernels are centred at certain points along the axis which is being
+estimated. The spread can be either at uniform intervals, each sample value,
+etc. Kernels may have a weight assigned to them. Varying the parameters of
+the kernels results in different properties of the estimate. There are many
+different kernels that can be used. Different kernels are used in different
+applications.
+- Show some examples of different kernels
 * Simulation of Photon Streams
 The first step in building the system was the development of a photon stream
 simulator. The ability to simulate photon streams means that the system can be
 tested on many different stream types, so that we are able to determine where
 its strengths and weaknesses lie. While many simulation tools are very complex,
-our system does not require complex simulation of quasars or the movement of
-photons, as we are only interested in their arrival time. A quasar can be
-represented by some random variable $X$, which changes over time. This means
-that a NHPP can be used to create similar effects. In order to simulate arrival
-times, a function that describes how the rate parameter $\lambda$ changes over
-time is needed.
+our system does not require simulation of the source objects or the movement of
+photons, as we are only interested in their arrival time. A source can be
+represented by some random variable $X$, which indicates the variability of the
+source with time. Different types of sources will have different types of
+characteristic functions---the variation in a quasar will be very different to
+that of an individual star, for example. A NHPP is an ideal way to represent
+this type of system. The function $\lambda(t)$ will represent the random
+variable, and the values output from the process will represent the arrival
+times of the photons. $\lambda(t)$ describes the variability of the source in
+time. In other words, it provides a rate parameter at each time $t$ for the
+duration of the simulation. To be able to simulate a wide variety of functions,
+it is necessary to have the capacity to generate functions with different
+characteristics.
 ** Function Generation
+To evaluate the performance of the function and time delay estimators, it will
+be necessary to test the accuracy of the estimates on different types of
+functions. To this end, the capability of generating random functions will be
+very useful. To generate random functions, we make use of \large{Gaussian
+kernels or just Gaussians?}. The generation process involves four simple steps:
+1. Pick some value $\Delta t$ which represents the distance between the mean
+   $\mu$ of successive Gaussians.
+2. Define some value $\alpha$, where the standard deviation $\sigma$ of each
+   Gaussian is determined by $\alpha\cdot\Delta t$.
+3. For each Gaussian, choose some weight $w_i$, from a uniform distribution
+   between -1 and 1.
+4. Using some step $s$, sum all the Gaussians at each point on the $x$-axis which
+   we get from these $s$ values.
+
+The first step defines how spread out the Gaussians should be in the interval
+$[t_0, T]$ in which the function is to be generated. If the spread is large,
+then depending on the standard deviation of the Gaussians there will be many
+points on the interval where the value of the function is zero. On the other
+hand, with a low value of $\Delta t$, most points on the line should have some
+non-zero value.
+
+The $\alpha$ parameter determines the standard deviation $\sigma$ of all the Gaussians
+used to generate the function. The value of $\sigma$ is the one that affects the
+final function the most. Low values will result in each Gaussian covering only a
+small interval, so if the Gaussians are sufficiently spread out, the variation
+in the function will be much larger than if higher values of $\sigma$ are used.
+
+With just the above two steps, the functions generated would be very
+homogeneous, because each Gaussian has the same weight. With uniform Gaussians,
+there would be hills at each point where a Gaussian is centred, and very little
+to speak of in between, and the height of the function would never exceed a
+certain value. To introduce more variation, a weight $w_i$ is sampled uniformly
+from ($w_i \sim U(-1,1)$). Uniform sampling simply means that each value between
+-1 and 1 has an equal probability of being chosen. To further increase the
+variation in the functions that can be generated, some multiplier can be used,
+which scales the values of the weights, meaning that the function will have
+larger values over the whole interval.
+
+The final step is to calculate the values which will make up the
+function. Starting at the beginning of the interval $t_0$, we sum the values of
+all the Gaussians at points along the line until the end of the interval $T$ is
+reached. The points that are sampled are defined by $t_i=t_{i-1}+s$, where $s$
+is some sample step. The use of smaller sample steps results in a higher
+resolution. The sum of the Gaussians at time $t$ can be calculated by
+#+BEGIN_LaTeX
+\begin{align}
+f(t) = \sum_{g\in G}w_g\cdot e^{-(t-\mu_g)^2/2\sigma_g^2}
+\end{align}
+#+END_LaTeX
+Where $G$ is the set of Gaussians which make up the function, and $w_g$, $\mu_g$
+and $\sigma_g$ are the weight, mean and standard deviation respectively of the
+current Gaussian being processed.
+
 - random functions using gaussian sums
 - explain how the gaussians are placed, how the standard deviation is
-  calculated, what effect this has on the function shape
-  ($\sigma=\alpha\cdot\Delta t$)
-- examples at various alpha values?
+   calculated, what effect this has on the function shape
+   ($\sigma=\alpha\cdot\Delta t$)
+- examples at various alpha and delta t values?
+- $w_t\cdot e^\frac{{x-\mu}^2}{2\sigma^2}$
+
+In addition to the random function generation, it may sometimes be useful to
+generate a function from a known expression, and the system includes this
+functionality as well, which will be described below.
 ** Generating Streams from Functions
+   Once the function has been generated, we can use it to generate values for
+   the random variable $X$ which governs a NHPP. To generate a NHPP, it is
+   necessary to build on the generation of a HPP. It is well known that
+   probability of an event occurring follows an exponential distribution. The
+   rate parameter $\lambda$ determines how many events occur in a given time
+   interval. Knowing this, we can calculate the time of the next event by
+   sampling from this distribution. Generate a random value $U\sim U(0,1)$. The
+   time $t$ to the next event is defined by
+   #+BEGIN_LaTeX
+   \begin{align}\label{eq:homlambda}
+   t=\frac{1}{\lambda}\log(U)
+   \end{align}
+   #+END_LaTeX
+   Using this calculation, it is possible to generate a realisation of a HPP for
+   any length of time. This provides a base which can be extended to generate
+   events from NHPPs. To generate events from the NHPP, we use a technique
+   called thinning. The basic concept behind thinning is to generate a large
+   amount of values, and then remove them based on some method. In the case of
+   the NHPP, we generate events with a rate parameter $\lambda$, where
+   $\lambda>\lambda(t)$ for $0<=t<=T$. In other words, the homogeneous lambda
+   value must be larger than the value of the function we are generating from at
+   any point. First, two random values are independently sampled from a uniform
+   distribution between 0 and 1, $U_1,U_2\sim U(0,1)$. $U_1$ is used in
+   \eqref{eq:homlambda} to find the next event time from the homogeneous process
+   governed by $\lambda$. Using the time $t$ generated from that, the value of
+   $\lambda(t)$ is found. Depending on the ratio between $\lambda(t)$ and
+   $\lambda$, the event is kept or discarded. When the value of $\lambda(t)$ is
+   close to that of $\lambda$, more events are kept because
+   $U_2\leq\frac{\lambda(t)}{\lambda}$ will be true more of the time. The
+   variation of $\lambda(t)$ in time means that events are generated
+   proportional to the value of lambda.
+
 - Need to generate event times - use Poisson process
 - start with homogeneous
 - extend homogeneous to non-homogeneous (explain math)
+- Issues with the implementation - must have $\lambda>\lambda(t)$ for all
+  $0<=t<=T$.
+- Diagram showing HPP and NHPP
+- http://preshing.com/20111007/how-to-generate-random-timings-for-a-poisson-process
+** Implementation
+    The implementation of the random and expression based function generators
+    form the first part of the \emph{generator} sub-system. This part of the
+    system deals with the generation of functions, and the generation of photon
+    streams from these functions.
+- gaussians as structs
+- gauss vector structs
+- functions into math library
+- separation of functions so that they can be called externally and internally
+- what can be generated
+- How expr and gauss version differ
+*** Generating from Expressions
+- muparser
+- enter expression and define variables in parameter file
+- parsed in and calculated automatically
+*** Generating from Random Functions
+- 
 * Function Estimation
 ** Baseline Estimation
-*** Optimum Least Squares
+*** Ordinary Least Squares
+The Ordinary least squares (OLS) estimator forms the core of the baseline
+estimator. This estimator will form an estimate by minimising the sum of squared
+residuals. It is important to note the difference between errors and
+residuals. In statistical terms, an \emph{error} is ``The difference between the
+observed value of an index and its ``true" value'' \cite{2008oecd}, and a
+\emph{residual} is ``The difference between the observed value of a response
+variable and the value predicted by some model of interest''
+\cite{everitt2010cambridge}. The ``true'' in the definition of error is in
+inverted commas due to the fact that the true value of the function is
+unobservable---it is only possible to obtain a statistical sample. The residual,
+on the other hand, is the difference of the observation from some
+\emph{estimate} of the function. This first estimator estimates a linear
+function of the form $y=ax+b$, or a straight line. While this is not directly
+useful for estimating characteristic functions, it was developed in order to
+gain a deeper understanding of the ideas behind regression, and in order to
+construct a simple estimator which could then be extended.
+
+In order to estimate the function, the stream of events must first be converted
+into a form which is suitable for processing. To do this, we first pick a time
+interval $(0,T]$, and divide it into $N$ sub-intervals, or \emph{bins}. According
+to \cite{massey1996estimating}, the $k\text{th}$ bin $I_k$ is
+calculated by
+#+BEGIN_LaTeX
+\begin{align}
+I_k&=\left(\frac{(k-1)T}{N}, \frac{kT}{N}\right],\,1\leq k\leq N
+\intertext{and the midpoint $x_k$ of each bin is}
+x_k&=\left(k-\frac{1}{2}\right)\frac{T}{N},\,1\leq k\leq N
+\end{align}
+#+END_LaTeX
+Due to the independent increments property of Poisson processes, splitting the
+interval leaves us with $N$ bins, and according to Massey et
+al. \cite{massey1996estimating}, each is defined by an independent Poisson
+random variable $Y_k$ with mean
+#+BEGIN_LaTeX
+\begin{equation}\label{eq:lam}
+{\lambda}_k=\frac{T}{N}(a+bx_k)
+\end{equation}
+#+END_LaTeX
+$T/N$ is used to normalise the value of ${\lambda}_k$. The value of $Y_k$ in our
+case is the number of photon arrival times for each bin. In order to perform
+regression on the data, we need a model of the data. At this stage, we make the
+assumption that the data is represented by a linear function, so the model is
+linear. The model is used to connect the random variables and the parameters,
+and describes how they are related. Our model becomes $Y=\alpha+\beta x
++\epsilon$, or $Y_k=\alpha+\beta x_k + {\epsilon}_k$
+\cite{massey1996estimating}. The values $\alpha$ and $\beta$ are the two
+regression parameters which we use to estimate the values of $a$ and $b$ of the
+characteristic function. \textcolor{red}{What is a regression parameter?}
+$\epsilon$ represents the Poisson error that is present in the data that we are
+trying to model. As mentioned before, this technique works by minimising the sum
+of squared residuals. The value of a residual can be computed by
+\cite{kenney1939mathematics}
+#+BEGIN_LaTeX
+\begin{equation}\label{eq:residual}
+d_k=Y_k-(a+bx_k)
+\end{equation}
+#+END_LaTeX
+However, since we cannot know the real values of $a$ and $b$, we must instead
+use the regression parameters $\alpha$ and $\beta$. Substituting these into
+\eqref{eq:residual} we get
+#+BEGIN_LaTeX
+\begin{equation}
+d_k=Y_k-(\alpha+\beta x_k)
+\end{equation}
+#+END_LaTeX
+With this, we can calculate residuals for our function estimate. This
+calculation by itself is not sufficient, though, as summing the residuals
+necessarily results in a value of zero \textcolor{red}{\textbf{FIND A CITATION FOR THIS!}}. To
+get a useful value from the residuals, we square the value of each residual.
+#+BEGIN_LaTeX
+\begin{equation}\label{eq:sqres}
+d_k^2=(Y_k-[\alpha +\beta x_k])^2
+\end{equation}
+#+END_LaTeX
+Until now, we have been ignoring ${\epsilon}_k$, the Poisson noise associated
+with the random variable. In order to compensate for this, it is necessary to
+introduce a weight $w_k$ for each interval, initialised to 1 as we are using
+the OLS technique \cite{massey1996estimating}. Introducing this weight into
+\eqref{eq:sqres} and summing over all bins, we have
+#+BEGIN_LaTeX
+\begin{equation}
+\sum_{k=1}^N w_k(Y_k-[\alpha +\beta x_k])^2
+\end{equation}
+#+END_LaTeX
+Which is known as the residual sum of squares (RSS). We want to find the values of
+$\alpha$ and $\beta$ for which the RSS is minimised, and so the final expression becomes
+#+BEGIN_LaTeX
+\begin{equation}
+\min_{\alpha,\beta}\sum_{k=1}^N w_k(Y_k-[\alpha +\beta x_k])^2
+\end{equation}
+#+END_LaTeX
+Now that we know what we are looking for, we define estimators $\hat{\alpha}$
+and $\hat{\beta}$, which we will use to estimate values of $\alpha$ and $\beta$
+to find the minimum.
+#+BEGIN_LaTeX
+\begin{equation}
+\hat{\beta}=\frac{\sum_{k=1}^N
+w_k(x_k-\bar{x})(Y_k-\bar{Y})}{\displaystyle \sum_{k=1}^N w_k(x_k-\bar{x})^2}=\frac{\displaystyle\sum_{k=1}^N w_k(x_k-\bar{x})Y_k}{\sum_{k=1}^N w_k(x_k-\bar{x})^2}
+\end{equation}
+#+END_LaTeX
+
+#+BEGIN_LaTeX
+\begin{equation}
+\hat{\alpha}=\bar{Y}-\hat{\beta}\bar{x}
+\end{equation}
+#+END_LaTeX
+
+#+BEGIN_LaTeX
+\begin{equation}
+\bar{x}=\frac{1}{N}\sum_{k=1}^N w_kx_k\quad \text{and}\quad
+\bar{Y}=\frac{1}{N}\sum_{k=1}^N w_kY_k
+\end{equation}
+#+END_LaTeX
+
+#+BEGIN_LaTeX
+\begin{equation}
+\hat{a}=\frac{N}{T}\hat{\alpha}\quad\text{and}\quad
+\hat{b}=\frac{N}{T}\hat{\beta}
+\end{equation}
+#+END_LaTeX
+Impose a constraint on the values of $\hat{a}$ and $\hat{b}$ which
+states that the rate function must be non-negative throughout the entire
+interval $[0,T]$ \cite{massey1996estimating}
+#+BEGIN_LaTeX
+\begin{equation}
+\hat{a}\geq 0\quad \text{and}\quad
+\hat{b}\geq -\hat{a}/T
+\end{equation}
+#+END_LaTeX
+There are two cases in which this constraint can be violated; when $a<0$ or
+$b<-\hat{a}/T$ \cite{massey1996estimating}. In the first case, we set
+#+BEGIN_LaTeX
+\begin{align}
+\hat{a}&=0\\
+\hat{b}&=\frac{N}{T}\frac{\displaystyle \sum_{k=1}^N w_kx_kY_k}{\displaystyle \sum_{k=1}^N w_kx_k^2}
+\end{align}
+#+END_LaTeX
+and in the second,
+#+BEGIN_LaTeX
+\begin{align}
+\hat{a}&=-\hat{b}T\\
+\hat{b}&=\frac{N}{T}\frac{\displaystyle \sum_{k=1}^N (T-x_k)Y_k}{\displaystyle \sum_{k=1}^N w_k(T-x_k)^2}
+\end{align}
+#+END_LaTeX
+With this set of equations, the structure of the OLS estimator is complete.
 - Explain main parameters, the main things that are important to the workings,
   and exactly how it works. Number of intervals, the total time, see massey paper
-- math
+- Example of residuals
+- Example function estimate on a linear function, use Poisson to generate
+- Talk about this being the first step, both to learn about regression and to
+  get a simple estimator working before moving on to more complex ones
 *** Iterative Weighted Least Squares
+The iterative weighted least squares (IWLS) builds upon the OLS estimator. As
+the name suggests, the extension is to include an iterative part. The OLS
+estimator performs a single estimate of the function and leaves it at that. The
+IWLS estimator, on the other hand, repeats the process multiple times, updating
+its estimates. Perhaps the most important update to the estimator is the use of
+unequal weights, which change depending on the variances of the random variable
+which defines the bin which the weight is being applied to. A Poisson
+random variable has a variance that is equal to its mean---this means that a
+higher value of ${\lambda}_k$ results in a larger variance. To compensate for
+this, we give higher weights to bins which have lower values of $\lambda$, as
+the variances will be lower. As shown in equation \eqref{eq:lam}, the value of
+$\lambda$ is easy to calculate, but the values of $a$ and $b$ must be known. In
+order to modify weights appropriately, we must be able to obtain estimates of
+$\lambda$, which can be done using \cite{massey1996estimating}
+#+BEGIN_LaTeX
+\begin{align}
+\hat{\lambda}_k=\frac{T}{N}(\hat{a}+\hat{b}x_k)
+\end{align}
+#+END_LaTeX
+The weights can then be updated using
+#+BEGIN_LaTeX
+\begin{equation}
+\hat{w_k}=\frac{\displaystyle \frac{N}{\hat{\lambda}_k}}{\displaystyle \sum_{k-1}^N\left(\frac{1}{\hat{\lambda}_k}\right)}
+\end{equation}
+#+END_LaTeX
+which has some desirable properties \cite{massey1996estimating}. Minimum
+variance estimator among linear functions of the observations $Y_k$ that are
+unbiased. Each iteration of the estimator updates these estimates of $\lambda$
+and the weight for each bin, and the process is stopped when the change in the
+estimates becomes negligible, which consistently happens in between two and five
+iterations \cite{massey1996estimating}. With this estimator, we have something
+which can improve upon the estimates from OLS with only a small amount of
+additional calculation. However, for our purposes this is not sufficient. The
+characteristic function of stellar objects are not linear functions, so we must
+extend this linear approach to give us some reasonable estimates of functions
+which are not straight lines.
 - Extension of the OLS technique which iterates it multiple times, updating weights
 - show weight update equation
 - talk about how varying the number of iterations affects it (massey)
@@ -303,8 +620,41 @@ time is needed.
 - Explain how line estimation is not useful since lensed photon streams are
   always some function which is not a line.
 *** Piecewise Iterative Weighted Least Squares
+It is clear that the IWLS estimator alone is not sufficient to complete our
+task. In order to have a reasonable estimate of the characteristic function, we
+need to be able to estimate a function which is not a straight line. During the
+development process, we considered the possibility of approximating a function
+by multiple straight-line estimates. This type of function is known as a
+piecewise linear function. Extending the approach presented in the previous two
+sections, we take the interval $[0,T]$, and split it into several
+sub-intervals. Then, the function underlying each of these sub-intervals is
+estimated using IWLS. We also add some minor extensions in an attempt to improve
+the quality of the estimates. Sub-intervals are estimated starting from the
+first, and moving to the next once the process is complete. However, since the
+number of sub-intervals that the interval is split into is somewhat arbitrary,
+we implemented an estimate extension strategy. When the estimate is completed,
+a short interval after the sub-interval being estimated is checked to see how
+well the estimate matches it. The check is performed using probability density
+functions (PDF). The extension interval is split into several bins, and the likelihood
+of obtaining the bin counts of those bins given the function estimate is
+checked. We use a simple threshold function which only permits the extension of
+the estimate if for each bin the PDF calculated does not fall below a certain
+value. The calculation of PDFs depends on the type of probability distribution
+being used to check the data. In our case, this is a Poisson distribution, and we
+use
+#+BEGIN_LaTeX
+\begin{equation}
+P(X=k)=\frac{\lambda^ke^{-\lambda}}{k!}
+\end{equation}
+#+END_LaTeX
+to calculate the probability of getting a value $k$ for the bin count with a
+rate parameter $lambda$. While this technique is an improvement on using
+straight lines to estimate functions which are curves, it is still not
+sufficient, as the resulting function estimate is piecewise disjoint---the
+estimate for each interval does not connect smoothly into the next. There are
+jumps between intervals.
 - explain intuition behind the technique. Split the whole interval into some
-  finite number of subintervals and estimate the function of each interval in
+  finite number of sub-intervals and estimate the function of each interval in
   turn using IWLS.
 - give reasoning behind moving to this technique. Some parts of functions look
   like they are pretty much linear - maybe it is a nice way to solve
@@ -346,6 +696,15 @@ min_interval_length folder in data. The better fitting line is the
 baseline estimate of that with no minimum, and the other set is the
 estimate with minimum interval length applied
 *** Baseline
+In the previous section, we introduced a piecewise method for function
+estimation. In this section we present the final modification to that estimator
+which completes the baseline estimator. As mentioned, the piecewise IWLS
+estimator gives us a piecewise disjoint estimate of the function, but we would
+like one which is piecewise continuous. In order to do this, the end of each
+interval estimate must meet the start of the next. To do so, we calculate the
+midpoint between the start and end of the estimates at each breakpoint, and then
+modify the estimates to make the functions meet at that point. This leaves us
+with a continuous function that forms our estimate of the function.
 - improvement on the piecewise method by making sure that the function is
   continuous, i.e. the start of the function at each interval is the end of the
   one in the previous
@@ -353,133 +712,293 @@ estimate with minimum interval length applied
   midpoint on y between the start and end
 - show a baseline and piecewise estimate on the same function
 ** Kernel Density Estimation
+For comparison to the baseline estimator, a kernel density estimator was also
+implemented. A kernel density estimator works by estimating the function using
+multiple functions called kernels. We use a gaussian kernel 
+#+BEGIN_LaTeX
+\begin{align}
+K(\mu,\sigma)=e^{-(t-\mu_g)^2/2\sigma_g^2}
+\end{align}
+#+END_LaTeX
+to estimate the function. There are methods which involve centering the kernels
+at uniform intervals along the $x$-axis, but for our purposes centering kernels at
+each arrival time is the best technique \cite{cuevas2006accurate}. Once a kernel
+has been centred on each arrival time, the values of the kernels are summed at
+given points along the $x$-axis to form a function estimate. However, this is not
+the final step in the process. Depending on the standard deviation of the
+kernels used, the function estimate produced will not match the actual
+function. As with the normalisation constants used in the OLS estimator, we must
+divide the resulting values by some normalisation constant. The calculation for
+the kernel density estimate is slightly more complex than that of the OLS
+estimator. The normalisation constant is estimated by using the Poisson PDF. A
+range of possible normalisation constants is checked, and the one chosen is the
+point at which
+#+BEGIN_LaTeX
+\begin{equation}
+\sum_{n=1}^N\frac{\lambda(t)^ke^{-\lambda(t)}}{k!}
+\end{equation}
+#+END_LaTeX
+is minimised. Dividing through all the values by the normalisation constant
+gives us the normalised estimate of the function.
 - explain how kernels are calculated, and how they are centred
 - explain the effect of the standard deviation on the estimate
 - needs normalisation to get the proper estimate
 - how the normalisation constant is found, using pmf stuff
-* Time Delay Calculation
+** Implementation
+* Time Delay Estimation
+Once we are able to estimate the characteristic function of photon streams, we
+can use these estimates to attempt to provide an estimate of the time delay
+between two streams. If the two streams come from the same source, then they
+should have the same characteristic function. Our estimates of the
+characteristic function will differ for both streams due to the fact that the
+number of photon arrivals will be different for each bin, but each should look
+relatively similar. In this section we present two methods for estimating the
+time delay between a pair of photon streams.
 - basic explanation of what we want to do with this part of the system,
   referring to the introduction a little?
 ** Area Method
+The first of the two methods uses a very simple metric to estimate the time
+delay. By taking the two function estimates, we can attempt to match up the two
+functions so that they ``fit together'' best. This goodness of fit can be
+determined by the area between the two functions. The point at which the area
+between the two is lowest is the natural point at which the two functions should
+match. Using the first estimate as a base, with its time delay set to zero, we
+guess at values of $\Delta$, and shift the second function by that value. Then,
+we calculate the inter-function area using
+#+BEGIN_LaTeX
+    \begin{align}
+      d(\hat{\lambda}_1,\hat{\lambda}_2)&=\int(\hat{\lambda}_1(t)-\hat{\lambda}_2(t))^2\,dt\\
+      &\approx\frac{1}{N}\sum_{i=1}^N(\hat{\lambda}_1(t)-\hat{\lambda}_2(t))^2
+    \end{align}
+#+END_LaTeX
+We make our estimate of $\Delta$ where the value of
+$d(\hat{\lambda}_1,\hat{\lambda}_2)$ is minimised. You will notice that to
+calculate the area between curves we must use an integral. In our case, an exact
+calculation is not necessary, and so we approximate it by a discrete calculation
+instead, which gives us a value which is good enough for our purposes.
+#+BEGIN_latex
+%\begin{figure}
+%   \begin{center}
+%     \begin{tikzpicture}[scale=0.1]
+%       \def\fzero{est_out_func_0_0.dat}
+%       \def\fone{est_out_func_0_1.dat}
+%       \draw[thick] plot[smooth] file {\fzero};
+%       \draw[thick] plot[smooth] file {\fone};
+%       \fill[color = gray!60, opacity=0.1] plot[smooth] file {\fzero} --
+%       plot[smooth] file {\fone};
+% %      \fill[color = gray!60, opacity=0.1] plot[smooth] file {\fzero} --
+% %      plot[smooth] file {\fone};
+      
+% %      \fill[pattern color = gray, pattern = north east lines, opacity=0.8]
+%  %     plot[smooth] file {\fzero} --  plot[smooth] file {\fzero};
+%       % \begin{axis}[stack plots=y,thick,smooth,no markers]
+% %         \addplot+[black]              gnuplot{est_out_func_0_0.dat};
+% %         \addplot+[black,fill=blue!50] gnuplot{est_out_func_0_1.dat} 
+% %         \closedcycle;
+% %       \end{axis}
+% % %      \begin{axis}[xmin=0, xmax=100, ymin=0, ymax=25, legend columns=4]
+% %         % \addplot[mark=none,color=red] table[x index=0,y index=1,col
+% %         % sep=space] {est_out_func_0_0.dat};
+% %         % \addplot[mark=none, color=blue] table[x index=0,y index=1,col
+% %         % sep=space] {est_out_func_0_1.dat};
+% %         % \addplot[mark=none, color=green, opacity=0.5] table[x index=0,y index=1,col
+% %         % sep=space] {rfuncsum_2.dat};
+% % %      \end{axis}
+%     \end{tikzpicture}
+%   \end{center}
+%\end{figure}
+#+END_latex
 - use the area of the space between two functions, find the time delay which
   minimises the value
 - show integral formula and then show the simplified discrete formula
-** Probability Mass Function Method
+** Probability Density Function Method
+The second method of estimation is using probability density functions. As
+before, we guess a value of $\Delta$ between $-\Delta_{\text{max}}$ and
+$+\Delta_{\text{max}}$ and shift the second stream by that amount. However, we
+know that there must be a single characteristic function, and we want to see how
+well our estimate of that matches the bin counts in each stream. From the two
+stream estimates we have, $\hat{\lambda}_1$ and $\hat{\lambda}_2$ (which is
+shifted by $\Delta$), we make an ``average'' function $\bar{\lambda}$ by combining the
+two.
+#+BEGIN_LaTeX
+\begin{equation}
+\bar{\lambda}(t)=\frac{\hat{\lambda}_1(t)+\hat{\lambda}_2(t+\Delta)}{2}
+\end{equation}
+#+END_LaTeX
+The point on $\bar{\lambda}$ at time $t$ is the midpoint between the values of
+the two estimates at that time. Once we have $\bar{\lambda}$, we can assign some
+score to the current estimate of the value of $\Delta$.
+#+BEGIN_LaTeX
+\begin{align}
+\begin{split}
+\log P(S_A,S_B\mid\bar{\lambda}(t))=\sum_{t=\Delta_{\text{max}}}^{T-\Delta_{\text{max}}}&\log P(S_A(t)\mid \bar{\lambda}(t))\\
+&+ \log P(S_B(t+\Delta)\mid \bar{\lambda}(t))
+\end{split}
+\end{align}
+#+END_LaTeX
+Here, we calculate the probability that the function $\bar{\lambda}$ is the
+characteristic function of the two streams $S_A$ and $S_B$. The streams are
+split into bins, and the probability of the number of events in each bin given
+the value of $\lambda$ calculated for that bin is computed. 
+
+\textcolor{red}{Perhaps this should go in the previous section} It is important
+to note that the value of $\Delta_{\text{max}}$ defines the interval in which
+the probabilities are summed. The need for calculation only in some specific
+interval should be clear---if one function is shifted, and both functions have
+the same time interval, then there will be an interval of $\Delta$ on either end
+of the range in which only one of the functions has a value. As such, the
+functions are combined only in the interval in which both functions have
+values. In addition to this, since the value of $\Delta$ changes, the intervals
+in which there is an overlap between the two functions changes. Setting
+$\Delta=0$ minimises the value, and $\Delta=\pm\Delta_{\text{max}}$ maximises
+it. To be able to compare the scores of different values of $\Delta$, we must
+perform calculations on the interval in which the two functions have values for
+all possible values of $\Delta$. If the calculations were to be performed on
+different intervals or interval lengths each time, it would be necessary to
+scale the scores for the longer intervals to the shorter intervals, and this
+scaling would likely not result in an accurate representation of the actual
+score. Imposing this constraint on the intervals we can work with has an
+additional effect; the value of $\Delta_{\text{max}}$ can never exceed the
+interval length $T$ in which we are performing the estimate. We are left with
+the constraints $T_{\text{est}}=[t_0+\Delta_{\text{max}},
+T-\Delta_{\text{max}}],\,\Delta_{\text{max}}<T$ on the interval and the maximum
+value of $\Delta$.
+
+The calculation of $\lambda$ is slightly more complicated than just taking the
+value of lambda at the midpoint. Since we are considering a number of events
+occurring in a given time span, we must consider the value of lambda in that
+entire time interval. In order to do this, we integrate the value of lambda over
+the interval
+#+BEGIN_LaTeX
+\begin{equation}
+\lambda_{a,b}=\int_a^b\lambda(t)\,dt
+\end{equation}
+#+END_LaTeX
+However, as with the calculation of the area between curves, we do not need an
+exact value, only a good approximation, and so we use a discrete version of this
+equation where the value of $t$ is incremented by some finite step for each successive
+value. The smaller the value of the step the more accurate the approximation of
+$\lambda_{a,b}$ becomes. As with the previous estimator, the estimate is made in
+two stages, first with a coarse pass over the values of delta to compute an
+initial estimate, and then a finer second pass around the first estimated value
+in order to refine the estimate.
 - calculate probability mass function at each point on the function and choose
   the time delay which maximises the value
 * System
 ** System Structure
-   \begin{figure}
-   \centering
-   \pgfdeclarelayer{background}
-   \pgfdeclarelayer{foreground}
-   \pgfsetlayers{background,main,foreground}
-   % horizontal separation
-   \def \hnsep {0.5}
-   \tikzstyle{sub}=[draw, fill=blue!20, text width=5em, 
-   text centered, minimum height=2.5em, node distance=1.5cm]
+#+BEGIN_LaTeX
+\begin{figure}
+\centering
+\pgfdeclarelayer{background}
+\pgfdeclarelayer{foreground}
+\pgfsetlayers{background,main,foreground}
+% horizontal separation
+\def \hnsep {0.5}
+\tikzstyle{sub}=[draw, fill=blue!20, text width=5em, 
+text centered, minimum height=2.5em, node distance=1.5cm]
 
-   \begin{tikzpicture}
-   \node (param) at (0,3.5) [sub] {Parameter file};
-   % libs group
-   \node (math) at (2,6) [sub] {Math};
-   \node (gut) [sub, right=\hnsep of math] {General};
-   \node (file) [sub, right=\hnsep of gut] {File};
-   \node (plist) [sub, right=\hnsep of file] {Parameter List};
-   \node (lib) [below right=0.25cm and -0.65 of gut] {\textbf{Libraries}};
-   % generator group
-   \node (hom) at (2,1) [sub] {HPP};
-   \node (nhm) [sub, below of=hom] {NHPP};
-   \node (rfunc) [sub, below of=nhm] {Random Function};
-   \node (gauss) [sub, below of=rfunc] {Gaussian};
-   \node (gen) [below of=gauss, font=\small] {\textbf{Generators}};
-   \node (strout) [sub, below of=gen] {Stream Data};
-   % estimator group
-   \node (ln) at (6,0) [sub] {Linear};
-   \node (pc) [sub, below of=ln] {Piecewise};
-   \node (bl) [sub, below of=pc] {Baseline};
-   \node (kd) [sub, below of=bl] {Kernel Density};
-   \node (td) [sub, below of=kd] {Time Delta};
-   \node (est) [below of=td, font=\small] {\textbf{Estimators}};
-   \node (estout) [sub, below of=est] {Estimator Output};
-   % experimenter
-   \node (expparam) at (11.5,2) [sub] {Experiment Parameters};
-   \node (exp) at (10,0) [sub] {Harness};
-   \node (explbl) [below of=exp, font=\small] {\textbf{Experimenter}};
-   \node (expout) [sub, below of=explbl] {Experiment Results};
-   % Draw the rest on the background layer
-   \begin{pgfonlayer}{background}
-   % Estimator background
-   \path (ln.north west)+(-0.2,0.2) node (a) {};
-   \path (est.south -| ln.east)+(+0.2,-0.2) node (b) {};
-   \path[fill=blue!10,rounded corners, draw=black!50, dashed]
-   (a) rectangle (b);
-   % generator background
-   \path (hom.north west)+(-0.2,0.2) node (c) {};
-   \path (gen.south -| hom.east)+(+0.2,-0.2) node (d) {};
-   \path[fill=blue!10,rounded corners, draw=black!50, dashed]
-   (c) rectangle (d);
-   % libs background
-   \path (math.north west)+(-0.2,0.2) node (e) {};
-   \path (lib.south -| plist.east)+(+0.2,-0.2) node (f) {};
-   \path[fill=blue!10,rounded corners, draw=black!50, dashed]
-   (e) rectangle (f);
-   % experimenter background
-   \path (exp.north west)+(-0.2,0.2) node (g) {};
-   \path (explbl.south -| exp.east)+(+0.2,-0.2) node (h) {};
-   \path[fill=blue!10,rounded corners, draw=black!50, dashed]
-   (g) rectangle (h);
-   
-   % path from expparam to experiments
-   \coordinate [above=1.51 of exp] (expln) {};
-   \coordinate [above=1 of exp] (tpexp) {};
-   \draw [dashed,line width=1pt] (expparam.west) -- (expln);
-   % path from experiments to exp out
-   \draw [->,line width=1pt] (explbl.south)+(0,-0.2) -- (expout.north);
+\begin{tikzpicture}
+\node (param) at (0,3.5) [sub] {Parameter file};
+% libs group
+\node (math) at (2,6) [sub] {Math};
+\node (gut) [sub, right=\hnsep of math] {General};
+\node (file) [sub, right=\hnsep of gut] {File};
+\node (plist) [sub, right=\hnsep of file] {Parameter List};
+\node (lib) [below right=0.25cm and -0.65 of gut] {\textbf{Libraries}};
+% generator group
+\node (hom) at (2,1) [sub] {HPP};
+\node (nhm) [sub, below of=hom] {NHPP};
+\node (rfunc) [sub, below of=nhm] {Random Function};
+\node (gauss) [sub, below of=rfunc] {Gaussian};
+\node (gen) [below of=gauss, font=\small] {\textbf{Generators}};
+\node (strout) [sub, below of=gen] {Stream Data};
+% estimator group
+\node (ln) at (6,0) [sub] {Linear};
+\node (pc) [sub, below of=ln] {Piecewise};
+\node (bl) [sub, below of=pc] {Baseline};
+\node (kd) [sub, below of=bl] {Kernel Density};
+\node (td) [sub, below of=kd] {Time Delta};
+\node (est) [below of=td, font=\small] {\textbf{Estimators}};
+\node (estout) [sub, below of=est] {Estimator Output};
+% experimenter
+\node (expparam) at (11.5,2) [sub] {Experiment Parameters};
+\node (exp) at (10,0) [sub] {Harness};
+\node (explbl) [below of=exp, font=\small] {\textbf{Experimenter}};
+\node (expout) [sub, below of=explbl] {Experiment Results};
+% Draw the rest on the background layer
+\begin{pgfonlayer}{background}
+% Estimator background
+\path (ln.north west)+(-0.2,0.2) node (a) {};
+\path (est.south -| ln.east)+(+0.2,-0.2) node (b) {};
+\path[fill=blue!10,rounded corners, draw=black!50, dashed]
+(a) rectangle (b);
+% generator background
+\path (hom.north west)+(-0.2,0.2) node (c) {};
+\path (gen.south -| hom.east)+(+0.2,-0.2) node (d) {};
+\path[fill=blue!10,rounded corners, draw=black!50, dashed]
+(c) rectangle (d);
+% libs background
+\path (math.north west)+(-0.2,0.2) node (e) {};
+\path (lib.south -| plist.east)+(+0.2,-0.2) node (f) {};
+\path[fill=blue!10,rounded corners, draw=black!50, dashed]
+(e) rectangle (f);
+% experimenter background
+\path (exp.north west)+(-0.2,0.2) node (g) {};
+\path (explbl.south -| exp.east)+(+0.2,-0.2) node (h) {};
+\path[fill=blue!10,rounded corners, draw=black!50, dashed]
+(g) rectangle (h);
 
-   % library arrows
-   \path (ln.north)+(0,0.05) node (esttop){};    
-   \coordinate [above=0.2cm of hom] (gentop) {};
-   \coordinate [below=2cm of lib] (lsplit) {};
-   \coordinate [below=0.2cm of lib] (blwlib) {};
-   \coordinate [above=0.2cm of exp] (abvexp) {};
-   \draw [-,line width=1pt] (blwlib) -- (lsplit);
-   \draw [->,line width=1pt] (lsplit) -- (esttop);
-   \draw [->,line width=1pt] (lsplit) -| (abvexp);
-   \draw [->,line width=1pt] (lsplit) -| (gentop);
+% path from expparam to experiments
+\coordinate [above=1.51 of exp] (expln) {};
+\coordinate [above=1 of exp] (tpexp) {};
+\draw [dashed,line width=1pt] (expparam.west) -- (expln);
+% path from experiments to exp out
+\draw [->,line width=1pt] (explbl.south)+(0,-0.2) -- (expout.north);
 
-   % path from param to library link
-   \coordinate [above=0.8cm of lsplit] (tt) {};
-   \draw [dashed,line width=1pt] (param.east) -- (tt);
-   
-   % estimator arrows
-   \draw [->] (ln.south) -- (pc.north);
-   \draw [->] (pc.south) -- (bl.north);
-   \coordinate [below=0.2 of est] (blest) {};
-   \draw [->,line width=1pt] (blest)--(estout);
-   \coordinate [right=0.9 of estout] (restout) {};
-   \draw [dashed,line width=1pt] (estout.east) -- (restout);
-   \draw [dashed,line width=1pt] (restout) |- (tpexp);
-   
-   % generator arrows
-   \coordinate [above= 1 of ln] (abvln) {}; %above length est
-   \coordinate [below=0.2 of gen] (bgen) {};
-   \coordinate [right=0.9 of strout] (rstrout) {};
-   \draw [->,line width=1pt] (bgen) -- (strout);
-   \draw [->] (hom.south) -- (nhm.north);
-   \draw [dashed,line width=1pt] (strout.east) -- (rstrout);
-   \draw [dashed,line width=1pt] (rstrout) |- (abvln);
-   
-   \end{pgfonlayer}
-   %\node (lib) at (0,0) [sub] {Libraries};
-   %\node (est) at (1.5,-1) [sub] {Estimators};
-   %\node (gen) at (-1.5,-1) [sub] {Generators};
-   %\draw [->] (lib.east) -| (est.north);
-   %\draw [->] (lib.west) -| (gen.north);
-   \end{tikzpicture}
-   \caption{System structure}
-   \label{fig:sysstruct}
-   \end{figure}
+% library arrows
+\path (ln.north)+(0,0.05) node (esttop){};    
+\coordinate [above=0.2cm of hom] (gentop) {};
+\coordinate [below=2cm of lib] (lsplit) {};
+\coordinate [below=0.2cm of lib] (blwlib) {};
+\coordinate [above=0.2cm of exp] (abvexp) {};
+\draw [-,line width=1pt] (blwlib) -- (lsplit);
+\draw [->,line width=1pt] (lsplit) -- (esttop);
+\draw [->,line width=1pt] (lsplit) -| (abvexp);
+\draw [->,line width=1pt] (lsplit) -| (gentop);
+
+% path from param to library link
+\coordinate [above=0.8cm of lsplit] (tt) {};
+\draw [dashed,line width=1pt] (param.east) -- (tt);
+
+% estimator arrows
+\draw [->] (ln.south) -- (pc.north);
+\draw [->] (pc.south) -- (bl.north);
+\coordinate [below=0.2 of est] (blest) {};
+\draw [->,line width=1pt] (blest)--(estout);
+\coordinate [right=0.9 of estout] (restout) {};
+\draw [dashed,line width=1pt] (estout.east) -- (restout);
+\draw [dashed,line width=1pt] (restout) |- (tpexp);
+
+% generator arrows
+\coordinate [above= 1 of ln] (abvln) {}; %above length est
+\coordinate [below=0.2 of gen] (bgen) {};
+\coordinate [right=0.9 of strout] (rstrout) {};
+\draw [->,line width=1pt] (bgen) -- (strout);
+\draw [->] (hom.south) -- (nhm.north);
+\draw [dashed,line width=1pt] (strout.east) -- (rstrout);
+\draw [dashed,line width=1pt] (rstrout) |- (abvln);
+
+\end{pgfonlayer}
+%\node (lib) at (0,0) [sub] {Libraries};
+%\node (est) at (1.5,-1) [sub] {Estimators};
+%\node (gen) at (-1.5,-1) [sub] {Generators};
+%\draw [->] (lib.east) -| (est.north);
+%\draw [->] (lib.west) -| (gen.north);
+\end{tikzpicture}
+\caption{System structure}
+\label{fig:sysstruct}
+\end{figure}
+#+END_LaTeX
 *** Overall Structure
 *** Libraries
     - say what the function of each library is and what sort of functions it
@@ -495,6 +1014,7 @@ the flow of things?
 **** Time delay estimators
 *** Generators
 - muparser generator
+*** Interface
 ** Development
 *** Development Process
 - first draft up code in notebook to get down the concept
@@ -519,21 +1039,141 @@ the flow of things?
     - show examples of changelogs and commit messages from the same time period
     - writing up and planning layout in notebook
 * Evaluation
-** experimentation on simulated data
-*** Sine Functions
-   - $y=a-b\sin(\alpha t)$
-   - five values of $\alpha$: 0.05, 0.1, 0.15, 0.3, 0.6
-   - 50 pairs of realisations for each value of alpha
-   - first find optimal parameter setting to estimate the functions by using
-     model selection
-   - Take the parameters from that and run the time delay estimator on the
-     functions to see what results they give for the time delay.
-   - Compare the means and standard deviations etc of the gaussian and baseline
-     estimators to find out how good they are by using t-tests.
-*** Random Functions
+The experiments done have two stages. First, the optimum parameter set for each
+function that is being experimented on is found using model selection. Model
+selection involves withholding some of the data from the estimator so that we
+can see how well a parameter set generalises if not all the data is
+available. Withholding data is done by removing the event data from intervals
+uniformly distributed across the interval that is being estimated. Each function
+is estimated, and the value of the function in the regions where data was
+removed is compared to the value that would be expected had all the data been
+present. This is done using log probabilities, taking the Poisson PDF at each
+point. The sum of these log probabilities gives the parameter set its score for
+that function. The optimum parameter set for that function is the set which
+maximises the sum. Once the optimum parameter set has been found, the time delay
+for the pair of streams is estimated, using all the data that is available. From
+this we receive estimates of the time delay on which it is possible to perform
+statistical analysis. The mean, standard deviation and error for each estimate
+on each function is calculated, and from this we can examine the effectiveness
+of the estimates. The aim of the experimentation is to compare the effectiveness
+of the time delay estimation with four combinations of estimators: gaussian
+area, gaussian pdf, baseline area and baseline pdf.
+Talk about why there is a window on the effective values.
+** Sine Functions
+The first experiment performed was on sinusoidal functions of the form
+$y=a-b\sin(\alpha t)$. An increase in the value of $\alpha$ increases the
+oscillation frequency, and a decrease reduces it. The value of $a$ indicates how
+much the wave is shifted along the $y$-axis, and $b$ determines the
+amplitude of the wave.
+#+BEGIN_LaTeX
+\begin{figure}
+\begin{subfigure}{0.5\textwidth}
+\includegraphics[width=\textwidth]{prelim_sine_005}
+\caption{$\alpha=0.005$}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\includegraphics[width=\textwidth]{prelim_sine_01}
+\caption{$\alpha=0.01$}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\includegraphics[width=\textwidth]{prelim_sine_015}
+\caption{$\alpha=0.015$}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\includegraphics[width=\textwidth]{prelim_sine_03}
+\caption{$\alpha=0.03$}
+\end{subfigure}
+\begin{center}
+\begin{subfigure}{0.5\textwidth}
+\includegraphics[width=\textwidth]{prelim_sine_06}
+\caption{$\alpha=0.06$}
+\end{subfigure}
+\end{center}
+\caption{Functions used for preliminary experiments on sine functions, showing
+the different $\alpha$ values used.}
+\label{fig:avals}
+\end{figure}
+#+END_LaTeX
+*** Preliminary Experiments
+In the first set of experiments, we investigate the performance of the
+estimators on five values of $\alpha$: 0.05, 0.1, 0.15, 0.3 and 0.6. Figure
+\ref{fig:avals} gives an indication of what the functions look like. For
+each value of $\alpha$, 25 pairs of streams were independently generated, each
+with an interval of 100 time units and a time delay of 10 time steps between the
+two streams. The Gaussian estimator was set to sample the kernels at a
+resolution of 0.3 time steps, and the standard deviation of the kernels was
+varied. The baseline estimator was set to use 3 iterations of the
+IWLS estimator, and four other parameters were experimented on.
+\begin{description}
+\item[IWLS sub-intervals] 2, 4, 6, 8, 10
+\item[PDF threshold] 0.01 to 0.15 with a step of 0.01
+\item[Maximum extension] 5, 7, 9, 11, 13, 15, 17, 19, 20
+\item[Maximum breakpoints] As above
+\item[Gaussian standard deviation] 0.5 to 20 with a step of 0.5
+\end{description}
+The parameters were co-varied, meaning that each value for one
+of the parameter settings was tested with all possible values of the other
+parameters, for a total of 6115 possible combinations, resulting in 152,875 runs
+of the function estimator for each value of $\alpha$.
+
+The results of the experiment were interesting but inconclusive. Figure
+\ref{fig:prelimerror} shows the error of the various estimator combination at
+each value of alpha. Estimates appear to be reasonably accurate until $\alpha$
+exceeds 0.01, after which large errors become much greater, and standard
+deviation is large. The area time delay estimator is significantly better than
+the PDF for both of the function estimators, with $p$-values of 0.00017 and
+0.0000074 for the baseline and Gaussian method respectively at
+$\alpha=$ 0.005. The difference between the two function estimation methods was
+not significant, with $p$-values in excess of 0.4 for comparisons between the
+baseline and Gaussian estimators for the same time delay estimators at
+$\alpha=$ 0.005. Results from $\alpha>$ 0.005 show no statistical significance in
+the difference between the various estimators.
+
+#+CAPTION: Details for $\alpha=$ 0.005 ($\mu\pm\sigma$)
+#+LABEL: fig:pretab
+|      | Gaussian          | Baseline          |
+|------+-------------------+-------------------|
+| /    | <                 |                   |
+| Area | 10.39 $\pm$ 3.60  | 11.43 $\pm$ 6.18  |
+| PDF  | 22.20 $\pm$ 10.94 | 22.06 $\pm$ 11.20 |
+
+#+BEGIN_LaTeX
+\begin{center}
+\begin{figure}
+\begin{subfigure}{0.5\textwidth}
+\includegraphics[width=\textwidth]{base_area_prelim}
+\caption{Baseline area}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\includegraphics[width=\textwidth]{base_pmf_prelim}
+\caption{Baseline PDF}
+\end{subfigure}\\
+\begin{subfigure}{0.5\textwidth}
+\includegraphics[width=\textwidth]{gauss_area_prelim}
+\caption{Gaussian area}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+\includegraphics[width=\textwidth]{gauss_pmf_prelim}
+\caption{Gaussian PDF}
+\end{subfigure}
+\caption{Error on the preliminary experiments. Error bars show standard
+deviation of error. Performance appears to deteriorate when $\alpha>0.01$.}
+\label{fig:prelimerror}
+\end{figure}
+\end{center}
+#+END_LaTeX
+*** Refined experiments
+Although the previous set of experiments provide some indication as to the
+performance of the estimators, we investigated their effectiveness on a smaller
+range of $\alpha$ values. In this set of experiments, we used the same
+parameters, but generated a new set of functions for value of $\alpha$ from
+0.001 to 0.015, with a step of 0.001 between each successive set of stream
+pairs. For each value of $\alpha$, 10 pairs of streams were generated. The time
+delay was set to 15 time steps, and the experiments were run with the same set
+of experimental parameters as the previous experiments.
+** Random Functions
    - Streams in reality are not likely to follow sine curves, so additional
      experiments on randomly generated functions were also performed.
-** experimentation on real-world data
 * Conclusion
 ** Future Work and Improvements
 - Poisson generator - must set lambda to be greater than the value of the
