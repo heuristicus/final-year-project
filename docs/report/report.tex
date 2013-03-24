@@ -1,4 +1,4 @@
-% Created 2013-03-23 Sat 22:41
+% Created 2013-03-24 Sun 22:53
 \documentclass[a4paper,11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -21,8 +21,7 @@
 \usepackage{metalogo}
 \usepackage{graphicx}
 \usepackage{moreverb}
-\usepackage[center]{caption}
-\usepackage{subcaption}
+\usepackage{subfig}
 \let\iint\relax % otherwise errors are thrown by amsmath. Defined in latexsym
 \let\iiint\relax
 \usepackage{amsmath}
@@ -188,17 +187,15 @@ method to find objects such as black holes and brown dwarfs, which are otherwise
 difficult to detect \cite{schneider2006gravitational}.
 \begin{figure}
 \centering
-\begin{subfigure}{0.4\textwidth}
-\includegraphics[width=\textwidth]{einstein_ring}
-\caption{An Einstein ring}
+\subfloat[An Einstein ring]{
+\includegraphics[width=0.4\textwidth]{einstein_ring}
 \label{fig:einring}
-\end{subfigure}
+}
 \qquad
-\begin{subfigure}{0.4\textwidth}
-\includegraphics[width=\textwidth]{einstein_cross}
-\caption{Einstein's cross}
+\subfloat[Einstein's cross]{
+\includegraphics[width=0.4\textwidth]{einstein_cross}
 \label{fig:einsteincross}
-\end{subfigure}
+}
 \caption{Two examples of strong lensing effects. a) shows light from
 a distant blue galaxy being distorted by the central galaxy LRG 3-757
 \cite{einsteinring}. b) shows four images of a distant quasar being lensed by a
@@ -818,10 +815,12 @@ between the two is lowest is the natural point at which the two functions should
 match. Using the first estimate as a base, with its time delay set to zero, we
 guess at values of $\Delta$, and shift the second function by that value. Then,
 we calculate the inter-function area using
-    \begin{align}
-      d(\hat{\lambda}_1,\hat{\lambda}_2)&=\int(\hat{\lambda}_1(t)-\hat{\lambda}_2(t))^2\,dt\\
-      &\approx\frac{1}{N}\sum_{i=1}^N(\hat{\lambda}_1(t)-\hat{\lambda}_2(t))^2
-    \end{align}
+\begin{align}
+\begin{split}
+d(\hat{\lambda}_1,\hat{\lambda}_2)&=\int(\hat{\lambda}_1(t)-\hat{\lambda}_2(t))^2\,dt\\
+&\approx\frac{1}{N}\sum_{i=1}^N(\hat{\lambda}_1(t)-\hat{\lambda}_2(t))^2
+\end{split}
+\end{align}
 We make our estimate of $\Delta$ where the value of
 $d(\hat{\lambda}_1,\hat{\lambda}_2)$ is minimised. You will notice that to
 calculate the area between curves we must use an integral. In our case, an exact
@@ -1160,28 +1159,24 @@ $y=a-b\sin(\alpha t)$. An increase in the value of $\alpha$ increases the
 oscillation frequency, and a decrease reduces it. The value of $a$ indicates how
 much the wave is shifted along the $y$-axis, and $b$ determines the
 amplitude of the wave.
+
 \begin{figure}
-\begin{subfigure}{0.5\textwidth}
-\includegraphics[width=\textwidth]{prelim_sine_005}
-\caption{$\alpha=0.005$}
-\end{subfigure}
-\begin{subfigure}{0.5\textwidth}
-\includegraphics[width=\textwidth]{prelim_sine_01}
-\caption{$\alpha=0.01$}
-\end{subfigure}
-\begin{subfigure}{0.5\textwidth}
-\includegraphics[width=\textwidth]{prelim_sine_015}
-\caption{$\alpha=0.015$}
-\end{subfigure}
-\begin{subfigure}{0.5\textwidth}
-\includegraphics[width=\textwidth]{prelim_sine_03}
-\caption{$\alpha=0.03$}
-\end{subfigure}
+\subfloat[$\alpha=0.005$]{
+\includegraphics[width=0.5\textwidth]{prelim_sine_005}
+}
+\subfloat[$\alpha=0.01$]{
+\includegraphics[width=0.5\textwidth]{prelim_sine_01}
+}\\
+\subfloat[$\alpha=0.015$]{
+\includegraphics[width=0.5\textwidth]{prelim_sine_015}
+}
+\subfloat[$\alpha=0.03$]{
+\includegraphics[width=0.5\textwidth]{prelim_sine_03}
+}\\
 \begin{center}
-\begin{subfigure}{0.5\textwidth}
-\includegraphics[width=\textwidth]{prelim_sine_06}
-\caption{$\alpha=0.06$}
-\end{subfigure}
+\subfloat[$\alpha=0.06$]{
+\includegraphics[width=0.5\textwidth]{prelim_sine_06}
+}
 \end{center}
 \caption{Functions used for preliminary experiments on sine functions, showing
 the different $\alpha$ values used.}
@@ -1240,22 +1235,18 @@ each value of alpha.
 
 \begin{center}
 \begin{figure}
-\begin{subfigure}{0.5\textwidth}
-\includegraphics[width=\textwidth]{base_area_prelim}
-\caption{Baseline area}
-\end{subfigure}
-\begin{subfigure}{0.5\textwidth}
-\includegraphics[width=\textwidth]{base_pmf_prelim}
-\caption{Baseline PDF}
-\end{subfigure}\\
-\begin{subfigure}{0.5\textwidth}
-\includegraphics[width=\textwidth]{gauss_area_prelim}
-\caption{Gaussian area}
-\end{subfigure}
-\begin{subfigure}{0.5\textwidth}
-\includegraphics[width=\textwidth]{gauss_pmf_prelim}
-\caption{Gaussian PDF}
-\end{subfigure}
+\subfloat[Baseline area]{
+\includegraphics[width=0.5\textwidth]{base_area_prelim}
+}
+\subfloat[Baseline PDF]{
+\includegraphics[width=0.5\textwidth]{base_pmf_prelim}
+}\\
+\subfloat[Gaussian area]{
+\includegraphics[width=0.5\textwidth]{gauss_area_prelim}
+}
+\subfloat[Gaussian PDF]{
+\includegraphics[width=0.5\textwidth]{gauss_pmf_prelim}
+}
 \caption{Error on the preliminary experiments. Error bars show standard
 deviation of error. Performance appears to deteriorate when $\alpha>0.01$.}
 \label{fig:prelimerror}
@@ -1288,22 +1279,19 @@ performs slightly better, having smaller standard deviations than the area
 method.
 \begin{center}
 \begin{figure}
-\begin{subfigure}{0.5\textwidth}
-\includegraphics[width=\textwidth]{baseline_area_fine}
-\caption{Baseline area}
-\end{subfigure}
-\begin{subfigure}{0.5\textwidth}
-\includegraphics[width=\textwidth]{baseline_pmf_fine}
-\caption{Baseline PDF}
-\end{subfigure}\\
-\begin{subfigure}{0.5\textwidth}
-\includegraphics[width=\textwidth]{gaussian_area_fine}
-\caption{Gaussian area}
-\end{subfigure}
-\begin{subfigure}{0.5\textwidth}
-\includegraphics[width=\textwidth]{gaussian_pmf_fine}
-\caption{Gaussian PDF}
-\end{subfigure} \caption{Error on the second set of experiments. Error bars show
+\subfloat[Baseline area]{
+\includegraphics[width=0.5\textwidth]{baseline_area_fine}
+}
+\subfloat[Baseline PDF]{
+\includegraphics[width=0.5\textwidth]{baseline_pmf_fine}
+}\\
+\subfloat[Gaussian area]{
+\includegraphics[width=0.5\textwidth]{gaussian_area_fine}
+}
+\subfloat[Gaussian PDF]{
+\includegraphics[width=0.5\textwidth]{gaussian_pmf_fine}
+}
+\caption{Error on the second set of experiments. Error bars show
 standard deviation of error. Peak performance is in the window 0.004
 $\leq\alpha\leq$ 0.01}
 \label{fig:fineerror}
@@ -1349,6 +1337,31 @@ the same set of experimental parameters as in the previous set of experiments:
 \item[Maximum breakpoints] As above
 \item[Gaussian standard deviation] 0.5 to 20 with a step of 0.5
 \end{description}
+
+\begin{center}
+\begin{figure}
+\subfloat[$\alpha=0.4$]{
+\includegraphics[width=0.5\textwidth]{randfunc_04}
+}
+\subfloat[$\alpha=0.8$]{
+\includegraphics[width=0.5\textwidth]{randfunc_08}
+}\\
+\subfloat[$\alpha=1$]{
+\includegraphics[width=0.5\textwidth]{randfunc_1}
+}
+\subfloat[$\alpha=2$]{
+\includegraphics[width=0.5\textwidth]{randfunc_2}
+}\\
+\begin{center}
+\subfloat[$\alpha=3$]{
+\includegraphics[width=0.5\textwidth]{randfunc_3}
+}
+\end{center}
+\caption{Examples of random functions generated by different
+values of $\alpha$. Oscillation of the functions decreases as $\alpha$ increases.}
+\label{fig:randex}
+\end{figure}
+\end{center}
 \section{Conclusion}
 \label{sec-8}
 \subsection{Future Work and Improvements}
@@ -1582,6 +1595,56 @@ comparing the Gaussian area method against the baseline area method.
     0.015  &   0.74025  &      0.52892  &     0.17196  &      0.40520  &     0.18736  &   0.39848  \\
 \end{tabular}
 \end{center}
+\end{table}
+
+
+
+\begin{table}
+\subfloat[]{
+\begin{tabular}{l|ll}
+       &  Baseline             &  Gaussian             \\
+\hline
+ Area  &  17.884 $\pm$ 6.7225  &  16.62 $\pm$ 1.9959   \\
+ PDF   &  13.096 $\pm$ 10.82   &  15.132 $\pm$ 11.392  \\
+\end{tabular}
+}
+\subfloat[]{
+\begin{tabular}{l|ll}
+       &  Baseline             &  Gaussian             \\
+\hline
+ Area  &  16.472 $\pm$ 4.6097  &  15.424 $\pm$ 1.5155  \\
+ PDF   &  15.64 $\pm$ 4.566    &  15.644 $\pm$ 0.6141  \\
+\end{tabular}
+}\\
+\subfloat[]{
+\begin{tabular}{l|ll}
+       &  Baseline             &  Gaussian             \\
+\hline
+ Area  &  7.216 $\pm$ 18.96    &  13.6 $\pm$ 8.0519    \\
+ PDF   &  15.156 $\pm$ 8.9448  &  13.056 $\pm$ 9.1612  \\
+\end{tabular}
+}
+\subfloat[]{
+\begin{tabular}{l|ll}
+       &  Baseline             &  Gaussian             \\
+\hline
+ Area  &  15.068 $\pm$ 0.6497  &  14.932 $\pm$ 0.9018  \\
+ PDF   &  15.052 $\pm$ 3.0461  &  14.62 $\pm$ 4.2005   \\
+\end{tabular}
+}\\
+\begin{center}
+\subfloat[]{
+\begin{tabular}{l|ll}
+       &  Baseline              &  Gaussian             \\
+\hline
+ Area  &  16.148 $\pm$ 0.99434  &  14.844 $\pm$ 0.7548  \\
+ PDF   &  15.724 $\pm$ 5.9319   &  14.176 $\pm$ 6.8956  \\
+\end{tabular}
+}
+\end{center}
+\caption{Results for preliminary random function experiments. Mean estimates
+over five functions were averaged for each $\alpha$ value, and the standard
+deviation was calculated from the mean values. ($\mu\pm\sigma$)}
 \end{table}
 
 \end{appendices}
