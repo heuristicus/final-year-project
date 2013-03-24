@@ -11,6 +11,7 @@ for EST_TYPE in ${TD_EST_TYPES[@]}; do # Two types of time delay estimators
     echo -e "" > tmp
     for TYPE in ${FUNC_EST_TYPES[@]}; do # Two types of function estimators
 	INFILE=$INDIR/$TYPE\_$EST_TYPE.txt
+	# Take alpha, mean and stdev out of the file
 	ALPHA=(`awk '{print $1}' $INFILE`)
 	MEAN=(`awk '{print $3}' $INFILE`)
 	STDEV=(`awk '{print $4}' $INFILE`)

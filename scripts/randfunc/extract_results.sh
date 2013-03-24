@@ -30,10 +30,12 @@ for EST_TYPE in ${TD_EST_TYPES[@]}; do # Two types of time delay estimators
 #		REAL_ALPHA="`echo $TOP_NUM | sed 's/^[[:digit:]]/0./g'`"
 		# Write the results of this experiment into the file
 		echo -e "$BOT_NUM\t$RES" >> $OUTFILE
+		# Copy the file with the original data into the results folder to make it easier to find
 		cp $INDIR/$EST_TYPE/$TOP_PREFIX$TOP_NUM/$BOT_PREFIX$BOT_NUM/$TYPE/experiment_0/results.txt $OUTDIR/results/data/$TYPE\_$EST_TYPE\_$TOP_PREFIX$TOP_NUM\_$BOT_PREFIX$BOT_NUM.txt
 	    done
 	    echo -e "\n\n" >> $OUTFILE
 	done
+
     done
 done
 

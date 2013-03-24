@@ -15,17 +15,17 @@ read_end_y=3
 separator="\t"
 
 cd(dirname)
+format short G
 
 # Read all the filenames from the given directory
 files=dir(fullfile(dirname, '*'))
 sigmat=[] # Used to store the results of the paired t-tests
 errmat=[] # Used to store the results of single t-tests on the error difference
-
 # Loop over all file names
 for ind = 1:length(files)
   # Extract the data from the current file
-  data = dlmread(files(ind).name, separator, [read_start_x,read_start_y,read_end_x,read_end_y])
   
+  data = dlmread(files(ind).name, separator, [read_start_x,read_start_y,read_end_x,read_end_y])
   # There are four possible methods which we can work with.
   for i = 1:4
     # There are four possible methods to which we can compare the first method
@@ -34,6 +34,8 @@ for ind = 1:length(files)
       if j==i
 	continue
       endif
+      first(end+1)=i
+      comp(end+1)=j
       # Contains the first set of error data from the file, for the ith method
       d1=data(:,i)
       # Contains the second set of error data from the file, for the jth method
@@ -50,7 +52,15 @@ for ind = 1:length(files)
   sigmat = [sigmat;pvalSig]
   # Append the error diff values to the result matrix
   errmat = [errmat;pvalErrorDiff]
+
+  # Information about which i and j values were compared in which column
+  # of data
+  comps=[first;comp]
   # Clear the variables so that they can be re-used in the next loop
+  files.name
   clear pvalSig
   clear pvalErrorDiff
+  clear first
+  clear comp
 endfor
+
