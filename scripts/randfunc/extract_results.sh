@@ -18,20 +18,21 @@ fi
 
 for EST_TYPE in ${TD_EST_TYPES[@]}; do # Two types of time delay estimators
     for TYPE in ${FUNC_EST_TYPES[@]}; do # Two types of function estimators
+	OUTFILE=$OUTDIR/$TYPE\_$EST_TYPE.txt # Create a file for this parameter
+	echo "" > $OUTFILE
 	for TOP_NUM in ${TOP_NUMS[@]}; do # Top level directories - this is usually the alpha parameter
-	    echo "" > $OUTDIR/$TYPE\_$EST_TYPE\_$TOP_NAME\_$TOP_NUM.txt # Create a file for this parameter
-	    echo -e "# $BOT_NAME\tActual delay\tMean estimate\tStandard dev\tMean error" >> $OUTDIR/$TYPE\_$EST_TYPE\_$TOP_NAME\_$TOP_NUM.txt
+	    echo -e "# $TOP_NAME$TOP_NUM" >> $OUTFILE
+	    echo -e "# $BOT_NAME\tActual delay\tMean estimate\tStandard dev\tMean error" >> $OUTFILE
 	    for BOT_NUM in ${BOT_NUMS[@]}; do # Subdirectories - different functions experimented with
 		#echo "est_type=$EST_TYPE, $TOP_NAME=$TOP_NUM, $BOT_NAME=$BOT_NUM, type=$TYPE" 
 		# Extract the first stream estimate information from the input directory, stripping the text
 		RES="`grep -A 4 "Stream 1" $INDIR/$EST_TYPE/$TOP_PREFIX$TOP_NUM/$BOT_PREFIX$BOT_NUM/$TYPE/experiment_0/results.txt | sed '1d;s/Actual: //g;s/Mean est: //g;s/Est stdev: //g;s/Mean error: //g' | tr '\n' '\t'`"
 #		REAL_ALPHA="`echo $TOP_NUM | sed 's/^[[:digit:]]/0./g'`"
 		# Write the results of this experiment into the file
-
-		echo -e "$BOT_NUM\t$RES" >> $OUTDIR/$TYPE\_$EST_TYPE\_$TOP_NAME\_$TOP_NUM.txt
+		echo -e "$BOT_NUM\t$RES" >> $OUTFILE
 		cp $INDIR/$EST_TYPE/$TOP_PREFIX$TOP_NUM/$BOT_PREFIX$BOT_NUM/$TYPE/experiment_0/results.txt $OUTDIR/results/data/$TYPE\_$EST_TYPE\_$TOP_PREFIX$TOP_NUM\_$BOT_PREFIX$BOT_NUM.txt
-		#echo -e "\n\n"
 	    done
+	    echo -e "\n\n" >> $OUTFILE
 	done
     done
 done

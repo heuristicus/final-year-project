@@ -11,7 +11,9 @@ for FILE in $INDIR/*; do
 	echo $FILE
 	for STREAM in ${STREAM_NUMS[@]}; do
 	    COL=$((1+$STREAM))
-	    RES=`awk '{print $'$COL'}' $FILE | grep -v '^\s*$' | pr -tw50 --columns 4 | sed 's/ \+ /\t/g'`
+	    # Grab the column for the stream from file, grep out the whitespace, then print 4 columns
+	    # and delete the top line of the resulting data, which contains unneeded text
+	    RES=`awk '{print $'$COL'}' $FILE | grep -v '^\s*$' | pr -ts --columns 4 | sed '1d'`
 	    echo "$RES" > $INDIR/ttest/$(basename $FILE)\_ttest
 	    echo -e "\n\n`grep td_ $FILE`" >> $INDIR/ttest/$(basename $FILE)\_ttest
 	done
