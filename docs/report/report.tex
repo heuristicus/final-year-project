@@ -1,4 +1,4 @@
-% Created 2013-03-24 Sun 22:53
+% Created 2013-03-25 Mon 22:48
 \documentclass[a4paper,11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -22,6 +22,7 @@
 \usepackage{graphicx}
 \usepackage{moreverb}
 \usepackage{subfig}
+\usepackage{float}
 \let\iint\relax % otherwise errors are thrown by amsmath. Defined in latexsym
 \let\iiint\relax
 \usepackage{amsmath}
@@ -117,10 +118,10 @@ understanding of the universe we live in.
 
 In section \ref{sec-2} we discuss the concepts underpinning the project in more
 detail, with a more in-depth explanation of the issues surrounding the
-calculation of the time delay and its uses. In section \ref{sec-3} we introduce our method of generating photon streams from Poisson
+calculation of the time delay and its uses. In section \ref{sec-4} we introduce our method of generating photon streams from Poisson
 processes. Section \ref{sec-2-3} shows our approach to estimating the
 underlying function of a given stream of photons. Our methods of calculating the
-time delays between multiple photon streams are explained in section \ref{sec-5}. Section \ref{sec-6} gives detailed information on the design and
+time delays between multiple photon streams are explained in section \ref{sec-6}. Section \ref{sec-3} gives detailed information on the design and
 development of the system, including the software and project management
 aspects. Finally, in section \ref{sec-7} we present experimental data from both
 simulated and real data and discuss the relative effectiveness of our methods.
@@ -318,8 +319,204 @@ applications.
 \begin{itemize}
 \item Show some examples of different kernels
 \end{itemize}
-\section{Simulation of Photon Streams}
+\section{System}
 \label{sec-3}
+\subsection{System Structure}
+\label{sec-3-1}
+
+\begin{figure}
+\centering
+\pgfdeclarelayer{background}
+\pgfdeclarelayer{foreground}
+\pgfsetlayers{background,main,foreground}
+% horizontal separation
+\def \hnsep {0.5}
+\tikzstyle{sub}=[draw, fill=blue!20, text width=5em, 
+text centered, minimum height=2.5em, node distance=1.5cm]
+
+\begin{tikzpicture}
+\node (param) at (0,3.5) [sub] {Parameter file};
+% libs group
+\node (math) at (2,6) [sub] {Math};
+\node (gut) [sub, right=\hnsep of math] {General};
+\node (file) [sub, right=\hnsep of gut] {File};
+\node (plist) [sub, right=\hnsep of file] {Parameter List};
+\node (lib) [below right=0.25cm and -0.65 of gut] {\textbf{Libraries}};
+% generator group
+\node (hom) at (2,1) [sub] {HPP};
+\node (nhm) [sub, below of=hom] {NHPP};
+\node (rfunc) [sub, below of=nhm] {Random Function};
+\node (gauss) [sub, below of=rfunc] {Gaussian};
+\node (gen) [below of=gauss, font=\small] {\textbf{Generators}};
+\node (strout) [sub, below of=gen] {Stream Data};
+% estimator group
+\node (ln) at (6,0) [sub] {Linear};
+\node (pc) [sub, below of=ln] {Piecewise};
+\node (bl) [sub, below of=pc] {Baseline};
+\node (kd) [sub, below of=bl] {Kernel Density};
+\node (td) [sub, below of=kd] {Time Delta};
+\node (est) [below of=td, font=\small] {\textbf{Estimators}};
+\node (estout) [sub, below of=est] {Estimator Output};
+% experimenter
+\node (expparam) at (11.5,2) [sub] {Experiment Parameters};
+\node (exp) at (10,0) [sub] {Harness};
+\node (explbl) [below of=exp, font=\small] {\textbf{Experimenter}};
+\node (expout) [sub, below of=explbl] {Experiment Results};
+% Draw the rest on the background layer
+\begin{pgfonlayer}{background}
+% Estimator background
+\path (ln.north west)+(-0.2,0.2) node (a) {};
+\path (est.south -| ln.east)+(+0.2,-0.2) node (b) {};
+\path[fill=blue!10,rounded corners, draw=black!50, dashed]
+(a) rectangle (b);
+% generator background
+\path (hom.north west)+(-0.2,0.2) node (c) {};
+\path (gen.south -| hom.east)+(+0.2,-0.2) node (d) {};
+\path[fill=blue!10,rounded corners, draw=black!50, dashed]
+(c) rectangle (d);
+% libs background
+\path (math.north west)+(-0.2,0.2) node (e) {};
+\path (lib.south -| plist.east)+(+0.2,-0.2) node (f) {};
+\path[fill=blue!10,rounded corners, draw=black!50, dashed]
+(e) rectangle (f);
+% experimenter background
+\path (exp.north west)+(-0.2,0.2) node (g) {};
+\path (explbl.south -| exp.east)+(+0.2,-0.2) node (h) {};
+\path[fill=blue!10,rounded corners, draw=black!50, dashed]
+(g) rectangle (h);
+
+% path from expparam to experiments
+\coordinate [above=1.51 of exp] (expln) {};
+\coordinate [above=1 of exp] (tpexp) {};
+\draw [dashed,line width=1pt] (expparam.west) -- (expln);
+% path from experiments to exp out
+\draw [->,line width=1pt] (explbl.south)+(0,-0.2) -- (expout.north);
+
+% library arrows
+\path (ln.north)+(0,0.05) node (esttop){};    
+\coordinate [above=0.2cm of hom] (gentop) {};
+\coordinate [below=2cm of lib] (lsplit) {};
+\coordinate [below=0.2cm of lib] (blwlib) {};
+\coordinate [above=0.2cm of exp] (abvexp) {};
+\draw [-,line width=1pt] (blwlib) -- (lsplit);
+\draw [->,line width=1pt] (lsplit) -- (esttop);
+\draw [->,line width=1pt] (lsplit) -| (abvexp);
+\draw [->,line width=1pt] (lsplit) -| (gentop);
+
+% path from param to library link
+\coordinate [above=0.8cm of lsplit] (tt) {};
+\draw [dashed,line width=1pt] (param.east) -- (tt);
+
+% estimator arrows
+\draw [->] (ln.south) -- (pc.north);
+\draw [->] (pc.south) -- (bl.north);
+\coordinate [below=0.2 of est] (blest) {};
+\draw [->,line width=1pt] (blest)--(estout);
+\coordinate [right=0.9 of estout] (restout) {};
+\draw [dashed,line width=1pt] (estout.east) -- (restout);
+\draw [dashed,line width=1pt] (restout) |- (tpexp);
+
+% generator arrows
+\coordinate [above= 1 of ln] (abvln) {}; %above length est
+\coordinate [below=0.2 of gen] (bgen) {};
+\coordinate [right=0.9 of strout] (rstrout) {};
+\draw [->,line width=1pt] (bgen) -- (strout);
+\draw [->] (hom.south) -- (nhm.north);
+\draw [dashed,line width=1pt] (strout.east) -- (rstrout);
+\draw [dashed,line width=1pt] (rstrout) |- (abvln);
+
+\end{pgfonlayer}
+%\node (lib) at (0,0) [sub] {Libraries};
+%\node (est) at (1.5,-1) [sub] {Estimators};
+%\node (gen) at (-1.5,-1) [sub] {Generators};
+%\draw [->] (lib.east) -| (est.north);
+%\draw [->] (lib.west) -| (gen.north);
+\end{tikzpicture}
+\caption{System structure}
+\label{fig:sysstruct}
+\end{figure}
+\subsubsection{Overall Structure}
+\label{sec-3-1-1}
+\subsubsection{Libraries}
+\label{sec-3-1-2}
+
+\begin{itemize}
+\item say what the function of each library is and what sort of functions it
+      contains.
+\end{itemize}
+\subsubsection{Estimators}
+\label{sec-3-1-3}
+
+Maybe this stuff should be in each individual section rather than here? talk
+about how the system is interlinked in those sections - makes more sense with
+the flow of things?
+\begin{itemize}
+
+\item Function estimators
+\label{sec-3-1-3-1}%
+\begin{itemize}
+\item talk about each estimator and where it is used, and how they are related.
+\item OLS->IWLS->Piecewise->Baseline
+\item gaussian + normalisation
+\end{itemize}
+
+\item Time delay estimators
+\label{sec-3-1-3-2}%
+\end{itemize} % ends low level
+\subsubsection{Generators}
+\label{sec-3-1-4}
+
+\begin{itemize}
+\item muparser generator
+\end{itemize}
+\subsubsection{Interface}
+\label{sec-3-1-5}
+\subsection{Development}
+\label{sec-3-2}
+\subsubsection{Development Process}
+\label{sec-3-2-1}
+
+\begin{itemize}
+\item first draft up code in notebook to get down the concept
+\item write a basic code skeleton and add tests to make sure that it works as
+  intended - particularly for mathematics and the like
+\item flesh out the code and integrate it with the system
+\item make code as modular as possible to make it easy to add stuff in later
+\end{itemize}
+\subsubsection{Development methodologies}
+\label{sec-3-2-2}
+
+\begin{itemize}
+\item could be merged with previous section, but mention some of the unix rules of
+  thumb, like the rule of least surprise and so on.
+\end{itemize}
+\subsubsection{Testing}
+\label{sec-3-2-3}
+
+\begin{itemize}
+\item talk about check, which functions were tested (mostly library functions, hard
+  to test estimators in a reliable way)
+\item give examples of the tests
+\end{itemize}
+\subsubsection{Version Control}
+\label{sec-3-2-4}
+
+\begin{itemize}
+\item branching strategy
+\item commit frequency
+\item using issues on github
+\item storing backups of tags on svn
+\end{itemize}
+\subsubsection{Project Management}
+\label{sec-3-2-5}
+
+\begin{itemize}
+\item keep changelog
+\item show examples of changelogs and commit messages from the same time period
+\item writing up and planning layout in notebook
+\end{itemize}
+\section{Simulation of Photon Streams}
+\label{sec-4}
 
 The first step in building the system was the development of a photon stream
 simulator. The ability to simulate photon streams means that the system can be
@@ -339,7 +536,7 @@ duration of the simulation. To be able to simulate a wide variety of functions,
 it is necessary to have the capacity to generate functions with different
 characteristics.
 \subsection{Function Generation}
-\label{sec-3-1}
+\label{sec-4-1}
 
 To evaluate the performance of the function and time delay estimators, it will
 be necessary to test the accuracy of the estimates on different types of
@@ -407,7 +604,7 @@ In addition to the random function generation, it may sometimes be useful to
 generate a function from a known expression, and the system includes this
 functionality as well, which will be described below.
 \subsection{Generating Streams from Functions}
-\label{sec-3-2}
+\label{sec-4-2}
 
    Once the function has been generated, we can use it to generate values for
    the random variable $X$ which governs a NHPP. To generate a NHPP, it is
@@ -449,7 +646,7 @@ functionality as well, which will be described below.
 \item \href{http://preshing.com/20111007/how-to-generate-random-timings-for-a-poisson-process}{http://preshing.com/20111007/how-to-generate-random-timings-for-a-poisson-process}
 \end{itemize}
 \subsection{Implementation}
-\label{sec-3-3}
+\label{sec-4-3}
 
     The implementation of the random and expression based function generators
     form the first part of the \emph{generator} sub-system. This part of the
@@ -464,7 +661,7 @@ functionality as well, which will be described below.
 \item How expr and gauss version differ
 \end{itemize}
 \subsubsection{Generating from Expressions}
-\label{sec-3-3-1}
+\label{sec-4-3-1}
 
 \begin{itemize}
 \item muparser
@@ -472,17 +669,17 @@ functionality as well, which will be described below.
 \item parsed in and calculated automatically
 \end{itemize}
 \subsubsection{Generating from Random Functions}
-\label{sec-3-3-2}
+\label{sec-4-3-2}
 
 \begin{itemize}
 \item 
 \end{itemize}
 \section{Function Estimation}
-\label{sec-4}
+\label{sec-5}
 \subsection{Baseline Estimation}
-\label{sec-4-1}
+\label{sec-5-1}
 \subsubsection{Ordinary Least Squares}
-\label{sec-4-1-1}
+\label{sec-5-1-1}
 
 The Ordinary least squares (OLS) estimator forms the core of the baseline
 estimator. This estimator will form an estimate by minimising the sum of squared
@@ -610,7 +807,7 @@ With this set of equations, the structure of the OLS estimator is complete.
   get a simple estimator working before moving on to more complex ones
 \end{itemize}
 \subsubsection{Iterative Weighted Least Squares}
-\label{sec-4-1-2}
+\label{sec-5-1-2}
 
 The iterative weighted least squares (IWLS) builds upon the OLS estimator. As
 the name suggests, the extension is to include an iterative part. The OLS
@@ -653,7 +850,7 @@ which are not straight lines.
   always some function which is not a line.
 \end{itemize}
 \subsubsection{Piecewise Iterative Weighted Least Squares}
-\label{sec-4-1-3}
+\label{sec-5-1-3}
 
 It is clear that the IWLS estimator alone is not sufficient to complete our
 task. In order to have a reasonable estimate of the characteristic function, we
@@ -725,7 +922,7 @@ jumps between intervals.
 \begin{itemize}
 
 \item coding issues\\
-\label{sec-4-1-3-1}%
+\label{sec-5-1-3-1}%
 what to do with the issue of minimum length of intervals? Sometimes
 not extending the original gives a better estimate of the line than
 re-estimating the interval extended, or adding the short interval onto
@@ -735,7 +932,7 @@ baseline estimate of that with no minimum, and the other set is the
 estimate with minimum interval length applied
 \end{itemize} % ends low level
 \subsubsection{Baseline}
-\label{sec-4-1-4}
+\label{sec-5-1-4}
 
 In the previous section, we introduced a piecewise method for function
 estimation. In this section we present the final modification to that estimator
@@ -755,7 +952,7 @@ with a continuous function that forms our estimate of the function.
 \item show a baseline and piecewise estimate on the same function
 \end{itemize}
 \subsection{Kernel Density Estimation}
-\label{sec-4-2}
+\label{sec-5-2}
 
 For comparison to the baseline estimator, a kernel density estimator was also
 implemented. A kernel density estimator works by estimating the function using
@@ -788,9 +985,9 @@ gives us the normalised estimate of the function.
 \item how the normalisation constant is found, using pmf stuff
 \end{itemize}
 \subsection{Implementation}
-\label{sec-4-3}
+\label{sec-5-3}
 \section{Time Delay Estimation}
-\label{sec-5}
+\label{sec-6}
 
 Once we are able to estimate the characteristic function of photon streams, we
 can use these estimates to attempt to provide an estimate of the time delay
@@ -805,7 +1002,7 @@ time delay between a pair of photon streams.
   referring to the introduction a little?
 \end{itemize}
 \subsection{Area Method}
-\label{sec-5-1}
+\label{sec-6-1}
 
 The first of the two methods uses a very simple metric to estimate the time
 delay. By taking the two function estimates, we can attempt to match up the two
@@ -862,7 +1059,7 @@ instead, which gives us a value which is good enough for our purposes.
 \item show integral formula and then show the simplified discrete formula
 \end{itemize}
 \subsection{Probability Density Function Method}
-\label{sec-5-2}
+\label{sec-6-2}
 
 The second method of estimation is using probability density functions. As
 before, we guess a value of $\Delta$ between $-\Delta_{\text{max}}$ and
@@ -932,235 +1129,10 @@ in order to refine the estimate.
 \item calculate probability mass function at each point on the function and choose
   the time delay which maximises the value
 \end{itemize}
-\section{System}
-\label{sec-6}
-\subsection{System Structure}
-\label{sec-6-1}
-
-\begin{figure}
-\centering
-\pgfdeclarelayer{background}
-\pgfdeclarelayer{foreground}
-\pgfsetlayers{background,main,foreground}
-% horizontal separation
-\def \hnsep {0.5}
-\tikzstyle{sub}=[draw, fill=blue!20, text width=5em, 
-text centered, minimum height=2.5em, node distance=1.5cm]
-
-\begin{tikzpicture}
-\node (param) at (0,3.5) [sub] {Parameter file};
-% libs group
-\node (math) at (2,6) [sub] {Math};
-\node (gut) [sub, right=\hnsep of math] {General};
-\node (file) [sub, right=\hnsep of gut] {File};
-\node (plist) [sub, right=\hnsep of file] {Parameter List};
-\node (lib) [below right=0.25cm and -0.65 of gut] {\textbf{Libraries}};
-% generator group
-\node (hom) at (2,1) [sub] {HPP};
-\node (nhm) [sub, below of=hom] {NHPP};
-\node (rfunc) [sub, below of=nhm] {Random Function};
-\node (gauss) [sub, below of=rfunc] {Gaussian};
-\node (gen) [below of=gauss, font=\small] {\textbf{Generators}};
-\node (strout) [sub, below of=gen] {Stream Data};
-% estimator group
-\node (ln) at (6,0) [sub] {Linear};
-\node (pc) [sub, below of=ln] {Piecewise};
-\node (bl) [sub, below of=pc] {Baseline};
-\node (kd) [sub, below of=bl] {Kernel Density};
-\node (td) [sub, below of=kd] {Time Delta};
-\node (est) [below of=td, font=\small] {\textbf{Estimators}};
-\node (estout) [sub, below of=est] {Estimator Output};
-% experimenter
-\node (expparam) at (11.5,2) [sub] {Experiment Parameters};
-\node (exp) at (10,0) [sub] {Harness};
-\node (explbl) [below of=exp, font=\small] {\textbf{Experimenter}};
-\node (expout) [sub, below of=explbl] {Experiment Results};
-% Draw the rest on the background layer
-\begin{pgfonlayer}{background}
-% Estimator background
-\path (ln.north west)+(-0.2,0.2) node (a) {};
-\path (est.south -| ln.east)+(+0.2,-0.2) node (b) {};
-\path[fill=blue!10,rounded corners, draw=black!50, dashed]
-(a) rectangle (b);
-% generator background
-\path (hom.north west)+(-0.2,0.2) node (c) {};
-\path (gen.south -| hom.east)+(+0.2,-0.2) node (d) {};
-\path[fill=blue!10,rounded corners, draw=black!50, dashed]
-(c) rectangle (d);
-% libs background
-\path (math.north west)+(-0.2,0.2) node (e) {};
-\path (lib.south -| plist.east)+(+0.2,-0.2) node (f) {};
-\path[fill=blue!10,rounded corners, draw=black!50, dashed]
-(e) rectangle (f);
-% experimenter background
-\path (exp.north west)+(-0.2,0.2) node (g) {};
-\path (explbl.south -| exp.east)+(+0.2,-0.2) node (h) {};
-\path[fill=blue!10,rounded corners, draw=black!50, dashed]
-(g) rectangle (h);
-
-% path from expparam to experiments
-\coordinate [above=1.51 of exp] (expln) {};
-\coordinate [above=1 of exp] (tpexp) {};
-\draw [dashed,line width=1pt] (expparam.west) -- (expln);
-% path from experiments to exp out
-\draw [->,line width=1pt] (explbl.south)+(0,-0.2) -- (expout.north);
-
-% library arrows
-\path (ln.north)+(0,0.05) node (esttop){};    
-\coordinate [above=0.2cm of hom] (gentop) {};
-\coordinate [below=2cm of lib] (lsplit) {};
-\coordinate [below=0.2cm of lib] (blwlib) {};
-\coordinate [above=0.2cm of exp] (abvexp) {};
-\draw [-,line width=1pt] (blwlib) -- (lsplit);
-\draw [->,line width=1pt] (lsplit) -- (esttop);
-\draw [->,line width=1pt] (lsplit) -| (abvexp);
-\draw [->,line width=1pt] (lsplit) -| (gentop);
-
-% path from param to library link
-\coordinate [above=0.8cm of lsplit] (tt) {};
-\draw [dashed,line width=1pt] (param.east) -- (tt);
-
-% estimator arrows
-\draw [->] (ln.south) -- (pc.north);
-\draw [->] (pc.south) -- (bl.north);
-\coordinate [below=0.2 of est] (blest) {};
-\draw [->,line width=1pt] (blest)--(estout);
-\coordinate [right=0.9 of estout] (restout) {};
-\draw [dashed,line width=1pt] (estout.east) -- (restout);
-\draw [dashed,line width=1pt] (restout) |- (tpexp);
-
-% generator arrows
-\coordinate [above= 1 of ln] (abvln) {}; %above length est
-\coordinate [below=0.2 of gen] (bgen) {};
-\coordinate [right=0.9 of strout] (rstrout) {};
-\draw [->,line width=1pt] (bgen) -- (strout);
-\draw [->] (hom.south) -- (nhm.north);
-\draw [dashed,line width=1pt] (strout.east) -- (rstrout);
-\draw [dashed,line width=1pt] (rstrout) |- (abvln);
-
-\end{pgfonlayer}
-%\node (lib) at (0,0) [sub] {Libraries};
-%\node (est) at (1.5,-1) [sub] {Estimators};
-%\node (gen) at (-1.5,-1) [sub] {Generators};
-%\draw [->] (lib.east) -| (est.north);
-%\draw [->] (lib.west) -| (gen.north);
-\end{tikzpicture}
-\caption{System structure}
-\label{fig:sysstruct}
-\end{figure}
-\subsubsection{Overall Structure}
-\label{sec-6-1-1}
-\subsubsection{Libraries}
-\label{sec-6-1-2}
-
-\begin{itemize}
-\item say what the function of each library is and what sort of functions it
-      contains.
-\end{itemize}
-\subsubsection{Estimators}
-\label{sec-6-1-3}
-
-Maybe this stuff should be in each individual section rather than here? talk
-about how the system is interlinked in those sections - makes more sense with
-the flow of things?
-\begin{itemize}
-
-\item Function estimators
-\label{sec-6-1-3-1}%
-\begin{itemize}
-\item talk about each estimator and where it is used, and how they are related.
-\item OLS->IWLS->Piecewise->Baseline
-\item gaussian + normalisation
-\end{itemize}
-
-\item Time delay estimators
-\label{sec-6-1-3-2}%
-\end{itemize} % ends low level
-\subsubsection{Generators}
-\label{sec-6-1-4}
-
-\begin{itemize}
-\item muparser generator
-\end{itemize}
-\subsubsection{Interface}
-\label{sec-6-1-5}
-\subsection{Development}
-\label{sec-6-2}
-\subsubsection{Development Process}
-\label{sec-6-2-1}
-
-\begin{itemize}
-\item first draft up code in notebook to get down the concept
-\item write a basic code skeleton and add tests to make sure that it works as
-  intended - particularly for mathematics and the like
-\item flesh out the code and integrate it with the system
-\item make code as modular as possible to make it easy to add stuff in later
-\end{itemize}
-\subsubsection{Development methodologies}
-\label{sec-6-2-2}
-
-\begin{itemize}
-\item could be merged with previous section, but mention some of the unix rules of
-  thumb, like the rule of least surprise and so on.
-\end{itemize}
-\subsubsection{Testing}
-\label{sec-6-2-3}
-
-\begin{itemize}
-\item talk about check, which functions were tested (mostly library functions, hard
-  to test estimators in a reliable way)
-\item give examples of the tests
-\end{itemize}
-\subsubsection{Version Control}
-\label{sec-6-2-4}
-
-\begin{itemize}
-\item branching strategy
-\item commit frequency
-\item using issues on github
-\item storing backups of tags on svn
-\end{itemize}
-\subsubsection{Project Management}
-\label{sec-6-2-5}
-
-\begin{itemize}
-\item keep changelog
-\item show examples of changelogs and commit messages from the same time period
-\item writing up and planning layout in notebook
-\end{itemize}
 \section{Evaluation}
 \label{sec-7}
 
-The experiments done have two stages. First, the optimum parameter set for each
-function that is being experimented on is found using model selection. Model
-selection involves withholding some of the data from the estimator so that we
-can see how well a parameter set generalises if not all the data is
-available. Withholding data is done by removing the event data from intervals
-uniformly distributed across the interval that is being estimated. Each function
-is estimated, and the value of the function in the regions where data was
-removed is compared to the value that would be expected had all the data been
-present. This is done using log probabilities, taking the Poisson PDF at each
-point. The sum of these log probabilities gives the parameter set its score for
-that function. The optimum parameter set for that function is the set which
-maximises the sum. Once the optimum parameter set has been found, the time delay
-for the pair of streams is estimated, using all the data that is available. From
-this we receive estimates of the time delay on which it is possible to perform
-statistical analysis. The mean, standard deviation and error for each estimate
-on each function is calculated, and from this we can examine the effectiveness
-of the estimates. The aim of the experimentation is to compare the effectiveness
-of the time delay estimation with four combinations of estimators: gaussian
-area, gaussian pdf, baseline area and baseline pdf. For the full set of
-experimental results, see Appendix \ref{sec-11}.
-\subsection{Sine Functions}
-\label{sec-7-1}
-
-The first experiment performed was on sinusoidal functions of the form
-$y=a-b\sin(\alpha t)$. An increase in the value of $\alpha$ increases the
-oscillation frequency, and a decrease reduces it. The value of $a$ indicates how
-much the wave is shifted along the $y$-axis, and $b$ determines the
-amplitude of the wave.
-
-\begin{figure}
+\begin{figure}[h!tb]
 \subfloat[$\alpha=0.005$]{
 \includegraphics[width=0.5\textwidth]{prelim_sine_005}
 }
@@ -1182,6 +1154,39 @@ amplitude of the wave.
 the different $\alpha$ values used.}
 \label{fig:avals}
 \end{figure}
+The experiments done have two stages. First, the optimum parameter set for each
+function that is being experimented on is found using model selection. Model
+selection involves withholding some of the data from the estimator so that we
+can see how well a parameter set generalises if not all the data is
+available. Withholding data is done by removing the event data from intervals
+uniformly distributed across the interval that is being estimated. Each function
+is estimated, and the value of the function in the regions where data was
+removed is compared to the value that would be expected had all the data been
+present. This is done using log probabilities, taking the Poisson PDF at each
+point. The sum of these log probabilities gives the parameter set its score for
+that function. The optimum parameter set for that function is the set which
+maximises the sum.
+
+Once the optimum parameter set has been found, the time delay
+for the pair of streams is estimated, using all the data that is available. From
+this we receive estimates of the time delay on which it is possible to perform
+statistical analysis. The mean, standard deviation and error for each estimate
+on each function is calculated, and from this we can examine the effectiveness
+of the estimates. The aim of the experimentation is to compare the effectiveness
+of the time delay estimation with four combinations of estimators: gaussian
+area, gaussian pdf, baseline area and baseline pdf. For the full set of
+experimental results, see Appendix \ref{sec-11}.
+
+We assume that the distribution of the samples is Gaussian, but this may not be
+the case. However, full non-parametric testing is out of the scope of this project.
+\subsection{Sine Functions}
+\label{sec-7-1}
+
+The first experiment performed was on sinusoidal functions of the form
+$y=a-b\sin(\alpha t)$. An increase in the value of $\alpha$ increases the
+oscillation frequency, and a decrease reduces it. The value of $a$ indicates how
+much the wave is shifted along the $y$-axis, and $b$ determines the
+amplitude of the wave.
 \subsubsection{Preliminary Experiments}
 \label{sec-7-1-1}
 
@@ -1205,7 +1210,25 @@ The parameters were co-varied, meaning that each value for one
 of the parameter settings was tested with all possible values of the other
 parameters, for a total of 6115 possible combinations, resulting in 152,875 runs
 of the function estimator for each value of $\alpha$.
-
+\begin{center}
+\begin{figure}
+\subfloat[Baseline area]{
+\includegraphics[width=0.5\textwidth]{base_area_prelim}
+}
+\subfloat[Baseline PDF]{
+\includegraphics[width=0.5\textwidth]{base_pmf_prelim}
+}\\
+\subfloat[Gaussian area]{
+\includegraphics[width=0.5\textwidth]{gauss_area_prelim}
+}
+\subfloat[Gaussian PDF]{
+\includegraphics[width=0.5\textwidth]{gauss_pmf_prelim}
+}
+\caption{Error on the preliminary experiments. Error bars show standard
+deviation of error. Performance appears to deteriorate when $\alpha>0.01$.}
+\label{fig:prelimerror}
+\end{figure}
+\end{center}
 Estimates appear to be reasonably accurate until $\alpha$ exceeds 0.01, after
 which errors become much greater, and standard deviation increases. The area
 time delay estimator is significantly better than the PDF for both of the
@@ -1231,27 +1254,6 @@ each value of alpha.
 \end{tabular}
 \end{center}
 \end{table}
-
-
-\begin{center}
-\begin{figure}
-\subfloat[Baseline area]{
-\includegraphics[width=0.5\textwidth]{base_area_prelim}
-}
-\subfloat[Baseline PDF]{
-\includegraphics[width=0.5\textwidth]{base_pmf_prelim}
-}\\
-\subfloat[Gaussian area]{
-\includegraphics[width=0.5\textwidth]{gauss_area_prelim}
-}
-\subfloat[Gaussian PDF]{
-\includegraphics[width=0.5\textwidth]{gauss_pmf_prelim}
-}
-\caption{Error on the preliminary experiments. Error bars show standard
-deviation of error. Performance appears to deteriorate when $\alpha>0.01$.}
-\label{fig:prelimerror}
-\end{figure}
-\end{center}
 \subsubsection{Refined experiments}
 \label{sec-7-1-2}
 
@@ -1310,6 +1312,30 @@ functions, vary the $\alpha$ parameter in the equation $\sigma=\alpha\cdot\Delta
 t$, where $\sigma$ is the standard deviation of the Gaussians used to generate
 the random function. The weight of each Gaussian was set to 3, to give a larger
 range of shapes that the function could take on.
+\begin{center}
+\begin{figure}
+\subfloat[$\alpha=0.4$]{
+\includegraphics[width=0.5\textwidth]{randfunc_04}
+}
+\subfloat[$\alpha=0.8$]{
+\includegraphics[width=0.5\textwidth]{randfunc_08}
+}\\
+\subfloat[$\alpha=1$]{
+\includegraphics[width=0.5\textwidth]{randfunc_1}
+}
+\subfloat[$\alpha=2$]{
+\includegraphics[width=0.5\textwidth]{randfunc_2}
+}\\
+\begin{center}
+\subfloat[$\alpha=3$]{
+\includegraphics[width=0.5\textwidth]{randfunc_3}
+}
+\end{center}
+\caption{Examples of random functions generated by different
+values of $\alpha$. Oscillation of the functions decreases as $\alpha$ increases.}
+\label{fig:randex}
+\end{figure}
+\end{center}
 \subsubsection{Preliminary Experiment}
 \label{sec-7-2-1}
 
@@ -1340,52 +1366,193 @@ the same set of experimental parameters as in the previous set of experiments:
 
 \begin{center}
 \begin{figure}
-\subfloat[$\alpha=0.4$]{
-\includegraphics[width=0.5\textwidth]{randfunc_04}
+\subfloat[Baseline area]{
+\includegraphics[width=0.5\textwidth]{baseline_area_random}
 }
-\subfloat[$\alpha=0.8$]{
-\includegraphics[width=0.5\textwidth]{randfunc_08}
+\subfloat[Baseline PDF]{
+\includegraphics[width=0.5\textwidth]{baseline_pmf_random}
 }\\
-\subfloat[$\alpha=1$]{
-\includegraphics[width=0.5\textwidth]{randfunc_1}
+\subfloat[Gaussian area]{
+\includegraphics[width=0.5\textwidth]{gaussian_area_random}
 }
-\subfloat[$\alpha=2$]{
-\includegraphics[width=0.5\textwidth]{randfunc_2}
-}\\
-\begin{center}
-\subfloat[$\alpha=3$]{
-\includegraphics[width=0.5\textwidth]{randfunc_3}
+\subfloat[Gaussian PDF]{
+\includegraphics[width=0.5\textwidth]{gaussian_pmf_random}
 }
-\end{center}
-\caption{Examples of random functions generated by different
-values of $\alpha$. Oscillation of the functions decreases as $\alpha$ increases.}
-\label{fig:randex}
+\caption{Mean error for each value of $\alpha$ for the preliminary random
+function experiments for each method combination.}
+\label{fig:randerror}
 \end{figure}
 \end{center}
+The results from the experiment were very enlightening. Figure
+\ref{fig:randerror} shows the error of the estimators over all $\alpha$
+values. The estimators performed with much smaller error values on average,
+leading us to believe that the large errors in the previous experiments were due
+to the shape of the functions. The methods that we use seem to be ineffective on
+functions which have a symmetrical shape, which sine functions are. The
+estimators appear to be much more stable, with the mean error deviating
+relatively little from zero, in comparison to the wild variation in the sine
+function experiments. While the performance of the estimators was better, the
+difference between method combinations is still not significant. The large error
+at $\alpha=$ 1 is due to very large errors occurring in estimates of two
+functions in that data set. This indicates that while on average the estimators
+perform well, on functions with certain characteristics there are large
+differences in the performance. Both time delay estimation methods perform worse
+when $\alpha=$ 0.4, but the estimate from the area method is clearly less
+affected.
 \section{Conclusion}
 \label{sec-8}
-\subsection{Future Work and Improvements}
+
+In this report, we have presented our system for estimating the time delay in
+gravitationally lensed photon stream pairs. We showed two methods for estimating
+the characteristic function of the stream; the baseline method, which is build
+upon the iterative weighted least squares method, and the Gaussian kernel
+density estimation method. In addition, we presented two methods for time delay
+estimation, one using inter-function area, and another using probability density
+functions. 
+
+We performed two experiments on sine functions with different
+oscillation frequencies. The first showed that there appeared to be a point of
+deterioration at which the estimators' performance experienced a large
+decrease. In the second, we investigated the performance on a finer level, and
+noted that there was a window in which estimators performed well, whereas in
+other areas there were large errors. From the first to experiments, the area
+method for time delay estimation appeared to be slightly better than the PDF
+method, and the Gaussian method for function estimation slightly better than the
+baseline method. However, the differences between the methods were shown to be
+insignificant. 
+
+In the second set of experiments, we used randomly generated
+functions to gauge performance of the estimators a second time, in order to more
+accurately represent their performance on data which resembles real data. These
+experiments indicated that the bad performance in the sine function experiments
+may have been caused by the characteristics of the functions. The error for all
+methods was much smaller on average, and apart from a few cases the standard
+deviation was also much better. We also noted that for some of the functions in
+the random data set the errors were 5--10 times greater than the average. We
+believe that this indicates that our methods are not suitable for use on some
+functions. Looking at the results of the sine function experiments, the
+likelihood is that the functions which cause trouble are those with a somewhat
+symmetrical shape, or recurring pattern in them. We were unable to demonstrate a
+significant difference between any combination of methods, but it appears that
+the Gaussian kernel density function estimation method combined with the area
+time delay estimation method produce the best results.
+
+We have achieved all that we had set out to do. We have a method of estimating
+functions and time delay, as well as a way to simulate photon streams. In the
+next section we discuss ways in which the system could be improved, and possible
+future work.
+\subsection{Improvements and Future Work}
 \label{sec-8-1}
 
-\begin{itemize}
-\item Poisson generator - must set lambda to be greater than the value of the
-  function at all points, otherwise it breaks. There are some methods of fixing this
-\item baseline estimator - better way of joining functions - use the pmf to
-  calculate the best possible point at which to join all points on the
-  estimates. Use a hierarchical method to scan across the points between the
-  points on the y axis and find the best values for all breakpoints
-\end{itemize}
+The first improvement is in the simulation of photon streams. Currently, the
+$\lambda$ parameter provided to the generator must be larger than the value of
+the function $\lambda(t),\,0\leq t\leq T$. This means that the maximum value of
+the function must be calculated before the program is run, or a value of
+$\lambda$ must be chosen such that the function is unlikely to exceed it. In
+most cases this does not pose a real issue, and large values of $\lambda$ can be
+chosen to no negative effect---the generation of data is still very
+fast. However, for the sake of completeness and convenience, implementing the
+generation in such a way that the extra $\lambda$ value is not necessary may
+have some benefits. Apart from the thinning method that we have used, there are
+many other methods of generating nonhomogeneous Poisson
+processes \cite{pasupathy2011,haugh2004,lewis1976simulation} which could be implemented to improve
+this aspect of the system.
+
+There is also the potential for improvements to the baseline
+estimator. Currently, at each breakpoint only the midpoint is considered. To
+improve the estimates received, using a hierarchical search could be
+beneficial. Instead of only a single point being used, a search could be done
+along the line between the points to find the point at which the probability
+density function was maximised. If this was done for each breakpoint, then it
+should be possible to find a function which provides an improved estimate
+compared to the current naive approach.
+
+From our experiments, we discovered that the time delay estimators developed
+appear to be unsuitable for estimating functions with certain characteristics,
+namely those which have some sort of periodicity---a good example of this is the
+sine function. In general, the estimators will struggle to correctly estimate
+the time delay for functions which have repeating patterns in them due to the
+way that the methods are implemented. A simple addition to the system which
+could provide additional information is to provide a confidence value for the
+time delay estimate calculation. Also, currently only the very highest scoring
+value of $\Delta$ is reported. In addition to this, reporting other peaks in the
+score may provide more information about the estimate.
+
+Although we have performed several experiments, we were unable to obtain real
+photon stream data on which to test our estimators. To find out whether our
+system would be useful in real applications, testing it on actual data would be
+beneficial.
+
+As mentioned in the introduction, this system is intended to form a base for a
+system which can automatically identify potential gravitationally lensed
+objects. We believe that the current system provides a good foundation for such
+a system. However, given that its accuracy is limited, the idea case is for this
+system to provide some sort of initial estimate, and then hand over to another
+system which is able to make more accurate estimates. We have identified three
+features that could be added as an extension to this system, or as separate
+systems:
+\begin{enumerate}
+\item Pull stream data from a database or some other form of storage
+\item Compute likelihood of a pair of images coming from the same object based on
+   estimates from our system
+\item Keep track of which data has been processed and the confidence
+   values of the estimates associated with that data
+\end{enumerate}
+The combination of our system with a system or systems with these features would
+potentially create a system that could reasonably be applied to real-world problems.
 \subsection{Individual Comments}
 \label{sec-8-2}
 
-\begin{itemize}
-\item using random libraries which are not very well documented
-\item using a language that I did not know before starting
-\item Working in an area that I did not know before, which required quite a lot of
-  mathematical understanding
-\item Working with a large system, and having to work to specific goals
-\item learning from mistakes(?)
-\end{itemize}
+   Although I have been required to work on several reasonably large projects
+   during my time at university, this is the largest by far. Other projects of
+   comparable size have been team projects, and as such I did not have to deal
+   with the whole of the code base or management of the project. I believe that
+   working alone on this project (other than weekly supervision meetings) has
+   improved my abilities in many areas. First and foremost, working on a project
+   in a field which I have relatively little experience is quite a daunting
+   task. Before starting I had some interest in astronomy and machine learning,
+   but my knowledge of problems and approaches to solving them in those areas
+   was minimal. Although a deep understanding of astronomy was not required to
+   complete the project, at least some understanding of the natural phenomena
+   was necessary in order to progress. Developing the function estimators was
+   particularly challenging, with literature on the subject being quite heavy on
+   mathematics with which I was unfamiliar. I had to study the papers on which
+   the function estimators are based for quite a long time before I felt
+   confident that I understood the important points. I have come to understand
+   the techniques much better than I did initially, but there is still much to
+   learn. Statistical testing was also a challenging part of the project,
+   requiring me to understand how various statistical techniques work, and which
+   approaches are valid for what data. Processing and analysing the results of
+   the experiments was also new to me, but ended up being a good learning
+   experience which will be useful for any scientific projects I may encounter
+   in the future.
+
+   In addition to being in an unfamiliar field with new mathematical concepts, I
+   also chose to write the project in C, a language which I had studied for only
+   a short time before starting the project. Attempting to implement a complex
+   system in a language which one is new to is difficult, and it took a few
+   months before I was able to add new features and modify old code with the
+   confidence and speed with which I can do so in other languages. C has a
+   rather small set of standard libraries, and so I had to implement many
+   features that are commonly available in the standard libraries of Java and
+   Python. For more complex functionality, in order to save time I had to find
+   libraries to use, and work out how to use a system with relatively sparse
+   documentation and information available. I think that forcing myself into an
+   uncomfortable situation in terms of unknown environments has paid off, as I
+   am now confident in the use of C. 
+
+   During the course of the project, I had to make several decisions about the
+   structure of the code, and make sweeping changes to the code base. One
+   example is the point at which I made the switch from the use of pointer
+   arrays to store estimate data to using structs. This required the
+   modification of some of the fundamentals of the system and required a large
+   amount of care to implement without breaking the functionality. While in team
+   environments it is possible to discuss structural changes and how to go about
+   implementing a new feature, I had to rely on my own judgement to do both,
+   which required a lot of time considering the benefits of one particular
+   approach.
+
+   Throughout the project I have attempted to 
 
 \newpage
 \printbibliography
@@ -1404,13 +1571,127 @@ values of $\alpha$. Oscillation of the functions decreases as $\alpha$ increases
  \end{verbatimtab}
 \section{Usage}
 \label{sec-10}
-\subsection{Creating functions for experimentation}
+\subsection{General Usage}
 \label{sec-10-1}
+\subsubsection{Generating Functions}
+\label{sec-10-1-1}
+\subsubsection{Estimating Functions}
+\label{sec-10-1-2}
+\subsection{Running Experiments}
+\label{sec-10-2}
+\subsubsection{Creating functions for experimentation}
+\label{sec-10-2-1}
+
+Using the \texttt{genfunc\_rand.sh} script found in the \texttt{scripts} directory, random
+functions can be generated, conforming to certain parameters. In this file,
+we specify the directory to which to output by modifying the
+\texttt{OUTPUT\_DIR} parameter. The \texttt{LAUNCHER\_LOC} parameter specifies the
+location of the \texttt{deltastream} executable used to run the program. The
+\texttt{PARAM\_FILE} parameter defines the location of the parameter file to use
+to generate the functions.
+
+Once these have been set, we specify the values to use to generate the
+function. The values in the the \texttt{AVALS} parameter define what values of
+$\alpha$ will be used to generate the functions. The \texttt{DIVISOR} parameter
+specifies what to divide the values in \texttt{AVALS} by when modifying the
+$\alpha$ parameter in the parameter file. This can be set to 1 to just use the
+values inside the array. The values in the \texttt{AVALS} array are also used to
+create directories, so the divisor is also used to prevent creation of
+directories such as \texttt{alpha\_0.3}. The \texttt{NFUNCS} parameter defines
+how many different functions to generate. \texttt{NPAIRS} defines the number of
+pairs of streams that will be generated from each function. Streams generated
+will be copies of the function. For example, when \texttt{NPAIRS} is set to 5, a
+function $f(a)$ is generated, along with two streams. Then, four more streams
+are generated from the same function \$f(a). This allows for multiple trials on
+similar data. The \texttt{FPREF} and \texttt{APREF} define the text that is
+prepended to the directories. Setting \texttt{FPREF} to \texttt{function\_} and
+\texttt{APREF} to \texttt{alpha\_} will put each set of functions in a directory
+structure like \texttt{alpha\_1/function\_1}.
+\subsubsection{Generating Model Selection Data}
+\label{sec-10-2-2}
+
+Next, we use the \texttt{stutter\_batch.sh} script to generate streams with data
+removed in certain intervals to use for model selection. Here, we set the
+\texttt{INDIR} parameter to the directory which we set as the output directory
+in the previous script, and make sure to set the \texttt{AVALS}, \texttt{NFUNCS}
+and \texttt{NPAIRS} parameters to the same values. We must also define the
+\texttt{EXP\_PFILE} parameter, which tells the script where to look for the
+experimental parameters. In this file, we must set up which data should be
+removed. Modifying values in the \texttt{setup} section of the experiment
+parameter file will allow the choosing of various intervals. To generate a
+default experiment parameter file, use \texttt{deltastream -d [filename] -x
+a}. Once this is set up, we run the script, and it generates a new set of files
+in the same location as the original data which has data in some intervals
+removed, with names something like \texttt{random\_function\_0\_output\_stream\_0\_stuttered.dat}.
+\subsubsection{Experiment Parameter Setup}
+\label{sec-10-2-3}
+
+Now, we set up the experiments that we wish to perform on the data. In the
+experiment parameter file, there are various options which control how the
+experiments are run. The most important is the \texttt{experiment\_names}
+parameter, which defines the names of the experiments that you wish to run. Once
+the names are set, we must define four parameters that are used to run the experiment.
+\small
+\begin{verbatimtab}
+experiment_names exp_1,exp_2 // Name the experiments
+// These parameters will be varied during the experiments
+exp_1_params base_max_breakpoints,base_max_extension
+exp_2_params gauss_est_stdev
+test_exp_1 yes // We want to experiment on this
+test_exp_2 no // This will not be experimented on
+// Set the estimator to use for the experiment
+exp_1_estimator base 
+ext_2_estimator gauss
+// Estimate the function or the time delay
+exp_1_type function
+exp_2_type delay
+
+// Set the parameter values for experiments
+base_max_extension 3,6,...,11
+base_max_breakpoints 4,5,...,10
+gauss_est_stdev 1,2,3,4
+
+// This is important! Set the time delay between streams
+// Used later to analyse the results
+timedelta 0,15
+\end{verbatimtab}
+\normalsize
+
+When setting the parameter values, \texttt{...} can be used to specify a
+range. In the example, the \texttt{base\_max\_extension} parameters would be 3,
+6, 9 and 11. The \texttt{timedelta} parameter is important as well---it provides
+the program with the actual value of the time delay between streams, which is
+used to determine the score of certain parameter settings. Information about the
+parameters used to generate streams can be found in the output directories in
+the \texttt{gen\_params.txt} file.
+\subsubsection{Running Model Selection}
+\label{sec-10-2-4}
+
+Once the parameters are set up, we run model selection on the generated streams
+using the \texttt{runexp\_batch.sh} script. Here we again set the various
+parameters needed, and specify a new output directory into which the experiment
+data is output. Depending on the number of experiments being run, the data can
+take up a lot of space (on the order of gigabytes), so choose a disk with plenty
+of free space. It is also a good idea to run a small subset of the experiments
+before running them all, just to make sure that you are outputting to the
+correct directory---\textbf{data in the output directories from previous
+experiments is overwritten}. Once you are sure that everything is good to go,
+run the script. Time taken depends on the number of parameter combinations and
+number of functions you are running the experiments on. A reasonably large set
+of data (approximately 151,000 experiments) took approximately two hours on an
+Intel i5 processor.
+\subsubsection{Time Delay Calculation}
+\label{sec-10-2-5}
+
+Once the experiments have completed, we use the best parameter settings from the
+model selection stage to run time delay estimators on the data again, this time
+with all data available to the estimators.
+
 
    Generate 10 random functions using gaussians, and output the transforms as
    well so they can be plotted
    \begin{verbatimtab}
-   ./launcher -g ../data/params.txt -r -t 2 -c 10
+   ./launcher -g ../data/params.txt -r -t 3 -c 10
    \end{verbatimtab}
    Generate two streams from each of these generated functions using the
    gaussian generator
@@ -1430,7 +1711,7 @@ In this appendix we present the full set of experimental data. BA=baseline area,
 GA=Gaussian area, BP=baseline PDF, GP=Gaussian PDF. BA/GA indicates a test
 comparing the Gaussian area method against the baseline area method.
 \begin{table}[htb]
-\caption{Table of mean estimate and standard deviation for the area estimator on the first set of sine experiments ($\mu\pm\sigma$). The actual time delay is 10.} 
+\caption{Table of mean estimate and standard deviation for the area estimator on the first set of sine experiments ($\mu\pm\sigma,\, n=$ 25). The actual time delay is 10.} 
 \begin{center}
 \begin{tabular}{r|ll}
  $\alpha$  &  Baseline area               &  Gaussian area               \\
@@ -1446,7 +1727,7 @@ comparing the Gaussian area method against the baseline area method.
 
 
 \begin{table}[htb]
-\caption{Table of mean estimate and standard deviation for the PDF estimator on the first set of sine experiments ($\mu\pm\sigma$). The actual time delay is 10.} 
+\caption{Table of mean estimate and standard deviation for the PDF estimator on the first set of sine experiments ($\mu\pm\sigma,\,n=$ 25). The actual time delay is 10.} 
 \begin{center}
 \begin{tabular}{r|ll}
  $\alpha$  &  Baseline PDF                &  Gaussian PDF                \\
@@ -1495,7 +1776,7 @@ comparing the Gaussian area method against the baseline area method.
 
 
 \begin{table}[htb]
-\caption{Table of mean estimate and standard deviation for the area estimator on the second set of sine experiments ($\mu\pm\sigma$). The actual time delay is 15.} 
+\caption{Table of mean estimate and standard deviation for the area estimator on the second set of sine experiments ($\mu\pm\sigma,\,n=$ 10). The actual time delay is 15.} 
 \begin{center}
 \begin{tabular}{r|ll}
  $\alpha$  &  Baseline area               &  Gaussian area               \\
@@ -1521,7 +1802,7 @@ comparing the Gaussian area method against the baseline area method.
 
 
 \begin{table}[htb]
-\caption{Table of mean estimate and standard deviation for the PDF estimator on the second set of sine experiments ($\mu\pm\sigma$). The actual time delay is 15.} 
+\caption{Table of mean estimate and standard deviation for the PDF estimator on the second set of sine experiments ($\mu\pm\sigma,\,n=$ 10). The actual time delay is 15.} 
 \begin{center}
 \begin{tabular}{r|ll}
  $\alpha$  &  Baseline PDF                &  Gaussian PDF                \\
@@ -1598,53 +1879,83 @@ comparing the Gaussian area method against the baseline area method.
 \end{table}
 
 
-
 \begin{table}
-\subfloat[]{
+\subfloat[$\alpha=0.4$]{
 \begin{tabular}{l|ll}
        &  Baseline             &  Gaussian             \\
 \hline
- Area  &  17.884 $\pm$ 6.7225  &  16.62 $\pm$ 1.9959   \\
- PDF   &  13.096 $\pm$ 10.82   &  15.132 $\pm$ 11.392  \\
+ Area  &  17.884 $\pm$ 10.66   &  16.62 $\pm$ 4.7732   \\
+ PDF   &  13.096 $\pm$ 19.711  &  15.132 $\pm$ 17.018  \\
 \end{tabular}
-}
-\subfloat[]{
+}\quad
+\subfloat[$\alpha=0.8$]{
 \begin{tabular}{l|ll}
-       &  Baseline             &  Gaussian             \\
+       &  Baseline             &  Gaussian            \\
 \hline
- Area  &  16.472 $\pm$ 4.6097  &  15.424 $\pm$ 1.5155  \\
- PDF   &  15.64 $\pm$ 4.566    &  15.644 $\pm$ 0.6141  \\
+ Area  &  16.472 $\pm$ 5.3609  &  15.424 $\pm$ 2.301  \\
+ PDF   &  15.64 $\pm$ 6.7863   &  15.644 $\pm$ 2.356  \\
 \end{tabular}
 }\\
-\subfloat[]{
+\subfloat[$\alpha=1$]{
 \begin{tabular}{l|ll}
-       &  Baseline             &  Gaussian             \\
+       &  Baseline             &  Gaussian            \\
 \hline
- Area  &  7.216 $\pm$ 18.96    &  13.6 $\pm$ 8.0519    \\
- PDF   &  15.156 $\pm$ 8.9448  &  13.056 $\pm$ 9.1612  \\
+ Area  &  7.216 $\pm$ 24.077   &  13.6 $\pm$ 15.197   \\
+ PDF   &  15.156 $\pm$ 15.831  &  13.056 $\pm$ 18.69  \\
 \end{tabular}
-}
-\subfloat[]{
+}\quad
+\subfloat[$\alpha=2$]{
 \begin{tabular}{l|ll}
        &  Baseline             &  Gaussian             \\
 \hline
- Area  &  15.068 $\pm$ 0.6497  &  14.932 $\pm$ 0.9018  \\
- PDF   &  15.052 $\pm$ 3.0461  &  14.62 $\pm$ 4.2005   \\
+ Area  &  15.068 $\pm$ 2.965   &  14.932 $\pm$ 1.9021  \\
+ PDF   &  15.052 $\pm$ 4.6295  &  14.62 $\pm$ 4.6207   \\
 \end{tabular}
 }\\
 \begin{center}
-\subfloat[]{
+\subfloat[$\alpha=3$]{
 \begin{tabular}{l|ll}
-       &  Baseline              &  Gaussian             \\
+       &  Baseline             &  Gaussian             \\
 \hline
- Area  &  16.148 $\pm$ 0.99434  &  14.844 $\pm$ 0.7548  \\
- PDF   &  15.724 $\pm$ 5.9319   &  14.176 $\pm$ 6.8956  \\
+ Area  &  16.148 $\pm$ 4.246   &  14.844 $\pm$ 3.4838  \\
+ PDF   &  15.724 $\pm$ 7.6279  &  14.176 $\pm$ 9.7994  \\
 \end{tabular}
 }
+\end{center} \caption{Results for preliminary random function
+experiments. Values shown are calculated by aggregating estimate data from 5
+functions with 5 estimates for each $\alpha$ value. The actual time delay
+is 15. ($\mu\pm\sigma,\, n=$25)}
+\end{table}
+
+\begin{table}[htb]
+\caption{Paired t-test results for preliminary random function experiments, calculated by aggregating results for each function for each method and comparing. $n=$ 25} 
+\begin{center}
+\begin{tabular}{r|rrrrrr}
+ $\alpha$  &    BA/GA  &    BA/BP  &    BA/GP  &    GA/BP  &    GA/GP  &    BP/GP  \\
+\hline
+      0.4  &  0.29071  &  0.59093  &   0.4965  &  0.38927  &  0.69758  &  0.67568  \\
+      0.8  &  0.63269  &  0.37356  &  0.48299  &  0.88083  &  0.99779  &  0.73982  \\
+        1  &  0.17468  &  0.26783  &  0.34286  &   0.7245  &  0.67007  &  0.91057  \\
+        2  &  0.98845  &  0.84775  &  0.68509  &  0.90508  &  0.74266  &  0.75625  \\
+        3  &  0.80916  &  0.24102  &   0.3605  &  0.60221  &  0.53605  &  0.74949  \\
+\end{tabular}
 \end{center}
-\caption{Results for preliminary random function experiments. Mean estimates
-over five functions were averaged for each $\alpha$ value, and the standard
-deviation was calculated from the mean values. ($\mu\pm\sigma$)}
+\end{table}
+
+
+\begin{table}[htb]
+\caption{One sample t-test results for preliminary random function experiments, calculated by aggregating results for each function for each method and comparing.$n=$ 25} 
+\begin{center}
+\begin{tabular}{r|rrrrrr}
+ $\alpha$  &    BA/GA  &    BA/BP  &    BA/GP  &    GA/BP  &    GA/GP  &    BP/GP  \\
+\hline
+      0.4  &  0.28246  &   0.6203  &  0.43163  &  0.39593  &  0.68339  &  0.69719  \\
+      0.8  &    0.524  &  0.23804  &  0.44777  &  0.86289  &  0.99737  &   0.7035  \\
+        1  &  0.15115  &  0.12471  &  0.24086  &  0.69366  &  0.48648  &  0.85042  \\
+        2  &    0.988  &  0.84899  &  0.67334  &  0.89557  &  0.31721  &  0.71896  \\
+        3  &  0.78673  &  0.13475  &   0.3649  &   0.5442  &   0.1848  &  0.70261  \\
+\end{tabular}
+\end{center}
 \end{table}
 
 \end{appendices}
