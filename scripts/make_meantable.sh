@@ -1,5 +1,5 @@
-INPUT=/media/michal/Edison/fyp/new/random/rand_results
-OUTFILE=meanvals.txt
+INDIR=/media/michal/Edison/fyp/new/random/rand_results
+OUTFILE=$INDIR/meanvals.dat
 # Number of columns to use when calculating averages for alpha values. 
 NCOLS=5
 
@@ -8,9 +8,9 @@ for COL in $(seq 1 $NCOLS); do
     echo "Processing column $COL..."
     echo -e "||Baseline|Gaussian|\n|--+--+--+--|\n|/|<||" >> $OUTFILE
     HOLD=""
-    for FILE in $INPUT/*.txt; do
+    for FILE in $INDIR/*.txt; do
         # Get the column of the mean values of the estimates and put it into one column for each alpha value
-	COLS=`awk '{print $3}' $FILE | grep -v '^\s*$' | pr -ts --columns $NCOLS | sed '1d'`
+	COLS=`awk '{print $4}' $FILE | grep -v '^\s*$' | pr -ts --columns $NCOLS | sed '1d'`
 
         # Extract the column in question
 	C=`echo "$COLS" | awk '{print $'$COL'}'`
@@ -26,6 +26,7 @@ for COL in $(seq 1 $NCOLS); do
 	DATA="`cat stdata | grep -v '#' | sed 's/^ *//g;s/ / $\\\pm$ /'`|"
 	HOLD="`echo "$HOLD $DATA\n"`"
     done
+    # should only be 2 columns, but need 3 for some reason?
     RES="`echo -e "$HOLD" | pr -ts --columns 3`"
     RES="`echo -e "$RES" | sed -e 's/^/|Area|/; 2s/Area/PDF/'`"
     echo -e "$RES\n" >> $OUTFILE

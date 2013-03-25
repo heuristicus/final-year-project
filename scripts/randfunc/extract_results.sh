@@ -9,11 +9,16 @@ TOP_NAME=alpha
 BOT_NAME=func
 TOP_PREFIX=alpha_
 BOT_PREFIX=f
-TT=1
+TT=1 # Output data for use in t-tests
+DV=1 # Output data for use in mean and standard deviation calculation
+EV=1 # Output data for use in graphing error for each estimator depending on alpha values
 
 # Create the output directory if it does not exist
 if [ ! -d "$OUTDIR" ]; then
     mkdir -p $OUTDIR/results/data
+    mkdir -p $OUTDIR/results/errors
+    mkdir -p $OUTDIR/results/estimates
+    mkdir -p $OUTDIR/results/alpha_errors
 fi
 
 for EST_TYPE in ${TD_EST_TYPES[@]}; do # Two types of time delay estimators
@@ -43,12 +48,43 @@ done
 if [[ -n "$TT" ]]; then
     for BOT_NUM in ${BOT_NUMS[@]}; do # Subdirectories - different functions experimented with
 	for TOP_NUM in ${TOP_NUMS[@]}; do
-	    echo "" > $OUTDIR/results/$TOP_PREFIX$TOP_NUM\_$BOT_PREFIX$BOT_NUM.txt
+	    echo "" > $OUTDIR/results/errors/$TOP_PREFIX$TOP_NUM\_$BOT_PREFIX$BOT_NUM.txt
 	    for EST_TYPE in ${TD_EST_TYPES[@]}; do # Two types of time delay estimators
 		for TYPE in ${FUNC_EST_TYPES[@]}; do # Two types of function estimators
-
 		    RES="`grep -A $NUM_FUNCS "Estimate errors" $OUTDIR/results/data/$TYPE\_$EST_TYPE\_$TOP_PREFIX$TOP_NUM\_$BOT_PREFIX$BOT_NUM.txt | sed '1d'`"
-		    echo -e "td_est=$EST_TYPE, func_est=$TYPE, $BOT_NAME=$BOT_NUM\n$RES\n\n" >> $OUTDIR/results/$TOP_PREFIX$TOP_NUM\_$BOT_PREFIX$BOT_NUM.txt
+		    echo -e "td_est=$EST_TYPE, func_est=$TYPE, $BOT_NAME=$BOT_NUM\n$RES\n\n" >> $OUTDIR/results/errors/$TOP_PREFIX$TOP_NUM\_$BOT_PREFIX$BOT_NUM.txt
+		done
+	    done
+	done
+    done
+fi
+
+# Output estimate delta values into the estimates directory. This data can be used to calculate the mean aggregated over all functions for which the experiments were performed.
+if [[ -n "$DV" ]]; then
+    for EST_TYPE in ${TD_EST_TYPES[@]}; do # Two types of time delay estimators
+	for TYPE in ${FUNC_EST_TYPES[@]}; do # Two types of function estimators
+	    echo "" > $OUTDIR/results/estimates/$TOP_PREFIX$TOP_NUM\_$TYPE\_$EST_TYPE.txt
+	    for BOT_NUM in ${BOT_NUMS[@]}; do # Subdirectories - different functions experimented with
+		for TOP_NUM in ${TOP_NUMS[@]}; do
+		    RES="`grep -A $NUM_FUNCS "Estimate delta" $OUTDIR/results/data/$TYPE\_$EST_TYPE\_$TOP_PREFIX$TOP_NUM\_$BOT_PREFIX$BOT_NUM.txt | sed '1d'`"
+		    echo -e "td_est=$EST_TYPE, func_est=$TYPE, $BOT_NAME=$BOT_NUM\n$RES\n\n" >> $OUTDIR/results/estimates/$TOP_PREFIX$TOP_NUM\_$TYPE\_$EST_TYPE.txt
+		done
+	    done
+	done
+    done
+fi
+
+# Output the error data, sorted by alpha values, into an extra directory. This data can be used to find the aggregate error
+# for each alpha value for a specific estimator combination.
+if [[ -n "$EV" ]]; then
+    for TOP_NUM in ${TOP_NUMS[@]}; do
+	for EST_TYPE in ${TD_EST_TYPES[@]}; do # Two types of time delay estimators
+	    for TYPE in ${FUNC_EST_TYPES[@]}; do # Two types of function estimators
+		echo "" > $OUTDIR/results/alpha_errors/$TOP_PREFIX$TOP_NUM\_$TYPE\_$EST_TYPE.txt
+		for BOT_NUM in ${BOT_NUMS[@]}; do # Subdirectories - different functions experimented with
+
+		    RES="`grep -A $NUM_FUNCS "Estimate error" $OUTDIR/results/data/$TYPE\_$EST_TYPE\_$TOP_PREFIX$TOP_NUM\_$BOT_PREFIX$BOT_NUM.txt | sed '1d'`"
+		    echo -e "td_est=$EST_TYPE, func_est=$TYPE, $BOT_NAME=$BOT_NUM\n$RES\n\n" >> $OUTDIR/results/alpha_errors/$TOP_PREFIX$TOP_NUM\_$TYPE\_$EST_TYPE.txt
 		done
 	    done
 	done

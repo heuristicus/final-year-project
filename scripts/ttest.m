@@ -4,12 +4,19 @@
 # read_end_x=9
 # read_end_y=3
 
+# dirname="/media/michal/Edison/fyp/new/sine/preliminary/prelim_results/results/alpha_errors/ttest"
+# # Define the points from which the dlmread command reads data. Specifies a rectangle over the data.
+# read_start_x=0
+# read_start_y=0
+# read_end_x=4
+# read_end_y=3
+
 # Define where the t-test data is to be read from
-dirname="/media/michal/Edison/fyp/new/random/rand_results/results/ttest"
+dirname="/media/michal/Edison/fyp/new/random/rand_results/results/alpha_errors/ttest"
 # Define the points from which the dlmread command reads data. Specifies a rectangle over the data.
 read_start_x=0
 read_start_y=0
-read_end_x=4
+read_end_x=24
 read_end_y=3
 # separator for the dlmread command
 separator="\t"

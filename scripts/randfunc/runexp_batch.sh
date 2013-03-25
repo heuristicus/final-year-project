@@ -1,11 +1,14 @@
 DEF_PFILE=/home/michal/Dropbox/study/university/final_year/final-year-project/src/params.txt
 EXP_PFILE=/home/michal/Dropbox/study/university/final_year/final-year-project/src/exp_params.txt
 LAUNCHER_LOC=/home/michal/Dropbox/study/university/final_year/final-year-project/src/deltastream
-INDIR=/media/michal/Edison/fyp/new/random/rand_streams
-OUTDIR=/media/michal/Doppler/fyp/new/rand_param
-FOLDER_PREFIX=alpha_
-FUNC_PREFIX=f
-NUM_STREAMS=5
+INDIR=/media/michal/Edison/fyp/new/morerandom/morerandom_streams
+OUTDIR=/media/michal/Doppler/fyp/new/morerandom/morerandom_params
+
+AVALS=(04 05 06 07 08 09 10 11 12 13 14 15)
+APREF=alpha_
+FPREF=f
+NFUNCS=5
+NPAIRS=5
 
 # We do model selection on stuttered streams in these experiments.
 sed -i 's/run_stuttered [a-zA-Z]*/run_stuttered yes/' $EXP_PFILE
@@ -21,12 +24,12 @@ for V in ${ENAMES[@]}; do
     sed -i "s/$V\_type [a-zA-Z]*/$V\_type function/" $EXP_PFILE
 done
 
-for ALPHA in 3; do
-    for FUNC in 5; do
-	if [ ! -d $OUTDIR/$FOLDER_PREFIX$ALPHA/$FUNC_PREFIX$FUNC ]; then
-	    mkdir -p $OUTDIR/$FOLDER_PREFIX$ALPHA/$FUNC_PREFIX$FUNC
+for ALPHA in ${AVALS[@]}; do
+    for FUNC in $(seq 1 $NFUNCS); do
+	if [ ! -d $OUTDIR/$APREF$ALPHA/$FPREF$FUNC ]; then
+	    mkdir -p $OUTDIR/$APREF$ALPHA/$FPREF$FUNC
 	fi
-	    
-	$LAUNCHER_LOC -x $EXP_PFILE -p $DEF_PFILE -i $INDIR/$FOLDER_PREFIX$ALPHA/$FUNC_PREFIX$FUNC -o $OUTDIR/$FOLDER_PREFIX$ALPHA/$FUNC_PREFIX$FUNC -c $NUM_STREAMS -r
+
+	$LAUNCHER_LOC -x $EXP_PFILE -p $DEF_PFILE -i $INDIR/$APREF$ALPHA/$FPREF$FUNC -o $OUTDIR/$APREF$ALPHA/$FPREF$FUNC -c $NFUNCS -r
     done
 done

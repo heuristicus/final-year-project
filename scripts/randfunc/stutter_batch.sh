@@ -1,8 +1,16 @@
 DEF_PFILE=/home/michal/Dropbox/study/university/final_year/final-year-project/src/params.txt
 EXP_PFILE=/home/michal/Dropbox/study/university/final_year/final-year-project/src/exp_params.txt
-INDIR=fine_streams
-FOLDER_PREFIX=alpha_
+LAUNCHER_LOC=/home/michal/Dropbox/study/university/final_year/final-year-project/src/deltastream
+INDIR=/media/michal/Edison/fyp/new/morerandom/morerandom_streams
 
-for ALPHA in 001 002 003 004 005 006 007 008 009 010 011 012 013 014 015; do
-    ./deltastream -x $EXP_PFILE -p $DEF_PFILE -i $INDIR/$FOLDER_PREFIX$ALPHA/$FUNC_PREFIX$FUNC -c 10 -n 2 -s
+AVALS=(01 02 03 04 05 06 07 08 09 10 11 12 13 14 15)
+NFUNCS=5
+NPAIRS=5
+APREF=alpha_
+FPREF=f
+
+for ALPHA in ${AVALS[@]}; do
+    for VAL in $(seq 1 $NFUNCS); do
+	$LAUNCHER_LOC -x $EXP_PFILE -p $DEF_PFILE -i $INDIR/$APREF$ALPHA/$FPREF$VAL -c $NPAIRS -n 2 -s -r
+    done
 done
