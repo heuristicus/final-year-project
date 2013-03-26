@@ -26,7 +26,7 @@ for FILE in $INDIR/*.txt; do
     HOLD="$HOLD $DATA\n"
 done
 
-rm $INDIR/stdata
+#rm $INDIR/stdata
 
 echo -e "\n" >> $OUTFILE
 
@@ -41,4 +41,26 @@ for COL in $(seq 1 $NCOLS); do
     # Prefix each line with the correct time delay estimation method
     RES="`echo -e "$TD" | sed -e 's/^/|Area|/; 2s/Area/PDF/; s/\\\$\\\pm\\\$/ $\\\pm$ /g'`"
     echo -e "$RES" >> $OUTFILE
+done
+
+echo -e "\n" >> $OUTFILE
+
+# Output each combination of methods into one large org table for all alpha values
+# This is quite non-specific. Might need to change quite a few things for it to work...
+# Four possible combinations
+for A in {0..3}; do
+    NAME="`sed -n -e $(($A*2 + 1))p $OUTFILE | sed 's/alpha_[0-9]*_\([A-Za-z]*\)_\([A-Za-z]*\)\.txt/\1 \2/'`"
+    echo -e "|$\\\alpha$|$NAME|\n|-+-+|" >> $OUTFILE
+    # there are $NCOLS values for each combination
+    for COL in $(seq 0 $(($NCOLS-1))); do
+	# column number * num combinations * 2 lines for each value + line
+	# numbers start at 1 + shift by combination number * 2 lines for each
+	# value + get to the actual number
+	ALPHA="`sed -n -e $(($COL*4*2+1+$A*2))p $OUTFILE | sed 's/alpha_\([0-9]*\).*/\1/'`"
+	RA="`echo "scale=1; $((10#$ALPHA))/10" | bc`"
+	
+	VALS="`sed -n -e $(($COL*4*2+1+$A*2+1))p $OUTFILE | sed 's/ / $\\\pm$ /g'`"
+	echo "|$RA|$VALS|" >> $OUTFILE
+    done
+    echo -e "\n" >> $OUTFILE
 done

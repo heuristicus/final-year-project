@@ -1,11 +1,11 @@
 # Columnate data for t-tests by aggregating functions in such a way that all
 # functions estimated by one method are compared. If there are 5 functions with
 # 5 pairs of streams each, then 25 numbers will be in each t-test.
-INDIR=/media/michal/Edison/fyp/new/random/rand_results/results/alpha_errors
+INDIR=/media/michal/Doppler/fyp/new/morerandom/morerandom_results/results/alpha_errors
 STREAM_NUMS=(2) # Which streams to create t-test data for
 
 # Top level directories - this is usually the alpha parameter
-ALPHA=(04 08 1 2 3)
+ALPHA=(01 02 03 04 05 06 07 08 09 10 11 12 13 14 15)
 if [ ! -d $INDIR/ttest ]; then
     mkdir $INDIR/ttest
 fi

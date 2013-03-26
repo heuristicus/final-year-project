@@ -11,8 +11,16 @@
 # read_end_x=4
 # read_end_y=3
 
+# # Define where the t-test data is to be read from
+# dirname="/media/michal/Edison/fyp/new/random/rand_results/results/alpha_errors/ttest"
+# # Define the points from which the dlmread command reads data. Specifies a rectangle over the data.
+# read_start_x=0
+# read_start_y=0
+# read_end_x=24
+# read_end_y=3
+
 # Define where the t-test data is to be read from
-dirname="/media/michal/Edison/fyp/new/random/rand_results/results/alpha_errors/ttest"
+dirname="/media/michal/Doppler/fyp/new/morerandom/morerandom_results/results/alpha_errors/ttest"
 # Define the points from which the dlmread command reads data. Specifies a rectangle over the data.
 read_start_x=0
 read_start_y=0
@@ -26,8 +34,8 @@ format short G
 
 # Read all the filenames from the given directory
 files=dir(fullfile(dirname, '*'))
-sigmat=[] # Used to store the results of the paired t-tests
-errmat=[] # Used to store the results of single t-tests on the error difference
+paired_tests=[] # Used to store the results of the paired t-tests
+single_sample=[] # Used to store the results of single t-tests on the error difference
 # Loop over all file names
 for ind = 1:length(files)
   # Extract the data from the current file
@@ -56,13 +64,13 @@ for ind = 1:length(files)
     endfor
   endfor
   # Append the significance values to the result matrix
-  sigmat = [sigmat;pvalSig]
+  paired_tests = [paired_tests;pvalSig]
   # Append the error diff values to the result matrix
-  errmat = [errmat;pvalErrorDiff]
+  single_sample = [single_sample;pvalErrorDiff]
 
   # Information about which i and j values were compared in which column
   # of data
-  comps=[first;comp]
+  comparisons=[first;comp]
   # Clear the variables so that they can be re-used in the next loop
   files.name
   clear pvalSig

@@ -60,7 +60,7 @@ for TD_EST_TYPE in pmf area; do
 		mkdir $OUTDIR/$TD_EST_TYPE/$FOLDER_PREFIX$ALPHA/$TYPE
 	    fi
 	    if [ $LOOP = 1 ]; then
-		echo "alpha=$ALPHA, type=$TYPE" >> $BESTFILE
+		echo "alpha=$ALPHA, type=$TYPE, td_type=$TD_EST_TYPE" >> $BESTFILE
 	    fi
 	        # Extract the goodness and experiment number from the aggregate file
 	    RES="`cat $GOODNESS_LOC/agg_goodness_$TYPE.txt | grep -A 1 "alpha_$ALPHA" | sed '1d;'`"

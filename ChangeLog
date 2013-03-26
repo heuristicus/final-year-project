@@ -1,3 +1,8 @@
+2013-03-26  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* scripts/randfunc/multifunc_mean.sh: Output combination of
+	methods into a single large org table for all alpha.
+
 2013-03-25  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* scripts/randfunc: Scripts to calculate values for t-tests on
