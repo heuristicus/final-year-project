@@ -1,4 +1,4 @@
-% Created 2013-03-25 Mon 22:48
+% Created 2013-03-26 Tue 15:21
 \documentclass[a4paper,11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -22,6 +22,7 @@
 \usepackage{graphicx}
 \usepackage{moreverb}
 \usepackage{subfig}
+\usepackage[scientific-notation=true]{siunitx}
 \usepackage{float}
 \let\iint\relax % otherwise errors are thrown by amsmath. Defined in latexsym
 \let\iiint\relax
@@ -1225,26 +1226,26 @@ of the function estimator for each value of $\alpha$.
 \includegraphics[width=0.5\textwidth]{gauss_pmf_prelim}
 }
 \caption{Error on the preliminary experiments. Error bars show standard
-deviation of error. Performance appears to deteriorate when $\alpha>0.01$.}
+deviation of error. Performance appears to deteriorate when $\alpha>0.1$.}
 \label{fig:prelimerror}
 \end{figure}
 \end{center}
-Estimates appear to be reasonably accurate until $\alpha$ exceeds 0.01, after
+Estimates appear to be reasonably accurate until $\alpha$ exceeds 0.1, after
 which errors become much greater, and standard deviation increases. The area
 time delay estimator is significantly better than the PDF for both of the
 function estimators, with $p$-values of 0.00017 and 0.0000074 for the baseline
-and Gaussian method respectively at $\alpha=$ 0.005. The difference between the
+and Gaussian method respectively at $\alpha=$ 0.05. The difference between the
 two function estimation methods was not significant, with $p$-values in excess
 of 0.4 for comparisons between the baseline and Gaussian estimators for the same
-time delay estimators at $\alpha=$ 0.005. Results from $\alpha>$ 0.005 show no
+time delay estimators at $\alpha=$ 0.05. Results from $\alpha>$ 0.005 show no
 statistical significance in the difference between the various estimators, so
-although the $p$-values at $\alpha$ =0.005 are significant, they are not
+although the $p$-values at $\alpha$ =0.05 are significant, they are not
 sufficient to say that the area estimator is always better. Figure
 \ref{fig:prelimerror} shows the error of the various estimator combination at
 each value of alpha.
 
 \begin{table}[htb]
-\caption{Experimental results for $\alpha=$ 0.005. Actual time delay is 10. ($\mu\pm\sigma$)} \label{fig:pretab}
+\caption{Experimental results for $\alpha=$ 0.05. Actual time delay is 10. ($\mu\pm\sigma$)} \label{fig:pretab}
 \begin{center}
 \begin{tabular}{l|ll}
        &  Gaussian           &  Baseline           \\
@@ -1261,7 +1262,7 @@ Although the previous set of experiments provide some indication as to the
 performance of the estimators, we investigated their effectiveness on a smaller
 range of $\alpha$ values. In this set of experiments, we used the same
 parameters, but generated a new set of functions for value of $\alpha$ from
-0.001 to 0.015, with a step of 0.001 between each successive set of stream
+0.01 to 0.15, with a step of 0.01 between each successive set of stream
 pairs. For each value of $\alpha$, 10 pairs of streams were generated. The time
 delay was set to 15 time steps, and the experiments were run with the same set
 of experimental parameters as the previous experiments.
@@ -1270,7 +1271,7 @@ The result of this second set of experiments uncovered an interesting pattern in
 the performance of the estimators. Figure \ref{fig:fineerror} shows the error
 for each combination of estimators for different values of $\alpha$. It is clear
 to see from the graphs that there is a window of optimum performance where
-$\alpha$ is between 0.004 and 0.01. As with the previous set of experiments, the
+$\alpha$ is between 0.04 and 0.1. As with the previous set of experiments, the
 area estimator again outperforms the PDF estimator, which is visible in the
 graphs. Within this window, the area method is significantly better than the PDF
 estimator in some cases, but this significance varies greatly as $\alpha$
@@ -1294,8 +1295,8 @@ method.
 \includegraphics[width=0.5\textwidth]{gaussian_pmf_fine}
 }
 \caption{Error on the second set of experiments. Error bars show
-standard deviation of error. Peak performance is in the window 0.004
-$\leq\alpha\leq$ 0.01}
+standard deviation of error. Peak performance is in the window 0.04
+$\leq\alpha\leq$ 0.1}
 \label{fig:fineerror}
 \end{figure}
 \end{center}
@@ -1602,7 +1603,7 @@ how many different functions to generate. \texttt{NPAIRS} defines the number of
 pairs of streams that will be generated from each function. Streams generated
 will be copies of the function. For example, when \texttt{NPAIRS} is set to 5, a
 function $f(a)$ is generated, along with two streams. Then, four more streams
-are generated from the same function \$f(a). This allows for multiple trials on
+are generated from the same function $f(a)$. This allows for multiple trials on
 similar data. The \texttt{FPREF} and \texttt{APREF} define the text that is
 prepended to the directories. Setting \texttt{FPREF} to \texttt{function\_} and
 \texttt{APREF} to \texttt{alpha\_} will put each set of functions in a directory
@@ -1685,7 +1686,90 @@ Intel i5 processor.
 
 Once the experiments have completed, we use the best parameter settings from the
 model selection stage to run time delay estimators on the data again, this time
-with all data available to the estimators.
+with all data available to the estimators. First, we use the
+\texttt{get\_goodness.sh} script to extract the experiment numbers of the
+highest scoring parameter settings. Inside the \texttt{runtd\_exp.sh} file, we
+modify the relevant parameters, setting the parameter files to read from, the
+directory from which to read the parameter data---the directory set as the
+output directory for the model selection, the location in which the files output
+from the \texttt{get\_goodness.sh} script, and the place where we wish to put
+the files produced by this stage of the process. When the script is run, it
+performs a time delay estimation on the streams with the best parameters for
+each function and $\alpha$ value. Inside each directory, a file
+\texttt{results.txt} is produced, which contains the some data about the
+performance of the estimators with that combination of methods on the given
+$\alpha$ value for that function. In the next step, we extract this data into a
+more usable form.
+\subsubsection{Extracting Result Data}
+\label{sec-10-2-6}
+
+In the \texttt{extract\_results.sh} script, we set up the parameters so that
+\texttt{INDIR} is set to read from the top level of the time delay results
+directory, and \texttt{OUTDIR} is set to the location to which we wish to output
+the aggregated results. There are three different flags that can be set to
+produce data in different forms for processing. The \texttt{TT} flag makes the
+script output error data in a form in which it can be processed by other scripts
+to run t-tests. The \texttt{DV} flag outputs data which can be used to calculate
+the mean value of the time delay estimate across all functions. Usually, the
+means are calculated on a per-function basis, but setting this flag outputs data
+in a form which groups data from all the functions for one value of $\alpha$
+into one set which can then be easily processed as a single set of
+estimates. The \texttt{EV} flag does a similar thing to the \texttt{DV} flag,
+but for error data. The error values are grouped by $\alpha$ value, and the
+resulting files can be used to find the aggregate error for each value of
+$\alpha$ for a specific method combination. Running the
+\texttt{extract\_results.sh} script will output the data. Next, we will explain
+how to process the resulting files.
+\subsubsection{Processing Result Data}
+\label{sec-10-2-7}
+
+Inside the results directory, the top level contains files which detail the mean
+estimate, standard deviation and mean error for each function for each value of
+$\alpha$. The \texttt{results} directory contains directories with files which
+are used to produce different data. The \texttt{data} directory contains copies
+of all results files, with the filenames showing what experiment the file was
+taken from.
+
+\paragraph{T-tests}
+
+To create data for t-tests, we use the files in the \texttt{alpha\_errors}
+directory. With this data we will be able to compare the errors of one
+combination of method to another. The \texttt{ttest\_columnate\_agg.sh} and
+\texttt{ttest\_columnate\_individual.sh} scripts are used to process the data
+further into files readable by the \texttt{ttest.m} script. The first script
+groups data so that when the t-tests are run, results from all functions for one
+value of $\alpha$ for one method are compared to the same set of functions for
+the same value of $\alpha$, but with a different method combination. The second
+script processes data so that results for individual functions are compared,
+rather than an aggregate set of data. T-test data will be output to a directory
+\texttt{ttest} in the directory specified in the script. In each file, there
+will be columns of data used for the t-test, as well as some information about
+where the data was taken from.
+
+Using the \texttt{ttest.m} script, we can run t-tests on the data. The script
+was written using GNU Octave \cite{octave}, but should also be compatible with
+Matlab. The \texttt{read\_start\_x}, \texttt{read\_start\_y},
+\texttt{read\_end\_x} and \texttt{read\_end\_y} must be modified to match the
+data before the script is run. These values specify the range used by the
+\texttt{dlmread} command to parse in data from the files. In the case of 4
+columns with 25 lines each, the values are set to \small
+\begin{verbatimtab}
+read_start_x=0
+read_start_y=0
+read_end_x=24
+read_end_y=3
+\end{verbatimtab}
+\normalsize
+When run, the script produces a set of t-tests from the data. The
+\texttt{paired\_tests} matrix contains the results of two-tailed paired t-tests
+on the data, and the \texttt{single\_sample} matrix contains the results of
+single sample t-tests on the error values calculated by subtracting one set of
+data from the other. The comparisons array indicates which columns were compared
+to produce each column of the matrix. In general, 1 refers to the baseline area
+method, 2 to the baseline PDF method, 3 to the Gaussian area method, and 4 to
+the Gaussian PDF method.
+
+\paragraph{Mean Error}
 
 
    Generate 10 random functions using gaussians, and output the transforms as
@@ -1711,49 +1795,32 @@ In this appendix we present the full set of experimental data. BA=baseline area,
 GA=Gaussian area, BP=baseline PDF, GP=Gaussian PDF. BA/GA indicates a test
 comparing the Gaussian area method against the baseline area method.
 \begin{table}[htb]
-\caption{Table of mean estimate and standard deviation for the area estimator on the first set of sine experiments ($\mu\pm\sigma,\, n=$ 25). The actual time delay is 10.} 
+\caption{Table of mean estimate and standard deviation for combinations of methods on the first set of sine experiments ($\mu\pm\sigma,\, n=$ 25). The actual time delay is 10.} 
 \begin{center}
-\begin{tabular}{r|ll}
- $\alpha$  &  Baseline area               &  Gaussian area               \\
+\begin{tabular}{r|llll}
+ $\alpha$  &  Baseline area       &  Gaussian area        &  Baseline PDF         &  Gaussian PDF         \\
 \hline
-    0.005  &  11.432000 $\pm$ 6.180791    &  10.388000 $\pm$ 3.603367    \\
-     0.01  &  6.008000 $\pm$ 14.456470    &  9.760000 $\pm$ 2.665033     \\
-    0.015  &  -16.440000 $\pm$ 19.618053  &  -12.024000 $\pm$ 20.848622  \\
-     0.03  &  3.152000 $\pm$ 20.093902    &  1.140000 $\pm$ 22.006308    \\
-     0.06  &  -2.620000 $\pm$ 19.709754   &  3.000000 $\pm$ 18.653279    \\
+     0.05  &  11.432 $\pm$ 6.18   &  10.388 $\pm$ 3.60    &  22.064 $\pm$ 11.20   &  22.20 $\pm$ 10.94    \\
+     0.10  &  6.008 $\pm$ 14.46   &  9.76 $\pm$ 2.67      &  4.712 $\pm$ 17.68    &  8.42 $\pm$ 14.73     \\
+     0.15  &  -16.44 $\pm$ 19.62  &  -12.024 $\pm$ 20.85  &  -11.472 $\pm$ 20.41  &  -13.308 $\pm$ 20.26  \\
+     0.30  &  3.152 $\pm$ 20.09   &  1.14 $\pm$ 22.01     &  3.94 $\pm$ 19.40     &  3.84 $\pm$ 18.67     \\
+     0.60  &  -2.62 $\pm$ 19.71   &  3.00 $\pm$ 18.65     &  1.404 $\pm$ 25.02    &  -7.744 $\pm$ 39.14   \\
 \end{tabular}
 \end{center}
 \end{table}
-
-
-\begin{table}[htb]
-\caption{Table of mean estimate and standard deviation for the PDF estimator on the first set of sine experiments ($\mu\pm\sigma,\,n=$ 25). The actual time delay is 10.} 
-\begin{center}
-\begin{tabular}{r|ll}
- $\alpha$  &  Baseline PDF                &  Gaussian PDF                \\
-\hline
-    0.005  &  22.064000 $\pm$ 11.200353   &  22.200000 $\pm$ 10.936178   \\
-     0.01  &  4.712000 $\pm$ 17.676545    &  8.420000 $\pm$ 14.729481    \\
-    0.015  &  -11.472000 $\pm$ 20.411242  &  -13.308000 $\pm$ 20.256197  \\
-     0.03  &  3.940000 $\pm$ 19.404082    &  3.840000 $\pm$ 18.671454    \\
-     0.06  &  1.404000 $\pm$ 25.021902    &  -7.744000 $\pm$ 39.142571   \\
-\end{tabular}
-\end{center}
-\end{table}
-
 
 
 \begin{table}[htb]
 \caption{Table of paired t-test $p$-values for preliminary sine experiments} 
 \begin{center}
-\begin{tabular}{r|rrrrrr}
- $\alpha$  &    BA/GA  &       BA/BP  &       BA/GP  &        GA/BP  &          GA/GP  &    BP/GP  \\
+\begin{tabular}{r|cccccc}
+ $\alpha$  &    BA/GA  &       BA/BP  &       BA/GP  &              GA/BP  &               GA/GP  &    BP/GP  \\
 \hline
-    0.005  &  0.47815  &  0.00017369  &  0.00011531  &  0.000012894  &  0.000007.3895  &  0.96623  \\
-    0.010  &  0.21721  &     0.78218  &     0.56963  &      0.17294  &        0.66295  &  0.43371  \\
-    0.015  &  0.45352  &     0.39424  &     0.58888  &      0.92654  &        0.82960  &  0.75580  \\
-    0.030  &  0.74226  &     0.89066  &     0.90272  &      0.64223  &        0.64879  &  0.98556  \\
-    0.060  &  0.31540  &     0.53891  &     0.56946  &      0.80325  &        0.23073  &  0.33954  \\
+     0.05  &  0.47815  &  0.00017369  &  0.00011531  &  \num{0.000012894}  &  \num{0.0000073895}  &  0.96623  \\
+     0.10  &  0.21721  &     0.78218  &     0.56963  &            0.17294  &             0.66295  &  0.43371  \\
+     0.15  &  0.45352  &     0.39424  &     0.58888  &            0.92654  &             0.82960  &  0.75580  \\
+     0.30  &  0.74226  &     0.89066  &     0.90272  &            0.64223  &             0.64879  &  0.98556  \\
+     0.60  &  0.31540  &     0.53891  &     0.56946  &            0.80325  &             0.23073  &  0.33954  \\
 \end{tabular}
 \end{center}
 \end{table}
@@ -1762,66 +1829,40 @@ comparing the Gaussian area method against the baseline area method.
 \begin{table}[htb]
 \caption{Table of $p$-values for preliminary sine experiments for one sample t-test performed on error values} 
 \begin{center}
-\begin{tabular}{r|rrrrrr}
- $\alpha$  &    BA/GA  &        BA/BP  &        BA/GP  &         GA/BP  &         GA/GP  &    BP/GP  \\
+\begin{tabular}{r|cccccc}
+ $\alpha$  &    BA/GA  &              BA/BP  &              BA/GP  &               GA/BP  &               GA/GP  &    BP/GP  \\
 \hline
-    0.005  &  0.40134  &  0.000034334  &  0.000027901  &  0.0000037237  &  0.0000045120  &  0.87340  \\
-    0.010  &  0.19016  &      0.77691  &      0.58516  &       0.16046  &       0.65594  &  0.35306  \\
-    0.015  &  0.44337  &      0.39762  &      0.54968  &       0.92600  &       0.84756  &  0.72240  \\
-    0.030  &  0.77304  &      0.90010  &      0.89556  &       0.60185  &       0.54686  &  0.98399  \\
-    0.060  &  0.25471  &      0.49996  &      0.56251  &       0.75755  &       0.22830  &  0.27032  \\
+     0.05  &  0.40134  &  \num{0.000034334}  &  \num{0.000027901}  &  \num{0.0000037237}  &  \num{0.0000045120}  &  0.87340  \\
+     0.10  &  0.19016  &            0.77691  &            0.58516  &             0.16046  &             0.65594  &  0.35306  \\
+     0.15  &  0.44337  &            0.39762  &            0.54968  &             0.92600  &             0.84756  &  0.72240  \\
+     0.30  &  0.77304  &            0.90010  &            0.89556  &             0.60185  &             0.54686  &  0.98399  \\
+     0.60  &  0.25471  &            0.49996  &            0.56251  &             0.75755  &             0.22830  &  0.27032  \\
 \end{tabular}
 \end{center}
 \end{table}
 
 
 \begin{table}[htb]
-\caption{Table of mean estimate and standard deviation for the area estimator on the second set of sine experiments ($\mu\pm\sigma,\,n=$ 10). The actual time delay is 15.} 
+\caption{Table of mean estimate and standard deviation for combinations of methods on the second set of sine experiments ($\mu\pm\sigma,\,n=$ 10). The actual time delay is 15.} 
 \begin{center}
-\begin{tabular}{r|ll}
- $\alpha$  &  Baseline area               &  Gaussian area               \\
+\begin{tabular}{r|llll}
+ $\alpha$  &  Baseline area       &  Gaussian area       &  Baseline PDF        &  Gaussian PDF        \\
 \hline
-    0.001  &  -2.600000 $\pm$ 21.170876   &  10.810000 $\pm$ 16.690983   \\
-    0.002  &  -4.800000 $\pm$ 20.772193   &  9.490000 $\pm$ 20.362635    \\
-    0.003  &  20.670000 $\pm$ 18.167171   &  17.410000 $\pm$ 10.515365   \\
-    0.004  &  9.580000 $\pm$ 6.362515     &  9.970000 $\pm$ 3.435127     \\
-    0.005  &  20.580000 $\pm$ 9.031810    &  15.610000 $\pm$ 3.206384    \\
-    0.006  &  12.170000 $\pm$ 3.972417    &  14.300000 $\pm$ 1.483914    \\
-    0.007  &  15.950000 $\pm$ 4.505164    &  15.990000 $\pm$ 3.094657    \\
-    0.008  &  18.420000 $\pm$ 3.027144    &  16.700000 $\pm$ 2.463331    \\
-    0.009  &  16.190000 $\pm$ 3.238657    &  15.830000 $\pm$ 3.249323    \\
-    0.010  &  16.790000 $\pm$ 3.952075    &  15.010000 $\pm$ 1.823431    \\
-    0.011  &  -0.360000 $\pm$ 24.729586   &  9.130000 $\pm$ 15.919991    \\
-    0.012  &  -12.190000 $\pm$ 25.523105  &  -1.360000 $\pm$ 23.433745   \\
-    0.013  &  -8.420000 $\pm$ 23.478705   &  -24.210000 $\pm$ 18.468701  \\
-    0.014  &  -5.960000 $\pm$ 20.159623   &  -2.490000 $\pm$ 21.265674   \\
-    0.015  &  -10.830000 $\pm$ 13.065301  &  -13.800000 $\pm$ 19.642301  \\
-\end{tabular}
-\end{center}
-\end{table}
-
-
-\begin{table}[htb]
-\caption{Table of mean estimate and standard deviation for the PDF estimator on the second set of sine experiments ($\mu\pm\sigma,\,n=$ 10). The actual time delay is 15.} 
-\begin{center}
-\begin{tabular}{r|ll}
- $\alpha$  &  Baseline PDF                &  Gaussian PDF                \\
-\hline
-    0.001  &  -2.210000 $\pm$ 18.145603   &  -4.320000 $\pm$ 21.909030   \\
-    0.002  &  -14.510000 $\pm$ 14.649877  &  -12.220000 $\pm$ 15.201368  \\
-    0.003  &  10.490000 $\pm$ 12.841686   &  13.720000 $\pm$ 10.651742   \\
-    0.004  &  27.300000 $\pm$ 9.604582    &  23.750000 $\pm$ 9.770491    \\
-    0.005  &  25.060000 $\pm$ 7.197249    &  24.300000 $\pm$ 7.483983    \\
-    0.006  &  20.720000 $\pm$ 2.740365    &  19.710000 $\pm$ 3.088187    \\
-    0.007  &  16.530000 $\pm$ 11.795258   &  15.720000 $\pm$ 14.064267   \\
-    0.008  &  12.350000 $\pm$ 10.595589   &  12.520000 $\pm$ 10.929026   \\
-    0.009  &  17.160000 $\pm$ 7.496693    &  16.170000 $\pm$ 8.510823    \\
-    0.010  &  6.480000 $\pm$ 22.690914    &  6.310000 $\pm$ 22.376168    \\
-    0.011  &  -6.030000 $\pm$ 25.816934   &  -1.060000 $\pm$ 23.423373   \\
-    0.012  &  -20.620000 $\pm$ 24.161945  &  -16.970000 $\pm$ 26.655433  \\
-    0.013  &  -20.710000 $\pm$ 21.445766  &  -25.040000 $\pm$ 19.282334  \\
-    0.014  &  -11.750000 $\pm$ 23.115720  &  -3.530000 $\pm$ 24.266275   \\
-    0.015  &  -4.360000 $\pm$ 21.956102   &  3.070000 $\pm$ 21.171776    \\
+     0.01  &  -2.60 $\pm$ 21.17   &  10.81 $\pm$ 16.69   &  -2.21 $\pm$ 18.15   &  -4.32 $\pm$ 21.91   \\
+     0.02  &  -4.80 $\pm$ 20.77   &  9.49 $\pm$ 20.36    &  -14.51 $\pm$ 14.65  &  -12.22 $\pm$ 15.20  \\
+     0.03  &  20.67 $\pm$ 18.17   &  17.41 $\pm$ 10.52   &  10.49 $\pm$ 12.84   &  13.72 $\pm$ 10.65   \\
+     0.04  &  9.58 $\pm$ 6.36     &  9.97 $\pm$ 3.44     &  27.3 $\pm$ 9.61     &  23.75 $\pm$ 9.77    \\
+     0.05  &  20.58 $\pm$ 9.03    &  15.61 $\pm$ 3.21    &  25.06 $\pm$ 7.20    &  24.30 $\pm$ 7.48    \\
+     0.06  &  12.17 $\pm$ 3.97    &  14.30 $\pm$ 1.48    &  20.72 $\pm$ 2.74    &  19.71 $\pm$ 3.09    \\
+     0.07  &  15.95 $\pm$ 4.51    &  15.99 $\pm$ 3.10    &  16.53 $\pm$ 11.80   &  15.72 $\pm$ 14.06   \\
+     0.08  &  18.42 $\pm$ 3.03    &  16.70 $\pm$ 2.46    &  12.35 $\pm$ 10.60   &  12.52 $\pm$ 10.93   \\
+     0.09  &  16.19 $\pm$ 3.24    &  15.83 $\pm$ 3.25    &  17.16 $\pm$ 7.50    &  16.17 $\pm$ 8.51    \\
+     0.10  &  16.79 $\pm$ 3.95    &  15.01 $\pm$ 1.82    &  6.48 $\pm$ 22.69    &  6.31 $\pm$ 22.38    \\
+     0.11  &  -0.36 $\pm$ 24.73   &  9.13 $\pm$ 15.92    &  -6.03 $\pm$ 25.82   &  -1.06 $\pm$ 23.42   \\
+     0.12  &  -12.19 $\pm$ 25.52  &  -1.36 $\pm$ 23.43   &  -20.62 $\pm$ 24.16  &  -16.97 $\pm$ 26.66  \\
+     0.13  &  -8.42 $\pm$ 23.48   &  -24.21 $\pm$ 18.47  &  -20.71 $\pm$ 21.45  &  -25.04 $\pm$ 19.28  \\
+     0.14  &  -5.96 $\pm$ 20.16   &  -2.49 $\pm$ 21.27   &  -11.75 $\pm$ 23.12  &  -3.53 $\pm$ 24.27   \\
+     0.15  &  -10.83 $\pm$ 13.07  &  -13.80 $\pm$ 19.64  &  -4.36 $\pm$ 21.96   &  3.07 $\pm$ 21.17    \\
 \end{tabular}
 \end{center}
 \end{table}
@@ -1830,24 +1871,24 @@ comparing the Gaussian area method against the baseline area method.
 \begin{table}[htb]
 \caption{Table of paired t-test $p$-values for second set of sine experiments.} 
 \begin{center}
-\begin{tabular}{r|rrrrrr}
- $\alpha$  &      BA/GA  &       BA/BP  &       BA/GP  &         GA/BP  &       GA/GP  &      BP/GP  \\
+\begin{tabular}{r|cccccc}
+ $\alpha$  &      BA/GA  &             BA/BP  &       BA/GP  &               GA/BP  &       GA/GP  &      BP/GP  \\
 \hline
-    0.001  &    0.15295  &     0.96699  &     0.86740  &       0.13054  &     0.11670  &    0.82642  \\
-    0.002  &   0.157811  &    0.266797  &    0.398533  &      0.010178  &    0.019558  &   0.748621  \\
-    0.003  &    0.64686  &     0.18670  &     0.33527  &       0.22703  &     0.46908  &    0.56859  \\
-    0.004  &    0.87326  &   0.0002154  &   0.0018482  &   0.000075319  &  0.00085570  &    0.44706  \\
-    0.005  &  0.1371851  &   0.2597158  &   0.3539836  &     0.0020559  &   0.0049413  &  0.8286646  \\
-    0.006  &    0.14919  &  0.00004719  &  0.00027971  &  0.0000078065  &  0.00016456  &    0.47247  \\
-    0.007  &    0.98273  &     0.89192  &     0.96325  &       0.89579  &     0.95576  &    0.89615  \\
-    0.008  &    0.20268  &     0.11576  &     0.13599  &       0.24583  &     0.27772  &    0.97364  \\
-    0.009  &    0.81655  &     0.72573  &     0.99482  &       0.63121  &     0.91209  &    0.79640  \\
-    0.010  &    0.23567  &     0.19600  &     0.18339  &       0.27572  &     0.26019  &    0.98741  \\
-    0.011  &    0.34587  &     0.63994  &     0.95152  &       0.15109  &     0.29466  &    0.67393  \\
-    0.012  &    0.36082  &     0.48103  &     0.70215  &       0.10321  &     0.20355  &    0.76434  \\
-    0.013  &    0.13020  &     0.26141  &     0.11813  &       0.71497  &     0.92673  &    0.65779  \\
-    0.014  &    0.72652  &     0.57817  &     0.81986  &       0.38812  &     0.92404  &    0.47133  \\
-    0.015  &   0.710077  &    0.457267  &    0.110994  &      0.349136  &    0.096720  &   0.474311  \\
+     0.01  &    0.15295  &           0.96699  &     0.86740  &             0.13054  &     0.11670  &    0.82642  \\
+     0.02  &   0.157811  &          0.266797  &    0.398533  &            0.010178  &    0.019558  &   0.748621  \\
+     0.03  &    0.64686  &           0.18670  &     0.33527  &             0.22703  &     0.46908  &    0.56859  \\
+     0.04  &    0.87326  &         0.0002154  &   0.0018482  &   \num{0.000075319}  &  0.00085570  &    0.44706  \\
+     0.05  &  0.1371851  &         0.2597158  &   0.3539836  &           0.0020559  &   0.0049413  &  0.8286646  \\
+     0.06  &    0.14919  &  \num{0.00004719}  &  0.00027971  &  \num{0.0000078065}  &  0.00016456  &    0.47247  \\
+     0.07  &    0.98273  &           0.89192  &     0.96325  &             0.89579  &     0.95576  &    0.89615  \\
+     0.08  &    0.20268  &           0.11576  &     0.13599  &             0.24583  &     0.27772  &    0.97364  \\
+     0.09  &    0.81655  &           0.72573  &     0.99482  &             0.63121  &     0.91209  &    0.79640  \\
+     0.10  &    0.23567  &           0.19600  &     0.18339  &             0.27572  &     0.26019  &    0.98741  \\
+     0.11  &    0.34587  &           0.63994  &     0.95152  &             0.15109  &     0.29466  &    0.67393  \\
+     0.12  &    0.36082  &           0.48103  &     0.70215  &             0.10321  &     0.20355  &    0.76434  \\
+     0.13  &    0.13020  &           0.26141  &     0.11813  &             0.71497  &     0.92673  &    0.65779  \\
+     0.14  &    0.72652  &           0.57817  &     0.81986  &             0.38812  &     0.92404  &    0.47133  \\
+     0.15  &   0.710077  &          0.457267  &    0.110994  &            0.349136  &    0.096720  &   0.474311  \\
 \end{tabular}
 \end{center}
 \end{table}
@@ -1856,81 +1897,50 @@ comparing the Gaussian area method against the baseline area method.
 \begin{table}[htb]
 \caption{Table of $p$-values for second set of sine experiments for one-sample t-test performed on error values} 
 \begin{center}
-\begin{tabular}{r|rrrrrr}
- $\alpha$  &     BA/GA  &        BA/BP  &       BA/GP  &        GA/BP  &       GA/GP  &     BP/GP  \\
+\begin{tabular}{r|cccccc}
+ $\alpha$  &     BA/GA  &              BA/BP  &       BA/GP  &              GA/BP  &       GA/GP  &     BP/GP  \\
 \hline
-    0.001  &  0.238363  &     0.963181  &    0.834164  &     0.109943  &    0.083662  &  0.718245  \\
-    0.002  &  0.012781  &     0.337071  &    0.318196  &     0.020011  &    0.011247  &  0.693379  \\
-    0.003  &   0.70689  &      0.28411  &     0.42725  &      0.17888  &     0.27976  &   0.46476  \\
-    0.004  &   0.85129  &  0.000056159  &   0.0016052  &  0.000071618  &  0.00051425  &   0.11740  \\
-    0.005  &   0.13016  &      0.29164  &     0.38843  &   0.00076639  &   0.0017663  &   0.20065  \\
-    0.006  &   0.12141  &   0.00027185  &  0.00054176  &  0.000034371  &  0.00034019  &  0.058177  \\
-    0.007  &   0.96101  &      0.89812  &     0.96606  &      0.89112  &     0.95491  &   0.65016  \\
-    0.008  &  0.093847  &     0.128048  &    0.147634  &     0.223662  &    0.252733  &  0.634744  \\
-    0.009  &   0.71169  &      0.73272  &     0.99485  &      0.66951  &     0.91808  &   0.36155  \\
-    0.010  &   0.28488  &      0.22685  &     0.21387  &      0.29118  &     0.27635  &   0.66831  \\
-    0.011  &   0.23385  &      0.66956  &     0.95495  &      0.10105  &     0.18555  &   0.61964  \\
-    0.012  &   0.42867  &      0.60176  &     0.75116  &      0.11260  &     0.20142  &   0.67466  \\
-    0.013  &   0.16087  &      0.33354  &     0.14625  &      0.48521  &     0.91090  &   0.37568  \\
-    0.014  &   0.74527  &      0.64935  &     0.84987  &      0.33823  &     0.91812  &   0.15872  \\
-    0.015  &   0.74025  &      0.52892  &     0.17196  &      0.40520  &     0.18736  &   0.39848  \\
+     0.01  &  0.238363  &           0.963181  &    0.834164  &           0.109943  &    0.083662  &  0.718245  \\
+     0.02  &  0.012781  &           0.337071  &    0.318196  &           0.020011  &    0.011247  &  0.693379  \\
+     0.03  &   0.70689  &            0.28411  &     0.42725  &            0.17888  &     0.27976  &   0.46476  \\
+     0.04  &   0.85129  &  \num{0.000056159}  &   0.0016052  &  \num{0.000071618}  &  0.00051425  &   0.11740  \\
+     0.05  &   0.13016  &            0.29164  &     0.38843  &         0.00076639  &   0.0017663  &   0.20065  \\
+     0.06  &   0.12141  &         0.00027185  &  0.00054176  &  \num{0.000034371}  &  0.00034019  &  0.058177  \\
+     0.07  &   0.96101  &            0.89812  &     0.96606  &            0.89112  &     0.95491  &   0.65016  \\
+     0.08  &  0.093847  &           0.128048  &    0.147634  &           0.223662  &    0.252733  &  0.634744  \\
+     0.09  &   0.71169  &            0.73272  &     0.99485  &            0.66951  &     0.91808  &   0.36155  \\
+     0.10  &   0.28488  &            0.22685  &     0.21387  &            0.29118  &     0.27635  &   0.66831  \\
+     0.11  &   0.23385  &            0.66956  &     0.95495  &            0.10105  &     0.18555  &   0.61964  \\
+     0.12  &   0.42867  &            0.60176  &     0.75116  &            0.11260  &     0.20142  &   0.67466  \\
+     0.13  &   0.16087  &            0.33354  &     0.14625  &            0.48521  &     0.91090  &   0.37568  \\
+     0.14  &   0.74527  &            0.64935  &     0.84987  &            0.33823  &     0.91812  &   0.15872  \\
+     0.15  &   0.74025  &            0.52892  &     0.17196  &            0.40520  &     0.18736  &   0.39848  \\
 \end{tabular}
 \end{center}
 \end{table}
 
 
-\begin{table}
-\subfloat[$\alpha=0.4$]{
-\begin{tabular}{l|ll}
-       &  Baseline             &  Gaussian             \\
-\hline
- Area  &  17.884 $\pm$ 10.66   &  16.62 $\pm$ 4.7732   \\
- PDF   &  13.096 $\pm$ 19.711  &  15.132 $\pm$ 17.018  \\
-\end{tabular}
-}\quad
-\subfloat[$\alpha=0.8$]{
-\begin{tabular}{l|ll}
-       &  Baseline             &  Gaussian            \\
-\hline
- Area  &  16.472 $\pm$ 5.3609  &  15.424 $\pm$ 2.301  \\
- PDF   &  15.64 $\pm$ 6.7863   &  15.644 $\pm$ 2.356  \\
-\end{tabular}
-}\\
-\subfloat[$\alpha=1$]{
-\begin{tabular}{l|ll}
-       &  Baseline             &  Gaussian            \\
-\hline
- Area  &  7.216 $\pm$ 24.077   &  13.6 $\pm$ 15.197   \\
- PDF   &  15.156 $\pm$ 15.831  &  13.056 $\pm$ 18.69  \\
-\end{tabular}
-}\quad
-\subfloat[$\alpha=2$]{
-\begin{tabular}{l|ll}
-       &  Baseline             &  Gaussian             \\
-\hline
- Area  &  15.068 $\pm$ 2.965   &  14.932 $\pm$ 1.9021  \\
- PDF   &  15.052 $\pm$ 4.6295  &  14.62 $\pm$ 4.6207   \\
-\end{tabular}
-}\\
+
+\begin{table}[htb]
+\caption{Results for preliminary random function experiments. Values shown are calculated by aggregating estimate data from 5 functions with 5 estimates for each $\alpha$ value. The actual time delay is 15. (\$$\mu$\textpm{}$\sigma$,\, n=\$25)} 
 \begin{center}
-\subfloat[$\alpha=3$]{
-\begin{tabular}{l|ll}
-       &  Baseline             &  Gaussian             \\
+\begin{tabular}{r|cccccc}
+ $\alpha$  &  Baseline area        &  Baseline PDF         &  Gaussian area        &  Gaussian PDF         \\
 \hline
- Area  &  16.148 $\pm$ 4.246   &  14.844 $\pm$ 3.4838  \\
- PDF   &  15.724 $\pm$ 7.6279  &  14.176 $\pm$ 9.7994  \\
+      0.4  &  17.884 $\pm$ 10.465  &  13.096 $\pm$ 19.351  &  16.62 $\pm$ 4.6861   &  15.132 $\pm$ 16.708  \\
+      0.8  &  16.472 $\pm$ 5.2632  &  15.64 $\pm$ 6.6625   &  15.424 $\pm$ 2.259   &  15.644 $\pm$ 2.3131  \\
+      1.0  &  7.216 $\pm$ 23.638   &  15.156 $\pm$ 15.542  &  13.6 $\pm$ 14.92     &  13.056 $\pm$ 18.349  \\
+      2.0  &  15.068 $\pm$ 2.911   &  15.052 $\pm$ 4.5451  &  14.932 $\pm$ 1.8674  &  14.62 $\pm$ 4.5364   \\
+      3.0  &  16.148 $\pm$ 4.246   &  15.724 $\pm$ 7.6279  &  14.844 $\pm$ 3.4838  &  14.176 $\pm$ 9.7994  \\
 \end{tabular}
-}
-\end{center} \caption{Results for preliminary random function
-experiments. Values shown are calculated by aggregating estimate data from 5
-functions with 5 estimates for each $\alpha$ value. The actual time delay
-is 15. ($\mu\pm\sigma,\, n=$25)}
+\end{center}
 \end{table}
+
 
 \begin{table}[htb]
 \caption{Paired t-test results for preliminary random function experiments, calculated by aggregating results for each function for each method and comparing. $n=$ 25} 
 \begin{center}
-\begin{tabular}{r|rrrrrr}
+\begin{tabular}{r|cccccc}
  $\alpha$  &    BA/GA  &    BA/BP  &    BA/GP  &    GA/BP  &    GA/GP  &    BP/GP  \\
 \hline
       0.4  &  0.29071  &  0.59093  &   0.4965  &  0.38927  &  0.69758  &  0.67568  \\
@@ -1944,9 +1954,9 @@ is 15. ($\mu\pm\sigma,\, n=$25)}
 
 
 \begin{table}[htb]
-\caption{One sample t-test results for preliminary random function experiments, calculated by aggregating results for each function for each method and comparing.$n=$ 25} 
+\caption{One sample t-test results for preliminary random function experiments, calculated by aggregating results for each function for each method and comparing. $n=$ 25} 
 \begin{center}
-\begin{tabular}{r|rrrrrr}
+\begin{tabular}{r|cccccc}
  $\alpha$  &    BA/GA  &    BA/BP  &    BA/GP  &    GA/BP  &    GA/GP  &    BP/GP  \\
 \hline
       0.4  &  0.28246  &   0.6203  &  0.43163  &  0.39593  &  0.68339  &  0.69719  \\
@@ -1954,6 +1964,85 @@ is 15. ($\mu\pm\sigma,\, n=$25)}
         1  &  0.15115  &  0.12471  &  0.24086  &  0.69366  &  0.48648  &  0.85042  \\
         2  &    0.988  &  0.84899  &  0.67334  &  0.89557  &  0.31721  &  0.71896  \\
         3  &  0.78673  &  0.13475  &   0.3649  &   0.5442  &   0.1848  &  0.70261  \\
+\end{tabular}
+\end{center}
+\end{table}
+
+
+\begin{table}[htb]
+\caption{Results for second set of random function experiments. Values shown are calculated by aggregating estimate data from 5 functions with 5 estimates for each $\alpha$ value. The actual time delay is 15. ($\mu\pm\sigma,\,n=$ 25)} 
+\begin{center}
+\begin{tabular}{r|cccccc}
+ $\alpha$  &  Baseline area        &  Baseline PDF         &  Gaussian area        &  Gaussian PDF          \\
+\hline
+      0.1  &  2.668 $\pm$ 24.011   &  -1.808 $\pm$ 24.508  &  8.656 $\pm$ 15.301   &  -14.152 $\pm$ 25.117  \\
+      0.2  &  13.54 $\pm$ 13.682   &  -0.16 $\pm$ 18.927   &  4.964 $\pm$ 14.226   &  2.1 $\pm$ 18.803      \\
+      0.3  &  9.976 $\pm$ 15.983   &  -4.576 $\pm$ 15.793  &  11.528 $\pm$ 11.16   &  -5.872 $\pm$ 20.965   \\
+      0.4  &  10.848 $\pm$ 17.376  &  6.032 $\pm$ 22.883   &  12.808 $\pm$ 7.7668  &  7.284 $\pm$ 16.856    \\
+      0.5  &  14.508 $\pm$ 7.9035  &  12.312 $\pm$ 15.138  &  15.316 $\pm$ 1.3203  &  12.732 $\pm$ 12.987   \\
+      0.6  &  13.212 $\pm$ 9.9238  &  11.116 $\pm$ 14.794  &  10.524 $\pm$ 15.65   &  5.072 $\pm$ 23.078    \\
+      0.7  &  4.88 $\pm$ 17.486    &  0.74 $\pm$ 20.025    &  13.096 $\pm$ 7.8901  &  4.236 $\pm$ 18.376    \\
+      0.8  &  12.224 $\pm$ 11.602  &  8.076 $\pm$ 15.033   &  9.523 $\pm$ 14.948   &  5.748 $\pm$ 15.487    \\
+      0.9  &  14.568 $\pm$ 13.218  &  1.524 $\pm$ 21.66    &  14.488 $\pm$ 2.6585  &  7.8 $\pm$ 17.765      \\
+      1.0  &  13.024 $\pm$ 10.781  &  11.544 $\pm$ 18.706  &  15.42 $\pm$ 1.8552   &  11.148 $\pm$ 18.037   \\
+      1.1  &  13.9 $\pm$ 8.1991    &  8.496 $\pm$ 14.743   &  14.1 $\pm$ 4.6522    &  9.348 $\pm$ 13.755    \\
+      1.2  &  17.988 $\pm$ 8.8131  &  18.852 $\pm$ 9.433   &  16.912 $\pm$ 6.1955  &  17.512 $\pm$ 9.4673   \\
+      1.3  &  14.228 $\pm$ 2.5246  &  17.264 $\pm$ 2.0459  &  15.028 $\pm$ 1.3014  &  17.096 $\pm$ 1.4202   \\
+      1.4  &  15.128 $\pm$ 4.0093  &  15.588 $\pm$ 11.763  &  13.46 $\pm$ 10.885   &  11.348 $\pm$ 17.795   \\
+      1.5  &  16.46 $\pm$ 10.726   &  21.592 $\pm$ 9.7962  &  15.724 $\pm$ 6.2363  &  19.004 $\pm$ 12.125   \\
+\end{tabular}
+\end{center}
+\end{table}
+
+
+
+\begin{table}[htb]
+\caption{Paired t-test results for second set of random function experiments, calculated by aggregating results for each function for each method and comparing. $n=$ 25} 
+\begin{center}
+\begin{tabular}{r|cccccc}
+ $\alpha$  &              BA/GA  &     BA/BP  &               BA/GP  &              GA/BP  &     GA/GP  &               BP/GP  \\
+\hline
+      0.1  &            0.51733  &   0.29827  &            0.019342  &           0.076423  &  0.084991  &          0.00032037  \\
+      0.2  &          0.0051315  &  0.034784  &            0.017553  &            0.28463  &   0.67378  &             0.54648  \\
+      0.3  &          0.0021849  &   0.69233  &           0.0042038  &         0.00012929  &   0.80605  &          0.00062073  \\
+      0.4  &            0.40614  &   0.60899  &             0.46525  &            0.16734  &    0.8266  &             0.14323  \\
+      0.5  &            0.52329  &   0.61644  &             0.56189  &            0.32788  &   0.91659  &             0.32726  \\
+      0.6  &            0.55908  &   0.47181  &             0.11175  &            0.89125  &   0.27578  &             0.33316  \\
+      0.7  &            0.44001  &  0.037343  &             0.89952  &          0.0060815  &   0.52319  &            0.031529  \\
+      0.8  &            0.28021  &   0.47903  &             0.10078  &            0.73421  &   0.59217  &             0.38478  \\
+      0.9  &           0.013321  &   0.97645  &             0.13302  &          0.0046355  &   0.26822  &            0.068792  \\
+      1.0  &            0.73328  &   0.27892  &             0.65733  &            0.30772  &   0.93958  &             0.24459  \\
+      1.1  &            0.11578  &   0.91596  &             0.16168  &           0.076168  &   0.83356  &             0.10831  \\
+      1.2  &            0.73935  &   0.61978  &             0.85478  &            0.39434  &   0.61843  &             0.79203  \\
+      1.3  &  \num{0.000024441}  &   0.16549  &  \num{0.0000095411}  &  \num{0.000029926}  &   0.73738  &  \num{0.0000022806}  \\
+      1.4  &            0.85395  &   0.47565  &             0.30533  &            0.50993  &   0.32528  &             0.61501  \\
+      1.5  &           0.083675  &   0.76805  &             0.43587  &           0.014871  &   0.41057  &             0.23495  \\
+\end{tabular}
+\end{center}
+\end{table}
+
+
+\begin{table}[htb]
+\caption{Single sample t-test results for second set of random function experiments, calculated by aggregating results for each function for each method and comparing. $n=$ 25} 
+\begin{center}
+\begin{tabular}{r|cccccc}
+ $\alpha$  &                BA/GA  &     BA/BP  &                 BA/GP  &                GA/BP  &     GA/GP  &                   BP/GP  \\
+\hline
+      0.1  &              0.53491  &   0.29591  &              0.023309  &              0.13562  &  0.015965  &               0.0024401  \\
+      0.2  &            0.0091442  &  0.018017  &             0.0072404  &              0.22424  &   0.55365  &                  0.5514  \\
+      0.3  &            0.0033213  &   0.53154  &             0.0015812  &           0.00045591  &   0.80415  &               0.0012471  \\
+      0.4  &              0.44784  &   0.61693  &               0.50809  &              0.16338  &   0.72314  &                 0.15106  \\
+      0.5  &              0.53795  &    0.5997  &               0.57453  &              0.34868  &   0.87381  &                 0.33991  \\
+      0.6  &              0.57406  &   0.47553  &               0.12949  &              0.89505  &    0.1207  &                 0.15509  \\
+      0.7  &              0.37818  &  0.020646  &               0.87337  &            0.0073325  &   0.11969  &                0.026935  \\
+      0.8  &              0.18908  &   0.38286  &              0.056598  &              0.59594  &   0.23452  &                 0.23195  \\
+      0.9  &             0.004523  &   0.97677  &               0.04792  &            0.0070827  &   0.12395  &                0.075853  \\
+      1.0  &               0.7347  &   0.25313  &               0.52376  &              0.30931  &   0.92957  &                 0.22829  \\
+      1.1  &             0.098855  &   0.89295  &               0.12298  &             0.081173  &   0.77935  &                 0.10247  \\
+      1.2  &              0.66062  &   0.52511  &               0.79827  &              0.31073  &   0.23649  &                 0.75251  \\
+      1.3  &  \num{0.00000066396}  &  0.044196  &  \num{0.000000042502}  &  \num{0.00000001978}  &   0.48723  &  \num{0.00000000068121}  \\
+      1.4  &               0.8409  &   0.54461  &               0.28351  &              0.42718  &   0.14969  &                 0.48467  \\
+      1.5  &             0.098748  &   0.63584  &               0.33856  &            0.0080649  &    0.3598  &                 0.21506  \\
 \end{tabular}
 \end{center}
 \end{table}
