@@ -1,7 +1,10 @@
-INDIR=/media/michal/Edison/fyp/new/random/rand_results
+# Makes a table of mean values from the data in the top level file in the results directory.
+# One table is produced for each value of alpha and the four possible method combinations.
+INDIR=/media/michal/Doppler/fyp/new/morerandom/morerandom_results
 OUTFILE=$INDIR/meanvals.dat
-# Number of columns to use when calculating averages for alpha values. 
-NCOLS=5
+# Number of columns to use when calculating averages for alpha values.
+# Should be equal to the number of alpha values used in the experiments
+NCOLS=15
 
 echo "" > $OUTFILE
 for COL in $(seq 1 $NCOLS); do
@@ -27,7 +30,7 @@ for COL in $(seq 1 $NCOLS); do
 	HOLD="`echo "$HOLD $DATA\n"`"
     done
     # should only be 2 columns, but need 3 for some reason?
-    RES="`echo -e "$HOLD" | pr -ts --columns 3`"
+    RES="`echo -e "$HOLD" | grep -v '^\s*$' | pr -ts --columns 2`"
     RES="`echo -e "$RES" | sed -e 's/^/|Area|/; 2s/Area/PDF/'`"
     echo -e "$RES\n" >> $OUTFILE
 done

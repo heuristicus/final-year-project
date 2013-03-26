@@ -1,12 +1,13 @@
 # Calculates the mean and standard deviation for different methods using the same alpha
 # value across multiple functions, and puts the resulting data into an org table
-INDIR=/media/michal/Edison/fyp/new/random/rand_results/results/alpha_errors
+INDIR=/media/michal/Doppler/fyp/new/morerandom/morerandom_results/results/alpha_errors
 OUTFILE=$INDIR/errmeans.dat
-AVALS=(04 08 1 2 3)
+AVALS=(01 02 03 04 05 06 07 08 09 10 11 12 13 14 15)
 TD_EST_TYPES=(area pmf)
 FUNC_EST_TYPES=(baseline gaussian)
 # Number of columns to use when calculating averages for alpha values. This is equal to the number of alpha values tested
-NCOLS=5
+NCOLS=15
+DIVISOR=10
 
 # Empty the output file
 > $OUTFILE
@@ -38,8 +39,9 @@ for TD in ${TD_EST_TYPES[@]}; do
 	> $SOUT
 	echo -e "# alpha\tMean\t stdev" >> $SOUT
 	for VAL in ${AVALS[@]}; do
+	    RVAL="`echo "scale=1; $((10#$VAL))/$DIVISOR" | bc`"
 	    RES="`grep -A 1 "alpha_$VAL\_$FUNC\_$TD" $OUTFILE | sed '1d'`"
-	    echo -e "$VAL\t$RES" >> $SOUT
+	    echo -e "$RVAL $RES" >> $SOUT
 	done
     done
 done
