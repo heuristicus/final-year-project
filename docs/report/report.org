@@ -577,8 +577,15 @@ functionality as well, which will be described below.
 - 
 * Function Estimation
 ** Baseline Estimation
+In this section, we present the baseline method for function estimation. The
+core of the estimator is based on the iterative weighted least squares estimator
+derived by Massey et.al \cite{massey1996estimating}, and in the next two
+sections we attempt to explain its derivation in simpler terms than in the
+original paper. The subsequent sections detail our additions to the simple
+estimators in order to form the final baseline estimator which will be used as
+the first of our function estimation methods.
 *** Ordinary Least Squares
-The Ordinary least squares (OLS) estimator forms the core of the baseline
+The ordinary least squares (OLS) estimator forms the core of the baseline
 estimator. This estimator will form an estimate by minimising the sum of squared
 residuals. It is important to note the difference between errors and
 residuals. In statistical terms, an \emph{error} is ``The difference between the
@@ -608,9 +615,8 @@ x_k&=\left(k-\frac{1}{2}\right)\frac{T}{N},\,1\leq k\leq N
 \end{align}
 #+END_LaTeX
 Due to the independent increments property of Poisson processes, splitting the
-interval leaves us with $N$ bins, and according to Massey et
-al. \cite{massey1996estimating}, each is defined by an independent Poisson
-random variable $Y_k$ with mean
+interval leaves us with $N$ bins, each of is defined by an independent Poisson
+random variable \cite{massey1996estimating} $Y_k$ with mean
 #+BEGIN_LaTeX
 \begin{equation}\label{eq:lam}
 {\lambda}_k=\frac{T}{N}(a+bx_k)
@@ -669,13 +675,14 @@ $\alpha$ and $\beta$ for which the RSS is minimised, and so the final expression
 \min_{\alpha,\beta}\sum_{k=1}^N w_k(Y_k-[\alpha +\beta x_k])^2
 \end{equation}
 #+END_LaTeX
-Now that we know what we are looking for, we define estimators $\hat{\alpha}$
-and $\hat{\beta}$, which we will use to estimate values of $\alpha$ and $\beta$
-to find the minimum.
+which is known as the \emph{objective function}. Once the objective function is
+known, we can define estimators $\hat{\alpha}$ and $\hat{\beta}$, which we
+will use to estimate values of $\alpha$ and $\beta$ to find the minimum.
 #+BEGIN_LaTeX
 \begin{equation}
-\hat{\beta}=\frac{\sum_{k=1}^N
-w_k(x_k-\bar{x})(Y_k-\bar{Y})}{\displaystyle \sum_{k=1}^N w_k(x_k-\bar{x})^2}=\frac{\displaystyle\sum_{k=1}^N w_k(x_k-\bar{x})Y_k}{\sum_{k=1}^N w_k(x_k-\bar{x})^2}
+\hat{\beta}
+=\frac{\displaystyle\sum_{k=1}^N w_k(x_k-\bar{x})(Y_k-\bar{Y})}{\displaystyle \sum_{k=1}^N w_k(x_k-\bar{x})^2}
+=\frac{\displaystyle\sum_{k=1}^N w_k(x_k-\bar{x})Y_k}{\displaystyle\sum_{k=1}^N w_k(x_k-\bar{x})^2}
 \end{equation}
 #+END_LaTeX
 
@@ -687,10 +694,17 @@ w_k(x_k-\bar{x})(Y_k-\bar{Y})}{\displaystyle \sum_{k=1}^N w_k(x_k-\bar{x})^2}=\f
 
 #+BEGIN_LaTeX
 \begin{equation}
+\text{where}\quad
 \bar{x}=\frac{1}{N}\sum_{k=1}^N w_kx_k\quad \text{and}\quad
 \bar{Y}=\frac{1}{N}\sum_{k=1}^N w_kY_k
 \end{equation}
 #+END_LaTeX
+
+If we ignore the addition of the weight for the time being, the calculation of
+$\hat{\beta}$ is equivalent to dividing the covariance of $x$ with $Y$ by the
+variance of $x$ \cite{kenney1962mathematics}. This should allow us to understand
+more about how the value of the estimate changes depending on what the values of
+$x$ and $Y$ look like.
 
 #+BEGIN_LaTeX
 \begin{equation}
@@ -766,12 +780,6 @@ additional calculation. However, for our purposes this is not sufficient. The
 characteristic function of stellar objects are not linear functions, so we must
 extend this linear approach to give us some reasonable estimates of functions
 which are not straight lines.
-- Extension of the OLS technique which iterates it multiple times, updating weights
-- show weight update equation
-- talk about how varying the number of iterations affects it (massey)
-- Show it estimating a line
-- Explain how line estimation is not useful since lensed photon streams are
-  always some function which is not a line.
 *** Piecewise Iterative Weighted Least Squares
 It is clear that the IWLS estimator alone is not sufficient to complete our
 task. In order to have a reasonable estimate of the characteristic function, we
@@ -785,16 +793,16 @@ estimated using IWLS. We also add some minor extensions in an attempt to improve
 the quality of the estimates. Sub-intervals are estimated starting from the
 first, and moving to the next once the process is complete. However, since the
 number of sub-intervals that the interval is split into is somewhat arbitrary,
-we implemented an estimate extension strategy. When the estimate is completed,
-a short interval after the sub-interval being estimated is checked to see how
-well the estimate matches it. The check is performed using probability density
-functions (PDF). The extension interval is split into several bins, and the likelihood
-of obtaining the bin counts of those bins given the function estimate is
-checked. We use a simple threshold function which only permits the extension of
-the estimate if for each bin the PDF calculated does not fall below a certain
+we implemented an estimate extension strategy. When the estimate is completed, a
+short interval after the sub-interval being estimated is checked to see how well
+the estimate matches it. The check is performed using probability density
+functions (PDF). The extension interval is split into several bins, and the
+likelihood of obtaining the bin counts of those bins given the function estimate
+is checked. We use a simple threshold function which only permits the extension
+of the estimate if for each bin the PDF calculated does not fall below a certain
 value. The calculation of PDFs depends on the type of probability distribution
-being used to check the data. In our case, this is a Poisson distribution, and we
-use
+being used to check the data. In our case, this is a Poisson distribution, and
+we use
 #+BEGIN_LaTeX
 \begin{equation}
 P(X=k)=\frac{\lambda^ke^{-\lambda}}{k!}
@@ -1037,8 +1045,6 @@ $\lambda_{a,b}$ becomes. As with the previous estimator, the estimate is made in
 two stages, first with a coarse pass over the values of delta to compute an
 initial estimate, and then a finer second pass around the first estimated value
 in order to refine the estimate.
-- calculate probability mass function at each point on the function and choose
-  the time delay which maximises the value
 * Evaluation
 #+BEGIN_LaTeX
 \begin{figure}[h!tb]
@@ -1085,7 +1091,7 @@ on each function is calculated, and from this we can examine the effectiveness
 of the estimates. The aim of the experimentation is to compare the effectiveness
 of the time delay estimation with four combinations of estimators: gaussian
 area, gaussian pdf, baseline area and baseline pdf. For the full set of
-experimental results, see Appendix [[Experimental Data]].
+experimental data, see Appendix [[Experimental Data]].
 
 We assume that the distribution of the samples is Gaussian, but this may not be
 the case. However, full non-parametric testing is out of the scope of this project.
@@ -1095,8 +1101,6 @@ $y=a-b\sin(\alpha t)$. An increase in the value of $\alpha$ increases the
 oscillation frequency, and a decrease reduces it. The value of $a$ indicates how
 much the wave is shifted along the $y$-axis, and $b$ determines the
 amplitude of the wave.
-
-
 *** Preliminary Experiments
 In the first set of experiments, we investigate the performance of the
 estimators on five values of $\alpha$: 0.05, 0.1, 0.15, 0.3 and 0.6. Figure
@@ -1152,7 +1156,6 @@ although the $p$-values at $\alpha$ =0.05 are significant, they are not
 sufficient to say that the area estimator is always better. Figure
 \ref{fig:prelimerror} shows the error of the various estimator combination at
 each value of alpha.
-
 #+CAPTION: Experimental results for $\alpha=$ 0.05. Actual time delay is 10. ($\mu\pm\sigma$)
 #+LABEL: fig:pretab
 |      | Gaussian          | Baseline          |
@@ -1160,9 +1163,6 @@ each value of alpha.
 | /    | <                 |                   |
 | Area | 10.39 $\pm$ 3.60  | 11.43 $\pm$ 6.18  |
 | PDF  | 22.20 $\pm$ 10.94 | 22.06 $\pm$ 11.20 |
-
-
-
 *** Refined experiments
 Although the previous set of experiments provide some indication as to the
 performance of the estimators, we investigated their effectiveness on a smaller
@@ -1270,7 +1270,22 @@ the same set of experimental parameters as in the previous set of experiments:
 \item[Maximum breakpoints] As above
 \item[Gaussian standard deviation] 0.5 to 20 with a step of 0.5
 \end{description}
-
+The results from the experiment were very enlightening. Figure
+\ref{fig:randerror} shows the error of the estimators over all $\alpha$
+values. The estimators performed with much smaller error values on average,
+leading us to believe that the large errors in the previous experiments were due
+to the shape of the functions. The methods that we use seem to be ineffective on
+functions which have a symmetrical shape, which sine functions are. The
+estimators appear to be much more stable, with the mean error deviating
+relatively little from zero, in comparison to the wild variation in the sine
+function experiments. While the performance of the estimators was better, the
+difference between method combinations is still not significant. The large error
+at $\alpha$ is 1 is due to very large errors occurring in estimates of two
+functions in that data set. This indicates that while on average the estimators
+perform well, on functions with certain characteristics there are large
+differences in the performance. Both time delay estimation methods perform worse
+when $\alpha$ is 0.4, but the estimate from the area method is clearly less
+affected.
 #+BEGIN_LaTeX
 \begin{center}
 \begin{figure}
@@ -1292,25 +1307,39 @@ function experiments for each method combination.}
 \end{figure}
 \end{center}
 #+END_LaTeX
-The results from the experiment were very enlightening. Figure
-\ref{fig:randerror} shows the error of the estimators over all $\alpha$
-values. The estimators performed with much smaller error values on average,
-leading us to believe that the large errors in the previous experiments were due
-to the shape of the functions. The methods that we use seem to be ineffective on
-functions which have a symmetrical shape, which sine functions are. The
-estimators appear to be much more stable, with the mean error deviating
-relatively little from zero, in comparison to the wild variation in the sine
-function experiments. While the performance of the estimators was better, the
-difference between method combinations is still not significant. The large error
-at $\alpha=$ 1 is due to very large errors occurring in estimates of two
-functions in that data set. This indicates that while on average the estimators
-perform well, on functions with certain characteristics there are large
-differences in the performance. Both time delay estimation methods perform worse
-when $\alpha=$ 0.4, but the estimate from the area method is clearly less
-affected.
 *** Second Experiment
-    #+BEGIN_LaTeX
+In order to investigate the estimator performance further, we performed an
+additional experiment on a finer set of data, varying $\alpha$ from 0.1 to 1.5,
+with steps of 0.1. Going down to such a low value of $\alpha$ results in
+functions which have very large variations, with impulse-like peaks and troughs,
+an example of which can be seen in Figure \ref{fig:smallalpha}. The parameter
+ranges used were the same as in the previous experiment on random functions.
+
+This experiment confirms our observation from the previous experiment that the
+Gaussian area method combination is the one which should be used to get the best
+estimates with the smallest errors, which is clear to see in Figure
+\ref{fig:moreranderror}. Again, there was no pattern in the $p$-values that
+could be said to indicate that one method is significantly better than another,
+so we can not conclude with certainty that the Gaussian area method is indeed
+better than the others. However, this and previous experiments have shown that
+the size of the error from estimates with that combination is in the vast
+majority of cases smaller than that of other combinations. Errors appearing in
+combinations using the PDF method increase as values of $\alpha$ drop below 0.4,
+indicating that the method is more error-prone when functions have large
+variations. The PDF method in general has larger standard deviations on the
+error than the area method.
+#+BEGIN_LaTeX
 \begin{center}
+\begin{figure}
+\includegraphics{smallalpha}
+\caption{Example of a function generated with $\alpha$ set to 0.1. The straight
+line at $\lambda=$ 5 is a result of the function being shifted to make all values
+$\geq 0$.}
+\label{fig:smallalpha}
+\end{figure}
+\end{center}
+\begin{center}
+
 \begin{figure}
 \subfloat[Baseline area]{
 \includegraphics[width=0.5\textwidth]{baseline_area_morerand}
