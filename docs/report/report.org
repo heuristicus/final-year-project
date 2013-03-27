@@ -21,6 +21,7 @@
 #+LaTeX_HEADER: \usepackage{metalogo}
 #+LaTeX_HEADER: \usepackage{graphicx}
 #+LaTeX_HEADER: \usepackage{moreverb}
+#+LaTeX_HEADER: \usepackage{fancyvrb}
 #+LaTeX_HEADER: \usepackage{subfig}
 #+LaTeX_HEADER: \usepackage[scientific-notation=true]{siunitx}
 #+LaTeX_HEADER: \usepackage{float}
@@ -49,8 +50,8 @@ functions. Finally, we compare the performance of the two function estimation
 methods and time delay estimation methods on simulated data, and show that there
 is not a significant difference between the approaches.
 
-\vspace{1.0cm}\textbf{Keywords: }Poisson process, gravitational lensing,
- machine learning, linear estimation
+\vspace{1.0cm}\noindent\textbf{Keywords:} Nonhomogeneous Poisson process, gravitational lensing,
+ machine learning, linear regression
 
 \begin{center}
 \vspace*{\fill}\scriptsize{Typeset in Linux Libertine using \XeLaTeX}.
@@ -254,8 +255,8 @@ contrast, a non-homogeneous Poisson process (NHPP) has a rate parameter which
 varies. This means that the rate at which events occur varies during the running
 time of the process.
 ** Function Estimation
-*** Linear Regression
-Linear regression is a statistical technique used to fit lines or curves to data
+*** Regression
+Regression is a statistical technique used to fit lines or curves to data
 points in order to find some sort of relationship between them. The number of
 variables in the data is important. One of the variables is called a \emph{dependent}
 variable. We want to find the relationship between this variable and the other
@@ -270,6 +271,9 @@ Linear regression is used in many different fields to find the trend between
 variables. It is heavily used in economics to make predictions about what
 happens in many economical situations. Finding trends in data is useful to many
 people in different ways.
+
+- example of residuals. Show two linear estimates with the residuals sketched,
+  one with a better fit than the other.
 *** Kernel Density Estimation
 This is another method which can be used to estimate functions, but which
 applies specifically to the probability density function of random
@@ -282,8 +286,20 @@ the kernels results in different properties of the estimate. There are many
 different kernels that can be used. Different kernels are used in different
 applications.
 - Show some examples of different kernels
+In this section, we present an overview of the structure of the system and the
+development process. More detailed notes on the implementation of a particular
+subsystem can be found in the section dedicated to that specific part. Here, we
+describe parts of the system which do not have a dedicated section, and also
+provide a general idea of the interactions between the parts of the system.
 * System
-** System Structure
+** Design
+** Overall Structure
+On the most basic level, the system is split up into two different modules; the
+estimators and the generators. These two parts of the system do not interact at
+all, and can be used as completely independent systems. What does connect them
+is a set of shared libraries, which provide mathematical functions, data
+structures and other non-specific utility functions. Figure \ref{fig:sysstruct}
+gives an overview of the structure of the system.
 #+BEGIN_LaTeX
 \begin{figure}
 \centering
@@ -397,42 +413,149 @@ text centered, minimum height=2.5em, node distance=1.5cm]
 \label{fig:sysstruct}
 \end{figure}
 #+END_LaTeX
-*** Overall Structure
-*** Libraries
-    - say what the function of each library is and what sort of functions it
-      contains.
-*** Estimators
-Maybe this stuff should be in each individual section rather than here? talk
-about how the system is interlinked in those sections - makes more sense with
-the flow of things?
-**** Function estimators
-- talk about each estimator and where it is used, and how they are related.
-- OLS->IWLS->Piecewise->Baseline
-- gaussian + normalisation
-**** Time delay estimators
-*** Generators
-- muparser generator
-*** Interface
-** Development
-*** Development Process
+** Libraries
+Each part of the system makes extensive use of custom libraries. Each library
+consists of a header file which contains the function prototypes and include
+information, along with a separate file for the functions, which are compiled by
+\texttt{libtool} into a convenience library. The advantage of using
+\texttt{libtool} over other ways of constructing libraries is that it can create
+both shared and static libraries. This means that if the library needs to be
+re-used elsewhere it is simple to take the shared object file created and
+compile the program including the library by passing the standard
+\texttt{-l[libname]} syntax to \texttt{gcc}. Since the libraries contain various
+functions which are useful not only for this system, this is a useful feature to
+have as the libraries can be easily re-used. Due to some interdependencies,
+between the lower level convenience libraries, they are merged into one main
+library, again functionality provided by \texttt{libtool}. The main function of
+the libraries is to abstract out code which may be used multiple times in order
+to reduce clutter, and avoid code duplication and the increased likelihood of
+errors associated with it.
+
+*** Parameter List
+    The parameter list library defines a singly-linked list which is used to
+    store data parsed from the parameter files which contain parameters that
+    modify the behaviour of the system. The functionality implemented by this
+    library is very important, as almost all functions outside the libraries
+    require one of these lists to perform their tasks. The library provides the
+    functions for adding elements to the list and finding its length. A function
+    for removal of elements is not provided, as there is no situation which
+    should necessitate the removal of elements from the list. There is also
+    functionality for checking whether a parameter with a given name exists,
+    retrieving the value of a parameter, and setting the value of a parameter.
+
+    There are multiple retrieval functions, each of which retrieves values of
+    different types. The parameter list is constructed in such a way that all
+    values in it are stored as character arrays. This means that if a parameter
+    value is required by some function, it must be converted into the type which
+    that function requires. Since it is known inside the function which type is
+    required, the relevant function can be called. Functions to read
+    \texttt{double} and \texttt{int} types are provided, along with a function
+    to retrieve the character array. In addition, some of the parameters in the
+    files are comma-separated lists of integers or doubles, which must be parsed
+    into arrays before they can be used. The parsing also applies to the
+    \texttt{double} and \texttt{int} types, which must be converted from string
+    form into the correct type. In order to reduce code duplication, the
+    conversion of the variables is done inside the retrieval function.
+
+    The issue of whether the parameters should be parsed into the correct types
+    upon reading of the file may be raised, but we believe that this solution is
+    more appropriate. Firstly, it is often the case that not all parameters
+    present in the file are required when any given task is executed by the
+    system. Therefore, parsing all the parameters upon read may be a waste of
+    processing time. In addition, having to parse parameters requires knowledge
+    about what types they should be. This can be deduced within the code, but
+    would require more complex logic. The storage would also be complicated by
+    this, as the list would be required to store variables of multiple types. As
+    mentioned above, parsing parameter values only when they are needed, and in
+    contexts where their type is known means that the current structure performs
+    its role well.
+*** Mathematics
+    As the name implies, the mathematics library provides the mathematical
+    functions required by the system which are not provided by the standard C
+    library. Some of the library functions are based on functionality provided
+    by the GNU Scientific Library \cite{gsl}, particularly those which calculate
+    probability density functions or require random number generators. The most
+    important part of the library is the functionality it provides for
+    computations to do with Gaussians, in particular the discrete Gaussian
+    transform. It also provides some basic useful functions, such as finding the
+    minimum and maximum values in arrays, averaging, summing, adding to or
+    multiplying arrays, and some implementations of statistical functions such
+    as the root mean square error, standard deviation and the like. Functions
+    which are critical to the operation of the system will be described in the
+    implementation section of the relevant subsystems.
+
+    The most challenging part of the implementation of the library was to get
+    around the issues caused by doubles. Functions which deal with calculations
+    based on timings require a certain precision on the start and end times of
+    intervals to work correctly. Due to the nature of double precision values,
+    calculations with them often do not have the precise value of the
+    calculation. Particular problems were encountered when incrementing a value
+    by a floating point number and comparing it to another. The floating point
+    increments caused the value to be slightly (on the order of \num{1.0e-20})
+    below the actual value, and this caused calculations to be incorrect and
+    resulted in a cascade of erroneous calculations. To deal with this problem,
+    functions for comparing double precision values to a specific precision were
+    implemented.
+*** Input/Output Utilities
+    This library implements functionality for reading from and outputting to
+    files, as well as for checking the state of files and directories on the
+    system. This library is also used to parse the parameter file into the
+    system, and as such defines the syntax that the parameter file must
+    follow. We attempted to find a library equivalent to the Java Properties
+    class, which allows the structured reading and storage of parameters. We
+    were, however, unable to find such a library and therefore had to implement
+    our own version. The syntax is very simple; the \texttt{\#} symbol defines a
+    comment, and that line will be ignored when parsing. A parameter is defined
+    as an string of ASCII characters followed by a single space, followed by
+    more ASCII characters. This library also reads in event data files, which are
+    needed as input to the estimators, and can retrieve either all events, or
+    data in a specific interval.
+
+    As well as reading in data, the library also serves to output data from
+    various data structures used within the system. This ranges from simple
+    arrays to more complex data structures used to store representations of
+    Gaussians or function estimates.
+*** General Utilities
+    The final library is for functions which do not fit in anywhere else, such
+    as memory allocation and freeing, printing structs and some error checking
+    functions. There are also functions for generating default parameter
+    files. The functionality of this library is relatively limited, but it means
+    that the rest of the code in the system is much cleaner, as memory
+    allocation and freeing of relatively complex structs can be done with a
+    single function call. This abstraction of the memory management also makes
+    dealing with the memory much easier---it is more difficult to make a mistake
+    when freeing something, as the functions are already defined.
+** Experimenter
+- explanation of the various bits to do with stuttering and so on
+- How data is parsed in and stuff
+- how the experiment numbers are incremented
+** Launcher
+- what thing it uses getopt
+- user-friendliness (help output)
+- struct usage to improve ease of modification
+** Scripts
+** Interface
+   Usage instructions for the system can be found in Appendix [[Usage]]
+* Development
+** Development Process
 - first draft up code in notebook to get down the concept
 - write a basic code skeleton and add tests to make sure that it works as
   intended - particularly for mathematics and the like
 - flesh out the code and integrate it with the system
 - make code as modular as possible to make it easy to add stuff in later
-*** Development methodologies
+** Development methodologies
 - could be merged with previous section, but mention some of the unix rules of
   thumb, like the rule of least surprise and so on.
-*** Testing
+** Testing
 - talk about check, which functions were tested (mostly library functions, hard
   to test estimators in a reliable way)
 - give examples of the tests
-*** Version Control
+** Version Control
     - branching strategy
     - commit frequency
     - using issues on github
     - storing backups of tags on svn
-*** Project Management
+** Project Management
     - keep changelog
     - show examples of changelogs and commit messages from the same time period
     - writing up and planning layout in notebook
@@ -622,7 +745,7 @@ random variable \cite{massey1996estimating} $Y_k$ with mean
 {\lambda}_k=\frac{T}{N}(a+bx_k)
 \end{equation}
 #+END_LaTeX
-$T/N$ is used to normalise the value of ${\lambda}_k$. The value of $Y_k$ in our
+where $T/N$ is used to normalise the value of ${\lambda}_k$. The value of $Y_k$ in our
 case is the number of photon arrival times for each bin. In order to perform
 regression on the data, we need a model of the data. At this stage, we make the
 assumption that the data is represented by a linear function, so the model is
@@ -668,8 +791,8 @@ the OLS technique \cite{massey1996estimating}. Introducing this weight into
 \sum_{k=1}^N w_k(Y_k-[\alpha +\beta x_k])^2
 \end{equation}
 #+END_LaTeX
-Which is known as the residual sum of squares (RSS). We want to find the values of
-$\alpha$ and $\beta$ for which the RSS is minimised, and so the final expression becomes
+the residual sum of squares (RSS). We want to find the values of $\alpha$ and
+$\beta$ for which the RSS is minimised, and so the final expression becomes
 #+BEGIN_LaTeX
 \begin{equation}
 \min_{\alpha,\beta}\sum_{k=1}^N w_k(Y_k-[\alpha +\beta x_k])^2
@@ -677,7 +800,7 @@ $\alpha$ and $\beta$ for which the RSS is minimised, and so the final expression
 #+END_LaTeX
 which is known as the \emph{objective function}. Once the objective function is
 known, we can define estimators $\hat{\alpha}$ and $\hat{\beta}$, which we
-will use to estimate values of $\alpha$ and $\beta$ to find the minimum.
+will use to estimate values of $\alpha$ and $\beta$ to find the minimum \cite{massey1996estimating}.
 #+BEGIN_LaTeX
 \begin{equation}
 \hat{\beta}
@@ -700,21 +823,56 @@ will use to estimate values of $\alpha$ and $\beta$ to find the minimum.
 \end{equation}
 #+END_LaTeX
 
-If we ignore the addition of the weight for the time being, the calculation of
-$\hat{\beta}$ is equivalent to dividing the covariance of $x$ with $Y$ by the
-variance of $x$ \cite{kenney1962mathematics}. This should allow us to understand
-more about how the value of the estimate changes depending on what the values of
-$x$ and $Y$ look like.
+If we ignore the effect of adding the weight $w_k$ for the time being, the
+calculation of $\hat{\beta}$ is equivalent to dividing the covariance of $x$
+with $Y$ by the variance of $x$ \cite{kenney1962mathematics}. This should allow
+us to understand more about how the value of the estimate changes depending on
+what the values of $x$ and $Y$ look like. The covariance is a measure of the
+strength of the correlation between two or more random variables
+\cite{covariance}. If high values of one variable occur when the other variable
+also has high values, then the covariance is positive. If high values of one
+variable occur when the other has low values, then it is negative. The variance,
+on the other hand, is a measure of the variation in values of a random
+variable. If all values are close to the mean, then the variance is small, and
+if there are large deviations from the mean value, then the variance is
+large. If the covariance is positive, then the values of $Y$ increase as $x$
+increases. The variance of $x$ depends only on the length of the
+interval---short intervals have low variance, and long intervals high
+variance. This is because the calculation of the variance is done by finding the
+distance to the midpoints of bins from the value of $\bar{x}$, which is the
+midpoint of the interval. It is clear that the sign of $\hat{\beta}$ depends on
+whether the covariance is positive or negative, and this in turn defines the
+sign of the gradient. The steepness of the gradient is defined by the magnitude
+of the covariance. Since the value of the variance is constant, the larger the
+magnitude of the covariance, the steeper the gradient. Once we know the gradient
+of the line, the calculation of the intercept is simple, so long as we know the
+value of a point on the line, and the point $(\bar{x},\bar{Y})$ is one such
+point. We rearrange the equation $\bar{Y}=\hat{\alpha}+\hat{\beta}\bar{x}$ to
+solve for $\hat{\alpha}$. Notice that since the values of $\bar{x}$ and
+$\bar{Y}$ do not change, the point defined by the mean values becomes a pivot
+for the line estimate. The addition of the weights adds bias into the calculation,
+taking into consideration the variation of those points which have a smaller
+estimated value of $\lambda$. The weight update calculation is discussed in the
+next section.
 
+We normalise the values of $\hat{\alpha}$ and $\hat{\beta}$ by multiplying the
+resulting estimate by the number of bins over the interval length. The fewer
+bins used in the estimate, the larger the bin count will be for each bin, and
+consequently the larger the estimated values will be. To return the estimate to
+the same scale, 
 #+BEGIN_LaTeX
 \begin{equation}
 \hat{a}=\frac{N}{T}\hat{\alpha}\quad\text{and}\quad
 \hat{b}=\frac{N}{T}\hat{\beta}
 \end{equation}
 #+END_LaTeX
-Impose a constraint on the values of $\hat{a}$ and $\hat{b}$ which
-states that the rate function must be non-negative throughout the entire
-interval $[0,T]$ \cite{massey1996estimating}
+
+- show non-normalised estimate vs normalised estimate
+
+As we are dealing with a Poisson process with a rate function, it is natural to
+impose a constraint on the values of $\hat{a}$ and $\hat{b}$ which states that
+the rate function must be non-negative throughout the entire interval $[0,T]$,
+since it is not possible to have a negative rate \cite{massey1996estimating}.
 #+BEGIN_LaTeX
 \begin{equation}
 \hat{a}\geq 0\quad \text{and}\quad
@@ -725,39 +883,47 @@ There are two cases in which this constraint can be violated; when $a<0$ or
 $b<-\hat{a}/T$ \cite{massey1996estimating}. In the first case, we set
 #+BEGIN_LaTeX
 \begin{align}
+\begin{split}
 \hat{a}&=0\\
-\hat{b}&=\frac{N}{T}\frac{\displaystyle \sum_{k=1}^N w_kx_kY_k}{\displaystyle \sum_{k=1}^N w_kx_k^2}
+\hat{b}&=\frac{N}{T}\frac{\displaystyle \sum_{k=1}^N w_kx_kY_k}{\displaystyle\sum_{k=1}^N w_kx_k^2}
+\end{split}
 \end{align}
 #+END_LaTeX
 and in the second,
 #+BEGIN_LaTeX
 \begin{align}
+\begin{split}
 \hat{a}&=-\hat{b}T\\
-\hat{b}&=\frac{N}{T}\frac{\displaystyle \sum_{k=1}^N (T-x_k)Y_k}{\displaystyle \sum_{k=1}^N w_k(T-x_k)^2}
+\hat{b}&=-\frac{N}{T}\frac{\displaystyle \sum_{k=1}^N (T-x_k)Y_k}{\displaystyle \sum_{k=1}^N w_k(T-x_k)^2}
+\end{split}
 \end{align}
 #+END_LaTeX
-With this set of equations, the structure of the OLS estimator is complete.
-- Explain main parameters, the main things that are important to the workings,
-  and exactly how it works. Number of intervals, the total time, see massey paper
+\textcolor{red}{\textbf{Is this sufficient?}}
+Applying these adjustments in the cases in which the constraints are violated
+ensures that the final estimate is always within the required
+constraints. However, the adjustments introduce some non-linearity into the
+system \cite{massey1996estimating}. With this set of equations, the fundamental
+structure of the OLS estimator is complete. In the next section, we discuss the
+addition of weight update rules and finding estimates of $\lambda$.
 - Example of residuals
 - Example function estimate on a linear function, use Poisson to generate
 - Talk about this being the first step, both to learn about regression and to
   get a simple estimator working before moving on to more complex ones
 *** Iterative Weighted Least Squares
-The iterative weighted least squares (IWLS) builds upon the OLS estimator. As
-the name suggests, the extension is to include an iterative part. The OLS
-estimator performs a single estimate of the function and leaves it at that. The
-IWLS estimator, on the other hand, repeats the process multiple times, updating
-its estimates. Perhaps the most important update to the estimator is the use of
-unequal weights, which change depending on the variances of the random variable
-which defines the bin which the weight is being applied to. A Poisson
-random variable has a variance that is equal to its mean---this means that a
-higher value of ${\lambda}_k$ results in a larger variance. To compensate for
-this, we give higher weights to bins which have lower values of $\lambda$, as
-the variances will be lower. As shown in equation \eqref{eq:lam}, the value of
-$\lambda$ is easy to calculate, but the values of $a$ and $b$ must be known. In
-order to modify weights appropriately, we must be able to obtain estimates of
-$\lambda$, which can be done using \cite{massey1996estimating}
+The iterative weighted least squares (IWLS) estimator builds upon the OLS
+estimator. As the name suggests, the extension is to include an iterative
+part. The OLS estimator performs a single estimate of the function and leaves it
+at that. The IWLS estimator, on the other hand, repeats the process multiple
+times, updating its estimates. Perhaps the most important update to the
+estimator is the use of unequal weights, which change depending on the variances
+of the random variable which defines the bin which the weight is being applied
+to. A Poisson random variable has a variance that is equal to its mean---this
+means that a higher value of ${\lambda}_k$ results in a larger variance. To
+compensate for this, we give higher weights to bins which have lower values of
+$\lambda$, as the variances will be lower. As shown in equation \eqref{eq:lam},
+the value of $\lambda$ is easy to calculate, but the values of $a$ and $b$ must
+be known. In order to modify weights appropriately, we must be able to obtain
+estimates of $\lambda$, which can be done using \cite{massey1996estimating}
 #+BEGIN_LaTeX
 \begin{align}
 \hat{\lambda}_k=\frac{T}{N}(\hat{a}+\hat{b}x_k)
@@ -769,9 +935,9 @@ The weights can then be updated using
 \hat{w_k}=\frac{\displaystyle \frac{N}{\hat{\lambda}_k}}{\displaystyle \sum_{k-1}^N\left(\frac{1}{\hat{\lambda}_k}\right)}
 \end{equation}
 #+END_LaTeX
-which has some desirable properties \cite{massey1996estimating}. Minimum
+which has some desirable properties \cite{massey1996estimating}. \textcolor{red}{\textbf{Minimum
 variance estimator among linear functions of the observations $Y_k$ that are
-unbiased. Each iteration of the estimator updates these estimates of $\lambda$
+unbiased}}. Each iteration of the estimator updates these estimates of $\lambda$
 and the weight for each bin, and the process is stopped when the change in the
 estimates becomes negligible, which consistently happens in between two and five
 iterations \cite{massey1996estimating}. With this estimator, we have something
@@ -1709,7 +1875,7 @@ export functionality built into \texttt{org-mode}.
 
 \paragraph{Error of Estimates}
 Being able to display the error of combinations of methods, such as the graphs
-in Figures \ref{fig:fineerror} and \ref{fig:prelimerror} is also useful, and
+in Figures \ref{fig:prelimerror} and \ref{fig:fineerror} is also useful, and
 data to do this can be produced by the \texttt{multifunc\_errmean.sh}
 script. The script will produce files for each combination of methods, which can
 then be plotted with a program such as gnuplot. One way to plot the data using

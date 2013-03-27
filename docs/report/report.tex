@@ -1,4 +1,4 @@
-% Created 2013-03-26 Tue 22:26
+% Created 2013-03-27 Wed 22:54
 \documentclass[a4paper,11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -21,6 +21,7 @@
 \usepackage{metalogo}
 \usepackage{graphicx}
 \usepackage{moreverb}
+\usepackage{fancyvrb}
 \usepackage{subfig}
 \usepackage[scientific-notation=true]{siunitx}
 \usepackage{float}
@@ -63,8 +64,8 @@ functions. Finally, we compare the performance of the two function estimation
 methods and time delay estimation methods on simulated data, and show that there
 is not a significant difference between the approaches.
 
-\vspace{1.0cm}\textbf{Keywords: }Poisson process, gravitational lensing,
- machine learning, linear estimation
+\vspace{1.0cm}\noindent\textbf{Keywords:} Nonhomogeneous Poisson process, gravitational lensing,
+ machine learning, linear regression
 
 \begin{center}
 \vspace*{\fill}\scriptsize{Typeset in Linux Libertine using \XeLaTeX}.
@@ -119,12 +120,12 @@ understanding of the universe we live in.
 
 In section \ref{sec-2} we discuss the concepts underpinning the project in more
 detail, with a more in-depth explanation of the issues surrounding the
-calculation of the time delay and its uses. In section \ref{sec-4} we introduce our method of generating photon streams from Poisson
+calculation of the time delay and its uses. In section \ref{sec-5} we introduce our method of generating photon streams from Poisson
 processes. Section \ref{sec-2-3} shows our approach to estimating the
 underlying function of a given stream of photons. Our methods of calculating the
-time delays between multiple photon streams are explained in section \ref{sec-6}. Section \ref{sec-3} gives detailed information on the design and
+time delays between multiple photon streams are explained in section \ref{sec-7}. Section \ref{sec-3} gives detailed information on the design and
 development of the system, including the software and project management
-aspects. Finally, in section \ref{sec-7} we present experimental data from both
+aspects. Finally, in section \ref{sec-8} we present experimental data from both
 simulated and real data and discuss the relative effectiveness of our methods.
 \section{Background}
 \label{sec-2}
@@ -286,10 +287,10 @@ varies. This means that the rate at which events occur varies during the running
 time of the process.
 \subsection{Function Estimation}
 \label{sec-2-3}
-\subsubsection{Linear Regression}
+\subsubsection{Regression}
 \label{sec-2-3-1}
 
-Linear regression is a statistical technique used to fit lines or curves to data
+Regression is a statistical technique used to fit lines or curves to data
 points in order to find some sort of relationship between them. The number of
 variables in the data is important. One of the variables is called a \emph{dependent}
 variable. We want to find the relationship between this variable and the other
@@ -304,6 +305,11 @@ Linear regression is used in many different fields to find the trend between
 variables. It is heavily used in economics to make predictions about what
 happens in many economical situations. Finding trends in data is useful to many
 people in different ways.
+
+\begin{itemize}
+\item example of residuals. Show two linear estimates with the residuals sketched,
+  one with a better fit than the other.
+\end{itemize}
 \subsubsection{Kernel Density Estimation}
 \label{sec-2-3-2}
 
@@ -320,11 +326,24 @@ applications.
 \begin{itemize}
 \item Show some examples of different kernels
 \end{itemize}
+In this section, we present an overview of the structure of the system and the
+development process. More detailed notes on the implementation of a particular
+subsystem can be found in the section dedicated to that specific part. Here, we
+describe parts of the system which do not have a dedicated section, and also
+provide a general idea of the interactions between the parts of the system.
 \section{System}
 \label{sec-3}
-\subsection{System Structure}
+\subsection{Design}
 \label{sec-3-1}
+\subsection{Overall Structure}
+\label{sec-3-2}
 
+On the most basic level, the system is split up into two different modules; the
+estimators and the generators. These two parts of the system do not interact at
+all, and can be used as completely independent systems. What does connect them
+is a set of shared libraries, which provide mathematical functions, data
+structures and other non-specific utility functions. Figure \ref{fig:sysstruct}
+gives an overview of the structure of the system.
 \begin{figure}
 \centering
 \pgfdeclarelayer{background}
@@ -436,46 +455,153 @@ text centered, minimum height=2.5em, node distance=1.5cm]
 \caption{System structure}
 \label{fig:sysstruct}
 \end{figure}
-\subsubsection{Overall Structure}
-\label{sec-3-1-1}
-\subsubsection{Libraries}
-\label{sec-3-1-2}
+\subsection{Libraries}
+\label{sec-3-3}
+
+Each part of the system makes extensive use of custom libraries. Each library
+consists of a header file which contains the function prototypes and include
+information, along with a separate file for the functions, which are compiled by
+\texttt{libtool} into a convenience library. The advantage of using
+\texttt{libtool} over other ways of constructing libraries is that it can create
+both shared and static libraries. This means that if the library needs to be
+re-used elsewhere it is simple to take the shared object file created and
+compile the program including the library by passing the standard
+\texttt{-l[libname]} syntax to \texttt{gcc}. Since the libraries contain various
+functions which are useful not only for this system, this is a useful feature to
+have as the libraries can be easily re-used. Due to some interdependencies,
+between the lower level convenience libraries, they are merged into one main
+library, again functionality provided by \texttt{libtool}. The main function of
+the libraries is to abstract out code which may be used multiple times in order
+to reduce clutter, and avoid code duplication and the increased likelihood of
+errors associated with it.
+\subsubsection{Parameter List}
+\label{sec-3-3-1}
+
+    The parameter list library defines a singly-linked list which is used to
+    store data parsed from the parameter files which contain parameters that
+    modify the behaviour of the system. The functionality implemented by this
+    library is very important, as almost all functions outside the libraries
+    require one of these lists to perform their tasks. The library provides the
+    functions for adding elements to the list and finding its length. A function
+    for removal of elements is not provided, as there is no situation which
+    should necessitate the removal of elements from the list. There is also
+    functionality for checking whether a parameter with a given name exists,
+    retrieving the value of a parameter, and setting the value of a parameter.
+
+    There are multiple retrieval functions, each of which retrieves values of
+    different types. The parameter list is constructed in such a way that all
+    values in it are stored as character arrays. This means that if a parameter
+    value is required by some function, it must be converted into the type which
+    that function requires. Since it is known inside the function which type is
+    required, the relevant function can be called. Functions to read
+    \texttt{double} and \texttt{int} types are provided, along with a function
+    to retrieve the character array. In addition, some of the parameters in the
+    files are comma-separated lists of integers or doubles, which must be parsed
+    into arrays before they can be used. The parsing also applies to the
+    \texttt{double} and \texttt{int} types, which must be converted from string
+    form into the correct type. In order to reduce code duplication, the
+    conversion of the variables is done inside the retrieval function.
+
+    The issue of whether the parameters should be parsed into the correct types
+    upon reading of the file may be raised, but we believe that this solution is
+    more appropriate. Firstly, it is often the case that not all parameters
+    present in the file are required when any given task is executed by the
+    system. Therefore, parsing all the parameters upon read may be a waste of
+    processing time. In addition, having to parse parameters requires knowledge
+    about what types they should be. This can be deduced within the code, but
+    would require more complex logic. The storage would also be complicated by
+    this, as the list would be required to store variables of multiple types. As
+    mentioned above, parsing parameter values only when they are needed, and in
+    contexts where their type is known means that the current structure performs
+    its role well.
+\subsubsection{Mathematics}
+\label{sec-3-3-2}
+
+    As the name implies, the mathematics library provides the mathematical
+    functions required by the system which are not provided by the standard C
+    library. Some of the library functions are based on functionality provided
+    by the GNU Scientific Library \cite{gsl}, particularly those which calculate
+    probability density functions or require random number generators. The most
+    important part of the library is the functionality it provides for
+    computations to do with Gaussians, in particular the discrete Gaussian
+    transform. It also provides some basic useful functions, such as finding the
+    minimum and maximum values in arrays, averaging, summing, adding to or
+    multiplying arrays, and some implementations of statistical functions such
+    as the root mean square error, standard deviation and the like. Functions
+    which are critical to the operation of the system will be described in the
+    implementation section of the relevant subsystems.
+
+    The most challenging part of the implementation of the library was to get
+    around the issues caused by doubles. Functions which deal with calculations
+    based on timings require a certain precision on the start and end times of
+    intervals to work correctly. Due to the nature of double precision values,
+    calculations with them often do not have the precise value of the
+    calculation. Particular problems were encountered when incrementing a value
+    by a floating point number and comparing it to another. The floating point
+    increments caused the value to be slightly (on the order of \num{1.0e-20})
+    below the actual value, and this caused calculations to be incorrect and
+    resulted in a cascade of erroneous calculations. To deal with this problem,
+    functions for comparing double precision values to a specific precision were
+    implemented.
+\subsubsection{Input/Output Utilities}
+\label{sec-3-3-3}
+
+    This library implements functionality for reading from and outputting to
+    files, as well as for checking the state of files and directories on the
+    system. This library is also used to parse the parameter file into the
+    system, and as such defines the syntax that the parameter file must
+    follow. We attempted to find a library equivalent to the Java Properties
+    class, which allows the structured reading and storage of parameters. We
+    were, however, unable to find such a library and therefore had to implement
+    our own version. The syntax is very simple; the \texttt{\#} symbol defines a
+    comment, and that line will be ignored when parsing. A parameter is defined
+    as an string of ASCII characters followed by a single space, followed by
+    more ASCII characters. This library also reads in event data files, which are
+    needed as input to the estimators, and can retrieve either all events, or
+    data in a specific interval.
+
+    As well as reading in data, the library also serves to output data from
+    various data structures used within the system. This ranges from simple
+    arrays to more complex data structures used to store representations of
+    Gaussians or function estimates.
+\subsubsection{General Utilities}
+\label{sec-3-3-4}
+
+    The final library is for functions which do not fit in anywhere else, such
+    as memory allocation and freeing, printing structs and some error checking
+    functions. There are also functions for generating default parameter
+    files. The functionality of this library is relatively limited, but it means
+    that the rest of the code in the system is much cleaner, as memory
+    allocation and freeing of relatively complex structs can be done with a
+    single function call. This abstraction of the memory management also makes
+    dealing with the memory much easier---it is more difficult to make a mistake
+    when freeing something, as the functions are already defined.
+\subsection{Experimenter}
+\label{sec-3-4}
 
 \begin{itemize}
-\item say what the function of each library is and what sort of functions it
-      contains.
+\item explanation of the various bits to do with stuttering and so on
+\item How data is parsed in and stuff
+\item how the experiment numbers are incremented
 \end{itemize}
-\subsubsection{Estimators}
-\label{sec-3-1-3}
+\subsection{Launcher}
+\label{sec-3-5}
 
-Maybe this stuff should be in each individual section rather than here? talk
-about how the system is interlinked in those sections - makes more sense with
-the flow of things?
 \begin{itemize}
-
-\item Function estimators
-\label{sec-3-1-3-1}%
-\begin{itemize}
-\item talk about each estimator and where it is used, and how they are related.
-\item OLS->IWLS->Piecewise->Baseline
-\item gaussian + normalisation
+\item what thing it uses getopt
+\item user-friendliness (help output)
+\item struct usage to improve ease of modification
 \end{itemize}
+\subsection{Scripts}
+\label{sec-3-6}
+\subsection{Interface}
+\label{sec-3-7}
 
-\item Time delay estimators
-\label{sec-3-1-3-2}%
-\end{itemize} % ends low level
-\subsubsection{Generators}
-\label{sec-3-1-4}
-
-\begin{itemize}
-\item muparser generator
-\end{itemize}
-\subsubsection{Interface}
-\label{sec-3-1-5}
-\subsection{Development}
-\label{sec-3-2}
-\subsubsection{Development Process}
-\label{sec-3-2-1}
+   Usage instructions for the system can be found in Appendix \ref{sec-11}
+\section{Development}
+\label{sec-4}
+\subsection{Development Process}
+\label{sec-4-1}
 
 \begin{itemize}
 \item first draft up code in notebook to get down the concept
@@ -484,23 +610,23 @@ the flow of things?
 \item flesh out the code and integrate it with the system
 \item make code as modular as possible to make it easy to add stuff in later
 \end{itemize}
-\subsubsection{Development methodologies}
-\label{sec-3-2-2}
+\subsection{Development methodologies}
+\label{sec-4-2}
 
 \begin{itemize}
 \item could be merged with previous section, but mention some of the unix rules of
   thumb, like the rule of least surprise and so on.
 \end{itemize}
-\subsubsection{Testing}
-\label{sec-3-2-3}
+\subsection{Testing}
+\label{sec-4-3}
 
 \begin{itemize}
 \item talk about check, which functions were tested (mostly library functions, hard
   to test estimators in a reliable way)
 \item give examples of the tests
 \end{itemize}
-\subsubsection{Version Control}
-\label{sec-3-2-4}
+\subsection{Version Control}
+\label{sec-4-4}
 
 \begin{itemize}
 \item branching strategy
@@ -508,8 +634,8 @@ the flow of things?
 \item using issues on github
 \item storing backups of tags on svn
 \end{itemize}
-\subsubsection{Project Management}
-\label{sec-3-2-5}
+\subsection{Project Management}
+\label{sec-4-5}
 
 \begin{itemize}
 \item keep changelog
@@ -517,7 +643,7 @@ the flow of things?
 \item writing up and planning layout in notebook
 \end{itemize}
 \section{Simulation of Photon Streams}
-\label{sec-4}
+\label{sec-5}
 
 The first step in building the system was the development of a photon stream
 simulator. The ability to simulate photon streams means that the system can be
@@ -537,7 +663,7 @@ duration of the simulation. To be able to simulate a wide variety of functions,
 it is necessary to have the capacity to generate functions with different
 characteristics.
 \subsection{Function Generation}
-\label{sec-4-1}
+\label{sec-5-1}
 
 To evaluate the performance of the function and time delay estimators, it will
 be necessary to test the accuracy of the estimates on different types of
@@ -605,7 +731,7 @@ In addition to the random function generation, it may sometimes be useful to
 generate a function from a known expression, and the system includes this
 functionality as well, which will be described below.
 \subsection{Generating Streams from Functions}
-\label{sec-4-2}
+\label{sec-5-2}
 
    Once the function has been generated, we can use it to generate values for
    the random variable $X$ which governs a NHPP. To generate a NHPP, it is
@@ -647,7 +773,7 @@ functionality as well, which will be described below.
 \item \href{http://preshing.com/20111007/how-to-generate-random-timings-for-a-poisson-process}{http://preshing.com/20111007/how-to-generate-random-timings-for-a-poisson-process}
 \end{itemize}
 \subsection{Implementation}
-\label{sec-4-3}
+\label{sec-5-3}
 
     The implementation of the random and expression based function generators
     form the first part of the \emph{generator} sub-system. This part of the
@@ -662,7 +788,7 @@ functionality as well, which will be described below.
 \item How expr and gauss version differ
 \end{itemize}
 \subsubsection{Generating from Expressions}
-\label{sec-4-3-1}
+\label{sec-5-3-1}
 
 \begin{itemize}
 \item muparser
@@ -670,15 +796,15 @@ functionality as well, which will be described below.
 \item parsed in and calculated automatically
 \end{itemize}
 \subsubsection{Generating from Random Functions}
-\label{sec-4-3-2}
+\label{sec-5-3-2}
 
 \begin{itemize}
 \item 
 \end{itemize}
 \section{Function Estimation}
-\label{sec-5}
+\label{sec-6}
 \subsection{Baseline Estimation}
-\label{sec-5-1}
+\label{sec-6-1}
 
 In this section, we present the baseline method for function estimation. The
 core of the estimator is based on the iterative weighted least squares estimator
@@ -688,7 +814,7 @@ original paper. The subsequent sections detail our additions to the simple
 estimators in order to form the final baseline estimator which will be used as
 the first of our function estimation methods.
 \subsubsection{Ordinary Least Squares}
-\label{sec-5-1-1}
+\label{sec-6-1-1}
 
 The ordinary least squares (OLS) estimator forms the core of the baseline
 estimator. This estimator will form an estimate by minimising the sum of squared
@@ -723,7 +849,7 @@ random variable \cite{massey1996estimating} $Y_k$ with mean
 \begin{equation}\label{eq:lam}
 {\lambda}_k=\frac{T}{N}(a+bx_k)
 \end{equation}
-$T/N$ is used to normalise the value of ${\lambda}_k$. The value of $Y_k$ in our
+where $T/N$ is used to normalise the value of ${\lambda}_k$. The value of $Y_k$ in our
 case is the number of photon arrival times for each bin. In order to perform
 regression on the data, we need a model of the data. At this stage, we make the
 assumption that the data is represented by a linear function, so the model is
@@ -761,14 +887,14 @@ the OLS technique \cite{massey1996estimating}. Introducing this weight into
 \begin{equation}
 \sum_{k=1}^N w_k(Y_k-[\alpha +\beta x_k])^2
 \end{equation}
-Which is known as the residual sum of squares (RSS). We want to find the values of
-$\alpha$ and $\beta$ for which the RSS is minimised, and so the final expression becomes
+the residual sum of squares (RSS). We want to find the values of $\alpha$ and
+$\beta$ for which the RSS is minimised, and so the final expression becomes
 \begin{equation}
 \min_{\alpha,\beta}\sum_{k=1}^N w_k(Y_k-[\alpha +\beta x_k])^2
 \end{equation}
 which is known as the \emph{objective function}. Once the objective function is
 known, we can define estimators $\hat{\alpha}$ and $\hat{\beta}$, which we
-will use to estimate values of $\alpha$ and $\beta$ to find the minimum.
+will use to estimate values of $\alpha$ and $\beta$ to find the minimum \cite{massey1996estimating}.
 \begin{equation}
 \hat{\beta}
 =\frac{\displaystyle\sum_{k=1}^N w_k(x_k-\bar{x})(Y_k-\bar{Y})}{\displaystyle \sum_{k=1}^N w_k(x_k-\bar{x})^2}
@@ -785,19 +911,56 @@ will use to estimate values of $\alpha$ and $\beta$ to find the minimum.
 \bar{Y}=\frac{1}{N}\sum_{k=1}^N w_kY_k
 \end{equation}
 
-If we ignore the addition of the weight for the time being, the calculation of
-$\hat{\beta}$ is equivalent to dividing the covariance of $x$ with $Y$ by the
-variance of $x$ \cite{kenney1962mathematics}. This should allow us to understand
-more about how the value of the estimate changes depending on what the values of
-$x$ and $Y$ look like.
+If we ignore the effect of adding the weight $w_k$ for the time being, the
+calculation of $\hat{\beta}$ is equivalent to dividing the covariance of $x$
+with $Y$ by the variance of $x$ \cite{kenney1962mathematics}. This should allow
+us to understand more about how the value of the estimate changes depending on
+what the values of $x$ and $Y$ look like. The covariance is a measure of the
+strength of the correlation between two or more random variables
+\cite{covariance}. If high values of one variable occur when the other variable
+also has high values, then the covariance is positive. If high values of one
+variable occur when the other has low values, then it is negative. The variance,
+on the other hand, is a measure of the variation in values of a random
+variable. If all values are close to the mean, then the variance is small, and
+if there are large deviations from the mean value, then the variance is
+large. If the covariance is positive, then the values of $Y$ increase as $x$
+increases. The variance of $x$ depends only on the length of the
+interval---short intervals have low variance, and long intervals high
+variance. This is because the calculation of the variance is done by finding the
+distance to the midpoints of bins from the value of $\bar{x}$, which is the
+midpoint of the interval. It is clear that the sign of $\hat{\beta}$ depends on
+whether the covariance is positive or negative, and this in turn defines the
+sign of the gradient. The steepness of the gradient is defined by the magnitude
+of the covariance. Since the value of the variance is constant, the larger the
+magnitude of the covariance, the steeper the gradient. Once we know the gradient
+of the line, the calculation of the intercept is simple, so long as we know the
+value of a point on the line, and the point $(\bar{x},\bar{Y})$ is one such
+point. We rearrange the equation $\bar{Y}=\hat{\alpha}+\hat{\beta}\bar{x}$ to
+solve for $\hat{\alpha}$. Notice that since the values of $\bar{x}$ and
+$\bar{Y}$ do not change, the point defined by the mean values becomes a pivot
+for the line estimate. The addition of the weights adds bias into the calculation,
+taking into consideration the variation of those points which have a smaller
+estimated value of $\lambda$. The weight update calculation is discussed in the
+next section.
 
+We normalise the values of $\hat{\alpha}$ and $\hat{\beta}$ by multiplying the
+resulting estimate by the number of bins over the interval length. The fewer
+bins used in the estimate, the larger the bin count will be for each bin, and
+consequently the larger the estimated values will be. To return the estimate to
+the same scale, 
 \begin{equation}
 \hat{a}=\frac{N}{T}\hat{\alpha}\quad\text{and}\quad
 \hat{b}=\frac{N}{T}\hat{\beta}
 \end{equation}
-Impose a constraint on the values of $\hat{a}$ and $\hat{b}$ which
-states that the rate function must be non-negative throughout the entire
-interval $[0,T]$ \cite{massey1996estimating}
+
+\begin{itemize}
+\item show non-normalised estimate vs normalised estimate
+\end{itemize}
+
+As we are dealing with a Poisson process with a rate function, it is natural to
+impose a constraint on the values of $\hat{a}$ and $\hat{b}$ which states that
+the rate function must be non-negative throughout the entire interval $[0,T]$,
+since it is not possible to have a negative rate \cite{massey1996estimating}.
 \begin{equation}
 \hat{a}\geq 0\quad \text{and}\quad
 \hat{b}\geq -\hat{a}/T
@@ -805,40 +968,48 @@ interval $[0,T]$ \cite{massey1996estimating}
 There are two cases in which this constraint can be violated; when $a<0$ or
 $b<-\hat{a}/T$ \cite{massey1996estimating}. In the first case, we set
 \begin{align}
+\begin{split}
 \hat{a}&=0\\
-\hat{b}&=\frac{N}{T}\frac{\displaystyle \sum_{k=1}^N w_kx_kY_k}{\displaystyle \sum_{k=1}^N w_kx_k^2}
+\hat{b}&=\frac{N}{T}\frac{\displaystyle \sum_{k=1}^N w_kx_kY_k}{\displaystyle\sum_{k=1}^N w_kx_k^2}
+\end{split}
 \end{align}
 and in the second,
 \begin{align}
+\begin{split}
 \hat{a}&=-\hat{b}T\\
-\hat{b}&=\frac{N}{T}\frac{\displaystyle \sum_{k=1}^N (T-x_k)Y_k}{\displaystyle \sum_{k=1}^N w_k(T-x_k)^2}
+\hat{b}&=-\frac{N}{T}\frac{\displaystyle \sum_{k=1}^N (T-x_k)Y_k}{\displaystyle \sum_{k=1}^N w_k(T-x_k)^2}
+\end{split}
 \end{align}
-With this set of equations, the structure of the OLS estimator is complete.
+\textcolor{red}{\textbf{Is this sufficient?}}
+Applying these adjustments in the cases in which the constraints are violated
+ensures that the final estimate is always within the required
+constraints. However, the adjustments introduce some non-linearity into the
+system \cite{massey1996estimating}. With this set of equations, the fundamental
+structure of the OLS estimator is complete. In the next section, we discuss the
+addition of weight update rules and finding estimates of $\lambda$.
 \begin{itemize}
-\item Explain main parameters, the main things that are important to the workings,
-  and exactly how it works. Number of intervals, the total time, see massey paper
 \item Example of residuals
 \item Example function estimate on a linear function, use Poisson to generate
 \item Talk about this being the first step, both to learn about regression and to
   get a simple estimator working before moving on to more complex ones
 \end{itemize}
 \subsubsection{Iterative Weighted Least Squares}
-\label{sec-5-1-2}
+\label{sec-6-1-2}
 
-The iterative weighted least squares (IWLS) builds upon the OLS estimator. As
-the name suggests, the extension is to include an iterative part. The OLS
-estimator performs a single estimate of the function and leaves it at that. The
-IWLS estimator, on the other hand, repeats the process multiple times, updating
-its estimates. Perhaps the most important update to the estimator is the use of
-unequal weights, which change depending on the variances of the random variable
-which defines the bin which the weight is being applied to. A Poisson
-random variable has a variance that is equal to its mean---this means that a
-higher value of ${\lambda}_k$ results in a larger variance. To compensate for
-this, we give higher weights to bins which have lower values of $\lambda$, as
-the variances will be lower. As shown in equation \eqref{eq:lam}, the value of
-$\lambda$ is easy to calculate, but the values of $a$ and $b$ must be known. In
-order to modify weights appropriately, we must be able to obtain estimates of
-$\lambda$, which can be done using \cite{massey1996estimating}
+The iterative weighted least squares (IWLS) estimator builds upon the OLS
+estimator. As the name suggests, the extension is to include an iterative
+part. The OLS estimator performs a single estimate of the function and leaves it
+at that. The IWLS estimator, on the other hand, repeats the process multiple
+times, updating its estimates. Perhaps the most important update to the
+estimator is the use of unequal weights, which change depending on the variances
+of the random variable which defines the bin which the weight is being applied
+to. A Poisson random variable has a variance that is equal to its mean---this
+means that a higher value of ${\lambda}_k$ results in a larger variance. To
+compensate for this, we give higher weights to bins which have lower values of
+$\lambda$, as the variances will be lower. As shown in equation \eqref{eq:lam},
+the value of $\lambda$ is easy to calculate, but the values of $a$ and $b$ must
+be known. In order to modify weights appropriately, we must be able to obtain
+estimates of $\lambda$, which can be done using \cite{massey1996estimating}
 \begin{align}
 \hat{\lambda}_k=\frac{T}{N}(\hat{a}+\hat{b}x_k)
 \end{align}
@@ -846,9 +1017,9 @@ The weights can then be updated using
 \begin{equation}
 \hat{w_k}=\frac{\displaystyle \frac{N}{\hat{\lambda}_k}}{\displaystyle \sum_{k-1}^N\left(\frac{1}{\hat{\lambda}_k}\right)}
 \end{equation}
-which has some desirable properties \cite{massey1996estimating}. Minimum
+which has some desirable properties \cite{massey1996estimating}. \textcolor{red}{\textbf{Minimum
 variance estimator among linear functions of the observations $Y_k$ that are
-unbiased. Each iteration of the estimator updates these estimates of $\lambda$
+unbiased}}. Each iteration of the estimator updates these estimates of $\lambda$
 and the weight for each bin, and the process is stopped when the change in the
 estimates becomes negligible, which consistently happens in between two and five
 iterations \cite{massey1996estimating}. With this estimator, we have something
@@ -858,7 +1029,7 @@ characteristic function of stellar objects are not linear functions, so we must
 extend this linear approach to give us some reasonable estimates of functions
 which are not straight lines.
 \subsubsection{Piecewise Iterative Weighted Least Squares}
-\label{sec-5-1-3}
+\label{sec-6-1-3}
 
 It is clear that the IWLS estimator alone is not sufficient to complete our
 task. In order to have a reasonable estimate of the characteristic function, we
@@ -930,7 +1101,7 @@ jumps between intervals.
 \begin{itemize}
 
 \item coding issues\\
-\label{sec-5-1-3-1}%
+\label{sec-6-1-3-1}%
 what to do with the issue of minimum length of intervals? Sometimes
 not extending the original gives a better estimate of the line than
 re-estimating the interval extended, or adding the short interval onto
@@ -940,7 +1111,7 @@ baseline estimate of that with no minimum, and the other set is the
 estimate with minimum interval length applied
 \end{itemize} % ends low level
 \subsubsection{Baseline}
-\label{sec-5-1-4}
+\label{sec-6-1-4}
 
 In the previous section, we introduced a piecewise method for function
 estimation. In this section we present the final modification to that estimator
@@ -960,7 +1131,7 @@ with a continuous function that forms our estimate of the function.
 \item show a baseline and piecewise estimate on the same function
 \end{itemize}
 \subsection{Kernel Density Estimation}
-\label{sec-5-2}
+\label{sec-6-2}
 
 For comparison to the baseline estimator, a kernel density estimator was also
 implemented. A kernel density estimator works by estimating the function using
@@ -993,9 +1164,9 @@ gives us the normalised estimate of the function.
 \item how the normalisation constant is found, using pmf stuff
 \end{itemize}
 \subsection{Implementation}
-\label{sec-5-3}
+\label{sec-6-3}
 \section{Time Delay Estimation}
-\label{sec-6}
+\label{sec-7}
 
 Once we are able to estimate the characteristic function of photon streams, we
 can use these estimates to attempt to provide an estimate of the time delay
@@ -1010,7 +1181,7 @@ time delay between a pair of photon streams.
   referring to the introduction a little?
 \end{itemize}
 \subsection{Area Method}
-\label{sec-6-1}
+\label{sec-7-1}
 
 The first of the two methods uses a very simple metric to estimate the time
 delay. By taking the two function estimates, we can attempt to match up the two
@@ -1067,7 +1238,7 @@ instead, which gives us a value which is good enough for our purposes.
 \item show integral formula and then show the simplified discrete formula
 \end{itemize}
 \subsection{Probability Density Function Method}
-\label{sec-6-2}
+\label{sec-7-2}
 
 The second method of estimation is using probability density functions. As
 before, we guess a value of $\Delta$ between $-\Delta_{\text{max}}$ and
@@ -1134,7 +1305,7 @@ two stages, first with a coarse pass over the values of delta to compute an
 initial estimate, and then a finer second pass around the first estimated value
 in order to refine the estimate.
 \section{Evaluation}
-\label{sec-7}
+\label{sec-8}
 
 \begin{figure}[h!tb]
 \subfloat[$\alpha=0.005$]{
@@ -1179,12 +1350,12 @@ on each function is calculated, and from this we can examine the effectiveness
 of the estimates. The aim of the experimentation is to compare the effectiveness
 of the time delay estimation with four combinations of estimators: gaussian
 area, gaussian pdf, baseline area and baseline pdf. For the full set of
-experimental data, see Appendix \ref{sec-11}.
+experimental data, see Appendix \ref{sec-12}.
 
 We assume that the distribution of the samples is Gaussian, but this may not be
 the case. However, full non-parametric testing is out of the scope of this project.
 \subsection{Sine Functions}
-\label{sec-7-1}
+\label{sec-8-1}
 
 The first experiment performed was on sinusoidal functions of the form
 $y=a-b\sin(\alpha t)$. An increase in the value of $\alpha$ increases the
@@ -1192,7 +1363,7 @@ oscillation frequency, and a decrease reduces it. The value of $a$ indicates how
 much the wave is shifted along the $y$-axis, and $b$ determines the
 amplitude of the wave.
 \subsubsection{Preliminary Experiments}
-\label{sec-7-1-1}
+\label{sec-8-1-1}
 
 In the first set of experiments, we investigate the performance of the
 estimators on five values of $\alpha$: 0.05, 0.1, 0.15, 0.3 and 0.6. Figure
@@ -1258,7 +1429,7 @@ each value of alpha.
 \end{center}
 \caption{Experimental results for $\alpha=$ 0.05. Actual time delay is 10. ($\mu\pm\sigma$)} \label{fig:pretab}\end{table}
 \subsubsection{Refined experiments}
-\label{sec-7-1-2}
+\label{sec-8-1-2}
 
 Although the previous set of experiments provide some indication as to the
 performance of the estimators, we investigated their effectiveness on a smaller
@@ -1303,7 +1474,7 @@ $\leq\alpha\leq$ 0.1}
 \end{figure}
 \end{center}
 \subsection{Random Functions}
-\label{sec-7-2}
+\label{sec-8-2}
 
 The experiments on sine functions have not yielded any definitive result as to
 which methods are more effective, and so we also performed a series of
@@ -1340,7 +1511,7 @@ values of $\alpha$. Oscillation of the functions decreases as $\alpha$ increases
 \end{figure}
 \end{center}
 \subsubsection{Preliminary Experiment}
-\label{sec-7-2-1}
+\label{sec-8-2-1}
 
 For the preliminary experiment, we chose to use five different values of
 $\alpha$, 0.4, 0.8, 1, 2 and 3. While increasing the $\alpha$ parameter in the
@@ -1402,7 +1573,7 @@ function experiments for each method combination.}
 \end{figure}
 \end{center}
 \subsubsection{Second Experiment}
-\label{sec-7-2-2}
+\label{sec-8-2-2}
 
 In order to investigate the estimator performance further, we performed an
 additional experiment on a finer set of data, varying $\alpha$ from 0.1 to 1.5,
@@ -1454,7 +1625,7 @@ function experiments for each method combination.}
 \end{figure}
 \end{center}
 \section{Conclusion}
-\label{sec-8}
+\label{sec-9}
 
 In this report, we have presented our system for estimating the time delay in
 gravitationally lensed photon stream pairs. We showed two methods for estimating
@@ -1496,7 +1667,7 @@ functions and time delay, as well as a way to simulate photon streams. In the
 next section we discuss ways in which the system could be improved, and possible
 future work.
 \subsection{Improvements and Future Work}
-\label{sec-8-1}
+\label{sec-9-1}
 
 The first improvement is in the simulation of photon streams. Currently, the
 $\lambda$ parameter provided to the generator must be larger than the value of
@@ -1555,7 +1726,7 @@ systems:
 The combination of our system with a system or systems with these features would
 potentially create a system that could reasonably be applied to real-world problems.
 \subsection{Individual Comments}
-\label{sec-8-2}
+\label{sec-9-2}
 
    Although I have been required to work on several reasonably large projects
    during my time at university, this is the largest by far. Other projects of
@@ -1613,9 +1784,9 @@ potentially create a system that could reasonably be applied to real-world probl
 \newpage
 \begin{appendices}
 \section{Installation}
-\label{sec-9}
+\label{sec-10}
 \subsection{MuParser}
-\label{sec-9-1}
+\label{sec-10-1}
 
  download package\\
  run \texttt{./configure --prefix=/usr}, followed by \texttt{make \&\& make install} (may require sudo)
@@ -1624,17 +1795,17 @@ potentially create a system that could reasonably be applied to real-world probl
  sudo apt-get install libgsl0-dev check 
  \end{verbatimtab}
 \section{Usage}
-\label{sec-10}
+\label{sec-11}
 \subsection{General Usage}
-\label{sec-10-1}
+\label{sec-11-1}
 \subsubsection{Generating Functions}
-\label{sec-10-1-1}
+\label{sec-11-1-1}
 \subsubsection{Estimating Functions}
-\label{sec-10-1-2}
+\label{sec-11-1-2}
 \subsection{Running Experiments}
-\label{sec-10-2}
+\label{sec-11-2}
 \subsubsection{Creating functions for experimentation}
-\label{sec-10-2-1}
+\label{sec-11-2-1}
 
 Using the \texttt{genfunc\_rand.sh} script found in the \texttt{scripts} directory, random
 functions can be generated, conforming to certain parameters. In this file,
@@ -1662,7 +1833,7 @@ prepended to the directories. Setting \texttt{FPREF} to \texttt{function\_} and
 \texttt{APREF} to \texttt{alpha\_} will put each set of functions in a directory
 structure like \texttt{alpha\_1/function\_1}.
 \subsubsection{Generating Model Selection Data}
-\label{sec-10-2-2}
+\label{sec-11-2-2}
 
 Next, we use the \texttt{stutter\_batch.sh} script to generate streams with data
 removed in certain intervals to use for model selection. Here, we set the
@@ -1678,7 +1849,7 @@ a}. Once this is set up, we run the script, and it generates a new set of files
 in the same location as the original data which has data in some intervals
 removed, with names something like \texttt{random\_function\_0\_output\_stream\_0\_stuttered.dat}.
 \subsubsection{Experiment Parameter Setup}
-\label{sec-10-2-3}
+\label{sec-11-2-3}
 
 Now, we set up the experiments that we wish to perform on the data. In the
 experiment parameter file, there are various options which control how the
@@ -1719,7 +1890,7 @@ used to determine the score of certain parameter settings. Information about the
 parameters used to generate streams can be found in the output directories in
 the \texttt{gen\_params.txt} file.
 \subsubsection{Running Model Selection}
-\label{sec-10-2-4}
+\label{sec-11-2-4}
 
 Once the parameters are set up, we run model selection on the generated streams
 using the \texttt{runexp\_batch.sh} script. Here we again set the various
@@ -1735,7 +1906,7 @@ number of functions you are running the experiments on. A reasonably large set
 of data (approximately 151,000 experiments) took approximately two hours on an
 Intel i5 processor.
 \subsubsection{Time Delay Calculation}
-\label{sec-10-2-5}
+\label{sec-11-2-5}
 
 Once the experiments have completed, we use the best parameter settings from the
 model selection stage to run time delay estimators on the data again, this time
@@ -1754,7 +1925,7 @@ performance of the estimators with that combination of methods on the given
 $\alpha$ value for that function. In the next step, we extract this data into a
 more usable form.
 \subsubsection{Extracting Result Data}
-\label{sec-10-2-6}
+\label{sec-11-2-6}
 
 In the \texttt{extract\_results.sh} script, we set up the parameters so that
 \texttt{INDIR} is set to read from the top level of the time delay results
@@ -1774,7 +1945,7 @@ $\alpha$ for a specific method combination. Running the
 \texttt{extract\_results.sh} script will output the data. Next, we will explain
 how to process the resulting files.
 \subsubsection{Processing Result Data}
-\label{sec-10-2-7}
+\label{sec-11-2-7}
 
 Inside the results directory, the top level contains files which detail the mean
 estimate, standard deviation and mean error for each function for each value of
@@ -1833,7 +2004,7 @@ export functionality built into \texttt{org-mode}.
 
 \paragraph{Error of Estimates}
 Being able to display the error of combinations of methods, such as the graphs
-in Figures \ref{fig:fineerror} and \ref{fig:prelimerror} is also useful, and
+in Figures \ref{fig:prelimerror} and \ref{fig:fineerror} is also useful, and
 data to do this can be produced by the \texttt{multifunc\_errmean.sh}
 script. The script will produce files for each combination of methods, which can
 then be plotted with a program such as gnuplot. One way to plot the data using
@@ -1844,7 +2015,7 @@ plot "baseline_area_err.txt" using 1:2:3 with errorbars
 \end{verbatimtab}
 \normalsize
 \section{Experimental Data}
-\label{sec-11}
+\label{sec-12}
 
 In this appendix we present the full set of experimental data. BA=baseline area,
 GA=Gaussian area, BP=baseline PDF, GP=Gaussian PDF. BA/GA indicates a test
