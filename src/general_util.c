@@ -1,7 +1,4 @@
 #include "general_util.h"
-#include "defparams.h"
-#include <stdlib.h>
-#include <string.h>
 
 #define DEF_ARR_SIZE 5
 

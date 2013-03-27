@@ -1,3 +1,8 @@
+2013-03-27  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* src/Makefile.am: Made single library out of the base libraries,
+	which makes sense since the libraries have some interdependencies.
+
 2013-03-26  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* scripts/randfunc/multifunc_mean.sh: Output combination of

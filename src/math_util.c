@@ -88,7 +88,7 @@ void init_rand(double seed)
 
 	r = gsl_rng_alloc(gsl_rng_rand48);
 	gsl_rng_set(r, seed);
-	//	printf("Seed for this run: %lf\n", seed);
+	printf("Seed for this run: %lf\n", seed);
 
 	rand_initialised = 1;
 	atexit(cleanup); // make sure we free the random number generator on exit

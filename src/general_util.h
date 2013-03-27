@@ -1,8 +1,14 @@
 #ifndef _GEN_UTIL_H
 #define _GEN_UTIL_H
 
-#include "estimator.h"
 #include "struct.h"
+#include "defparams.h"
+#include "paramlist.h"
+#include "file_util.h"
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+
 
 void free_pointer_arr(void** arr, int length);
 string_arr* string_split(char* string, char separator);

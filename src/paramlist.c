@@ -108,7 +108,6 @@ char* get_string_param(paramlist* head, char* param_name)
  */
 double_arr* get_double_list_param(paramlist* head, char* param_name)
 {
-
     char* retrieved;
     
     if (head == NULL || (retrieved = get_string_param(head, param_name)) == NULL)

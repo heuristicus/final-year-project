@@ -2,7 +2,6 @@
 #define _FUTIL_H
 
 #include "paramlist.h"
-#include "estimator.h"
 #include "math_util.h"
 #include "general_util.h"
 #include <string.h>
@@ -28,7 +27,6 @@ char* select_output_file(char* cur_out, char* param_out);
 void arr_to_file(char* filename, void* arr, int len, char* format_string);
 void double_to_file(char* filename, char* mode, double* arr, int len);
 void int_to_file(char* filename, char* mode, int* arr, int len);
-void double_mult_dim_to_file(char* filename, char* mode, double_multi_arr* arr);
 double_arr* get_event_data_interval(double start_time, double end_time, char* filename);
 double_arr* get_event_data_all(char* filename);
 void int_dbl_to_file(char* filename, char* mode, double* arr1, int* arr2, int len);
