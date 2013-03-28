@@ -204,7 +204,7 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 			 char* out_dir, exp_set* experiments, int num_streams,
 			 int num_functions, int output_switch, int rfunc)
 {
-    int i, j, k;
+    int i;
     int expcount = 0;
     char* tmp = NULL;
     int multiple = 0; // Are we estimating the time delay or just a single stream (function)
@@ -271,13 +271,7 @@ void execute_experiments(paramlist* exp_list, paramlist* def_list, char* in_dir,
 	// The way we do experiments depends on whether the parameters are to be
 	// co-varied - we split here.
 	if (strcmp(get_string_param(exp_list, "run_separately"), "yes") == 0){
-	    for (j = 0; j < current_exp->num_params; ++j) {
-//		printf("Parameter %d: %s\nValues:\n", j, current_exp->data[j]->param_name);
-		for (k = 0; k < current_exp->data[j]->param_vals->len; ++k) {
-//		    printf("%lf\n", current_exp->data[j]->param_vals->data[k]);
-		    expcount++;
-		}
-	    }
+	    printf("Not implemented yet. Please set run_separately to \"no\"\n");
 	} else {
 	    int sepcount = 0; // separate count for each experiment
 	    

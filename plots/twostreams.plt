@@ -2,7 +2,7 @@
 
 reset
 
-set terminal epslatex size 5.0,3.5 standalone header "\\usepackage{cmbright}\n" color colortext
+set terminal epslatex size 5.0,3.5 standalone header "\\usepackage{libertine}\n" color colortext
 set output '$0.tex'
 
 # Line styles

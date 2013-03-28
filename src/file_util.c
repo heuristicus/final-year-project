@@ -171,7 +171,7 @@ double_arr* get_event_data_all(char *filename)
 
 
 /*
- * Checks whether a line received from the parameter file is valid.
+ * Checks whether a line received from the parameter file is valid. Returns 1 if valid, 0 otherwise.
  */
 int valid_param(char* pname)
 {

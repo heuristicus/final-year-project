@@ -1,6 +1,6 @@
 reset
 
-set terminal epslatex size 5.0,3.5 standalone color colortext
+set terminal epslatex size 5.0,3.5 standalone color colortext header "\\usepackage{libertine}\n"
 set output "tist.tex"
 
 # Line styles
