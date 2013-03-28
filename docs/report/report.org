@@ -254,8 +254,7 @@ that in every interval, the same number of events are likely to occur. In
 contrast, a non-homogeneous Poisson process (NHPP) has a rate parameter which
 varies. This means that the rate at which events occur varies during the running
 time of the process.
-** Function Estimation
-*** Regression
+** Regression
 Regression is a statistical technique used to fit lines or curves to data
 points in order to find some sort of relationship between them. The number of
 variables in the data is important. One of the variables is called a \emph{dependent}
@@ -274,7 +273,7 @@ people in different ways.
 
 - example of residuals. Show two linear estimates with the residuals sketched,
   one with a better fit than the other.
-*** Kernel Density Estimation
+** Kernel Density Estimation
 This is another method which can be used to estimate functions, but which
 applies specifically to the probability density function of random
 variables. This technique uses \emph{kernels} to estimate the function
@@ -300,6 +299,7 @@ all, and can be used as completely independent systems. What does connect them
 is a set of shared libraries, which provide mathematical functions, data
 structures and other non-specific utility functions. Figure \ref{fig:sysstruct}
 gives an overview of the structure of the system.
+- structs
 #+BEGIN_LaTeX
 \begin{figure}
 \centering
@@ -413,6 +413,19 @@ text centered, minimum height=2.5em, node distance=1.5cm]
 \label{fig:sysstruct}
 \end{figure}
 #+END_LaTeX
+** Parameter Files
+The parameter files are used to configure the settings of all parameters that
+affect the functioning of the system. Separate files are used to configure the
+estimators and generators, and the experimenter. The syntax is very simple; the
+\texttt{\#} symbol defines a comment, and that line will be ignored when the
+file is parsed. A parameter is defined as an string of ASCII characters followed
+by a single space, followed by more ASCII characters. Each file is split into
+several sections, to aid the user in finding the parameters they are looking
+for. All parameters have comments describing their effect on the behaviour of
+the system, what values they can take, and other information relevant to the
+user.
+*** System
+*** Experiment
 ** Libraries
 Each part of the system makes extensive use of custom libraries. Each library
 consists of a header file which contains the function prototypes and include
@@ -429,8 +442,7 @@ between the lower level convenience libraries, they are merged into one main
 library, again functionality provided by \texttt{libtool}. The main function of
 the libraries is to abstract out code which may be used multiple times in order
 to reduce clutter, and avoid code duplication and the increased likelihood of
-errors associated with it.
-
+errors associated with it. 
 *** Parameter List
     The parameter list library defines a singly-linked list which is used to
     store data parsed from the parameter files which contain parameters that
@@ -499,15 +511,12 @@ errors associated with it.
 *** Input/Output Utilities
     This library implements functionality for reading from and outputting to
     files, as well as for checking the state of files and directories on the
-    system. This library is also used to parse the parameter file into the
-    system, and as such defines the syntax that the parameter file must
-    follow. We attempted to find a library equivalent to the Java Properties
-    class, which allows the structured reading and storage of parameters. We
-    were, however, unable to find such a library and therefore had to implement
-    our own version. The syntax is very simple; the \texttt{\#} symbol defines a
-    comment, and that line will be ignored when parsing. A parameter is defined
-    as an string of ASCII characters followed by a single space, followed by
-    more ASCII characters. This library also reads in event data files, which are
+    system. It is also used to parse the parameter file into the system, and as
+    such defines the syntax that the parameter file must follow. We were unable
+    to find a library which provided similar functionality to the Java
+    Properties class, which allows the structured reading and storage of
+    parameters, and so implemented a simplified version in the form of the
+    parameter files. This library also reads in event data files, which are
     needed as input to the estimators, and can retrieve either all events, or
     data in a specific interval.
 
@@ -525,17 +534,88 @@ errors associated with it.
     single function call. This abstraction of the memory management also makes
     dealing with the memory much easier---it is more difficult to make a mistake
     when freeing something, as the functions are already defined.
-** Experimenter
-- explanation of the various bits to do with stuttering and so on
-- How data is parsed in and stuff
-- how the experiment numbers are incremented
-** Launcher
-- what thing it uses getopt
-- user-friendliness (help output)
-- struct usage to improve ease of modification
-** Scripts
 ** Interface
-   Usage instructions for the system can be found in Appendix [[Usage]]
+   User interaction with the system is done via a command line
+   interface. Various flags passed to the executable change the behaviour of the
+   system, but the majority of behaviour can also be controlled through the
+   parameter file. The standard C libraries provide a useful function,
+   \texttt{getopt}, specifically for the parsing of command line options. This
+   function allows the parsing of short options, such as \texttt{-g}, or with
+   the \texttt{getopt\_long} function, longer options such as
+   \texttt{--generate} can be parsed. Users familiar with UNIX systems will no
+   doubt recognise such options, as they are used in almost every program which
+   can be run from the command line. The parsing of options is done by the
+   launcher, which is the only part of the system that the user interacts with
+   directly. Depending on the options received, the system behaves in a
+   different way. Each subsystem can be called using a specific option, and
+   checks are made to ensure that only a single subsystem is being called. When
+   an error occurs in the parsing of options, which can arise due to an option
+   with a required parameter not having anything passed to it, or as a result of
+   multiple subsystem calls, an error message is printed informing the user of
+   the error. As with many command line programs, instructions on what switches
+   are available, and some information on what they do is available by using the
+   \texttt{-h} or \texttt{--help} options. The help information is also printed
+   when there is some issue when parsing the parameters. To better facilitate
+   the addition and removal of options, the value of each option is stored as a
+   flag in a struct which is then passed to another functions which uses its
+   contents to take the user's desired route through the program
+   logic. Instructions on how to use the system can be found in Appendix [[General
+   Usage]].
+** Experimenter
+   The purpose of the experimenter is to run the estimation subsystem multiple
+   times, with different parameter settings. Its behaviour is modified by a
+   separate parameter file. The code is designed in such a way that new
+   experiments on different parameters can be added and removed with minimal
+   effort on the part of the user. 
+
+   A simple experiment can be set up by modifying just a few lines in a
+   parameter file used to configure the behaviour of the experimenter. The
+   experiment must be given a name, so that the system can reference it. Some
+   parameters to experiment on must be set, and the type of estimator to use to
+   estimate the function must also be specified. An additional parameter is used
+   to specify whether an experiment with the given name should be run or
+   not. There are two types of experiments that can be performed; the estimation
+   of functions, or the estimation of the time delay. The ability to do
+   experiments on these separately is important, as model selection must be
+   performed to determine the optimal parameter settings for a given set of test
+   data before experiments on the time delay can be done, and there are
+   functions which can be used to do this. However, the system does not require
+   model selection to run. Once streams of photons have been generated, the
+   experimenter can be set to create a copy of those streams with the data in
+   certain intervals removed. 
+   
+   The next stage is to run the function estimators on these streams with
+   different parameter combinations and see which combinations produce the best
+   results. Parameter settings are co-varied, which means that all possible
+   combinations of parameters are tested. All possible values of parameters are
+   stored in separate arrays for each parameter, and each has a pointer which
+   indicates which value of the parameter should be used by the estimator. After
+   each run of the estimator with a given set of parameters on all test data has
+   been completed, the index of the last parameter is incremented by 1, and the
+   process is repeated. Once the value of the index exceeds the length of the
+   array, it is reset to 0, and the index on the second to last parameter is
+   incremented by 1, and this process continues until all indices return to 0. A
+   system that works in a similar way is a milometer---once the digits column
+   reaches 9, travelling a mile will reset that value to 0, and the value in the
+   tens column will be incremented to 1, and this process continues until the
+   value in all columns is 9, and with the next mile everything is reset
+   to 0. After the experiment for a set of parameters is complete, the results
+   of the estimates are analysed, and each is given a score based on a sum of
+   log probabilities. The value of the function in each interval in which data
+   was withheld is compared to the actual value. The closer the estimated and
+   actual values are, the higher the score. Once all parameter combinations have
+   been run, the best combination of parameters for each stream in the test data
+   is written to file. Files are also produced in each sub-directory which give
+   information about the parameters used for experiments in that directory. 
+
+   Once the model selection is done, the optimum parameters can be extracted
+   from the results and the time delay can be estimated. The time delay results
+   are also processed, with the estimate and error for each stream pair, and the
+   mean, standard deviation and mean error of a set of streams pairs being
+   output to file. Functionality for running large numbers of experiments is
+   provided by a number of shell scripts. Instructions on running experiments
+   can be found in Appendix [[Running Experiments]].
+** Scripts
 * Development
 ** Development Process
 - first draft up code in notebook to get down the concept
