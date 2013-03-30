@@ -1,4 +1,4 @@
-% Created 2013-03-28 Thu 22:50
+% Created 2013-03-30 Sat 22:45
 \documentclass[a4paper,11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -331,19 +331,76 @@ describe parts of the system which do not have a dedicated section, and also
 provide a general idea of the interactions between the parts of the system.
 \section{System}
 \label{sec-3}
+
+In this section we provide an overview of the system, and explain some of the
+details behind parts of the system which do not warrant their own sections in
+the report. We also give some idea about the design decisions used in the
+implementation. Discussion of the programming methodologies and ideas used can
+be found in the \ref{sec-4} section.
 \subsection{Design}
 \label{sec-3-1}
-\subsection{Overall Structure}
-\label{sec-3-2}
 
-On the most basic level, the system is split up into two different modules; the
-estimators and the generators. These two parts of the system do not interact at
-all, and can be used as completely independent systems. What does connect them
-is a set of shared libraries, which provide mathematical functions, data
-structures and other non-specific utility functions. Figure \ref{fig:sysstruct}
-gives an overview of the structure of the system.
+   When designing the system, we made the decision to split the three main
+   pieces of required functionality into two groups. The generation of streams
+   and functions would make up one subsystem, and the function and time delay
+   estimation would make up another. This division is logical, as both of these
+   subsystems perform two completely different tasks. They are only linked by
+   the fact that the generators produce data that can be used by the estimators,
+   but it is not strictly necessary for the data to come from inside the
+   system---as long as it has the structure required by the estimators it can be
+   used. However, since in our case the two subsystems are part of the same
+   system, we need to be able to run them both from the same executable, and to
+   do so we simply link them by allowing the subsystem which is to be run to be
+   selected. Figure \ref{fig:sysstruct} gives an overview of the structure of
+   the system.
+
+   As with any large program, there will inevitably be some code which has to be
+   used in different places in the program. We could just write the code twice,
+   but this is very bad practice, and leads to more difficulty in both checking
+   that the system works correctly, and modifying it later. Instead of allowing
+   this to happen, code that might need to be used more than once is put into
+   libraries which are shared between all subsystems.
+
+   The input and output of the system is another important thing that must be
+   considered. The system should be able to read data which follows some sort of
+   structure. However, the structure should be simple so that data from as many
+   sources as possible can be read in with minimal effort on the part of the
+   user. If data has to be converted into some strange format before it can be
+   read, then this is clearly sub-optimal. As such, the input to the system is
+   from simple text files, which are easy to construct, and easy to read
+   in. Output from the system, both in terms of output to the interface, and
+   also output files, also need to have some meaningful structure, and the
+   results of calculations should be clear. Output files should not contain any
+   unneeded information. However, the needs of users is different. Sometimes
+   more data will be required, and sometimes no output files are required at
+   all. To deal with these cases, there needs to be some way to define how
+   verbose output should be.
+
+   For user interaction to occur, there needs to be an interface between the
+   program and the user. In our case, the need for user interaction is
+   relatively minimal. Once parameters are set, the program does not need any
+   other input from the user. Results are mostly numbers and graphs. Textual
+   output is simple to display, and there are many utility programs that can
+   parse data files to draw graphs. As such, we decided not to use a command
+   line interface over a graphical one. The development of a graphical interface
+   is time consuming, and requires a lot of thought to be put into design. On
+   the other hand, interaction with the command line is simply a question of
+   reading text responses or parsing parameters. A graphical interface for the
+   system would provide little benefit to the user in terms of additional
+   information. There are some issues from the usability perspective, but the
+   target audience for this program is not the average user. Most scientists
+   interact regularly with computers, and astronomers in particular often use
+   computer-based data processing tools. The system is a tool to use for data
+   processing, not something that requires constant interaction with the
+   user.
+
+   Finally, in order to test the various methods developed, there has to be a
+   way of running controlled experiments on the system. For this purpose, a
+   wrapper around the estimator subsystem which can execute that subsystem
+   multiple times with controlled parameters is a necessity.
+
 \begin{itemize}
-\item structs
+\item scripts?
 \end{itemize}
 \begin{figure}
 \centering
@@ -457,7 +514,7 @@ text centered, minimum height=2.5em, node distance=1.5cm]
 \label{fig:sysstruct}
 \end{figure}
 \subsection{Parameter Files}
-\label{sec-3-3}
+\label{sec-3-2}
 
 The parameter files are used to configure the settings of all parameters that
 affect the functioning of the system. Separate files are used to configure the
@@ -468,13 +525,33 @@ by a single space, followed by more ASCII characters. Each file is split into
 several sections, to aid the user in finding the parameters they are looking
 for. All parameters have comments describing their effect on the behaviour of
 the system, what values they can take, and other information relevant to the
-user.
-\subsubsection{System}
-\label{sec-3-3-1}
-\subsubsection{Experiment}
-\label{sec-3-3-2}
+user. As the parameter files are quite long and require specific parameters to
+be present, functionality for generating parameter files with default settings
+are provided.
+\subsubsection{System File}
+\label{sec-3-2-1}
+
+The most used parameter file is the one which controls the behaviour of the
+estimators and generators. This file allows the setting of output filenames,
+generation parameters for the stream generator, including the interval length,
+start time, and the expression used to generate the streams. The random function
+generator can be set up to change the multiplier applied to the Gaussians,
+change their resolution, and define how the standard deviation is set. The
+configuration of all the parameters used by estimators is also done here. Time
+delay estimator behaviour is also determined by the settings in this
+file. The sections describing the implementation of parts of the system explain
+the exact parameters used and how they affect the behaviour.
+\subsubsection{Experiment File}
+\label{sec-3-2-2}
+
+The experiment parameter file is separate from the system parameter file as it
+may be desirable to use different parameter files for the same experiment. The
+experiment file contains parameters which affects the naming of output files,
+and allows the configuration of the intervals in which data is withheld in model
+selection. The most important parameters are those which define the names and
+parameters to test during the experiments.
 \subsection{Libraries}
-\label{sec-3-4}
+\label{sec-3-3}
 
 Each part of the system makes extensive use of custom libraries. Each library
 consists of a header file which contains the function prototypes and include
@@ -493,7 +570,7 @@ the libraries is to abstract out code which may be used multiple times in order
 to reduce clutter, and avoid code duplication and the increased likelihood of
 errors associated with it. 
 \subsubsection{Parameter List}
-\label{sec-3-4-1}
+\label{sec-3-3-1}
 
     The parameter list library defines a singly-linked list which is used to
     store data parsed from the parameter files which contain parameters that
@@ -533,7 +610,7 @@ errors associated with it.
     contexts where their type is known means that the current structure performs
     its role well.
 \subsubsection{Mathematics}
-\label{sec-3-4-2}
+\label{sec-3-3-2}
 
     As the name implies, the mathematics library provides the mathematical
     functions required by the system which are not provided by the standard C
@@ -562,7 +639,7 @@ errors associated with it.
     functions for comparing double precision values to a specific precision were
     implemented.
 \subsubsection{Input/Output Utilities}
-\label{sec-3-4-3}
+\label{sec-3-3-3}
 
     This library implements functionality for reading from and outputting to
     files, as well as for checking the state of files and directories on the
@@ -580,7 +657,7 @@ errors associated with it.
     arrays to more complex data structures used to store representations of
     Gaussians or function estimates.
 \subsubsection{General Utilities}
-\label{sec-3-4-4}
+\label{sec-3-3-4}
 
     The final library is for functions which do not fit in anywhere else, such
     as memory allocation and freeing, printing structs and some error checking
@@ -591,6 +668,21 @@ errors associated with it.
     single function call. This abstraction of the memory management also makes
     dealing with the memory much easier---it is more difficult to make a mistake
     when freeing something, as the functions are already defined.
+\subsection{External Libraries and Tools}
+\label{sec-3-4}
+
+   The system uses a number of external libraries to augment the C standard
+   libraries, and to reduce the need for us to write code which has already been
+   written elsewhere. The GNU Scientific Library \cite{gsl} provides the system
+   with random number generators that can be used to provide more varied random
+   numbers than the standard library provides, and also gives access to
+   probability density function computations. The Check framework \cite{check}
+   is used to implement automated tests for the system, and is part of the GNU
+   build system, which provides assistance for making source code packages
+   portable to many Unix systems. Our system makes use of the \texttt{automake}
+   and \texttt{libtool} frameworks to generate shared library files and
+   makefiles, and its structure outside the code follows that of the standard
+   GNU package.
 \subsection{Interface}
 \label{sec-3-5}
 
@@ -601,7 +693,7 @@ errors associated with it.
    \texttt{getopt}, specifically for the parsing of command line options. This
    function allows the parsing of short options, such as \texttt{-g}, or with
    the \texttt{getopt\_long} function, longer options such as
-   \texttt{--generate} can be parsed. Users familiar with UNIX systems will no
+   \texttt{--generate} can be parsed. Users familiar with *NIX systems will no
    doubt recognise such options, as they are used in almost every program which
    can be run from the command line. The parsing of options is done by the
    launcher, which is the only part of the system that the user interacts with
@@ -617,8 +709,11 @@ errors associated with it.
    when there is some issue when parsing the parameters. To better facilitate
    the addition and removal of options, the value of each option is stored as a
    flag in a struct which is then passed to another functions which uses its
-   contents to take the user's desired route through the program
-   logic. Instructions on how to use the system can be found in Appendix \ref{sec-11-1}.
+   contents to take the user's desired route through the program logic. The
+   launcher does only the minimum amount of work required to get the system to
+   run. Once it has parsed the options, it calls the relevant subsystem and its
+   job is done. Instructions on how to use the system can be found in Appendix
+   \ref{sec-10-2}.
 \subsection{Experimenter}
 \label{sec-3-6}
 
@@ -633,8 +728,11 @@ errors associated with it.
    experiment must be given a name, so that the system can reference it. Some
    parameters to experiment on must be set, and the type of estimator to use to
    estimate the function must also be specified. An additional parameter is used
-   to specify whether an experiment with the given name should be run or
-   not. There are two types of experiments that can be performed; the estimation
+   to specify whether an experiment with the given name should be run or not. To
+   allow for greater flexibility, the parameter values to test can be defined as
+   ranges. For example, entering \texttt{2,4,...,10} as the value for a
+   parameter will result in values of 2, 4, 6, 8 and 10 being experimented
+   on. There are two types of experiments that can be performed; the estimation
    of functions, or the estimation of the time delay. The ability to do
    experiments on these separately is important, as model selection must be
    performed to determine the optimal parameter settings for a given set of test
@@ -642,7 +740,7 @@ errors associated with it.
    functions which can be used to do this. However, the system does not require
    model selection to run. Once streams of photons have been generated, the
    experimenter can be set to create a copy of those streams with the data in
-   certain intervals removed. 
+   certain intervals removed.
    
    The next stage is to run the function estimators on these streams with
    different parameter combinations and see which combinations produce the best
@@ -674,53 +772,168 @@ errors associated with it.
    mean, standard deviation and mean error of a set of streams pairs being
    output to file. Functionality for running large numbers of experiments is
    provided by a number of shell scripts. Instructions on running experiments
-   can be found in Appendix \ref{sec-11-2}.
-\subsection{Scripts}
-\label{sec-3-7}
+   can be found in Appendix \ref{sec-10-3}.
 \section{Development}
 \label{sec-4}
+
+In this section, we discuss the programming methodologies and project management
+ideas used during the development of the project.
 \subsection{Development Process}
 \label{sec-4-1}
 
-\begin{itemize}
-\item first draft up code in notebook to get down the concept
-\item write a basic code skeleton and add tests to make sure that it works as
-  intended - particularly for mathematics and the like
-\item flesh out the code and integrate it with the system
-\item make code as modular as possible to make it easy to add stuff in later
-\end{itemize}
-\subsection{Development methodologies}
+   The development process was made up of three key stages. First, before
+   writing any code, the ideas behind the part of the system that was to be
+   implemented were sketched out in a physical notebook. The details of this
+   stage were specific to the needs of every bit of functionality, but generally
+   consisted of the same decomposition of what was required. What parameters
+   does it need? How does the input need to be processed? What should be output?
+   For more complex parts of the system, we also planned out how it would
+   connect to the main parts of the system, either in terms of data structures,
+   or where it should be called from. When more complex algorithms had to be
+   implemented, we wrote a prototype on paper and tested it for a few simple
+   cases to check its correctness.
+
+   Once we had a good idea of the structure of the code, we implemented a
+   prototype which was loosely connected to the system. This prototype would
+   have its own internal variables and would not actually return anything to the
+   system, instead printing all its output to the terminal. The output was
+   checked manually to verify its correctness. At this stage, automated tests
+   were also written for many functions, particularly those which had an
+   important role in mathematical calculations or error checking. By the end of
+   this part of the process, we had a minimal working version of the function
+   that we wanted to implement.
+
+   The final stage was to integrate the function or subsystem fully with the
+   main system, abstracting out all the internal function variables to the
+   parameter files, or taking them in as parameters to the function. More
+   rigorous error checking was also implemented at this stage to ensure the
+   correctness of parameters. Once integrated, tests were run again to confirm
+   that no bugs had been introduced by the conversion.
+\subsection{Development Methodologies}
 \label{sec-4-2}
 
-\begin{itemize}
-\item could be merged with previous section, but mention some of the unix rules of
-  thumb, like the rule of least surprise and so on.
-\end{itemize}
+   We used a few principles of software development that we believed could guide
+   us to create a better system. The Unix philosophy of operating system
+   development has many ideas that can be used to develop much smaller
+   systems. In \emph{The Art of UNIX Programming}, Raymond abstracts some ideas
+   behind the philosophy into a set of 17 short rules \cite{artunix}. We found
+   that a subset of these rules were applicable to our system:
+
+   \begin{description}
+   \item[Rule of Least Surprise] In interface design, always do the least
+   surprising thing.
+   \item[Rule of Modularity] Write simple parts connected by clean interfaces.
+   \item[Rule of Optimising] Prototype before polishing. Get it working before
+   you optimise it.
+   \end{description}
+   
+   Although the interface in our system involves minimal interaction, the rule
+   of least surprise is still a good one to follow. When designing the behaviour
+   of the launcher, we considered what the expected behaviour would be, and
+   implemented functionality which made this behaviour possible. However minimal
+   the interaction with a system is, it is still important to consider the
+   expectations that a user may have. One particular example is the presence of
+   a help command which gives information about what the program does and what
+   options it can parse. Entering \texttt{ls --help} on a Linux system gives an
+   example of the contents of such a printout. We ensured that this was present
+   in our implementation of the launcher.
+
+   Our system is not so large as to have properly defined interfaces, but the
+   content of subsystems, and the links between them are vitally
+   important. During our implementation, we tried to follow the rule of
+   modularity by making each part of the system as simple as possible. The
+   functions which execute a particular task should be grouped together, and any
+   functions which are not a direct part of that process should be grouped
+   elsewhere. For example, the functions which run the estimators are very
+   short, and are grouped together in one file. The estimators themselves are
+   separate entities---they are not grouped together in one large file which
+   contains them all, but instead in their own dedicated file. Functions which
+   are used by the baseline estimator, for example, are of no use to the
+   iterative weighted least squares estimator, as their tasks are very
+   different. Connections between parts are also made to be simple, by
+   encapsulating data in structs and passing them around as necessary.
+
+   As mentioned in the previous section, the rule of optimising was a key part
+   of the development process. Moving from prototype to implementation to
+   polishing means that time is not wasted optimising or trying to fix something
+   that is fundamentally broken.
+
+   In \emph{The Pragmatic Programmer}, Hunt and Thomas put forward their ``DRY''
+   (\emph{D}on't \emph{R}epeat \emph{Y}ourself) principle, which states that
+   ``Every piece of knowledge must have a single, unambiguous, authoritative
+   representation in a system.'' We believe this to be the most important
+   principle we have followed, as code duplication has many issues, mostly
+   stemming from contradictions. The libraries are our attempt to ensure that
+   there is one function for a single task, and the parameter files represent
+   the single definition of control parameters in the system.
 \subsection{Testing}
 \label{sec-4-3}
 
-\begin{itemize}
-\item talk about check, which functions were tested (mostly library functions, hard
-  to test estimators in a reliable way)
-\item give examples of the tests
-\end{itemize}
+   Any system requires testing to verify its correctness, and we have
+   implemented a large number of tests for those functions which are central to
+   the correct functioning of the system. Some functions, such as those which
+   perform the estimation, it is not feasible to check, as the actual results
+   that should be obtained for a normal input are not easily calculated without
+   relying on the system itself. In cases where it is possible, we have
+   concentrated on those functions which consist of more than just simple
+   statements. Those functions which perform mathematical computations and error
+   checking are the ones which have undergone the most rigorous checks.
+
+   A total of 62 tests have been implemented, each of which contain multiple
+   cases to check edge cases. Of these, 56 check library functions. Checks on
+   functions in the mathematics library make up over half of those.
+
+   Tests are implemented using the Check framework \cite{check}, which is a unit
+   testing framework designed for the C language. The main reason for its use is
+   its integration into the GNU Autotools framework, which is used for automatic
+   configuration and compilation of the code.
 \subsection{Version Control}
 \label{sec-4-4}
 
-\begin{itemize}
-\item branching strategy
-\item commit frequency
-\item using issues on github
-\item storing backups of tags on svn
-\end{itemize}
+   The project was kept under version control using the \texttt{Git} and
+   \texttt{SVN} revision control systems. The Git repository was used as the
+   main repository, with all commits being made there. The SVN repository was
+   used as a backup, with tagged versions being committed to that for backup
+   purposes.
+
+   A branching strategy was chosen, in an attempt to bring the project closer to
+   one which might be performed in an industry environment. Several searches for
+   a branching strategy led us to use one proposed by Driessen
+   \cite{driessen}. In this strategy, there are two main branches,
+   \texttt{master} and \texttt{develop}. The state of \texttt{master} reflects
+   the current version, and \texttt{develop} reflects the current state of
+   development. There are three supporting branches, which deal with features,
+   hotfixes and releases. In our case, dealing with hotfixes was not important
+   as we were not releasing production software. For each new feature, or large
+   change that was made to the system, we moved development to a new branch so
+   as not to impact the main development branch. Branches were merged back to
+   the main development branch when the feature was complete. When a large
+   milestone in the project was completed, such as the completion of a
+   subsystem, we branched into a separate branch for that release to make some
+   modifications to information about the code, and then merged the release
+   branch with \texttt{master} and \texttt{develop}.
+
+   Commits were made to the development branch when a small feature was
+   completed, or some modifications were made. With this sort of regular commit
+   activity, it would be easy to revert to a working version should a bug be
+   found, and attempt to locate the root of the problem.
 \subsection{Project Management}
 \label{sec-4-5}
 
-\begin{itemize}
-\item keep changelog
-\item show examples of changelogs and commit messages from the same time period
-\item writing up and planning layout in notebook
-\end{itemize}
+   As mentioned above, we kept detailed notes of algorithm prototypes and ideas
+   about how to proceed with the implementation of the project in a physical
+   notebook. This notebook also served the purpose of detailing mathematics and
+   ideas that were relevant to the project, and how they might be used. 
+
+   In addition to the notebook, we kept a change log of all the modifications
+   made to the code in a text file which was updated with every commit to the
+   repository. In this log we detailed which parts of the code were changed,
+   what change was made, and if relevant, the reasoning behind the change. Not
+   only the change log, but also each individual commit to the repository went
+   into a reasonable amount of detail about the changes that were made. With
+   this log, it is easy to go back in the time line of the development of the
+   system and see exactly when and why a specific change was made, in a much
+   more accessible form than physical writing. 
 \section{Simulation of Photon Streams}
 \label{sec-5}
 
@@ -1136,7 +1349,7 @@ we use
 P(X=k)=\frac{\lambda^ke^{-\lambda}}{k!}
 \end{equation}
 to calculate the probability of getting a value $k$ for the bin count with a
-rate parameter $lambda$. While this technique is an improvement on using
+rate parameter $\lambda$. While this technique is an improvement on using
 straight lines to estimate functions which are curves, it is still not
 sufficient, as the resulting function estimate is piecewise disjoint---the
 estimate for each interval does not connect smoothly into the next. There are
@@ -1421,6 +1634,21 @@ point. The sum of these log probabilities gives the parameter set its score for
 that function. The optimum parameter set for that function is the set which
 maximises the sum.
 
+The Gaussian estimator was set to sample the kernels at a resolution of 0.3 time
+steps, and the standard deviation of the kernels was varied. The baseline
+estimator was set to use 3 iterations of the IWLS estimator, and four other
+parameters were experimented on.
+\begin{description}
+\item[IWLS sub-intervals] 2, 4, 6, 8, 10
+\item[PDF threshold] 0.01 to 0.15 with a step of 0.01
+\item[Maximum extension] 5, 7, 9, 11, 13, 15, 17, 19, 20
+\item[Maximum breakpoints] As above
+\item[Gaussian standard deviation] 0.5 to 20 with a step of 0.5
+\end{description}
+ The parameters were co-varied, meaning that each value for one
+of the parameter settings was tested with all possible values of the other
+parameters, for a total of 6115 possible combinations.
+
 Once the optimum parameter set has been found, the time delay
 for the pair of streams is estimated, using all the data that is available. From
 this we receive estimates of the time delay on which it is possible to perform
@@ -1429,7 +1657,7 @@ on each function is calculated, and from this we can examine the effectiveness
 of the estimates. The aim of the experimentation is to compare the effectiveness
 of the time delay estimation with four combinations of estimators: gaussian
 area, gaussian pdf, baseline area and baseline pdf. For the full set of
-experimental data, see Appendix \ref{sec-12}.
+experimental data, see Appendix \ref{sec-11}.
 
 We assume that the distribution of the samples is Gaussian, but this may not be
 the case. However, full non-parametric testing is out of the scope of this project.
@@ -1449,21 +1677,21 @@ estimators on five values of $\alpha$: 0.05, 0.1, 0.15, 0.3 and 0.6. Figure
 \ref{fig:avals} gives an indication of what the functions look like. For
 each value of $\alpha$, 25 pairs of streams were independently generated, each
 with an interval of 100 time units and a time delay of 10 time steps between the
-two streams. The Gaussian estimator was set to sample the kernels at a
-resolution of 0.3 time steps, and the standard deviation of the kernels was
-varied. The baseline estimator was set to use 3 iterations of the
-IWLS estimator, and four other parameters were experimented on.
-\begin{description}
-\item[IWLS sub-intervals] 2, 4, 6, 8, 10
-\item[PDF threshold] 0.01 to 0.15 with a step of 0.01
-\item[Maximum extension] 5, 7, 9, 11, 13, 15, 17, 19, 20
-\item[Maximum breakpoints] As above
-\item[Gaussian standard deviation] 0.5 to 20 with a step of 0.5
-\end{description}
-The parameters were co-varied, meaning that each value for one
-of the parameter settings was tested with all possible values of the other
-parameters, for a total of 6115 possible combinations, resulting in 152,875 runs
-of the function estimator for each value of $\alpha$.
+two streams. 
+
+Estimates appear to be reasonably accurate until $\alpha$ exceeds 0.1, after
+which errors become much greater, and standard deviation increases. The area
+time delay estimator is significantly better than the PDF for both of the
+function estimators, with $p$-values of 0.00017 and 0.0000074 for the baseline
+and Gaussian method respectively at $\alpha=$ 0.05. The difference between the
+two function estimation methods was not significant, with $p$-values in excess
+of 0.4 for comparisons between the baseline and Gaussian estimators for the same
+time delay estimators at $\alpha=$ 0.05. Results from $\alpha>$ 0.005 show no
+statistical significance in the difference between the various estimators, so
+although the $p$-values at $\alpha$ =0.05 are significant, they are not
+sufficient to say that the area estimator is always better. Figure
+\ref{fig:prelimerror} shows the error of the various estimator combination at
+each value of alpha.
 \begin{center}
 \begin{figure}
 \subfloat[Baseline area]{
@@ -1483,19 +1711,7 @@ deviation of error. Performance appears to deteriorate when $\alpha>0.1$.}
 \label{fig:prelimerror}
 \end{figure}
 \end{center}
-Estimates appear to be reasonably accurate until $\alpha$ exceeds 0.1, after
-which errors become much greater, and standard deviation increases. The area
-time delay estimator is significantly better than the PDF for both of the
-function estimators, with $p$-values of 0.00017 and 0.0000074 for the baseline
-and Gaussian method respectively at $\alpha=$ 0.05. The difference between the
-two function estimation methods was not significant, with $p$-values in excess
-of 0.4 for comparisons between the baseline and Gaussian estimators for the same
-time delay estimators at $\alpha=$ 0.05. Results from $\alpha>$ 0.005 show no
-statistical significance in the difference between the various estimators, so
-although the $p$-values at $\alpha$ =0.05 are significant, they are not
-sufficient to say that the area estimator is always better. Figure
-\ref{fig:prelimerror} shows the error of the various estimator combination at
-each value of alpha.
+
 \begin{table}[htb]
 
 \begin{center}
@@ -1607,15 +1823,8 @@ to construct the function it will have more variation than with large values. We
 generated 5 different functions for each value of $\alpha$, and from each of
 these generated 5 pairs of photon streams. In these initial experiments, we wish
 to discover where the point of deterioration is, so that we can look at the
-region close to this in more detail in a subsequent set of experiments. We use
-the same set of experimental parameters as in the previous set of experiments:
-\begin{description}
-\item[IWLS sub-intervals] 2, 4, 6, 8, 10
-\item[PDF threshold] 0.01 to 0.15 with a step of 0.01
-\item[Maximum extension] 5, 7, 9, 11, 13, 15, 17, 19, 20
-\item[Maximum breakpoints] As above
-\item[Gaussian standard deviation] 0.5 to 20 with a step of 0.5
-\end{description}
+region close to this in more detail in a subsequent set of experiments.
+
 The results from the experiment were very enlightening. Figure
 \ref{fig:randerror} shows the error of the estimators over all $\alpha$
 values. The estimators performed with much smaller error values on average,
@@ -1862,10 +2071,12 @@ potentially create a system that could reasonably be applied to real-world probl
 \printbibliography
 \newpage
 \begin{appendices}
-\section{Installation}
+\section{Usage}
 \label{sec-10}
-\subsection{MuParser}
+\subsection{Installation}
 \label{sec-10-1}
+\subsubsection{MuParser}
+\label{sec-10-1-1}
 
  download package\\
  run \texttt{./configure --prefix=/usr}, followed by \texttt{make \&\& make install} (may require sudo)
@@ -1873,18 +2084,16 @@ potentially create a system that could reasonably be applied to real-world probl
  \begin{verbatimtab}   
  sudo apt-get install libgsl0-dev check 
  \end{verbatimtab}
-\section{Usage}
-\label{sec-11}
 \subsection{General Usage}
-\label{sec-11-1}
+\label{sec-10-2}
 \subsubsection{Generating Functions}
-\label{sec-11-1-1}
+\label{sec-10-2-1}
 \subsubsection{Estimating Functions}
-\label{sec-11-1-2}
+\label{sec-10-2-2}
 \subsection{Running Experiments}
-\label{sec-11-2}
+\label{sec-10-3}
 \subsubsection{Creating functions for experimentation}
-\label{sec-11-2-1}
+\label{sec-10-3-1}
 
 Using the \texttt{genfunc\_rand.sh} script found in the \texttt{scripts} directory, random
 functions can be generated, conforming to certain parameters. In this file,
@@ -1912,7 +2121,7 @@ prepended to the directories. Setting \texttt{FPREF} to \texttt{function\_} and
 \texttt{APREF} to \texttt{alpha\_} will put each set of functions in a directory
 structure like \texttt{alpha\_1/function\_1}.
 \subsubsection{Generating Model Selection Data}
-\label{sec-11-2-2}
+\label{sec-10-3-2}
 
 Next, we use the \texttt{stutter\_batch.sh} script to generate streams with data
 removed in certain intervals to use for model selection. Here, we set the
@@ -1928,7 +2137,7 @@ a}. Once this is set up, we run the script, and it generates a new set of files
 in the same location as the original data which has data in some intervals
 removed, with names something like \texttt{random\_function\_0\_output\_stream\_0\_stuttered.dat}.
 \subsubsection{Experiment Parameter Setup}
-\label{sec-11-2-3}
+\label{sec-10-3-3}
 
 Now, we set up the experiments that we wish to perform on the data. In the
 experiment parameter file, there are various options which control how the
@@ -1969,7 +2178,7 @@ used to determine the score of certain parameter settings. Information about the
 parameters used to generate streams can be found in the output directories in
 the \texttt{gen\_params.txt} file.
 \subsubsection{Running Model Selection}
-\label{sec-11-2-4}
+\label{sec-10-3-4}
 
 Once the parameters are set up, we run model selection on the generated streams
 using the \texttt{runexp\_batch.sh} script. Here we again set the various
@@ -1985,7 +2194,7 @@ number of functions you are running the experiments on. A reasonably large set
 of data (approximately 151,000 experiments) took approximately two hours on an
 Intel i5 processor.
 \subsubsection{Time Delay Calculation}
-\label{sec-11-2-5}
+\label{sec-10-3-5}
 
 Once the experiments have completed, we use the best parameter settings from the
 model selection stage to run time delay estimators on the data again, this time
@@ -2004,7 +2213,7 @@ performance of the estimators with that combination of methods on the given
 $\alpha$ value for that function. In the next step, we extract this data into a
 more usable form.
 \subsubsection{Extracting Result Data}
-\label{sec-11-2-6}
+\label{sec-10-3-6}
 
 In the \texttt{extract\_results.sh} script, we set up the parameters so that
 \texttt{INDIR} is set to read from the top level of the time delay results
@@ -2024,7 +2233,7 @@ $\alpha$ for a specific method combination. Running the
 \texttt{extract\_results.sh} script will output the data. Next, we will explain
 how to process the resulting files.
 \subsubsection{Processing Result Data}
-\label{sec-11-2-7}
+\label{sec-10-3-7}
 
 Inside the results directory, the top level contains files which detail the mean
 estimate, standard deviation and mean error for each function for each value of
@@ -2094,7 +2303,7 @@ plot "baseline_area_err.txt" using 1:2:3 with errorbars
 \end{verbatimtab}
 \normalsize
 \section{Experimental Data}
-\label{sec-12}
+\label{sec-11}
 
 In this appendix we present the full set of experimental data. BA=baseline area,
 GA=Gaussian area, BP=baseline PDF, GP=Gaussian PDF. BA/GA indicates a test
