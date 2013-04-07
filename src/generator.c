@@ -169,32 +169,40 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile,
 	       " Please reduce the number of streams or add more timedelta values.\n", nstreams, time_delta->len);
 	exit(1);
     }
-
-    char* infname = malloc(strlen(funcfile) + 10);
-    sprintf(infname, "%s_%d.dat", funcfile, i);
-    FILE* fp = NULL;
     
-    if ((fp = fopen(infname, "r")) == NULL || copy_base){
-	if (errno == ENOENT || copy_base) {
-	    printf("File %s not found. Generating gaussian data.\n", infname);
-	    if (copy_base){
-		generate_gaussian_data(paramfile, NULL, NULL, 1, output_type);
-		copy_gauss_files(funcfile, nfuncs, output_type);
-	    } else {
-		generate_gaussian_data(paramfile, NULL, NULL, nfuncs, output_type);
-	    }
+    char* infname = NULL;
+    if (infile == NULL){
+	infname = malloc(strlen(funcfile) + 10);
+	sprintf(infname, "%s_%d.dat", funcfile, i);
+	FILE* fp = NULL;
+    
+	if ((fp = fopen(infname, "r")) == NULL || copy_base){
+	    if (errno == ENOENT || copy_base) {
+		printf("File %s not found. Generating gaussian data.\n", infname);
+		if (copy_base){
+		    generate_gaussian_data(paramfile, NULL, NULL, 1, output_type);
+		    copy_gauss_files(funcfile, nfuncs, output_type);
+		} else {
+		    generate_gaussian_data(paramfile, NULL, NULL, nfuncs, output_type);
+		}
 	    
+	    } else {
+		printf("Could not access file %s. Exiting.\n", infname);
+		perror("Error");
+		exit(1);
+	    }
 	} else {
-	    printf("Could not access file %s. Exiting.\n", infname);
-	    perror("Error");
-	    exit(1);
+	    fclose(fp);
 	}
     } else {
-	fclose(fp);
+	infname = infile;
     }
+    
+    printf("hello\n");
 
     for (i = 0; i < nfuncs; ++i) {
-	sprintf(infname, "%s_%d.dat", funcfile, i);
+	if (infile == NULL)
+	    sprintf(infname, "%s_%d.dat", funcfile, i);
 	_generate_from_gaussian(params, outfile, infname, stdev, start, interval,
 				step, resolution, stream_ext, time_delta, nstreams, output_type);
     }

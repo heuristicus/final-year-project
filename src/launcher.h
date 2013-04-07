@@ -33,14 +33,14 @@
     "\t\t If you want to generate multiple sets of streams from the same function, set\n"\
     "\t\t this switch when using the gaussian random generator (-f rand). The default\n"\
     "\t\t generator has this behaviour automatically. Not passing this switch will generate\n"\
-    "\t\t the number of distinct functions specified by the -c switch."\
+    "\t\t the number of distinct functions specified by the -c switch.\n\n"\
     "Options related to experimentation.\n\n"\
     "\t -x, --experiment\n"						\
     "\t\t Run an experiment. Requires parameter file.\n\n"\
     "\t -s, --stutter\n"						\
     "\t\t Modifies streams in the input directory passed to -i, or specified by\n"\
     "\t\t the input_dir parameter in the parameter file so that event data in some\n"\
-    "\t\t intervals is removed."									\
+    "\t\t intervals is removed.\n\n"									\
     "General options.\n\n"\
     "\t -c, --count\n"							\
     "\t\t Specify the number of functions to generate data from. This can be used\n"\

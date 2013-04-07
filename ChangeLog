@@ -1,3 +1,8 @@
+2013-04-01  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
+
+	* generator.c: Passing a filename to the -i switch when generating
+	random function streams now correctly uses data from that file.
+
 2013-03-27  Michal Staniaszek  <mxs968@cs.bham.ac.uk>
 
 	* src/Makefile.am: Made single library out of the base libraries,

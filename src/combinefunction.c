@@ -33,8 +33,9 @@ double_multi_arr* combine_functions(est_arr** estimates, double_arr* time_delay,
     int memsize = ((interval_time - start - 2 * max_delay) / step) + 10;
 
 
-    double* times = malloc((memsize + 10) * sizeof(double));
-    double* sums = malloc((memsize + 10) * sizeof(double));
+    //    double* times = malloc((memsize + 10) * sizeof(double));
+    //    double* sums = malloc((memsize + 10) * sizeof(double));
+    double_multi_arr* combination = init_multi_array(2, memsize + 10);
     
     /*
      * Only have data for all functions in the intervals in which they
@@ -52,20 +53,23 @@ double_multi_arr* combine_functions(est_arr** estimates, double_arr* time_delay,
 	    total += estimate_at_point(estimates[estimate_num], time - time_delay->data[estimate_num]);
 	}
 	
-	times[i] = time;
-	sums[i] = total/num_estimates;
+	combination->data[0][i] = time;
+	combination->data[1][i] = total/num_estimates;
 //	printf("sum at time %lf is %lf\n", times[i], sums[i]);
     }
 //    printf("time is %.30lf\n", time);
+    
 
-    double_multi_arr* combination = malloc(sizeof(double_multi_arr));
-    combination->len = 2;
-    combination->lengths = malloc(2 * sizeof(int));
+    /* double_multi_arr* combination = malloc(sizeof(double_multi_arr)); */
+    /* combination->len = 2; */
+    /* combination->lengths = malloc(2 * sizeof(int)); */
+    /* combination->lengths[0] = i; */
+    /* combination->lengths[1] = i; */
+    /* combination->data = malloc(2 * sizeof(double*)); */
+    /* combination->data[0] = times; */
+    /* combination->data[1] = sums; */
     combination->lengths[0] = i;
     combination->lengths[1] = i;
-    combination->data = malloc(2 * sizeof(double*));
-    combination->data[0] = times;
-    combination->data[1] = sums;
 
     return combination;
 }
