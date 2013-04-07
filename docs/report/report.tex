@@ -1,4 +1,4 @@
-% Created 2013-03-30 Sat 22:45
+% Created 2013-04-06 Sat 22:56
 \documentclass[a4paper,11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -103,20 +103,57 @@ given a set of data containing the time of arrival of photons from a particular
 source, henceforth called a \emph{stream}, we wish to find another stream which,
 when shifted in time by some value $\Delta$, has similar numbers of photons
 arriving in a given interval as the first stream. We call $\Delta$ the
-\emph{delay} between the two streams. In this project, we develop a system which
-can generate simulated photon streams using Poisson processes, use linear
-regression to estimate the underlying function of a given stream, and, given the
-function estimates of two streams, estimate the time delay between them. Knowing
-the value of the time delay has many applications in astrophysics, and with more
-precise estimates, more accurate calculations can be made to increase our
-understanding of the universe we live in.
+\emph{delay} between the two streams.
 
+Much work has been done in the astrophysics community to find more accurate
+estimates for the time delay of many lensed objects. An estimate of the possible
+range of time delays for the first lensed system was given by Dyer and Roeder in
+1980, a year after its discovery, with a value of between 0.03 and 1.7 years
+\cite{dyer1980range}. Since then, there have been many estimates of the time
+delay using various methods, but the generally accepted value, determined by
+Kundi\'c et al. in 1997 is 417 $\pm$ 3 days \cite{kundic1997robust}. In this
+paper, a measurement of the global value of Hubble's constant is also made,
+indicating one useful application of the time delay. More accurate estimates of
+the delay result in more accurate estimates of the Hubble constant. In addition,
+the time delay can be used to observe the distribution of dark matter in regions
+of space \cite{schneider2006gravitational}, and has also been proposed as a
+distance estimator \cite{bozza2004time}.
+
+This report details the development of a system to perform time delay estimates,
+which implements two methods of function estimation and two methods of time
+delay estimation in order to facilitate the estimation of the time delay between
+two photon streams. The first function estimator is an extension of a method
+introduced by Massey et al. \cite{massey1996estimating}, which performs
+piecewise continuous function estimates. The second function estimator is a
+simplified implementation of the kernel density estimator given by Cuevas-Tello
+et al. \cite{cuevas2006accurate}. We use two independently developed time delay
+estimation methods, one based on probability densities, and the other on the
+area between functions. Part of the purpose behind the project is to compare the
+efficacy of combinations of these four methods on the time delay estimation
+problem.
+
+\begin{comment}
+In gravitationally lensed systems, there is a delay between photon streams
+coming from images of the source due to the bending of light. Light from one
+source may have had to travel a slightly longer distance than that from the
+other, and while photons travel extremely fast, over astronomical distances the
+delay can become quite large. 
 \begin{itemize}
+\item strong lensing p86
+\item Talk generally about the problem of time delay estimation
+\item refer to physics papers attempting to make estimates of the delay
+\item talk about time delay estimation in particular, refer to kundic et al, many others
+\item talk about how better estimates benefit the scientific community
+\item refer to peter's paper about the efficacy of kernel regression
+\item better estimators are necessary to increase the accuracy of estimates
+\item this is an experiment to see whether this method has any use
+\item build on technique introduced in massey et al
 \item strong lensing has delays on the order of hundreds of days, but weak lensing
   is more like on the order of hours - no longer sufficient to calculate flux
   for a single day, must do it in a different way, by measuring individual
   photon arrival times.
 \end{itemize}
+\end{comment}
 
 In section \ref{sec-2} we discuss the concepts underpinning the project in more
 detail, with a more in-depth explanation of the issues surrounding the
@@ -205,25 +242,6 @@ a distant blue galaxy being distorted by the central galaxy LRG 3-757
 foreground galaxy \cite{eincross}.}
 \label{fig:stronglens}
 \end{figure}
-\subsubsection{Importance of the Time Delay}
-\label{sec-2-1-1}
-
-In gravitationally lensed systems, there is a delay between photon streams
-coming from images of the source due to the bending of light. Light from one
-source may have had to travel a slightly longer distance than that from the
-other, and while photons travel extremely fast, over astronomical distances the
-delay can become quite large. 
-\begin{itemize}
-\item strong lensing p86
-\item Talk generally about the problem of time delay estimation
-\item refer to physics papers attempting to make estimates of the delay
-\item talk about time delay estimation in particular, refer to kundic et al, many others
-\item talk about how better estimates benefit the scientific community
-\item refer to peter's paper about the efficacy of kernel regression
-\item better estimators are necessary to increase the accuracy of estimates
-\item this is an experiment to see whether this method has any use
-\item build on technique introduced in massey et al
-\end{itemize}
 \subsection{Poisson Processes}
 \label{sec-2-2}
 
@@ -311,7 +329,7 @@ people in different ways.
 \subsection{Kernel Density Estimation}
 \label{sec-2-4}
 
-This is another method which can be used to estimate functions, but which
+   This is another method which can be used to estimate functions, but which
 applies specifically to the probability density function of random
 variables. This technique uses \emph{kernels} to estimate the function
 densities. A kernel is a function which has some parameters. To estimate
@@ -336,7 +354,12 @@ In this section we provide an overview of the system, and explain some of the
 details behind parts of the system which do not warrant their own sections in
 the report. We also give some idea about the design decisions used in the
 implementation. Discussion of the programming methodologies and ideas used can
-be found in the \ref{sec-4} section.
+be found in the \ref{sec-4} section. The system is very large (over 7000 lines
+of C code), and we therefore attempt to detail the general ideas behind each
+part of the implementation rather than an in depth discussion of the
+techniques. Each subsystem described in sections \ref{sec-5}--
+\ref{sec-7} also has its own section describing some of the important
+parts of its implementation.
 \subsection{Design}
 \label{sec-3-1}
 
@@ -401,6 +424,7 @@ be found in the \ref{sec-4} section.
 
 \begin{itemize}
 \item scripts?
+\item structured filenames
 \end{itemize}
 \begin{figure}
 \centering
@@ -682,7 +706,9 @@ errors associated with it.
    portable to many Unix systems. Our system makes use of the \texttt{automake}
    and \texttt{libtool} frameworks to generate shared library files and
    makefiles, and its structure outside the code follows that of the standard
-   GNU package.
+   GNU package. The MuParser library \cite{muparser} is used to parse
+   expressions used to generate stream data. The Valgrind framework was used to
+   debug memory errors \cite{valgrind}.
 \subsection{Interface}
 \label{sec-3-5}
 
@@ -960,7 +986,7 @@ characteristics.
 To evaluate the performance of the function and time delay estimators, it will
 be necessary to test the accuracy of the estimates on different types of
 functions. To this end, the capability of generating random functions will be
-very useful. To generate random functions, we make use of \large{Gaussian
+very useful. To generate random functions, we make use of \textbf{Gaussian
 kernels or just Gaussians?}. The generation process involves four simple steps:
 \begin{enumerate}
 \item Pick some value $\Delta t$ which represents the distance between the mean
@@ -1067,32 +1093,48 @@ functionality as well, which will be described below.
 \subsection{Implementation}
 \label{sec-5-3}
 
-    The implementation of the random and expression based function generators
-    form the first part of the \emph{generator} sub-system. This part of the
-    system deals with the generation of functions, and the generation of photon
-    streams from these functions.
-\begin{itemize}
-\item gaussians as structs
-\item gauss vector structs
-\item functions into math library
-\item separation of functions so that they can be called externally and internally
-\item what can be generated
-\item How expr and gauss version differ
-\end{itemize}
-\subsubsection{Generating from Expressions}
-\label{sec-5-3-1}
+   The function and stream generation functions form the \emph{generator}
+   subsystem. The two different function generation methods use fundamentally
+   different methods to generate functions. The random functions use Gaussians,
+   which are represented in a struct containing the mean, standard deviation and
+   weight of the Gaussian. We use another struct to store an array of Gaussians
+   which represent the whole function. When one of these arrays is generated,
+   its constituent Gaussians are output to a file so they can be used later if
+   necessary. Once one of these sets of Gaussians is generated, it is passed to
+   a function which implements the thinning procedure. To generate the $\lambda(t)$
+   values, the sum of Gaussians in the generated array at the given time is
+   used. A two dimensional array is returned, containing the time of each event,
+   and the value of $\lambda$ at each time. Once the stream has been generated,
+   depending on the requested output verbosity, the data is output to file. This
+   process is repeated for the requested number of streams. Multiple different
+   functions can be generated with one function call. Alternatively, a single
+   function can be used to generate multiple stream pairs.
 
-\begin{itemize}
-\item muparser
-\item enter expression and define variables in parameter file
-\item parsed in and calculated automatically
-\end{itemize}
-\subsubsection{Generating from Random Functions}
-\label{sec-5-3-2}
+   The generation of functions using expressions is done in a very similar way
+   to the Gaussian generation, but since an expression is being used there is no
+   need to store the representation of the function in a special way. Events are
+   generated and thinned using a very similar function to the Gaussian, but
+   instead of an array take a \texttt{muparser} struct pointer which can be used
+   to get function values out of the expression that has been parsed into
+   it. This pointer is created in the setup function which reads data from the
+   parameter file and parses the expression. If there is a syntax error in the
+   expression, the program prints the location of the error using
+   \texttt{muparser} functions and exits.
 
-\begin{itemize}
-\item 
-\end{itemize}
+   The generation in both cases is split into several stages. In the first
+   stage, the parameters required by the function are read from the parameter
+   list. If there are parameters that have been passed in as options to the
+   command line, they take precedence. Once these parameters are checked, the
+   top level function makes multiple calls to the second function, depending on
+   how many functions are to be generated. The job of the second level function
+   is to make calls to the function which actually performs stream generation,
+   and output the resulting data to file.
+
+   This three-level structure is used throughout the system to separate the
+   parameter retrieval and checking from the execution of the logic. This also
+   means that if parameters have already been parsed and checked in another
+   function, the second-level function can be called to get back the desired
+   results.
 \section{Function Estimation}
 \label{sec-6}
 \subsection{Baseline Estimation}
@@ -1154,7 +1196,7 @@ characteristic function. \textcolor{red}{What is a regression parameter?}
 $\epsilon$ represents the Poisson error that is present in the data that we are
 trying to model. As mentioned before, this technique works by minimising the sum
 of squared residuals. The value of a residual can be computed by
-\cite{kenney1939mathematics}
+\cite{kenney1962mathematics}
 \begin{equation}\label{eq:residual}
 d_k=Y_k-(a+bx_k)
 \end{equation}
@@ -1457,6 +1499,61 @@ gives us the normalised estimate of the function.
 \end{itemize}
 \subsection{Implementation}
 \label{sec-6-3}
+
+   Other than the libraries, the function estimators make up the largest portion
+   of the system. As should be clear from what has been said above, the baseline
+   estimator is built upon the IWLS estimator, and this is true in the code as
+   well. The IWLS and OLS estimators form the base of the piecewise estimator,
+   which is in turn used by the baseline estimator. The OLS estimator is
+   implemented as a single iteration of the IWLS estimator; there is no separate
+   code for OLS, apart from function which call the IWLS estimator with the
+   correct parameters. The IWLS estimator first constructs arrays containing
+   weights, bin counts and midpoints to be used in the estimation. At this
+   stage, if there are no events in the interval that is being estimated, the
+   estimator returns an empty estimate. Once the required arrays have been
+   constructed, the estimator is simply a large loop which does all the required
+   weight and constraint updates when required. The function returns a struct
+   which contains the estimated values of $a$ and $b$, and the start and end of
+   the interval that was being estimated.
+
+   The piecewise estimator uses a while loop to iterate through the given
+   interval, which is split into sub-intervals by defining a maximum number of
+   breakpoints. If the number of breakpoints is set to 4, then the maximum
+   number of times the IWLS estimator will be called is 5---each breakpoint
+   represents a point where the end of one interval meets the start of the
+   next. During each iteration a function to extend the line estimated by
+   IWLS. The process is hierarchical; if the initial extension fails, then a
+   shorter interval is attempted. If no extension is possible after a given
+   number of iterations, then extension fails. If the extension is successful,
+   then the next interval estimate starts directly after the end of the extended
+   estimate rather than its expected start point. In this way, it may be the
+   case that there are fewer sub-intervals than expected based on the number of
+   breakpoints. The line extension function requires the checking of event data
+   in the interval it is attempting to extend into. Rather than reading the
+   event file each time, a function was written which can, given a set of event
+   data, return an array containing events within a desired interval. Each
+   sub-interval estimate is stored in a struct which is simply an array of
+   structs returned by the IWLS estimator.
+
+   The baseline estimator takes the struct from the piecewise estimate and
+   modifies the estimates inside it to ensure that the function produced by
+   combining them is piecewise continuous. Four functions complete the
+   process. First, the point at which the breakpoints occur is calculated. Then,
+   the values of the two functions for the intervals before and after that point
+   are calculated at the breakpoint. The midpoint of these two values is then
+   calculated, and all functions for the sub-intervals are modified by drawing
+   new lines between these points.
+
+   The kernel density estimator uses is much simpler than the baseline
+   estimator, using only two functions to perform all the operations
+   required. The first stage is to generate an array of Gaussians using the
+   event data---identical Gaussians centred on each event time, represented by
+   their mean, standard deviation, and weight (set to 1). This array is then
+   passed to a function which performs a discrete Gaussian transform on the
+   array, by summing the Gaussians at points sampled at a given resolution. The
+   function returns a two dimensional array containing the times of samples and
+   their corresponding $\lambda$ values. A function which returns just the array
+   of Gaussians is also used when all data on the Gaussians is required.
 \section{Time Delay Estimation}
 \label{sec-7}
 
@@ -1596,7 +1693,42 @@ $\lambda_{a,b}$ becomes. As with the previous estimator, the estimate is made in
 two stages, first with a coarse pass over the values of delta to compute an
 initial estimate, and then a finer second pass around the first estimated value
 in order to refine the estimate.
-\section{Evaluation}
+\subsection{Implementation}
+\label{sec-7-3}
+
+   Both the area and PDF methods perform the same hierarchical estimate of the
+   time delay. As always, the first stage of the process is to extract required
+   parameters. Once the initial estimate is received, the process is simply
+   repeated with a slight change in the parameters to the function to make the
+   second, finer pass over the data. Since both the methods may receive data
+   from either of the two function estimation methods, they use a void pointer
+   to receive the estimate data, and take a switch that is used to select the
+   correct function to process the data. The estimate data is cast to the
+   correct type before it is processed. Each of the functions returns a single
+   double precision value of the estimate it makes.
+
+   To produce its estimate, the PDF estimator must combine the two function
+   estimates into a single function. The different function estimates are stored
+   in different data types, so a separate function is used for each
+   type. The function can in theory combine any number of streams, but has only
+   been tested to a maximum of 4. One of the parameters it takes is an array of
+   time delays, which is used to shift the function in time before combination
+   takes place.
+
+   The time delay estimation must somehow be combined with the function
+   estimation. This is done by the \texttt{multi\_estimate} function. Again, this
+   is a two stage function, the first stage of which extracts the relevant
+   parameters. Depending on the type of estimator, different parameters are
+   retrieved. The function can do estimates of several functions with only a
+   single call by using the standardised output filenames. The second stage of
+   the function first estimates the characteristic function of each stream
+   (tested up to 4 streams). If the kernel density method is being used, a
+   normalisation constant is calculated. Finally, the time delay estimate is
+   performed using the estimates and the normalisation constant (if
+   required). Using the best scoring estimates between each stream, the
+   functions for all streams are combined to make a single final estimate of the
+   function, which is both output to file and returned to the caller.
+\section{Experimentation}
 \label{sec-8}
 
 \begin{figure}[h!tb]
@@ -1723,10 +1855,10 @@ deviation of error. Performance appears to deteriorate when $\alpha>0.1$.}
 \end{tabular}
 \end{center}
 \caption{Experimental results for $\alpha=$ 0.05. Actual time delay is 10. ($\mu\pm\sigma$)} \label{fig:pretab}\end{table}
-\subsubsection{Refined experiments}
+\subsubsection{Refined Experiments}
 \label{sec-8-1-2}
 
-Although the previous set of experiments provide some indication as to the
+    Although the previous set of experiments provide some indication as to the
 performance of the estimators, we investigated their effectiveness on a smaller
 range of $\alpha$ values. In this set of experiments, we used the same
 parameters, but generated a new set of functions for value of $\alpha$ from
@@ -1805,7 +1937,7 @@ values of $\alpha$. Oscillation of the functions decreases as $\alpha$ increases
 \label{fig:randex}
 \end{figure}
 \end{center}
-\subsubsection{Preliminary Experiment}
+\subsubsection{Preliminary Experiments}
 \label{sec-8-2-1}
 
 For the preliminary experiment, we chose to use five different values of
@@ -1860,7 +1992,7 @@ function experiments for each method combination.}
 \label{fig:randerror}
 \end{figure}
 \end{center}
-\subsubsection{Second Experiment}
+\subsubsection{Refined Experiments}
 \label{sec-8-2-2}
 
 In order to investigate the estimator performance further, we performed an
@@ -2065,7 +2197,10 @@ potentially create a system that could reasonably be applied to real-world probl
    which required a lot of time considering the benefits of one particular
    approach.
 
-   Throughout the project I have attempted to 
+   I have learned a lot from working on the project, and I hope to make good use
+   of not only the technical knowledge, but also the experience of working on a
+   large and challenging project in the future.
+
 
 \newpage
 \printbibliography
@@ -2075,24 +2210,121 @@ potentially create a system that could reasonably be applied to real-world probl
 \label{sec-10}
 \subsection{Installation}
 \label{sec-10-1}
-\subsubsection{MuParser}
-\label{sec-10-1-1}
 
- download package\\
- run \texttt{./configure --prefix=/usr}, followed by \texttt{make \&\& make install} (may require sudo)
- this installs muparser so that headers can be found in \texttt{/usr/include}
- \begin{verbatimtab}   
- sudo apt-get install libgsl0-dev check 
- \end{verbatimtab}
+   This installation guide is intended for users of Linux distributions,
+   particularly those which are Ubuntu based. The program has been tested on
+   Linux Mint 13 and 14, but should work on most Linux distributions. First,
+   download the latest version of the program from
+   \href{https://github.com/heuristicus/final-year-project/tags}{https://github.com/heuristicus/final-year-project/tags} and extract it with
+   your favourite program. Alternatively, clone the current version of the
+   repository with 
+\begin{verbatimtab} 
+git clone [[https://github.com/heuristicus/final-year-project.git]]
+\end{verbatimtab}
+   Before the program can be configured, we must install some libraries without
+   which the program will not run. Download the latest muParser package from
+   \href{http://sourceforge.net/projects/muparser/files/latest/download}{http://sourceforge.net/projects/muparser/files/latest/download} (must be
+   $\geq$ v2.2.3). Then, run the following commands
+\begin{verbatimtab}
+unzip muparser_v_[your_version]
+cd muparser_v_[your_version]
+./configure --prefix=/usr
+make && make install // may require sudo
+\end{verbatimtab}
+   This will install muParser so that the header files it uses can be found in
+   \texttt{/usr/include}. Your system must have the \texttt{g++} package
+   installed for the \texttt{configure} command to complete, and you may also
+   require the \texttt{autoconf} package. We must also install the GNU
+   Scientific Library and the Check test framework. All the required packages
+   can be installed with
+\begin{verbatimtab}
+apt-get install libgsl0-dev check g++ autoconf
+\end{verbatimtab}
 \subsection{General Usage}
 \label{sec-10-2}
-\subsubsection{Generating Functions}
+
+   The executable for the program can be found in the \texttt{src} directory,
+   and is named \texttt{deltastream}. It can be run from the top level directory
+   with
+\begin{verbatimtab}
+src/deltastream [OPTIONS]
+\end{verbatimtab}
+   To find out what options are available, call the executable with the
+   \texttt{-h} or \texttt{--help} options. We will detail some of the options
+   below. All parameters which govern the behaviour of the system are defined in
+   the parameter files, which have information about what the effect of each is.
+\subsubsection{Parameter files}
 \label{sec-10-2-1}
-\subsubsection{Estimating Functions}
+
+    Some parameter files are provided with the program, but if for some reason
+    they are deleted, then additional ones can be created using
+\begin{verbatimtab}
+deltastream -d paramfile.txt // default
+deltastream -d paramfile.txt -x a // experiment
+\end{verbatimtab}
+\subsubsection{Generating Functions}
 \label{sec-10-2-2}
+
+    The \texttt{-g} switch is used to run all generation functions. Generating a
+    random function can be done in one of two ways. Using
+\begin{verbatimtab}
+deltastream -g params.txt -r -c 1
+\end{verbatimtab}
+    We can generate a file containing a Gaussian representation of a random
+    function which we can use to generate streams. Changing the number passed
+    to the \texttt{-c} switch changes the number of functions generated. To
+    generate streams from the functions, we use
+\begin{verbatimtab}
+deltastream -g params.txt -f rand -n 2 -i random_function_0.dat
+\end{verbatimtab}
+    This takes the data in the file \texttt{random\_function\_0.dat}, generated
+    in the previous step, and generates two streams. Modifying the number passed
+    to the \texttt{-n} option will generate different numbers of
+    streams. Another way to generate random functions is with
+\begin{verbatimtab}
+deltastream -g params.txt -f rand -c 3 -n 2
+\end{verbatimtab}
+    The \texttt{-c} switch defines how many functions should be generated. After
+    the functions are generated, two streams are generated from each. If you
+    wish to generate multiple different pairs of streams from the same function,
+    use
+\begin{verbatimtab}
+deltastream -g params.txt -f rand -c 3 -n 2 -u
+\end{verbatimtab}
+    The first function generated will be copied into multiple files, and streams
+    will be generated from those copied files. The \texttt{-t} switch can be
+    used to specify more or less verbose output. For example, passing a value of
+    3 will output bin counts for the streams, and a file containing the sum of
+    Gaussians which make up the random function.
+
+    The generation of streams from expressions is rather simpler. The following
+    two commands are equivalent.
+\begin{verbatimtab}
+deltastream -g params.txt -n 2
+deltastream -g params.txt -f mup -n 2
+\end{verbatimtab}
+    The generator defaults to generating streams from the expression defined in
+    the parameter file. Multiple pairs can be generated using the \texttt{-c} switch.
+\subsubsection{Estimating Functions and Time Delay}
+\label{sec-10-2-3}
+
+    Estimates of functions are done using the \texttt{-e} switch. The most
+    important parameters are defined in the parameter file. Once streams have
+    been generated, we can estimate them using the baseline estimator
+\begin{verbatimtab}
+deltastream -e params.txt -a base -n 2
+\end{verbatimtab}
+    If the streams were generated from a random function, the \texttt{-r} switch
+    must be added to indicate this fact. Again, if there are multiple functions
+    to estimate at once, use the \texttt{-c} switch to specify the number. The
+    \texttt{-a} option has 5 possible arguments (\texttt{ols}, \texttt{iwls},
+    \texttt{pc}, \texttt{base} and \texttt{gauss}), each of which use a
+    different estimator to produce an estimate. Passing a value larger than 1 to
+    the \texttt{-n} option will result in an estimate of the time delay. To
+    estimate only the function, simply omit the switch.
 \subsection{Running Experiments}
 \label{sec-10-3}
-\subsubsection{Creating functions for experimentation}
+\subsubsection{Creating Functions for Experimentation}
 \label{sec-10-3-1}
 
 Using the \texttt{genfunc\_rand.sh} script found in the \texttt{scripts} directory, random
