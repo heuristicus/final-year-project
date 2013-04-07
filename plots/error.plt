@@ -6,9 +6,6 @@ set output "$0.tex"
 # Line styles
 set border linewidth 2
 set style line 1 linecolor rgb '#FF0000' linetype 1 linewidth 3 # red
-set style line 2 linecolor rgb '#FFA0A0' linetype 1 linewidth 2 # ltred
-set style line 3 linecolor rgb '#00FF00' linetype 1 linewidth 3 # green
-
 
 # Tics in latex format
 #set format '%g'

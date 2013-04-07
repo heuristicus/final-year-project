@@ -11,15 +11,11 @@ You will need to pass in some files to plot them. Run this script with the switc
 
 OPTIONS:
   -h   show this message
-  -s   plot graph for multiple streams
-  -S   plot graph for multiple streams with multiple estimates
-  -l   plot graph with linear estimates
-  -L   plot linear estimate graph with extra data
-  -e   plot graph with data from the given estimate. Makes no assumptions about the type of the estimate.
-  -p   plot piecewise estimate graph
-  -P   plot piecewise estimate with extra data
-  -b   plot baseline estimate graph
-  -0   plot original function only
+  -E   plot error data gathered from experiments
+  -f   plot generating function, bin data and estimate
+  -A   plot two functions with the area in between shaded
+  -m   plot generating function, bin data and two different estimates
+  -o   plot generating function
 EOF
 }
 
@@ -36,99 +32,31 @@ if [ $# -eq 0 ]; then
     exit
 fi
 
-while getopts "sSlLpPbehEo" opt; do
+while getopts "hEofmA" opt; do
     case $opt in
-	s)
-	    s=1
-	    ;;
-	S)
-	    S=1
-	    ;;
-	l)
-	    l=1
-	    ;;
-	L)
-	    L=1
-	    ;;
-	e)
-	    e=1
-	    ;;
 	E)
 	    E=1
-	    ;;
-	b)
-	    b=1
 	    ;;
         o)
 	    o=1
 	    ;;
+	f)
+	    f=1
+	    ;;
 	h)
 	    usage
+	    ;;
+	m)
+	    m=1
+	    ;;
+	A)
+	    A=1
 	    ;;
 	\?)
 	    usage
 	    ;;
     esac
 done
-
-if [ $s ]; then
-    if [ $# -ne 4 ]; then
-	echo -e "Missing or excess arguments when plotting two streams.\nusage: `basename $0` -s outfile stream_1_data stream_2_data"
-	exit
-    fi
-gnuplot<<EOF
-call "$PLOT_DIR/twostreams.plt" "$2" "$3" "$4"
-EOF
-texify $2
-    exit
-fi
-
-if [ $l ]; then
-    exit
-fi
-
-if [ $L ]; then
-    exit
-fi
-
-if [ $e ]; then
-    if [ $# -ne 4 ]; then
-	echo -e "Missing or excess arguments when plotting unspecified estimate.\nusage: `basename $0` -e outfile stream_data_all estimator_output"
-	exit
-    fi
-gnuplot <<EOF
-call "$PLOT_DIR/undef.plt" "$2" "$3" "$4"
-EOF
-texify $2
-fi
-
-if [ $b ]; then
-    if [ $# -ne 4 ]; then
-	echo -e "Missing or excess arguments when plotting baseline estimates.\nusage: `basename $0` -b outfile stream_data_all IWLS_output baseline_output"
-	exit
-    fi
-gnuplot << EOF
-# $1 is the switch, so skip it $2 is the file to output to, $3 is all data from the generator, $4 is the data produced by the IWLS, $5 is the output from the baseline estimate
-call "$PLOT_DIR/blplot.plt" "$2" "$3" "$4" "$5"
-
-EOF
-texify $2
-exit
-fi
-
-if [ $S ]; then
-    if [ $# -ne 6 ]; then
-	echo -e "Missing or excess arguments when plotting multiple stream.\nusage: `basename $0` -b outfile stream_1_data stream_1_estimate stream_2_data stream_2_estimate"
-	exit
-    fi
-gnuplot << EOF
-# $2 is the file to output to, $3 is all data from the generator for stream 1, $4 is the estimate data for stream 1, $5 generator data from stream 2, $6 is estimate data for stream 2.
-call "$PLOT_DIR/multiest.plt" "$2" "$3" "$4" "$5" "$6"
-
-EOF
-texify $2
-exit
-fi
 
 if [ $E ]; then
     if [ $# -ne 3 ]; then
@@ -149,6 +77,43 @@ if [ $o ]; then
     fi
 gnuplot << EOF
 call "$PLOT_DIR/orig.plt" "$2" "$3"
+EOF
+texify $2
+exit
+fi
+
+if [ $f ]; then
+    if [ $# -ne 5 ]; then
+	echo -e "Missing or excess arguments when plotting error.\nusage: `basename $0` -f outfile FUNC EST BINS"
+	exit
+    fi
+gnuplot << EOF
+call "$PLOT_DIR/allplot.plt" "$2" "$3" "$4" "$5"
+EOF
+texify $2
+exit
+fi
+
+if [ $m ]; then
+    if [ $# -ne 6 ]; then
+	echo -e "Missing or excess arguments when plotting error.\nusage: `basename $0` -m outfile FUNC EST1 EST2 BINS"
+	exit
+    fi
+gnuplot << EOF
+call "$PLOT_DIR/multiplot.plt" "$2" "$3" "$4" "$5" "$6"
+EOF
+texify $2
+exit
+fi
+
+# Note that the input files for this need some special tweaking to plot correctly.
+if [ $A ]; then
+    if [ $# -ne 3 ]; then
+	echo -e "Missing or excess arguments when plotting error.\nusage: `basename $0` -A outfile EST_DATA"
+	exit
+    fi
+gnuplot << EOF
+call "$PLOT_DIR/area.plt" "$2" "$3"
 EOF
 texify $2
 exit
