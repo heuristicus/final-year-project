@@ -242,11 +242,9 @@ machine learning, linear regression
    change as time passes is not predictable. Poisson processes are part of a
    family of stochastic processes which count the number of events and their
    time of occurrence in a given interval. They have been used to model the
-   number of incoming requests to a server \cite{arlitt1997internet}, the number
-   of calls made to emergency services \cite{hajjam2008approach}, and the rate
-   of radioactive decay \cite{cannizzaro1978results}. In their basic form,
-   Poisson processes have the following important properties
-   \cite{ross1997simulation}:
+   number of incoming requests to a server \cite{arlitt1997internet}, as well as
+   many other time-related systems. In their basic form, Poisson processes have
+   the following important properties \cite{ross1997simulation}:
 1. $N(0)=0$.
    - $N(t)$ represents the total number of events that occurred up until time
      $t$. Thus, if $N(0)=0$, it follows that the process begins at $t=0$.
@@ -298,21 +296,20 @@ machine learning, linear regression
 ** Regression
    Regression is a statistical technique used to fit lines or curves to data
    points in order to find some sort of relationship between them. The number of
-   variables in the data is important. One of the variables is called a \emph{dependent}
-   variable. We want to find the relationship between this variable and the other
-   variables, called \emph{independent} variables. What makes one variable
-   dependent and another independent? Consider the expression $y=f(x)$. If $f(x)$
-   is some function of the variable $x$, then we know that the value of $y$ depends
-   on the value of $x$. This is where the names come from. In this simple example,
-   $x$ is the independent variable, and $y$ is the dependent variable. There can be
-   multiple independent variables, but only a single dependent variable.
-
-   Linear regression is used in many different fields to find the trend between
-   variables. It is heavily used in economics to make predictions about what
-   happens in many economical situations. Finding trends in data is useful to many
-   people in different ways.
-- example of residuals. Show two linear estimates with the residuals sketched,
-  one with a better fit than the other.
+   variables in the data is important. One of the variables is called a
+   \emph{dependent} variable. We want to find the relationship between this
+   variable and the other variables, called \emph{independent} variables. What
+   makes one variable dependent and another independent? Consider the expression
+   $y=f(x)$. If $f(x)$ is some function of the variable $x$, then we know that
+   the value of $y$ depends on the value of $x$, and so $y$ is the dependent
+   variable, and $x$ is the independent variable. In linear regression, there
+   can be multiple independent variables, but only a single dependent
+   variable. In order to fit a line to data, a \emph{predictor function} is
+   used. This function predicts the value of the dependent variable. Regression
+   is used in fields ranging from epidemiology to economics. An example of its
+   use is finding factors contributing to smoking initiation and cessation
+   \cite{van2005determinants}.
+\begin{comment}
 ** Kernel Density Estimation
    This is another method which can be used to estimate functions, but which
    applies specifically to the probability density function of random
@@ -325,23 +322,25 @@ machine learning, linear regression
    different kernels that can be used. Different kernels are used in different
    applications.
 - Show some examples of different kernels
-   #+BEGIN_LaTeX
-   \begin{center}
-   \begin{figure}
-   \includegraphics{kernel}
-   \caption{Some examples of kernels commonly used for kernel density estimation.}
-   \label{fig:kern}
-   \end{figure}
-   \end{center}
+  #+BEGIN_LaTeX
+  \begin{center}
+  \begin{figure}
+  \includegraphics{kernel}
+  \caption{Some examples of kernels commonly used for kernel density estimation.}
+  \label{fig:kern}
+  \end{figure}
+  \end{center}
    #+END_LaTeX
+
+  \end{comment}
 * System
   In this section we provide an overview of the system, and explain some of the
   details behind parts of the system which do not warrant their own sections in
   the report. We also give some idea about the design decisions used in the
   implementation. Discussion of the programming methodologies and ideas used can
   be found in the [[Development]] section. The system is very large (over 7000 lines
-  of C code), and we therefore attempt to detail the general ideas behind each
-  part of the implementation rather than an in depth discussion of the
+  of C code), and we therefore attempt to detail the key ideas behind each part
+  of the implementation rather than an in depth discussion of the
   techniques. Each subsystem described in sections [[Simulation of Photon
   Streams]]--[[Time Delay Estimation]] also has its own section describing some of the
   important parts of its implementation.
@@ -349,64 +348,59 @@ machine learning, linear regression
    When designing the system, we made the decision to split the three main
    pieces of required functionality into two groups. The generation of streams
    and functions would make up one subsystem, and the function and time delay
-   estimation would make up another. This division is logical, as both of these
-   subsystems perform two completely different tasks. They are only linked by
-   the fact that the generators produce data that can be used by the estimators,
-   but it is not strictly necessary for the data to come from inside the
-   system---as long as it has the structure required by the estimators it can be
-   used. However, since in our case the two subsystems are part of the same
-   system, we need to be able to run them both from the same executable, and to
-   do so we simply link them by allowing the subsystem which is to be run to be
-   selected. Figure \ref{fig:sysstruct} gives an overview of the structure of
+   estimation would make up another. This is a logical way in which to divide
+   the system, as they are linked only by the dependence of the estimators on
+   data from the generators. It is not strictly necessary for the data to come
+   from inside the system---as long as it has the structure required by the
+   estimators it can be used. We use a single executable to launch both of the
+   subsystems. Figure \ref{fig:sysstruct} gives an overview of the structure of
    the system.
 
    As with any large program, there will inevitably be some code which has to be
-   used in different places in the program. We could just write the code twice,
-   but this is very bad practice, and leads to more difficulty in both checking
-   that the system works correctly, and modifying it later. Instead of allowing
-   this to happen, code that might need to be used more than once is put into
-   libraries which are shared between all subsystems.
+   used in different places in the program. To make checking the correctness of
+   the system and its modification easier, functions that are called more than
+   once are put into libraries which are shared between all subsystems.
 
    The input and output of the system is another important thing that must be
    considered. The system should be able to read data which follows some sort of
-   structure. However, the structure should be simple so that data from as many
-   sources as possible can be read in with minimal effort on the part of the
-   user. If data has to be converted into some strange format before it can be
-   read, then this is clearly sub-optimal. As such, the input to the system is
-   from simple text files, which are easy to construct, and easy to read
+   structure. The structure should be simple, so that minimal effort is required
+   to convert data into a form which the system can process. Input to the system
+   is from simple text files, which are easy to construct, and easy to read
    in. Output from the system, both in terms of output to the interface, and
    also output files, also need to have some meaningful structure, and the
    results of calculations should be clear. Output files should not contain any
-   unneeded information. However, the needs of users is different. Sometimes
-   more data will be required, and sometimes no output files are required at
-   all. To deal with these cases, there needs to be some way to define how
-   verbose output should be.
+   unneeded information. The system can be made to output more detailed data, or
+   not output anything at all, with the use of output flags. Output filenames
+   are highly structured, which make reading in data much easier, and is of
+   particular importance when doing experiments.
 
-   For user interaction to occur, there needs to be an interface between the
-   program and the user. In our case, the need for user interaction is
-   relatively minimal. Once parameters are set, the program does not need any
-   other input from the user. Results are mostly numbers and graphs. Textual
-   output is simple to display, and there are many utility programs that can
-   parse data files to draw graphs. As such, we decided not to use a command
-   line interface over a graphical one. The development of a graphical interface
-   is time consuming, and requires a lot of thought to be put into design. On
-   the other hand, interaction with the command line is simply a question of
-   reading text responses or parsing parameters. A graphical interface for the
+   The amount of user interaction with the system is relatively minimal. Once
+   parameters are set, the program does not need any other input from the
+   user. Results are mostly numbers and graphs. Textual output is simple to
+   display, and there are many utility programs that can parse data files to
+   draw graphs. As such, we decided not to use a command line interface over a
+   graphical one. The development of a graphical interface is time consuming,
+   and requires a lot of thought to be put into design. On the other hand,
+   interaction with the command line is simply a question of reading text
+   responses or parsing command line options. A graphical interface for the
    system would provide little benefit to the user in terms of additional
-   information. There are some issues from the usability perspective, but the
-   target audience for this program is not the average user. Most scientists
-   interact regularly with computers, and astronomers in particular often use
-   computer-based data processing tools. The system is a tool to use for data
-   processing, not something that requires constant interaction with the
-   user.
+   information. The system is a tool to use for data processing, not something
+   that requires constant interaction with the user. Most scientists interact
+   regularly with computers, and astronomers in particular regularly use data
+   processing programs. As our intended user base is likely to have experience
+   with command line interfaces, we feel that the lack of a graphical interface
+   does not reflect negatively on the system.
 
-   Finally, in order to test the various methods developed, there has to be a
-   way of running controlled experiments on the system. For this purpose, a
-   wrapper around the estimator subsystem which can execute that subsystem
-   multiple times with controlled parameters is a necessity.
+   In order to test the various methods developed, there has to be a way of
+   running controlled experiments on the system. For this purpose, an experiment
+   system which is a wrapper around the estimators forms the final
+   subsystem. With it, multiple calls to the estimators can be made with
+   different configuration parameters.
 
-- scripts?
-- structured filenames
+   In addition to the core of the system, scripts are provided which can be used
+   to plot the output data, and run more complex sets of
+   experiments. Instructions for use can be found in Appendix [[Running
+   Experiments]] and [[Plotting Output]].
    #+BEGIN_LaTeX
    \begin{figure}
    \centering
@@ -490,62 +484,55 @@ machine learning, linear regression
    \end{figure}
    #+END_LaTeX
 ** Parameter Files
-   The parameter files are used to configure the settings of all parameters that
-   affect the functioning of the system. Separate files are used to configure the
-   estimators and generators, and the experimenter. The syntax is very simple; the
-   \texttt{\#} symbol defines a comment, and that line will be ignored when the
-   file is parsed. A parameter is defined as an string of ASCII characters followed
-   by a single space, followed by more ASCII characters. Each file is split into
-   several sections, to aid the user in finding the parameters they are looking
-   for. All parameters have comments describing their effect on the behaviour of
-   the system, what values they can take, and other information relevant to the
-   user. As the parameter files are quite long and require specific parameters to
-   be present, functionality for generating parameter files with default settings
-   are provided.
+   The parameter files are used to configure the values of all parameters which
+   affect the behaviour of the system. Separate files are used to configure the
+   estimators and generators, and the experimenter. The files use a simple
+   syntax. The \texttt{\#} symbol defines a comment. A parameter is defined as
+   an string of ASCII characters followed by a single space, followed by more
+   ASCII characters. Each file is split into several sections, to aid the user
+   in finding the parameters they are looking for. All parameters have comments
+   describing their effect on the behaviour of the system, what values they can
+   take, and other information relevant to the user. Functionality for
+   generating parameter files with default settings are provided.
 *** System File
-    The most used parameter file is the one which controls the behaviour of the
-    estimators and generators. This file allows the setting of output filenames,
-    generation parameters for the stream generator, including the interval length,
-    start time, and the expression used to generate the streams. The random function
-    generator can be set up to change the multiplier applied to the Gaussians,
-    change their resolution, and define how the standard deviation is set. The
-    configuration of all the parameters used by estimators is also done here. Time
-    delay estimator behaviour is also determined by the settings in this
-    file. The sections describing the implementation of parts of the system explain
-    the exact parameters used and how they affect the behaviour.
+    This parameter file is the one which controls the behaviour of the
+    estimators and generators, and is required for almost all operations. It
+    facilitates the definition of output filenames, generation parameters for
+    the stream generator, including the interval length, start time, and the
+    expression used to generate the streams. The random function generator can
+    be set up to change the multiplier applied to the Gaussians, change their
+    resolution, and define how the standard deviation is set. The configuration
+    of all the parameters used by estimators, both function and time delay, is
+    also done here. The sections describing the implementation of parts of the
+    system explain the exact parameters used and how they affect the behaviour.
 *** Experiment File
-    The experiment parameter file is separate from the system parameter file as it
-    may be desirable to use different parameter files for the same experiment. The
-    experiment file contains parameters which affects the naming of output files,
-    and allows the configuration of the intervals in which data is withheld in model
-    selection. The most important parameters are those which define the names and
-    parameters to test during the experiments.
+    A separate parameter file is used by the experimenter to prevent parameter
+    duplication and allow greater flexibility with experiments. It contains
+    parameters which affects the naming of output files, and allows the
+    configuration of the intervals in which data is withheld in model
+    selection. The most important parameters are those which define the names
+    and parameters to test during the experiments.
 ** Libraries
    Each part of the system makes extensive use of custom libraries. Each library
    consists of a header file which contains the function prototypes and include
-   information, along with a separate file for the functions, which are compiled by
-   \texttt{libtool} into a convenience library. The advantage of using
-   \texttt{libtool} over other ways of constructing libraries is that it can create
-   both shared and static libraries. This means that if the library needs to be
-   re-used elsewhere it is simple to take the shared object file created and
-   compile the program including the library by passing the standard
-   \texttt{-l[libname]} syntax to \texttt{gcc}. Since the libraries contain various
-   functions which are useful not only for this system, this is a useful feature to
-   have as the libraries can be easily re-used. Due to some interdependencies,
+   information, along with a separate file for the functions, which are compiled
+   by \texttt{libtool} into a convenience library. The advantage of using
+   \texttt{libtool} over other ways of constructing libraries is that it can
+   create both shared and static libraries. This means that if the library needs
+   to be re-used elsewhere it is simple to take the shared object file created
+   and compile the program including the library by passing the standard
+   \texttt{-l[libname]} syntax to \texttt{gcc}. Due to some interdependencies
    between the lower level convenience libraries, they are merged into one main
-   library, again functionality provided by \texttt{libtool}. The main function of
-   the libraries is to abstract out code which may be used multiple times in order
-   to reduce clutter, and avoid code duplication and the increased likelihood of
-   errors associated with it. 
+   library, again functionality provided by \texttt{libtool}. The main purpose
+   of the libraries is to provide a single place where oft-used functions can be
+   defined once and used by all parts of the system.
 *** Parameter List
-    The parameter list library defines a singly-linked list which is used to
-    store data parsed from the parameter files which contain parameters that
-    modify the behaviour of the system. The functionality implemented by this
-    library is very important, as almost all functions outside the libraries
-    require one of these lists to perform their tasks. The library provides the
-    functions for adding elements to the list and finding its length. A function
-    for removal of elements is not provided, as there is no situation which
-    should necessitate the removal of elements from the list. There is also
+    The parameter list library defines a singly-linked list, used to store data
+    parsed from the parameter files. These lists are required by many functions
+    in the system to set their behaviour. The library provides functions for
+    adding elements to the list and finding its length. A function for removal
+    of elements is not provided, as there is no situation which should
+    necessitate the removal of elements from the list. There is also
     functionality for checking whether a parameter with a given name exists,
     retrieving the value of a parameter, and setting the value of a parameter.
 
@@ -558,23 +545,16 @@ machine learning, linear regression
     \texttt{double} and \texttt{int} types are provided, along with a function
     to retrieve the character array. In addition, some of the parameters in the
     files are comma-separated lists of integers or doubles, which must be parsed
-    into arrays before they can be used. The parsing also applies to the
-    \texttt{double} and \texttt{int} types, which must be converted from string
-    form into the correct type. In order to reduce code duplication, the
-    conversion of the variables is done inside the retrieval function.
+    into arrays before they can be used. In order to reduce code duplication,
+    the conversion of variables to the correct type is done inside the retrieval
+    function.
 
-    The issue of whether the parameters should be parsed into the correct types
-    upon reading of the file may be raised, but we believe that this solution is
-    more appropriate. Firstly, it is often the case that not all parameters
-    present in the file are required when any given task is executed by the
-    system. Therefore, parsing all the parameters upon read may be a waste of
-    processing time. In addition, having to parse parameters requires knowledge
-    about what types they should be. This can be deduced within the code, but
-    would require more complex logic. The storage would also be complicated by
-    this, as the list would be required to store variables of multiple types. As
-    mentioned above, parsing parameter values only when they are needed, and in
-    contexts where their type is known means that the current structure performs
-    its role well.
+    Parameters are only parsed when they are required by a function. This
+    reduces the complexity of the logic, as it is not necessary to deduce the
+    type of the parameter---the function knows what type it requires. It also
+    reduces the complexity of the data structure, as only character arrays need
+    to be stored. In addition, some parameters are not required by some
+    subsystems, so parsing every parameter in the file is unnecessary.
 *** Mathematics
     As the name implies, the mathematics library provides the mathematical
     functions required by the system which are not provided by the standard C
@@ -582,13 +562,11 @@ machine learning, linear regression
     by the GNU Scientific Library \cite{gsl}, particularly those which calculate
     probability density functions or require random number generators. The most
     important part of the library is the functionality it provides for
-    computations to do with Gaussians, in particular the discrete Gaussian
-    transform. It also provides some basic useful functions, such as finding the
+    computations with Gaussians, in particular the discrete Gaussian
+    transform. It also provides some basic functions, such as finding the
     minimum and maximum values in arrays, averaging, summing, adding to or
     multiplying arrays, and some implementations of statistical functions such
-    as the root mean square error, standard deviation and the like. Functions
-    which are critical to the operation of the system will be described in the
-    implementation section of the relevant subsystems.
+    as the root mean square error, standard deviation and the like.
 
     The most challenging part of the implementation of the library was to get
     around the issues caused by double precision values. Functions which deal
@@ -620,58 +598,51 @@ machine learning, linear regression
     Gaussians or function estimates.
 *** General Utilities
     The final library is for functions which do not fit in anywhere else, such
-    as memory allocation and freeing, printing structs and some error checking
+    as memory allocation and freeing, printing structs, and error checking
     functions. There are also functions for generating default parameter
-    files. The functionality of this library is relatively limited, but it means
-    that the rest of the code in the system is much cleaner, as memory
-    allocation and freeing of relatively complex structs can be done with a
-    single function call. This abstraction of the memory management also makes
-    dealing with the memory much easier---it is more difficult to make a mistake
-    when freeing something, as the functions are already defined.
+    files. This library makes the rest of the system much cleaner, as memory
+    allocation and freeing for large structs can be done with a single function
+    call. 
 ** External Libraries and Tools
    The system uses a number of external libraries to augment the C standard
    libraries, and to reduce the need for us to write code which has already been
    written elsewhere. The GNU Scientific Library \cite{gsl} provides the system
-   with random number generators that can be used to provide more varied random
-   numbers than the standard library provides, and also gives access to
-   probability density function computations. The Check framework \cite{check}
-   is used to implement automated tests for the system, and is part of the GNU
-   build system, which provides assistance for making source code packages
-   portable to many Unix systems. Our system makes use of the \texttt{automake}
-   and \texttt{libtool} frameworks to generate shared library files and
-   makefiles, and its structure outside the code follows that of the standard
-   GNU package. The MuParser library \cite{muparser} is used to parse
-   expressions used to generate stream data. The Valgrind framework was used to
-   debug memory errors \cite{valgrind}.
+   with a larger variety of random number generators than the standard library
+   provides, and also gives access to probability density function
+   computations. The Check framework \cite{check} is used to implement automated
+   tests for the system, and is part of the GNU build system, which provides
+   assistance for making source code packages portable to many Unix systems. Our
+   system makes use of the \texttt{automake} and \texttt{libtool} frameworks to
+   generate shared library files and makefiles, and directory structure follows
+   that of the standard GNU package. The MuParser library \cite{muparser} is
+   used to parse expressions used to generate stream data. The Valgrind
+   framework was used to debug memory errors \cite{valgrind}.
 ** Interface
-   User interaction with the system is done via a command line
-   interface. Various flags passed to the executable change the behaviour of the
-   system, but the majority of behaviour can also be controlled through the
-   parameter file. The standard C libraries provide a useful function,
-   \texttt{getopt}, specifically for the parsing of command line options. This
-   function allows the parsing of short options, such as \texttt{-g}, or with
-   the \texttt{getopt\_long} function, longer options such as
-   \texttt{--generate} can be parsed. Users familiar with *NIX systems will no
-   doubt recognise such options, as they are used in almost every program which
-   can be run from the command line. The parsing of options is done by the
-   launcher, which is the only part of the system that the user interacts with
-   directly. Depending on the options received, the system behaves in a
-   different way. Each subsystem can be called using a specific option, and
-   checks are made to ensure that only a single subsystem is being called. When
-   an error occurs in the parsing of options, which can arise due to an option
-   with a required parameter not having anything passed to it, or as a result of
-   multiple subsystem calls, an error message is printed informing the user of
-   the error. As with many command line programs, instructions on what switches
-   are available, and some information on what they do is available by using the
+   Users interact with the system via a command line interface. Various flags
+   passed to the executable change the behaviour of the system, but the majority
+   of behaviour is controlled through the parameter file. The standard C
+   libraries provide a useful function, \texttt{getopt}, specifically for the
+   parsing of command line options. This function allows the parsing of short
+   options, such as \texttt{-g}, or with the \texttt{getopt\_long} function,
+   longer options such as \texttt{--generate} can be parsed. Users familiar with
+   *NIX systems will no doubt recognise such options, as they are used in almost
+   every program which can be run from the command line. The parsing of options
+   is done by the launcher, which is the only part of the system that the user
+   interacts with directly. Each subsystem can be run by passing a specific
+   option, and checks are made to ensure that only a single subsystem is being
+   called. When an error occurs in the parsing of options, which can arise due
+   to an option with a required parameter not having anything passed to it, or
+   as a result of multiple subsystem calls, an error message is printed
+   informing the user of the error.
+   
+   As with many command line programs, instructions on what options are
+   available, and some information on what they do can be displayed using the
    \texttt{-h} or \texttt{--help} options. The help information is also printed
    when there is some issue when parsing the parameters. To better facilitate
    the addition and removal of options, the value of each option is stored as a
-   flag in a struct which is then passed to another functions which uses its
-   contents to take the user's desired route through the program logic. The
-   launcher does only the minimum amount of work required to get the system to
-   run. Once it has parsed the options, it calls the relevant subsystem and its
-   job is done. Instructions on how to use the system can be found in Appendix
-   [[General Usage]].
+   flag in a struct which is used to determine which subsystem to
+   run. Instructions on how to use the system can be found in Appendix [[General
+   Usage]].
 ** Experimenter
    The purpose of the experimenter is to run the estimation subsystem multiple
    times, with different parameter settings. Its behaviour is modified by a
@@ -679,56 +650,49 @@ machine learning, linear regression
    experiments on different parameters can be added and removed with minimal
    effort on the part of the user. 
 
-   A simple experiment can be set up by modifying just a few lines in a
-   parameter file used to configure the behaviour of the experimenter. The
-   experiment must be given a name, so that the system can reference it. Some
-   parameters to experiment on must be set, and the type of estimator to use to
-   estimate the function must also be specified. An additional parameter is used
-   to specify whether an experiment with the given name should be run or not. To
-   allow for greater flexibility, the parameter values to test can be defined as
-   ranges. For example, entering \texttt{2,4,...,10} as the value for a
-   parameter will result in values of 2, 4, 6, 8 and 10 being experimented
-   on. There are two types of experiments that can be performed; the estimation
-   of functions, or the estimation of the time delay. The ability to do
-   experiments on these separately is important, as model selection must be
-   performed to determine the optimal parameter settings for a given set of test
-   data before experiments on the time delay can be done, and there are
-   functions which can be used to do this. However, the system does not require
-   model selection to run. Once streams of photons have been generated, the
-   experimenter can be set to create a copy of those streams with the data in
-   certain intervals removed.
+   A simple experiment can be set up by modifying just a few lines in a the
+   parameter file. The experiment must be given a name, so that the system can
+   reference it. Some parameters to experiment on must be set, and the type of
+   estimator to use to estimate the function must also be specified. An
+   additional parameter is used to specify whether an experiment with the given
+   name should be run or not. To allow for greater flexibility, the parameter
+   values to test can be defined as ranges. For example, entering
+   \texttt{2,4,...,10} as the value for a parameter will result in values of 2,
+   4, 6, 8 and 10 being experimented on. There are two types of experiments that
+   can be performed; the estimation of functions, or the estimation of the time
+   delay. Function estimate experiments are used to determine optimal parameter
+   settings for a given set of test data, using model selection. The
+   experimenter can create copies of test data with events in certain intervals
+   removed to use for this purpose.
    
-   The next stage is to run the function estimators on these streams with
-   different parameter combinations and see which combinations produce the best
-   results. Parameter settings are co-varied, which means that all possible
-   combinations of parameters are tested. All possible values of parameters are
-   stored in separate arrays for each parameter, and each has a pointer which
-   indicates which value of the parameter should be used by the estimator. After
-   each run of the estimator with a given set of parameters on all test data has
-   been completed, the index of the last parameter is incremented by 1, and the
-   process is repeated. Once the value of the index exceeds the length of the
-   array, it is reset to 0, and the index on the second to last parameter is
-   incremented by 1, and this process continues until all indices return to 0. A
-   system that works in a similar way is a milometer---once the digits column
-   reaches 9, travelling a mile will reset that value to 0, and the value in the
-   tens column will be incremented to 1, and this process continues until the
-   value in all columns is 9, and with the next mile everything is reset
-   to 0. After the experiment for a set of parameters is complete, the results
-   of the estimates are analysed, and each is given a score based on a sum of
-   log probabilities. The value of the function in each interval in which data
-   was withheld is compared to the actual value. The closer the estimated and
-   actual values are, the higher the score. Once all parameter combinations have
-   been run, the best combination of parameters for each stream in the test data
-   is written to file. Files are also produced in each sub-directory which give
-   information about the parameters used for experiments in that directory. 
+   With the modified data, the function estimators are run on the test set with
+   different parameter combinations. Parameter settings are co-varied, which
+   means that all possible combinations of parameters are tested. All possible
+   values of parameters are stored in separate arrays for each parameter, and
+   each has a pointer which indicates which value of the parameter should be
+   used by the estimator. After each run of the estimator with a given set of
+   parameters on all test data has been completed, the index of the last
+   parameter is incremented by 1, and the process is repeated. Once the value of
+   the index exceeds the length of the array, it is reset to 0, and the index on
+   the second to last parameter is incremented by 1, and this process continues
+   until all indices return to 0, similar to how a milometer works. After the
+   experiment for a set of parameters is complete, the results of the estimates
+   are analysed, and each is given a score based on a sum of log
+   probabilities. The value of the function in each interval in which data was
+   withheld is compared to the actual value from the original data. The closer
+   the estimated and actual values are, the higher the score. Once all parameter
+   combinations have been run, the best combination of parameters for each
+   stream in the test data is written to file. Files are also produced in each
+   sub-directory which give information about the parameters used for
+   experiments in that directory.
 
    Once the model selection is done, the optimum parameters can be extracted
    from the results and the time delay can be estimated. The time delay results
-   are also processed, with the estimate and error for each stream pair, and the
-   mean, standard deviation and mean error of a set of streams pairs being
-   output to file. Functionality for running large numbers of experiments is
-   provided by a number of shell scripts. Instructions on running experiments
-   can be found in Appendix [[Running Experiments]].
+   are processed, with the estimate and error for each stream pair, and the
+   mean, standard deviation and mean error of a set of stream pairs are output
+   to a file. Functionality for running large numbers of experiments is provided
+   by a number of shell scripts. Instructions on running experiments can be
+   found in Appendix [[Running Experiments]].
 * Development
   In this section, we discuss the programming methodologies and project management
   ideas used during the development of the project.
@@ -742,8 +706,8 @@ machine learning, linear regression
    For more complex parts of the system, we also planned out how it would
    connect to the main parts of the system, either in terms of data structures,
    or where it should be called from. When more complex algorithms had to be
-   implemented, we wrote a prototype on paper and tested it for a few simple
-   cases to check its correctness.
+   implemented, we wrote a prototype on paper and tested it manually for a few
+   simple cases to check its correctness.
 
    Once we had a good idea of the structure of the code, we implemented a
    prototype which was loosely connected to the system. This prototype would
@@ -782,28 +746,25 @@ machine learning, linear regression
    Although the interface in our system involves minimal interaction, the rule
    of least surprise is still a good one to follow. When designing the behaviour
    of the launcher, we considered what the expected behaviour would be, and
-   implemented functionality which made this behaviour possible. However minimal
-   the interaction with a system is, it is still important to consider the
-   expectations that a user may have. One particular example is the presence of
-   a help command which gives information about what the program does and what
-   options it can parse. Entering \texttt{ls --help} on a Linux system gives an
-   example of the contents of such a printout. We ensured that this was present
-   in our implementation of the launcher.
+   implemented functionality which made this behaviour possible. One particular
+   example is the presence of a help command which gives information about what
+   the program does and what options it can parse. Entering \texttt{ls --help}
+   on a Linux system gives an example of the contents of such a printout. We
+   ensured that this was present in our implementation of the launcher.
 
-   Our system is not so large as to have properly defined interfaces, but the
-   content of subsystems, and the links between them are vitally
-   important. During our implementation, we tried to follow the rule of
-   modularity by making each part of the system as simple as possible. The
-   functions which execute a particular task should be grouped together, and any
-   functions which are not a direct part of that process should be grouped
-   elsewhere. For example, the functions which run the estimators are very
-   short, and are grouped together in one file. The estimators themselves are
-   separate entities---they are not grouped together in one large file which
-   contains them all, but instead in their own dedicated file. Functions which
-   are used by the baseline estimator, for example, are of no use to the
-   iterative weighted least squares estimator, as their tasks are very
-   different. Connections between parts are also made to be simple, by
-   encapsulating data in structs and passing them around as necessary.
+   Our system is not so large as to have properly defined interfaces, but there
+   is interaction between subsystems. During our implementation, we tried to
+   follow the rule of modularity by making each part of the system as simple as
+   possible. The functions which execute a particular task should be grouped
+   together, and any functions which are not a direct part of that process
+   should be grouped elsewhere. For example, the functions which call the
+   estimators are very short, and are grouped together in one file. The
+   estimators themselves are separate entities---they are not grouped together
+   in one large file which contains them all, but instead in their own dedicated
+   file. Functions which are used by the baseline estimator, for example, are of
+   no use to the iterative weighted least squares estimator, as their tasks are
+   very different. Interactions between subsystems are made simpler by
+   encapsulating data in structs.
 
    As mentioned in the previous section, the rule of optimising was a key part
    of the development process. Moving from prototype to implementation to
@@ -824,10 +785,9 @@ machine learning, linear regression
    the correct functioning of the system. Some functions, such as those which
    perform the estimation, it is not feasible to check, as the actual results
    that should be obtained for a normal input are not easily calculated without
-   relying on the system itself. In cases where it is possible, we have
-   concentrated on those functions which consist of more than just simple
-   statements. Those functions which perform mathematical computations and error
-   checking are the ones which have undergone the most rigorous checks.
+   relying on the system itself. Those functions which perform mathematical
+   computations and error checking are the ones which have undergone the most
+   rigorous checks.
 
    A total of 62 tests have been implemented, each of which contain multiple
    cases to check edge cases. Of these, 56 check library functions. Checks on
@@ -836,13 +796,13 @@ machine learning, linear regression
    Tests are implemented using the Check framework \cite{check}, which is a unit
    testing framework designed for the C language. The main reason for its use is
    its integration into the GNU Autotools framework, which is used for automatic
-   configuration and compilation of the code.
+   configuration and compilation of the code. The tests can be run by running
+   \texttt{make check} from the top directory.
 ** Version Control
    The project was kept under version control using the \texttt{Git} and
-   \texttt{SVN} revision control systems. The Git repository was used as the
-   main repository, with all commits being made there. The SVN repository was
-   used as a backup, with tagged versions being committed to that for backup
-   purposes.
+   \texttt{SVN} revision control systems. All commits were made to the Git
+   repository. The SVN repository was used as a backup, with tagged versions
+   being committed for backup purposes.
 
    A branching strategy was chosen, in an attempt to bring the project closer to
    one which might be performed in an industry environment. Several searches for
@@ -850,16 +810,14 @@ machine learning, linear regression
    \cite{driessen}. In this strategy, there are two main branches,
    \texttt{master} and \texttt{develop}. The state of \texttt{master} reflects
    the current version, and \texttt{develop} reflects the current state of
-   development. There are three supporting branches, which deal with features,
-   hotfixes and releases. In our case, dealing with hotfixes was not important
-   as we were not releasing production software. For each new feature, or large
-   change that was made to the system, we moved development to a new branch so
-   as not to impact the main development branch. Branches were merged back to
-   the main development branch when the feature was complete. When a large
-   milestone in the project was completed, such as the completion of a
-   subsystem, we branched into a separate branch for that release to make some
-   modifications to information about the code, and then merged the release
-   branch with \texttt{master} and \texttt{develop}.
+   development. There are two supporting branches, which deal with features,
+   releases. For each new feature, or large change that was made to the system,
+   we moved development to a new branch so as not to impact the main development
+   branch. Branches were merged back to the main development branch when the
+   feature was complete. When a large milestone in the project was completed,
+   such as the completion of a subsystem, we branched into a separate branch for
+   that release to make some modifications to information about the code, and
+   then merged the release branch with \texttt{master} and \texttt{develop}.
 
    Commits were made to the development branch when a small feature was
    completed, or some modifications were made. With this sort of regular commit
@@ -884,32 +842,29 @@ machine learning, linear regression
   The first step in building the system was the development of a photon stream
   simulator. The ability to simulate photon streams means that the system can be
   tested on many different stream types, so that we are able to determine where
-  its strengths and weaknesses lie. While many simulation tools are very complex,
-  our system does not require simulation of the source objects or the movement of
-  photons, as we are only interested in their arrival time. A source can be
-  represented by some random variable $X$, which indicates the variability of the
-  source with time. Different types of sources will have different types of
-  characteristic functions---the variation in a quasar will be very different to
-  that of an individual star, for example. A NHPP is an ideal way to represent
-  this type of system. The function $\lambda(t)$ will represent the random
-  variable, and the values output from the process will represent the arrival
-  times of the photons. $\lambda(t)$ describes the variability of the source in
-  time. In other words, it provides a rate parameter at each time $t$ for the
-  duration of the simulation. To be able to simulate a wide variety of functions,
-  it is necessary to have the capacity to generate functions with different
-  characteristics.
+  its strengths and weaknesses lie. While many simulation tools are very
+  complex, our system does not require simulation of the source objects or the
+  movement of photons, as we are only interested in their arrival time. A source
+  can be represented by a random variable which indicates its variability with
+  time. Different types of sources will have different types of characteristic
+  functions---the variation in a quasar will be very different to that of an
+  individual star, for example. A NHPP is an ideal way to model this type of
+  system. The function $\lambda(t)$ is the rate function of the process, and the
+  times output by the process will represent the arrival times of the
+  photons. $\lambda(t)$ provides a rate parameter at each time $t$ for the
+  duration of the simulation.
 ** Function Generation
-   To evaluate the performance of the function and time delay estimators, it will
-   be necessary to test the accuracy of the estimates on different types of
-   functions. To this end, the capability of generating random functions will be
-   very useful. To generate random functions, we make use of \textbf{Gaussian
-   kernels or just Gaussians?}. The generation process involves four simple steps:
+   To evaluate the performance of the function and time delay estimators, it
+   will be necessary to test the accuracy of the estimators on different types
+   of functions. To this end, the capability of generating random functions will
+   be very useful. To generate random functions, we make use of Gaussians. The
+   generation process involves four simple steps:
 1. Pick some value $\Delta t$ which represents the distance between the mean
    $\mu$ of successive Gaussians.
 2. Define some value $\alpha$, where the standard deviation $\sigma$ of each
    Gaussian is determined by $\alpha\cdot\Delta t$.
 3. For each Gaussian, choose some weight $w_i$, from a uniform distribution
-   between -1 and 1.
+   between -1 and 1, and scale it by some multiplier.
 4. Using some step $s$, sum all the Gaussians at each point on the $x$-axis which
    we get from these $s$ values.
 
@@ -926,82 +881,87 @@ machine learning, linear regression
    small interval, so if the Gaussians are sufficiently spread out, the variation
    in the function will be much larger than if higher values of $\sigma$ are used.
 
-   With just the above two steps, the functions generated would be very
-   homogeneous, because each Gaussian has the same weight. With uniform Gaussians,
-   there would be hills at each point where a Gaussian is centred, and very little
-   to speak of in between, and the height of the function would never exceed a
-   certain value. To introduce more variation, a weight $w_i$ is sampled uniformly
-   from ($w_i \sim U(-1,1)$). Uniform sampling simply means that each value between
-   -1 and 1 has an equal probability of being chosen. To further increase the
-   variation in the functions that can be generated, some multiplier can be used,
-   which scales the values of the weights, meaning that the function will have
-   larger values over the whole interval.
+   With just the above two steps, the functions generated would be quite
+   similar, because each Gaussian is assigned the same weight. With uniform
+   Gaussians, there would be hills at each point where a Gaussian is centred,
+   and very little to speak of in between, and the height of the function would
+   never exceed a certain value. To introduce more variation, a weight $w_i$
+   sampled from the uniform distribution $U(-1,1)$ is applied to each
+   Gaussian. Uniform sampling simply means that each value between -1 and 1 has
+   an equal probability of being chosen. To further increase the variation in
+   the functions that can be generated, a multiplier can be used, which scales
+   the values of the weights, resulting in the sampling of larger values from
+   the Gaussians.
 
    The final step is to calculate the values which will make up the
-   function. Starting at the beginning of the interval $t_0$, we sum the values of
-   all the Gaussians at points along the line until the end of the interval $T$ is
-   reached. The points that are sampled are defined by $t_i=t_{i-1}+s$, where $s$
-   is some sample step. The use of smaller sample steps results in a higher
-   resolution. The sum of the Gaussians at time $t$ can be calculated by
+   function. Starting at the beginning of the interval $t_0$, we sum the values
+   of all the Gaussians at points along the line until the end of the interval
+   $T$ is reached. The points that are sampled are defined by $t_i=t_{i-1}+s$,
+   where $s$ is the sample resolution. The sum of the Gaussians at time $t$ can
+   be calculated by
    #+BEGIN_LaTeX
    \begin{align}
    f(t) = \sum_{g\in G}w_g\cdot e^{-(t-\mu_g)^2/2\sigma_g^2}
    \end{align}
    #+END_LaTeX
-   Where $G$ is the set of Gaussians which make up the function, and $w_g$, $\mu_g$
-   and $\sigma_g$ are the weight, mean and standard deviation respectively of the
-   current Gaussian being processed.
-
-- random functions using gaussian sums
-- explain how the gaussians are placed, how the standard deviation is
-  calculated, what effect this has on the function shape
-  ($\sigma=\alpha\cdot\Delta t$)
-- examples at various alpha and delta t values?
-- $w_t\cdot e^\frac{{x-\mu}^2}{2\sigma^2}$
-
-   In addition to the random function generation, it may sometimes be useful to
-   generate a function from a known expression, and the system includes this
-   functionality as well, which will be described below.
+   Where $G$ is the set of Gaussians used to construct the function, and $w_g$,
+   $\mu_g$ and $\sigma_g$ are the weight, mean and standard deviation
+   respectively of the Gaussian being processed. Figure \ref{fig:contrib} shows
+   some examples of functions generated from Gaussians in this way. In addition
+   to the random function generation, it may sometimes be useful to generate a
+   function from a known expression, and the system includes this functionality
+   as well, which is described in the Implementation section.
+   #+BEGIN_LaTeX
+   \begin{figure}
+   \subfloat{
+   \includegraphics[width=0.5\textwidth]{contrib1}
+   }
+   \subfloat{
+   \includegraphics[width=0.5\textwidth]{contrib2}
+   }
+   \caption{Two examples of functions randomly generated from Gaussians. The red
+   function is constructed by summing the green gaussians. Generated with
+   $\Delta t=$ 10, $\alpha=$ 1. The functions are shifted so that all points
+   are $\geq$ 0.}
+   \label{fig:contrib}
+   \end{figure}
+   #+END_LaTeX
 ** Generating Streams from Functions
-   Once the function has been generated, we can use it to generate values for
-   the random variable $X$ which governs a NHPP. To generate a NHPP, it is
-   necessary to build on the generation of a HPP. It is well known that
-   probability of an event occurring follows an exponential distribution. The
-   rate parameter $\lambda$ determines how many events occur in a given time
-   interval. Knowing this, we can calculate the time of the next event by
-   sampling from this distribution. Generate a random value $U\sim U(0,1)$. The
-   time $t$ to the next event is defined by
+   Once a function has been generated, we can use it as the rate function
+   $\lambda(t)$ from which we generate values for a NHPP . To generate events
+   from a NHPP, we build on the generation of events from a HPP.
+
+   We use inverse transform sampling to generate event times from a HPP. This
+   technique works by generating a uniform random number $U\sim U(0,1)$, and
+   finding the value on the $x$-axis at which the cumulative distribution
+   function (CDF) of a probability distribution is equal to the value of $U$. To
+   do so, it is necessary to invert the CDF. The waiting time to the next event
+   in a Poisson process is an exponential function, which has CDF $1-e^{\lambda
+   x}$, which we can invert using the $\log$ function, giving us the
+   waiting time $t$ to the next event as \cite{1998art}
    #+BEGIN_LaTeX
    \begin{align}\label{eq:homlambda}
-   t=\frac{1}{\lambda}\log(U)
+   t=-\frac{1}{\lambda}\log(U)
    \end{align}
    #+END_LaTeX
    Using this calculation, it is possible to generate a realisation of a HPP for
    any length of time. This provides a base which can be extended to generate
-   events from NHPPs. To generate events from the NHPP, we use a technique
-   called thinning. The basic concept behind thinning is to generate a large
-   amount of values, and then remove them based on some method. In the case of
-   the NHPP, we generate events with a rate parameter $\lambda$, where
+   events from NHPPs.
+   
+   To generate events from an NHPP with a random variable $\lambda(t)$, we use a
+   technique called thinning, where we generate a large number of values, and
+   then throw some of them away based on some criterion. In the case of the
+   NHPP, we generate events from a HPP with a rate parameter $\lambda$, where
    $\lambda>\lambda(t)$ for $0<=t<=T$. In other words, the homogeneous lambda
-   value must be larger than the value of the function we are generating from at
-   any point. First, two random values are independently sampled from a uniform
-   distribution between 0 and 1, $U_1,U_2\sim U(0,1)$. $U_1$ is used in
-   \eqref{eq:homlambda} to find the next event time from the homogeneous process
-   governed by $\lambda$. Using the time $t$ generated from that, the value of
-   $\lambda(t)$ is found. Depending on the ratio between $\lambda(t)$ and
-   $\lambda$, the event is kept or discarded. When the value of $\lambda(t)$ is
-   close to that of $\lambda$, more events are kept because
-   $U_2\leq\frac{\lambda(t)}{\lambda}$ will be true more of the time. The
-   variation of $\lambda(t)$ in time means that events are generated
-   proportional to the value of lambda.
-
-- Need to generate event times - use Poisson process
-- start with homogeneous
-- extend homogeneous to non-homogeneous (explain math)
-- Issues with the implementation - must have $\lambda>\lambda(t)$ for all
-  $0<=t<=T$.
-- Diagram showing HPP and NHPP
-- http://preshing.com/20111007/how-to-generate-random-timings-for-a-poisson-process
+   value must be larger than the value of the function we are generating from
+   for the whole time the process runs. First, two random values are
+   independently sampled from a uniform distribution, $U_1,U_2\sim U(0,1)$. The
+   first number, $U_1$, is used in \eqref{eq:homlambda} to find the next event
+   time from the homogeneous process governed by $\lambda$. Using the time $t$
+   generated from that, the value of $\lambda(t)$ is calculated. If
+   $U_2\leq\frac{\lambda(t)}{\lambda}$, then the event is kept. Clearly, the closer
+   $\lambda(t)$ is to $\lambda$, the more events will be kept, and so the number
+   of events generated depends on the value of the rate function.
 ** Implementation
    The function and stream generation functions form the \emph{generator}
    subsystem. The two different function generation methods use fundamentally
@@ -1011,25 +971,25 @@ machine learning, linear regression
    which represent the whole function. When one of these arrays is generated,
    its constituent Gaussians are output to a file so they can be used later if
    necessary. Once one of these sets of Gaussians is generated, it is passed to
-   a function which implements the thinning procedure. To generate the $\lambda(t)$
-   values, the sum of Gaussians in the generated array at the given time is
-   used. A two dimensional array is returned, containing the time of each event,
-   and the value of $\lambda$ at each time. Once the stream has been generated,
-   depending on the requested output verbosity, the data is output to file. This
-   process is repeated for the requested number of streams. Multiple different
-   functions can be generated with one function call. Alternatively, a single
-   function can be used to generate multiple stream pairs.
+   a function which implements the thinning procedure. The rate function
+   $\lambda(t)$ is generated by summing the values of Gaussians in the set at
+   time $t$. A two dimensional array is returned, containing the time of each
+   event, and the value of $\lambda(t)$ at each time. Once the stream has been
+   generated, depending on the requested output verbosity, the data is output to
+   file in two columns. This process is repeated for the requested number of
+   streams. Multiple different functions can be generated with one function
+   call. Alternatively, a single function can be used to generate multiple
+   stream pairs.
 
    The generation of functions using expressions is done in a very similar way
    to the Gaussian generation, but since an expression is being used there is no
    need to store the representation of the function in a special way. Events are
-   generated and thinned using a very similar function to the Gaussian, but
-   instead of an array take a \texttt{muparser} struct pointer which can be used
-   to get function values out of the expression that has been parsed into
-   it. This pointer is created in the setup function which reads data from the
-   parameter file and parses the expression. If there is a syntax error in the
-   expression, the program prints the location of the error using
-   \texttt{muparser} functions and exits.
+   generated and thinned using a very similar function to the above, but use a
+   \texttt{muparser} struct pointer which can be used to calculate values of the
+   function it has parsed. This pointer is created in the setup function which
+   reads data from the parameter file and parses the user-defined expression. If
+   there is a syntax error in the expression, the program prints the location of
+   the error using \texttt{muparser} functions and exits.
 
    The generation in both cases is split into several stages. In the first
    stage, the parameters required by the function are read from the parameter
@@ -1041,10 +1001,8 @@ machine learning, linear regression
    and output the resulting data to file.
 
    This three-level structure is used throughout the system to separate the
-   parameter retrieval and checking from the execution of the logic. This also
-   means that if parameters have already been parsed and checked in another
-   function, the second-level function can be called to get back the desired
-   results.
+   parameter retrieval and checking from the execution of the logic, and removes
+   the need to re-parse the parameters for each call to the generator.
 
    The configurable parameters for the generation functions include the value
    of $\Delta$ for each stream, the start time and length of the interval, the
@@ -1055,31 +1013,34 @@ machine learning, linear regression
    be set to be calculated using $\alpha\cdot\Delta t$, or simply taken from a
    specified value.
 * Function Estimation
+  Once we have a photon stream, the next stage is to estimate its characteristic
+  function. This section presents the two methods that we implemented to do
+  this. The first method uses simple linear regression, and the second a kernel
+  density estimator.
 ** Baseline Estimation
    In this section, we present the baseline method for function estimation. The
-   core of the estimator is based on the iterative weighted least squares estimator
-   derived by Massey et.al \cite{massey1996estimating}, and in the next two
-   sections we attempt to explain its derivation in simpler terms than in the
-   original paper. The subsequent sections detail our additions to the simple
-   estimators in order to form the final baseline estimator which will be used as
-   the first of our function estimation methods.
+   core of the estimator is based on the iterative weighted least squares
+   estimator derived by Massey et.al \cite{massey1996estimating}, and in the
+   next two sections we attempt to explain it in simple terms. The subsequent
+   sections detail our additions to the simple estimators in order to form the
+   final baseline estimator which forms the first of our function
+   estimation methods.
 *** Ordinary Least Squares
     The ordinary least squares (OLS) estimator forms the core of the baseline
-    estimator. This estimator will form an estimate by minimising the sum of squared
+    estimator, estimating functions by minimising the sum of squared
     residuals. It is important to note the difference between errors and
-    residuals. In statistical terms, an \emph{error} is ``The difference between the
-    observed value of an index and its ``true" value'' \cite{2008oecd}, and a
-    \emph{residual} is ``The difference between the observed value of a response
-    variable and the value predicted by some model of interest''
-    \cite{everitt2010cambridge}. The ``true'' in the definition of error is in
-    inverted commas due to the fact that the true value of the function is
-    unobservable---it is only possible to obtain a statistical sample. The residual,
-    on the other hand, is the difference of the observation from some
+    residuals. In statistical terms, an \emph{error} is ``The difference between
+    the observed value of an index and its ``true" value'' \cite{2008oecd}, and
+    a \emph{residual} is ``The difference between the observed value of a
+    response variable and the value predicted by some model of interest''
+    \cite{everitt2010cambridge}. The true value of the function is
+    unobservable---it is only possible to obtain a statistical sample. The
+    residual, on the other hand, is the difference of the observation from some
     \emph{estimate} of the function. This first estimator estimates a linear
-    function of the form $y=ax+b$, or a straight line. While this is not directly
-    useful for estimating characteristic functions, it was developed in order to
-    gain a deeper understanding of the ideas behind regression, and in order to
-    construct a simple estimator which could then be extended.
+    function of the form $y=ax+b$, or a straight line. While this is not
+    directly useful for estimating characteristic functions, it was developed in
+    order to gain a deeper understanding of the ideas behind regression, and in
+    order to construct a simple estimator which could then be extended.
 
     In order to estimate the function, the stream of events must first be converted
     into a form which is suitable for processing. To do this, we first pick a time
@@ -1093,62 +1054,46 @@ machine learning, linear regression
     x_k&=\left(k-\frac{1}{2}\right)\frac{T}{N},\,1\leq k\leq N
     \end{align}
     #+END_LaTeX
-    Due to the independent increments property of Poisson processes, splitting the
-    interval leaves us with $N$ bins, each of is defined by an independent Poisson
-    random variable \cite{massey1996estimating} $Y_k$ with mean
+    Due to the independent increments property of Poisson processes, splitting
+    the interval leaves us with $N$ bins, each of which is defined by an
+    independent Poisson random variable \cite{massey1996estimating} $Y_k$ with
+    mean
     #+BEGIN_LaTeX
     \begin{equation}\label{eq:lam}
     {\lambda}_k=\frac{T}{N}(a+bx_k)
     \end{equation}
     #+END_LaTeX
-    where $T/N$ is used to normalise the value of ${\lambda}_k$. The value of $Y_k$ in our
-    case is the number of photon arrival times for each bin. In order to perform
-    regression on the data, we need a model of the data. At this stage, we make the
-    assumption that the data is represented by a linear function, so the model is
-    linear. The model is used to connect the random variables and the parameters,
-    and describes how they are related. Our model becomes $Y=\alpha+\beta x
-    +\epsilon$, or $Y_k=\alpha+\beta x_k + {\epsilon}_k$
-    \cite{massey1996estimating}. The values $\alpha$ and $\beta$ are the two
-    regression parameters which we use to estimate the values of $a$ and $b$ of the
-    characteristic function. \textcolor{red}{What is a regression parameter?}
-    $\epsilon$ represents the Poisson error that is present in the data that we are
-    trying to model. As mentioned before, this technique works by minimising the sum
-    of squared residuals. The value of a residual can be computed by
-    \cite{kenney1962mathematics}
-    #+BEGIN_LaTeX
-    \begin{equation}\label{eq:residual}
-    d_k=Y_k-(a+bx_k)
-    \end{equation}
-    #+END_LaTeX
-    However, since we cannot know the real values of $a$ and $b$, we must instead
-    use the regression parameters $\alpha$ and $\beta$. Substituting these into
-    \eqref{eq:residual} we get
-    #+BEGIN_LaTeX
-    \begin{equation}
-    d_k=Y_k-(\alpha+\beta x_k)
-    \end{equation}
-    #+END_LaTeX
-    With this, we can calculate residuals for our function estimate. This
-    calculation by itself is not sufficient, though, as summing the residuals
-    necessarily results in a value of zero \textcolor{red}{\textbf{FIND A CITATION FOR THIS!}}. To
-    get a useful value from the residuals, we square the value of each residual.
+    where $T/N$ is used to normalise the value of ${\lambda}_k$. The value of
+    $Y_k$ in our case is the number of photon arrival times for each bin. In
+    order to perform regression on the data, we need a model. The model is used
+    to connect the random variables and the parameters, and describes how they
+    are related. Our model becomes $Y=\alpha+\beta x +\epsilon$, or
+    $Y_k=\alpha+\beta x_k + \epsilon_k$ \cite{massey1996estimating}. The
+    values $\alpha$ and $\beta$ are the two regression parameters which we use
+    to estimate the values of $a$ and $b$ in the characteristic function. We
+    introduce a Poisson error $\epsilon$ which represents the error present in
+    the data that we are trying to model. As mentioned before, this technique
+    works by minimising the sum of squared residuals. The square of a residual
+    can be computed by \cite{kenney1962mathematics}
     #+BEGIN_LaTeX
     \begin{equation}\label{eq:sqres}
     d_k^2=(Y_k-[\alpha +\beta x_k])^2
     \end{equation}
     #+END_LaTeX
-    Until now, we have been ignoring ${\epsilon}_k$, the Poisson noise associated
-    with the random variable. In order to compensate for this, it is necessary to
-    introduce a weight $w_k$ for each interval, initialised to 1 as we are using
-    the OLS technique \cite{massey1996estimating}. Introducing this weight into
-    \eqref{eq:sqres} and summing over all bins, we have
+    We use the regression parameters $\alpha$ and $\beta$ rather than the
+    unknowable values $a$ and $b$, since we calculate residuals in relation to
+    the estimate of the function. We introduce a weight $w_k$, initialised to 1,
+    for each interval, which compensates for the Poisson error
+    \cite{massey1996estimating}. Introducing this weight into \eqref{eq:sqres}
+    and summing over all bins, we compute a weighted version of the residual sum
+    of squares (RSS).
     #+BEGIN_LaTeX
     \begin{equation}
     \sum_{k=1}^N w_k(Y_k-[\alpha +\beta x_k])^2
     \end{equation}
     #+END_LaTeX
-    the residual sum of squares (RSS). We want to find the values of $\alpha$ and
-    $\beta$ for which the RSS is minimised, and so the final expression becomes
+    We want to find the values of $\alpha$ and $\beta$ for which the RSS is
+    minimised, and so the final expression becomes
     #+BEGIN_LaTeX
     \begin{equation}
     \min_{\alpha,\beta}\sum_{k=1}^N w_k(Y_k-[\alpha +\beta x_k])^2
@@ -1181,54 +1126,53 @@ machine learning, linear regression
 
     If we ignore the effect of adding the weight $w_k$ for the time being, the
     calculation of $\hat{\beta}$ is equivalent to dividing the covariance of $x$
-    with $Y$ by the variance of $x$ \cite{kenney1962mathematics}. This should allow
-    us to understand more about how the value of the estimate changes depending on
-    what the values of $x$ and $Y$ look like. The covariance is a measure of the
-    strength of the correlation between two or more random variables
-    \cite{covariance}. If high values of one variable occur when the other variable
-    also has high values, then the covariance is positive. If high values of one
-    variable occur when the other has low values, then it is negative. The variance,
-    on the other hand, is a measure of the variation in values of a random
-    variable. If all values are close to the mean, then the variance is small, and
-    if there are large deviations from the mean value, then the variance is
-    large. If the covariance is positive, then the values of $Y$ increase as $x$
-    increases. The variance of $x$ depends only on the length of the
-    interval---short intervals have low variance, and long intervals high
-    variance. This is because the calculation of the variance is done by finding the
-    distance to the midpoints of bins from the value of $\bar{x}$, which is the
-    midpoint of the interval. It is clear that the sign of $\hat{\beta}$ depends on
-    whether the covariance is positive or negative, and this in turn defines the
-    sign of the gradient. The steepness of the gradient is defined by the magnitude
-    of the covariance. Since the value of the variance is constant, the larger the
-    magnitude of the covariance, the steeper the gradient. Once we know the gradient
-    of the line, the calculation of the intercept is simple, so long as we know the
-    value of a point on the line, and the point $(\bar{x},\bar{Y})$ is one such
-    point. We rearrange the equation $\bar{Y}=\hat{\alpha}+\hat{\beta}\bar{x}$ to
-    solve for $\hat{\alpha}$. Notice that since the values of $\bar{x}$ and
-    $\bar{Y}$ do not change, the point defined by the mean values becomes a pivot
-    for the line estimate. The addition of the weights adds bias into the calculation,
-    taking into consideration the variation of those points which have a smaller
-    estimated value of $\lambda$. The weight update calculation is discussed in the
-    next section.
+    with $Y$ by the variance of $x$ \cite{kenney1962mathematics}. The covariance
+    is a measure of the strength of the correlation between two or more random
+    variables \cite{covariance}. If high values of one variable occur when the
+    other variable also has high values, then the covariance is positive. If
+    high values of one variable occur when the other has low values, then it is
+    negative. The variance, on the other hand, is a measure of the variation in
+    values of a random variable. If all values are close to the mean, then the
+    variance is small, and if there are large deviations from the mean value,
+    then the variance is large. If the covariance is positive, then the values
+    of $Y$ increase as $x$ increases. The variance of $x$ depends only on the
+    length of the interval---short intervals have low variance, and long
+    intervals high variance. This is because the calculation of the variance is
+    done by finding the distance to the midpoints of bins from the value of
+    $\bar{x}$, which is the midpoint of the interval.
+    
+    It is clear that the sign of $\hat{\beta}$ depends on whether the covariance
+    is positive or negative, and this in turn defines the sign of the
+    gradient. The steepness of the gradient is defined by the magnitude of the
+    covariance. Since the value of the variance is constant, the larger the
+    magnitude of the covariance, the steeper the gradient. Once we know the
+    gradient of the line, the calculation of the intercept is simple, so long as
+    we know the value of a point on the line, and the point $(\bar{x},\bar{Y})$
+    is one such point. We rearrange the equation
+    $\bar{Y}=\hat{\alpha}+\hat{\beta}\bar{x}$ to solve for
+    $\hat{\alpha}$. Notice that since the values of $\bar{x}$ and $\bar{Y}$ do
+    not change, the point defined by the mean values becomes a pivot for the
+    line estimate. The addition of the weights adds bias into the calculation,
+    taking into consideration the variation of those bins which have a smaller
+    estimated value of $\lambda$. The weight update calculation is discussed in
+    the next section.
 
-    We normalise the values of $\hat{\alpha}$ and $\hat{\beta}$ by multiplying the
-    resulting estimate by the number of bins over the interval length. The fewer
-    bins used in the estimate, the larger the bin count will be for each bin, and
-    consequently the larger the estimated values will be. To return the estimate to
-    the same scale, 
+    We normalise the values of $\hat{\alpha}$ and $\hat{\beta}$ by multiplying
+    the resulting estimate by the number of bins over the interval length. The
+    fewer bins used in the estimate, the larger the bin count will be for each
+    bin, and consequently the larger the estimated values will be. To return the
+    estimate to the correct scale, we set
     #+BEGIN_LaTeX
     \begin{equation}
     \hat{a}=\frac{N}{T}\hat{\alpha}\quad\text{and}\quad
     \hat{b}=\frac{N}{T}\hat{\beta}
     \end{equation}
     #+END_LaTeX
-
-- show non-normalised estimate vs normalised estimate
-
-    As we are dealing with a Poisson process with a rate function, it is natural to
-    impose a constraint on the values of $\hat{a}$ and $\hat{b}$ which states that
-    the rate function must be non-negative throughout the entire interval $[0,T]$,
-    since it is not possible to have a negative rate \cite{massey1996estimating}.
+    As we are dealing with a Poisson process with a rate function, it is natural
+    to impose a constraint on the values of $\hat{a}$ and $\hat{b}$ which states
+    that the rate function must be non-negative throughout the entire interval
+    $[0,T]$, since it is not possible to have a negative rate
+    \cite{massey1996estimating}.
     #+BEGIN_LaTeX
     \begin{equation}
     \hat{a}\geq 0\quad \text{and}\quad
@@ -1254,58 +1198,59 @@ machine learning, linear regression
     \end{split}
     \end{align}
     #+END_LaTeX
-    \textcolor{red}{\textbf{Is this sufficient?}}
-    Applying these adjustments in the cases in which the constraints are violated
-    ensures that the final estimate is always within the required
+    Applying these adjustments in the cases in which the constraints are
+    violated ensures that the final estimate is always within the required
     constraints. However, the adjustments introduce some non-linearity into the
-    system \cite{massey1996estimating}. With this set of equations, the fundamental
-    structure of the OLS estimator is complete. In the next section, we discuss the
-    addition of weight update rules and finding estimates of $\lambda$.
+    system \cite{massey1996estimating}. With this set of equations, the
+    fundamental structure of the OLS estimator is complete. In the next section,
+    we discuss the addition of weight update rules and finding estimates of
+    $\lambda$.
 *** Iterative Weighted Least Squares
     #+BEGIN_LaTeX
-    \begin{figure}
+    \begin{figure}[h]
     \includegraphics{lineest}
-    \label{fig:line}
     \caption{IWLS estimate of a realisation of the function $y=a+bx$ where $a=$ 7
     and $b=$ 2.}
+    \label{linefig}
     \end{figure}
     #+END_LaTeX
     The iterative weighted least squares (IWLS) estimator builds upon the OLS
     estimator. As the name suggests, the extension is to include an iterative
-    part. The OLS estimator performs a single estimate of the function and leaves it
-    at that. The IWLS estimator, on the other hand, repeats the process multiple
-    times, updating its estimates. Perhaps the most important update to the
-    estimator is the use of unequal weights, which change depending on the variances
-    of the random variable which defines the bin which the weight is being applied
-    to. A Poisson random variable has a variance that is equal to its mean---this
-    means that a higher value of ${\lambda}_k$ results in a larger variance. To
-    compensate for this, we give higher weights to bins which have lower values of
-    $\lambda$, as the variances will be lower. As shown in equation \eqref{eq:lam},
-    the value of $\lambda$ is easy to calculate, but the values of $a$ and $b$ must
-    be known. In order to modify weights appropriately, we must be able to obtain
+    part. The OLS estimator performs a single estimate of the function, whereas
+    IWLS estimator repeats the process multiple times, updating its estimates.
+
+    Perhaps the most important update to the estimator is the use of unequal
+    weights, which change depending on the variances of the random variable
+    which defines the bin which the weight is being applied to. A Poisson random
+    variable has a variance that is equal to its mean---this means that a higher
+    value of $\lambda$ results in a larger variance. To compensate for this,
+    we give higher weights to bins which have lower values of $\lambda$, as the
+    variances will be lower. As shown in equation \eqref{eq:lam}, the value of
+    $\lambda$ is easy to calculate, but the values of $a$ and $b$ must be
+    known. In order to modify weights appropriately, we must be able to obtain
     estimates of $\lambda$, which can be done using \cite{massey1996estimating}
     #+BEGIN_LaTeX
     \begin{align}
     \hat{\lambda}_k=\frac{T}{N}(\hat{a}+\hat{b}x_k)
     \end{align}
     #+END_LaTeX
-    The weights can then be updated using
+    The weights can then be updated by
     #+BEGIN_LaTeX
     \begin{equation}
     \hat{w_k}=\frac{\displaystyle \frac{N}{\hat{\lambda}_k}}{\displaystyle \sum_{k-1}^N\left(\frac{1}{\hat{\lambda}_k}\right)}
     \end{equation}
     #+END_LaTeX
-    which has some desirable properties \cite{massey1996estimating}. \textcolor{red}{\textbf{Minimum
-    variance estimator among linear functions of the observations $Y_k$ that are
-    unbiased}}. Each iteration of the estimator updates these estimates of $\lambda$
-    and the weight for each bin, and the process is stopped when the change in the
-    estimates becomes negligible, which consistently happens in between two and five
-    iterations \cite{massey1996estimating}. With this estimator, we have something
-    which can improve upon the estimates from OLS with only a small amount of
-    additional calculation. However, for our purposes this is not sufficient. The
-    characteristic function of stellar objects are not linear functions, so we must
-    extend this linear approach to give us some reasonable estimates of functions
-    which are not straight lines.
+    Each iteration of the estimator updates these estimates of $\lambda$ and the
+    weight for each bin, and the process is stopped when the change in the
+    estimates becomes negligible, which consistently happens in between two and
+    five iterations \cite{massey1996estimating}. Figure \ref{linefig} shows an
+    example of a function estimated using IWLS.
+
+    With this estimator, we have something which can improve upon the estimates
+    from OLS with only a small amount of additional calculation. However, for
+    our purposes this is not sufficient. The characteristic function of stellar
+    objects are not linear functions, so we must extend this linear approach to
+    give us some reasonable estimates of functions which are not straight lines.
 *** Piecewise Iterative Weighted Least Squares
     It is clear that the IWLS estimator alone is not sufficient to complete our
     task. In order to have a reasonable estimate of the characteristic function, we
@@ -1316,60 +1261,71 @@ machine learning, linear regression
     sections, we take the interval $[0,T]$, and split it into several
     sub-intervals. Then, the function underlying each of these sub-intervals is
     estimated using IWLS. We also add some minor extensions in an attempt to improve
-    the quality of the estimates. Sub-intervals are estimated starting from the
-    first, and moving to the next once the process is complete. However, since the
-    number of sub-intervals that the interval is split into is somewhat arbitrary,
-    we implemented an estimate extension strategy. When the estimate is completed, a
-    short interval after the sub-interval being estimated is checked to see how well
-    the estimate matches it. The check is performed using probability density
-    functions (PDF). The extension interval is split into several bins, and the
-    likelihood of obtaining the bin counts of those bins given the function estimate
-    is checked. We use a simple threshold function which only permits the extension
-    of the estimate if for each bin the PDF calculated does not fall below a certain
-    value. The calculation of PDFs depends on the type of probability distribution
-    being used to check the data. In our case, this is a Poisson distribution, and
-    we use
+    the quality of the estimates.
+
+    Sub-intervals are estimated starting from the first, and moving to the next
+    once the process is complete. When the estimate is completed, a short
+    interval after the sub-interval being estimated is checked to see how well
+    the estimate for the previous sub-interval matches it. The extension
+    interval is split into several bins. Using a probability density function
+    (PDF), we evaluate the likelihood of obtaining the count $Y_k$ for each bin
+    given the estimate $\lambda$ at that point. The PDF for a Poisson
+    distribution is calculated by
     #+BEGIN_LaTeX
     \begin{equation}
-    P(X=k)=\frac{\lambda^ke^{-\lambda}}{k!}
+    P(Y_k=x)=\frac{\lambda^xe^{-\lambda}}{x!}
     \end{equation}
     #+END_LaTeX
-    to calculate the probability of getting a value $k$ for the bin count with a
-    rate parameter $\lambda$. While this technique is an improvement on using
-    straight lines to estimate functions which are curves, it is still not
-    sufficient, as the resulting function estimate is piecewise disjoint---the
-    estimate for each interval does not connect smoothly into the next. There are
-    jumps between intervals.
-- explain intuition behind the technique. Split the whole interval into some
-  finite number of sub-intervals and estimate the function of each interval in
-  turn using IWLS.
-- give reasoning behind moving to this technique. Some parts of functions look
-  like they are pretty much linear - maybe it is a nice way to solve
-  them. mention that this was developed on my own interest in seeing how it worked
-- Explain the not-so-good parts - each subsection estimate is disjoint from the
-  next, but the stream must be a continuous function.
+    For each bin, $P(Y_k=x)$ must exceed some threshold. A lower threshold means
+    that lines are less likely to be successfully extended. While this technique
+    is an improvement on using straight lines to estimate functions which are
+    curves, it is still not sufficient, as the resulting function estimate is
+    piecewise disjoint---the estimate for each interval does not connect
+    smoothly into the next. There are jumps between intervals.
 *** Baseline
-    In the previous section, we introduced a piecewise method for function
-    estimation. In this section we present the final modification to that estimator
-    which completes the baseline estimator. As mentioned, the piecewise IWLS
-    estimator gives us a piecewise disjoint estimate of the function, but we would
-    like one which is piecewise continuous. In order to do this, the end of each
-    interval estimate must meet the start of the next. To do so, we calculate the
-    midpoint between the start and end of the estimates at each breakpoint, and then
-    modify the estimates to make the functions meet at that point. This leaves us
-    with a continuous function that forms our estimate of the function.
+    As mentioned in the previous section, the piecewise IWLS estimator gives us
+    a piecewise disjoint estimate of the function, but we would like one which
+    is piecewise continuous. In order to do this, the end of each interval
+    estimate must meet the start of the next. The estimate returned by the
+    piecewise estimator has several breakpoints---points where the start of one
+    sub-interval and the end of another meet. If there are five lines which make
+    up the estimate, there will be four such points. At each of these
+    breakpoints $r$, we calculate the value of the previous and subsequent
+    function estimates $f$, and find their midpoint $m$ with
+    #+BEGIN_LaTeX
+    \begin{equation}
+    m_i = \frac{f_{i-1}(r_i) + f_i(r_i)}{2},\quad 1\leq i \leq R
+    \end{equation}
+    #+END_LaTeX
+    The value of $m$ is calculated for each breakpoint. Midpoints are not
+    calculated at time 0 and time $T$. Instead, the function values at those
+    points are used. Each sub-interval is now represented by a point $p$ at
+    the start and $q$ at the end, each with an $x$ and $y$ coordinate. With
+    these points, we can recalculate the each sub-interval estimate of the form
+    $f=\hat{a}+\hat{b}x$. We replace $f$ with $m$ and $x$ with $r$, and
+    recalculate the gradient $\hat{b}$ and intercept $\hat{a}$ with
+    #+BEGIN_LaTeX
+    \begin{align}
+    \hat{b} &= \frac{q_y-p_y}{q_x-p_x}\\
+    \hat{a} &= m - \hat{b}\cdot r
+    \end{align}
+    #+END_LaTeX
+    This adjustment of the lines gives us our final estimate of the function,
+    which is piecewise continuous. Figure \ref{fig:basecomp} shows an example of
+    a piecewise and baseline estimate.
     #+BEGIN_LaTeX
     \begin{figure}
     \includegraphics{pcbase}
     \caption{A comparison of the baseline and piecewise estimates on the same
-    function.}
+    function. Note how the baseline estimate passes through the midpoint of the
+    piecewise estimates at the breakpoints.}
     \label{fig:basecomp}
     \end{figure}
     #+END_LaTeX
 ** Kernel Density Estimation
    For comparison to the baseline estimator, a kernel density estimator was also
-   implemented. A kernel density estimator works by estimating the function using
-   multiple functions called kernels. We use a gaussian kernel 
+   implemented. A kernel density estimator works by estimating the function
+   using functions called kernels. We use a gaussian kernel
    #+BEGIN_LaTeX
    \begin{align}
    K(\mu,\sigma)=e^{-(t-\mu_i)^2/2\sigma_i^2}
@@ -1443,15 +1399,15 @@ machine learning, linear regression
    The baseline estimator takes the struct from the piecewise estimate and
    modifies the estimates inside it to ensure that the function produced by
    combining them is piecewise continuous. Four functions complete the
-   process. First, the point at which the breakpoints occur is calculated. Then,
-   the values of the two functions for the intervals before and after that point
-   are calculated at the breakpoint. The midpoint of these two values is then
-   calculated, and all functions for the sub-intervals are modified by drawing
-   new lines between these points. The baseline and piecewise estimators have
-   the same configuration parameters. The iterations and sub-intervals for the
-   IWLS estimator to use, the maximum extension length, the maximum number of
-   breakpoints, and the threshold value for the probability density function can
-   be specified.
+   process. First, breakpoint are calculated. Then, the values of the two
+   functions for the intervals adjacent to that point are calculated at the
+   breakpoint. The midpoint of these two values is then calculated. Once all
+   midpoints have been calculated, the functions for the sub-intervals are
+   modified by constructing lines between the midpoints. The baseline and
+   piecewise estimators have the same configuration parameters. The iterations
+   and sub-intervals for the IWLS estimator to use, the maximum extension
+   length, the maximum number of breakpoints, and the threshold value for the
+   probability density function can be specified.
 
    The kernel density estimator uses is much simpler than the baseline
    estimator, using only two functions to perform all the operations
@@ -1651,7 +1607,7 @@ machine learning, linear regression
    number of bins into which it is to split the interval.
 * Experimentation
   #+BEGIN_LaTeX
-  \begin{figure}[h!tb]
+  \begin{figure}
   \subfloat[$\alpha=0.005$]{
   \includegraphics[width=0.5\textwidth]{prelim_sine_005}
   }
@@ -1853,17 +1809,19 @@ machine learning, linear regression
     previous set of experiments would make the functions more difficult to estimate,
     in this case the opposite is true; larger values are easier to estimate, whereas
     smaller values are more difficult. This is due to the relationship of $\alpha$
-    and the standard deviation of the Gaussians used to generate the functions. For
-    the preliminary experiments we set the value of $\Delta t$ to be 10, resulting
-    in 11 Gaussians being spread uniformly across the 100 time unit interval. Given
-    that $\alpha$ ranges from 0.4 to 3, the value of $\sigma$ will be between 4 and
-    30 time units. Lower values of $\sigma$ result in each Gaussian being spread
-    over a smaller interval, which in turn means that when the Gaussians are summed
-    to construct the function it will have more variation than with large values. We
-    generated 5 different functions for each value of $\alpha$, and from each of
-    these generated 5 pairs of photon streams. In these initial experiments, we wish
-    to discover where the point of deterioration is, so that we can look at the
-    region close to this in more detail in a subsequent set of experiments.
+    and the standard deviation of the Gaussians used to generate the functions.
+    
+    For the preliminary experiments we set the value of $\Delta t$ to be 10,
+    resulting in 11 Gaussians being spread uniformly across the 100 time unit
+    interval. Given that $\alpha$ ranges from 0.4 to 3, the value of $\sigma$
+    will be between 4 and 30 time units. Lower values of $\sigma$ result in each
+    Gaussian being spread over a smaller interval, which in turn means that when
+    the Gaussians are summed to construct the function it will have more
+    variation than with large values. We generated 5 different functions for
+    each value of $\alpha$, and from each of these generated 5 pairs of photon
+    streams. In these initial experiments, we wish to discover where the point
+    of deterioration is, so that we can look at the region close to this in more
+    detail in a subsequent set of experiments.
 
     The results from the experiment were very enlightening. Figure
     \ref{fig:randerror} shows the error of the estimators over all $\alpha$
@@ -1873,13 +1831,15 @@ machine learning, linear regression
     functions which have a symmetrical shape, which sine functions are. The
     estimators appear to be much more stable, with the mean error deviating
     relatively little from zero, in comparison to the wild variation in the sine
-    function experiments. While the performance of the estimators was better, the
-    difference between method combinations is still not significant. The large error
-    at $\alpha$ is 1 is due to very large errors occurring in estimates of two
-    functions in that data set. This indicates that while on average the estimators
-    perform well, on functions with certain characteristics there are large
-    differences in the performance. Both time delay estimation methods perform worse
-    when $\alpha$ is 0.4, but the estimate from the area method is clearly less
+    function experiments.
+
+    While the performance of the estimators was better, the difference between
+    method combinations is still not significant. The large error at $\alpha$ is
+    1 is due to very large errors occurring in estimates of two functions in
+    that data set. This indicates that while on average the estimators perform
+    well, on functions with certain characteristics there are large differences
+    in the performance. Both time delay estimation methods perform worse when
+    $\alpha$ is 0.4, but the estimate from the area method is clearly less
     affected.
     #+BEGIN_LaTeX
     \begin{figure}
@@ -2000,7 +1960,7 @@ machine learning, linear regression
    generation in such a way that the extra $\lambda$ value is not necessary may
    have some benefits. Apart from the thinning method that we have used, there are
    many other methods of generating nonhomogeneous Poisson
-   processes \cite{pasupathy2011,haugh2004,lewis1976simulation} which could be implemented to improve
+   processes \cite{pasupathy2011,lewis1976simulation} which could be implemented to improve
    this aspect of the system.
 
    There is also the potential for improvements to the baseline
@@ -2229,6 +2189,18 @@ machine learning, linear regression
     different estimator to produce an estimate. Passing a value larger than 1 to
     the \texttt{-n} option will result in an estimate of the time delay. To
     estimate only the function, simply omit the switch.
+*** Plotting Output
+    The \texttt{scripts/plot.sh} script can be used to plot various data which
+    is output from the system. Calling it with the \texttt{-h} option will
+    output information about what plots can be made. The script generates a
+    \texttt{.tex} file using \texttt{gnuplot}, which it then processes into a
+    \texttt{.pdf} and displays using \texttt{evince}. After doing a function
+    estimate with the baseline estimator, the generating function can be plotted
+    along with the bin data and estimate using 
+    \begin{verbatimtab}
+    scripts/plot.sh -f output random_function_0_sum.dat est_out.dat
+    random_function_0_output_stream_0_bins.dat
+    \end{verbatimtab}
 ** Running Experiments
 *** Creating Functions for Experimentation
     Using the \texttt{genfunc\_rand.sh} script found in the \texttt{scripts} directory, random

@@ -125,7 +125,7 @@ gauss_resolution 0.200000
 # The standard gaussian weight is ~ [-1,1]. The standard functions on average
 # vary between -5 and 5, which may not be appropriate. Multiplying the weight
 # values gives a greater range of values but preserves the shape of the function.
-gauss_func_multiplier 3.000000
+gauss_func_multiplier 5.000000
 
 ################################################################################
 #                              Estimator Parameters                            #

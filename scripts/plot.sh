@@ -11,6 +11,7 @@ You will need to pass in some files to plot them. Run this script with the switc
 
 OPTIONS:
   -h   show this message
+  -c   plot randomly generated function with gaussian contributions
   -E   plot error data gathered from experiments
   -f   plot generating function, bin data and estimate
   -A   plot two functions with the area in between shaded
@@ -32,8 +33,11 @@ if [ $# -eq 0 ]; then
     exit
 fi
 
-while getopts "hEofmA" opt; do
+while getopts "hEofmAc" opt; do
     case $opt in
+	c)
+	    c=1
+	    ;;
 	E)
 	    E=1
 	    ;;
@@ -106,7 +110,7 @@ texify $2
 exit
 fi
 
-# Note that the input files for this need some special tweaking to plot correctly.
+# Note that the input files for this need some special tweaking to plot correctly. 
 if [ $A ]; then
     if [ $# -ne 3 ]; then
 	echo -e "Missing or excess arguments when plotting error.\nusage: `basename $0` -A outfile EST_DATA"
@@ -114,6 +118,19 @@ if [ $A ]; then
     fi
 gnuplot << EOF
 call "$PLOT_DIR/area.plt" "$2" "$3"
+EOF
+texify $2
+exit
+fi
+
+# Note that the input files for this need some special tweaking to plot correctly. 
+if [ $c ]; then
+    if [ $# -ne 4 ]; then
+	echo -e "Missing or excess arguments when plotting error.\nusage: `basename $0` -c outfile FUNC_SUM FUNC_CONTRIB"
+	exit
+    fi
+gnuplot << EOF
+call "$PLOT_DIR/contrib.plt" "$2" "$3" "$4"
 EOF
 texify $2
 exit
