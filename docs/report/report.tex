@@ -1,4 +1,4 @@
-% Created 2013-04-08 Mon 21:59
+% Created 2013-04-09 Tue 19:58
 \documentclass[a4paper,11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -158,10 +158,10 @@ machine learning, linear regression
 
   In section \ref{sec-2} we discuss the concepts underpinning the project in more
   detail, with a more in-depth explanation of the issues surrounding the
-  calculation of the time delay and its uses. In section \ref{sec-5} we introduce our method of generating photon streams from Poisson
-  processes. Section \ref{sec-6} shows our approach to estimating the
+  calculation of the time delay and its uses. In section \ref{sec-3} we introduce our method of generating photon streams from Poisson
+  processes. Section \ref{sec-4} shows our approach to estimating the
   underlying function of a given stream of photons. Our methods of calculating the
-  time delays between multiple photon streams are explained in section \ref{sec-7}. Section \ref{sec-3} gives detailed information on the design and
+  time delays between multiple photon streams are explained in section \ref{sec-5}. Section \ref{sec-6} gives detailed information on the design and
   development of the system, including the software and project management
   aspects. Finally, in section \ref{sec-8} we present experimental data from both
   simulated and real data and discuss the relative effectiveness of our methods.
@@ -253,15 +253,15 @@ machine learning, linear regression
    There are many situations in which one can benefit from a good model of the
    number of events of interest that occur in a given period. Poisson processes
    are \emph{stochastic processes} that can be used to do create such models. A
-   stochastic process is a way of representing the evolution of a random value
-   or system over time by using collections of random variables. Most such
-   processes do not evolve in a \emph{deterministic} way. That is, the way they
-   change as time passes is not predictable. Poisson processes are part of a
-   family of stochastic processes which count the number of events and their
-   time of occurrence in a given interval. They have been used to model the
-   number of incoming requests to a server \cite{arlitt1997internet}, as well as
-   many other time-related systems. In their basic form, Poisson processes have
-   the following important properties \cite{ross1997simulation}:
+   stochastic process is a collection of random variables that represents the
+   evolution of a system over time. Such processes do not evolve in a
+   \emph{deterministic} way. That is, the way they change as time passes is not
+   predictable. Poisson processes are part of a family of stochastic processes
+   which count the number of events and their time of occurrence in a given
+   interval. They have been used to model the number of incoming requests to a
+   server \cite{arlitt1997internet}, as well as many other time-related
+   systems. In their basic form, Poisson processes have the following important
+   properties \cite{ross1997simulation}:
 \begin{enumerate}
 \item $N(0)=0$.
 \begin{itemize}
@@ -360,544 +360,8 @@ machine learning, linear regression
 \end{itemize}
 
   \end{comment}
-\section{System}
-\label{sec-3}
-
-  In this section we provide an overview of the system, and explain some of the
-  details behind parts of the system which do not warrant their own sections in
-  the report. We also give some idea about the design decisions used in the
-  implementation. Discussion of the programming methodologies and ideas used can
-  be found in the \ref{sec-4} section. The system is very large (over 7000 lines
-  of C code), and we therefore attempt to detail the key ideas behind each part
-  of the implementation rather than an in depth discussion of the
-  techniques. Each subsystem described in sections \ref{sec-5}--\ref{sec-7} also has its own section describing some of the
-  important parts of its implementation.
-\subsection{Design}
-\label{sec-3-1}
-
-   When designing the system, we made the decision to split the three main
-   pieces of required functionality into two groups. The generation of streams
-   and functions would make up one subsystem, and the function and time delay
-   estimation would make up another. This is a logical way in which to divide
-   the system, as they are linked only by the dependence of the estimators on
-   data from the generators. It is not strictly necessary for the data to come
-   from inside the system---as long as it has the structure required by the
-   estimators it can be used. We use a single executable to launch both of the
-   subsystems. Figure \ref{fig:sysstruct} gives an overview of the structure of
-   the system.
-
-   As with any large program, there will inevitably be some code which has to be
-   used in different places in the program. To make checking the correctness of
-   the system and its modification easier, functions that are called more than
-   once are put into libraries which are shared between all subsystems.
-
-   The input and output of the system is another important thing that must be
-   considered. The system should be able to read data which follows some sort of
-   structure. The structure should be simple, so that minimal effort is required
-   to convert data into a form which the system can process. Input to the system
-   is from simple text files, which are easy to construct, and easy to read
-   in. Output from the system, both in terms of output to the interface, and
-   also output files, also need to have some meaningful structure, and the
-   results of calculations should be clear. Output files should not contain any
-   unneeded information. The system can be made to output more detailed data, or
-   not output anything at all, with the use of output flags. Output filenames
-   are highly structured, which make reading in data much easier, and is of
-   particular importance when doing experiments.
-
-   The amount of user interaction with the system is relatively minimal. Once
-   parameters are set, the program does not need any other input from the
-   user. Results are mostly numbers and graphs. Textual output is simple to
-   display, and there are many utility programs that can parse data files to
-   draw graphs. As such, we decided not to use a command line interface over a
-   graphical one. The development of a graphical interface is time consuming,
-   and requires a lot of thought to be put into design. On the other hand,
-   interaction with the command line is simply a question of reading text
-   responses or parsing command line options. A graphical interface for the
-   system would provide little benefit to the user in terms of additional
-   information. The system is a tool to use for data processing, not something
-   that requires constant interaction with the user. Most scientists interact
-   regularly with computers, and astronomers in particular regularly use data
-   processing programs. As our intended user base is likely to have experience
-   with command line interfaces, we feel that the lack of a graphical interface
-   does not reflect negatively on the system.
-
-   In order to test the various methods developed, there has to be a way of
-   running controlled experiments on the system. For this purpose, an experiment
-   system which is a wrapper around the estimators forms the final
-   subsystem. With it, multiple calls to the estimators can be made with
-   different configuration parameters.
-
-   In addition to the core of the system, scripts are provided which can be used
-   to plot the output data, and run more complex sets of
-   experiments. Instructions for use can be found in Appendix \ref{sec-10-3} and \ref{sec-10-2-4}.
-   \begin{figure}
-   \centering
-   \pgfdeclarelayer{background}
-   \pgfdeclarelayer{foreground}
-   \pgfsetlayers{background,main,foreground}
-   % horizontal separation
-   \def \hnsep {0.5}
-   \tikzstyle{sub}=[draw, fill=blue!20, text width=5em, 
-   text centered, minimum height=2.5em, node distance=1.5cm]
-
-   \begin{tikzpicture}
-   \node (param) at (2,3) [sub] {Parameter file};
-   % libs group
-   \node (lib) at (6,3) [sub] {Libraries};
-   % generator group
-   \node (gen) at (2,0) [sub] {Generators};
-   \node (strout) [sub, below of=gen] {Stream Data};
-   % estimator group
-   \node (est) at (6,0) [sub] {Estimators};
-   \node (estout) [sub, below of=est] {Estimator Output};
-   % experimenter
-   \node (expparam) at (10,3) [sub] {Experiment Parameters};
-   \node (explbl) at (10,0) [sub] {Experiment};
-   \node (expout) [sub, below of=explbl] {Experiment Results};
-   % launcher
-   \node (launcher) at (0,1.5) [sub] {Launcher};
-   % Draw the rest on the background layer
-   \begin{pgfonlayer}{background}
-
-   % path from expparam to experiments
-   \coordinate [above=0.5 of explbl] (expln) {};
-   \coordinate [below=0.8 of expparam] (exppjoin) {};
-   \draw [line width=1pt] (expparam.south) -| (exppjoin);
-   % path from experiments to exp out
-   \draw [dashed,->,line width=1pt] (explbl.south) -- (expout.north);
-
-   % launcher arrows
-   \path (est.north)+(-0.3,-0.13) node (estla) {};
-   \draw [->,line width=1pt,red] (launcher.east) -| (estla);
-   \path (gen.north)+(-0.3,-0.13) node (genla) {};
-   \draw [->,line width=1pt,red] (launcher.east) -| (genla);
-   \path (explbl.north)+(-0.3,-0.13) node (expla) {};
-   \draw [->,line width=1pt,red] (launcher.east) -| (expla);
-
-   % library arrows
-   \path (est.north) node (esttop){};    
-   \coordinate [above of=gen] (gentop) {};
-   \coordinate [below=0.8 of lib] (lsplit) {};
-   \draw [-,line width=1pt] (lib.south) -- (lsplit);
-   \draw [->,line width=1pt] (lsplit) -- (est.north);
-   \draw [->,line width=1pt] (lsplit) -| (explbl.north);
-   \draw [->,line width=1pt] (lsplit) -| (gen.north);
-
-   % path from param to library link
-   \coordinate [above=0.5 of lsplit] (tt) {};
-   \coordinate [right=0.5 of param.east] (pright) {};
-   \draw [line width=1pt] (param.east) -- (pright);
-   \draw [line width=1pt] (pright) |- (tt);
-
-   % estimator arrows
-   \draw [dashed,->,line width=1pt] (est.south)--(estout.north);
-   \coordinate [right=0.9 of estout] (restout) {};
-   \coordinate [above=0.5 of explbl] (abvexp) {};
-   \draw [line width=1pt] (estout.east) -- (restout);
-   \draw [line width=1pt] (restout) |- (abvexp);
-
-   % generator arrows
-   \coordinate [above=0.5 of est] (abvln) {}; %above length est
-   \coordinate [right=0.9 of strout] (rstrout) {};
-   \draw [dashed,->,line width=1pt] (gen.south) -- (strout);
-   \draw [line width=1pt] (strout.east) -- (rstrout);
-   \draw [line width=1pt] (rstrout) |- (abvln);
-
-   \end{pgfonlayer}
-   \end{tikzpicture}
-   \caption{A simplified overview of the system structure. Solid lines indicate
-   the dependencies of a given subsystem, and Dashed lines indicate output from a
-   subsystem. The red lines indicate what the user can access through the launcher.}
-   \label{fig:sysstruct}
-   \end{figure}
-\subsection{Parameter Files}
-\label{sec-3-2}
-
-   The parameter files are used to configure the values of all parameters which
-   affect the behaviour of the system. Separate files are used to configure the
-   estimators and generators, and the experimenter. The files use a simple
-   syntax. The \texttt{\#} symbol defines a comment. A parameter is defined as
-   an string of ASCII characters followed by a single space, followed by more
-   ASCII characters. Each file is split into several sections, to aid the user
-   in finding the parameters they are looking for. All parameters have comments
-   describing their effect on the behaviour of the system, what values they can
-   take, and other information relevant to the user. Functionality for
-   generating parameter files with default settings are provided.
-\subsubsection{System File}
-\label{sec-3-2-1}
-
-    This parameter file is the one which controls the behaviour of the
-    estimators and generators, and is required for almost all operations. It
-    facilitates the definition of output filenames, generation parameters for
-    the stream generator, including the interval length, start time, and the
-    expression used to generate the streams. The random function generator can
-    be set up to change the multiplier applied to the Gaussians, change their
-    resolution, and define how the standard deviation is set. The configuration
-    of all the parameters used by estimators, both function and time delay, is
-    also done here. The sections describing the implementation of parts of the
-    system explain the exact parameters used and how they affect the behaviour.
-\subsubsection{Experiment File}
-\label{sec-3-2-2}
-
-    A separate parameter file is used by the experimenter to prevent parameter
-    duplication and allow greater flexibility with experiments. It contains
-    parameters which affects the naming of output files, and allows the
-    configuration of the intervals in which data is withheld in model
-    selection. The most important parameters are those which define the names
-    and parameters to test during the experiments.
-\subsection{Libraries}
-\label{sec-3-3}
-
-   Each part of the system makes extensive use of custom libraries. Each library
-   consists of a header file which contains the function prototypes and include
-   information, along with a separate file for the functions, which are compiled
-   by \texttt{libtool} into a convenience library. The advantage of using
-   \texttt{libtool} over other ways of constructing libraries is that it can
-   create both shared and static libraries. This means that if the library needs
-   to be re-used elsewhere it is simple to take the shared object file created
-   and compile the program including the library by passing the standard
-   \texttt{-l[libname]} syntax to \texttt{gcc}. Due to some interdependencies
-   between the lower level convenience libraries, they are merged into one main
-   library, again functionality provided by \texttt{libtool}. The main purpose
-   of the libraries is to provide a single place where oft-used functions can be
-   defined once and used by all parts of the system.
-\subsubsection{Parameter List}
-\label{sec-3-3-1}
-
-    The parameter list library defines a singly-linked list, used to store data
-    parsed from the parameter files. These lists are required by many functions
-    in the system to set their behaviour. The library provides functions for
-    adding elements to the list and finding its length. A function for removal
-    of elements is not provided, as there is no situation which should
-    necessitate the removal of elements from the list. There is also
-    functionality for checking whether a parameter with a given name exists,
-    retrieving the value of a parameter, and setting the value of a parameter.
-
-    There are multiple retrieval functions, each of which retrieves values of
-    different types. The parameter list is constructed in such a way that all
-    values in it are stored as character arrays. This means that if a parameter
-    value is required by some function, it must be converted into the type which
-    that function requires. Since it is known inside the function which type is
-    required, the relevant function can be called. Functions to read
-    \texttt{double} and \texttt{int} types are provided, along with a function
-    to retrieve the character array. In addition, some of the parameters in the
-    files are comma-separated lists of integers or doubles, which must be parsed
-    into arrays before they can be used. In order to reduce code duplication,
-    the conversion of variables to the correct type is done inside the retrieval
-    function.
-
-    Parameters are only parsed when they are required by a function. This
-    reduces the complexity of the logic, as it is not necessary to deduce the
-    type of the parameter---the function knows what type it requires. It also
-    reduces the complexity of the data structure, as only character arrays need
-    to be stored. In addition, some parameters are not required by some
-    subsystems, so parsing every parameter in the file is unnecessary.
-\subsubsection{Mathematics}
-\label{sec-3-3-2}
-
-    As the name implies, the mathematics library provides the mathematical
-    functions required by the system which are not provided by the standard C
-    library. Some of the library functions are based on functionality provided
-    by the GNU Scientific Library \cite{gsl}, particularly those which calculate
-    probability density functions or require random number generators. The most
-    important part of the library is the functionality it provides for
-    computations with Gaussians, in particular the discrete Gaussian
-    transform. It also provides some basic functions, such as finding the
-    minimum and maximum values in arrays, averaging, summing, adding to or
-    multiplying arrays, and some implementations of statistical functions such
-    as the root mean square error, standard deviation and the like.
-
-    The most challenging part of the implementation of the library was to get
-    around the issues caused by double precision values. Functions which deal
-    with calculations based on timings require a certain precision on the start
-    and end times of intervals to work correctly. Due to the nature of their
-    implementation, calculations with doubles often result in numbers which are
-    only very close to the actual value. Particular problems were encountered
-    when incrementing a value by a floating point number and comparing it to
-    another. The floating point increments caused the value to be slightly (on
-    the order of \num{1.0e-20}) below the actual value, and this caused
-    calculations to be incorrect and resulted in a cascade of erroneous
-    calculations. To deal with this problem, functions for comparing doubles to
-    a specific precision were implemented.
-\subsubsection{Input/Output Utilities}
-\label{sec-3-3-3}
-
-    This library implements functionality for reading from and outputting to
-    files, as well as for checking the state of files and directories on the
-    system. It is also used to parse the parameter file into the system, and as
-    such defines the syntax that the parameter file must follow. We were unable
-    to find a library which provided similar functionality to the Java
-    Properties class, which allows the structured reading and storage of
-    parameters, and so implemented a simplified version in the form of the
-    parameter files. This library also reads in event data files, which are
-    needed as input to the estimators, and can retrieve either all events, or
-    data in a specific interval.
-
-    As well as reading in data, the library also serves to output data from
-    various data structures used within the system. This ranges from simple
-    arrays to more complex data structures used to store representations of
-    Gaussians or function estimates.
-\subsubsection{General Utilities}
-\label{sec-3-3-4}
-
-    The final library is for functions which do not fit in anywhere else, such
-    as memory allocation and freeing, printing structs, and error checking
-    functions. There are also functions for generating default parameter
-    files. This library makes the rest of the system much cleaner, as memory
-    allocation and freeing for large structs can be done with a single function
-    call. 
-\subsection{External Libraries and Tools}
-\label{sec-3-4}
-
-   The system uses a number of external libraries to augment the C standard
-   libraries, and to reduce the need for us to write code which has already been
-   written elsewhere. The GNU Scientific Library \cite{gsl} provides the system
-   with a larger variety of random number generators than the standard library
-   provides, and also gives access to probability density function
-   computations. The Check framework \cite{check} is used to implement automated
-   tests for the system, and is part of the GNU build system, which provides
-   assistance for making source code packages portable to many Unix systems. Our
-   system makes use of the \texttt{automake} and \texttt{libtool} frameworks to
-   generate shared library files and makefiles, and directory structure follows
-   that of the standard GNU package. The MuParser library \cite{muparser} is
-   used to parse expressions used to generate stream data. The Valgrind
-   framework was used to debug memory errors \cite{valgrind}.
-\subsection{Interface}
-\label{sec-3-5}
-
-   Users interact with the system via a command line interface. Various flags
-   passed to the executable change the behaviour of the system, but the majority
-   of behaviour is controlled through the parameter file. The standard C
-   libraries provide a useful function, \texttt{getopt}, specifically for the
-   parsing of command line options. This function allows the parsing of short
-   options, such as \texttt{-g}, or with the \texttt{getopt\_long} function,
-   longer options such as \texttt{--generate} can be parsed. Users familiar with
-   *NIX systems will no doubt recognise such options, as they are used in almost
-   every program which can be run from the command line. The parsing of options
-   is done by the launcher, which is the only part of the system that the user
-   interacts with directly. Each subsystem can be run by passing a specific
-   option, and checks are made to ensure that only a single subsystem is being
-   called. When an error occurs in the parsing of options, which can arise due
-   to an option with a required parameter not having anything passed to it, or
-   as a result of multiple subsystem calls, an error message is printed
-   informing the user of the error.
-   
-   As with many command line programs, instructions on what options are
-   available, and some information on what they do can be displayed using the
-   \texttt{-h} or \texttt{--help} options. The help information is also printed
-   when there is some issue when parsing the parameters. To better facilitate
-   the addition and removal of options, the value of each option is stored as a
-   flag in a struct which is used to determine which subsystem to
-   run. Instructions on how to use the system can be found in Appendix \ref{sec-10-2}.
-\subsection{Experimenter}
-\label{sec-3-6}
-
-   The purpose of the experimenter is to run the estimation subsystem multiple
-   times, with different parameter settings. Its behaviour is modified by a
-   separate parameter file. The code is designed in such a way that new
-   experiments on different parameters can be added and removed with minimal
-   effort on the part of the user. 
-
-   A simple experiment can be set up by modifying just a few lines in a the
-   parameter file. The experiment must be given a name, so that the system can
-   reference it. Some parameters to experiment on must be set, and the type of
-   estimator to use to estimate the function must also be specified. An
-   additional parameter is used to specify whether an experiment with the given
-   name should be run or not. To allow for greater flexibility, the parameter
-   values to test can be defined as ranges. For example, entering
-   \texttt{2,4,...,10} as the value for a parameter will result in values of 2,
-   4, 6, 8 and 10 being experimented on. There are two types of experiments that
-   can be performed; the estimation of functions, or the estimation of the time
-   delay. Function estimate experiments are used to determine optimal parameter
-   settings for a given set of test data, using model selection. The
-   experimenter can create copies of test data with events in certain intervals
-   removed to use for this purpose.
-   
-   With the modified data, the function estimators are run on the test set with
-   different parameter combinations. Parameter settings are co-varied, which
-   means that all possible combinations of parameters are tested. All possible
-   values of parameters are stored in separate arrays for each parameter, and
-   each has a pointer which indicates which value of the parameter should be
-   used by the estimator. After each run of the estimator with a given set of
-   parameters on all test data has been completed, the index of the last
-   parameter is incremented by 1, and the process is repeated. Once the value of
-   the index exceeds the length of the array, it is reset to 0, and the index on
-   the second to last parameter is incremented by 1, and this process continues
-   until all indices return to 0, similar to how a milometer works. After the
-   experiment for a set of parameters is complete, the results of the estimates
-   are analysed, and each is given a score based on a sum of log
-   probabilities. The value of the function in each interval in which data was
-   withheld is compared to the actual value from the original data. The closer
-   the estimated and actual values are, the higher the score. Once all parameter
-   combinations have been run, the best combination of parameters for each
-   stream in the test data is written to file. Files are also produced in each
-   sub-directory which give information about the parameters used for
-   experiments in that directory.
-
-   Once the model selection is done, the optimum parameters can be extracted
-   from the results and the time delay can be estimated. The time delay results
-   are processed, with the estimate and error for each stream pair, and the
-   mean, standard deviation and mean error of a set of stream pairs are output
-   to a file. Functionality for running large numbers of experiments is provided
-   by a number of shell scripts. Instructions on running experiments can be
-   found in Appendix \ref{sec-10-3}.
-\section{Development}
-\label{sec-4}
-
-  In this section, we discuss the programming methodologies and project management
-  ideas used during the development of the project.
-\subsection{Development Process}
-\label{sec-4-1}
-
-   The development process was made up of three key stages. First, before
-   writing any code, the ideas behind the part of the system that was to be
-   implemented were sketched out in a physical notebook. The details of this
-   stage were specific to the needs of every bit of functionality, but generally
-   consisted of the same decomposition of what was required. What parameters
-   does it need? How does the input need to be processed? What should be output?
-   For more complex parts of the system, we also planned out how it would
-   connect to the main parts of the system, either in terms of data structures,
-   or where it should be called from. When more complex algorithms had to be
-   implemented, we wrote a prototype on paper and tested it manually for a few
-   simple cases to check its correctness.
-
-   Once we had a good idea of the structure of the code, we implemented a
-   prototype which was loosely connected to the system. This prototype would
-   have its own internal variables and would not actually return anything to the
-   system, instead printing all its output to the terminal. The output was
-   checked manually to verify its correctness. At this stage, automated tests
-   were also written for many functions, particularly those which had an
-   important role in mathematical calculations or error checking. By the end of
-   this part of the process, we had a minimal working version of the function
-   that we wanted to implement.
-
-   The final stage was to integrate the function or subsystem fully with the
-   main system, abstracting out all the internal function variables to the
-   parameter files, or taking them in as parameters to the function. More
-   rigorous error checking was also implemented at this stage to ensure the
-   correctness of parameters. Once integrated, tests were run again to confirm
-   that no bugs had been introduced by the conversion.
-\subsection{Development Methodologies}
-\label{sec-4-2}
-
-   We used a few principles of software development that we believed could guide
-   us to create a better system. The Unix philosophy of operating system
-   development has many ideas that can be used to develop much smaller
-   systems. In \emph{The Art of UNIX Programming}, Raymond abstracts some ideas
-   behind the philosophy into a set of 17 short rules \cite{artunix}. We found
-   that a subset of these rules were applicable to our system:
-
-   \begin{description}
-   \item[Rule of Least Surprise] In interface design, always do the least
-   surprising thing.
-   \item[Rule of Modularity] Write simple parts connected by clean interfaces.
-   \item[Rule of Optimising] Prototype before polishing. Get it working before
-   you optimise it.
-   \end{description}
-   
-   Although the interface in our system involves minimal interaction, the rule
-   of least surprise is still a good one to follow. When designing the behaviour
-   of the launcher, we considered what the expected behaviour would be, and
-   implemented functionality which made this behaviour possible. One particular
-   example is the presence of a help command which gives information about what
-   the program does and what options it can parse. Entering \texttt{ls --help}
-   on a Linux system gives an example of the contents of such a printout. We
-   ensured that this was present in our implementation of the launcher.
-
-   Our system is not so large as to have properly defined interfaces, but there
-   is interaction between subsystems. During our implementation, we tried to
-   follow the rule of modularity by making each part of the system as simple as
-   possible. The functions which execute a particular task should be grouped
-   together, and any functions which are not a direct part of that process
-   should be grouped elsewhere. For example, the functions which call the
-   estimators are very short, and are grouped together in one file. The
-   estimators themselves are separate entities---they are not grouped together
-   in one large file which contains them all, but instead in their own dedicated
-   file. Functions which are used by the baseline estimator, for example, are of
-   no use to the iterative weighted least squares estimator, as their tasks are
-   very different. Interactions between subsystems are made simpler by
-   encapsulating data in structs.
-
-   As mentioned in the previous section, the rule of optimising was a key part
-   of the development process. Moving from prototype to implementation to
-   polishing means that time is not wasted optimising or trying to fix something
-   that is fundamentally broken.
-
-   In \emph{The Pragmatic Programmer}, Hunt and Thomas put forward their ``DRY''
-   (\emph{D}on't \emph{R}epeat \emph{Y}ourself) principle, which states that
-   ``Every piece of knowledge must have a single, unambiguous, authoritative
-   representation in a system.'' We believe this to be the most important
-   principle we have followed, as code duplication has many issues, mostly
-   stemming from contradictions. The libraries are our attempt to ensure that
-   there is one function for a single task, and the parameter files represent
-   the single definition of control parameters in the system.
-\subsection{Testing}
-\label{sec-4-3}
-
-   Any system requires testing to verify its correctness, and we have
-   implemented a large number of tests for those functions which are central to
-   the correct functioning of the system. Some functions, such as those which
-   perform the estimation, it is not feasible to check, as the actual results
-   that should be obtained for a normal input are not easily calculated without
-   relying on the system itself. Those functions which perform mathematical
-   computations and error checking are the ones which have undergone the most
-   rigorous checks.
-
-   A total of 62 tests have been implemented, each of which contain multiple
-   cases to check edge cases. Of these, 56 check library functions. Checks on
-   functions in the mathematics library make up over half of those.
-
-   Tests are implemented using the Check framework \cite{check}, which is a unit
-   testing framework designed for the C language. The main reason for its use is
-   its integration into the GNU Autotools framework, which is used for automatic
-   configuration and compilation of the code. The tests can be run by running
-   \texttt{make check} from the top directory.
-\subsection{Version Control}
-\label{sec-4-4}
-
-   The project was kept under version control using the \texttt{Git} and
-   \texttt{SVN} revision control systems. All commits were made to the Git
-   repository. The SVN repository was used as a backup, with tagged versions
-   being committed for backup purposes.
-
-   A branching strategy was chosen, in an attempt to bring the project closer to
-   one which might be performed in an industry environment. Several searches for
-   a branching strategy led us to use one proposed by Driessen
-   \cite{driessen}. In this strategy, there are two main branches,
-   \texttt{master} and \texttt{develop}. The state of \texttt{master} reflects
-   the current version, and \texttt{develop} reflects the current state of
-   development. There are two supporting branches, which deal with features,
-   releases. For each new feature, or large change that was made to the system,
-   we moved development to a new branch so as not to impact the main development
-   branch. Branches were merged back to the main development branch when the
-   feature was complete. When a large milestone in the project was completed,
-   such as the completion of a subsystem, we branched into a separate branch for
-   that release to make some modifications to information about the code, and
-   then merged the release branch with \texttt{master} and \texttt{develop}.
-
-   Commits were made to the development branch when a small feature was
-   completed, or some modifications were made. With this sort of regular commit
-   activity, it would be easy to revert to a working version should a bug be
-   found, and attempt to locate the root of the problem.
-\subsection{Project Management}
-\label{sec-4-5}
-
-   As mentioned above, we kept detailed notes of algorithm prototypes and ideas
-   about how to proceed with the implementation of the project in a physical
-   notebook. This notebook also served the purpose of detailing mathematics and
-   ideas that were relevant to the project, and how they might be used. 
-
-   In addition to the notebook, we kept a change log of all the modifications
-   made to the code in a text file which was updated with every commit to the
-   repository. In this log we detailed which parts of the code were changed,
-   what change was made, and if relevant, the reasoning behind the change. Not
-   only the change log, but also each individual commit to the repository went
-   into a reasonable amount of detail about the changes that were made. With
-   this log, it is easy to go back in the time line of the development of the
-   system and see exactly when and why a specific change was made, in a much
-   more accessible form than physical writing. 
 \section{Simulation of Photon Streams}
-\label{sec-5}
+\label{sec-3}
 
   The first step in building the system was the development of a photon stream
   simulator. The ability to simulate photon streams means that the system can be
@@ -914,7 +378,7 @@ machine learning, linear regression
   photons. $\lambda(t)$ provides a rate parameter at each time $t$ for the
   duration of the simulation.
 \subsection{Function Generation}
-\label{sec-5-1}
+\label{sec-3-1}
 
    To evaluate the performance of the function and time delay estimators, it
    will be necessary to test the accuracy of the estimators on different types
@@ -987,7 +451,7 @@ machine learning, linear regression
    \label{fig:contrib}
    \end{figure}
 \subsection{Generating Streams from Functions}
-\label{sec-5-2}
+\label{sec-3-2}
 
    Once a function has been generated, we can use it as the rate function
    $\lambda(t)$ from which we generate values for a NHPP . To generate events
@@ -1022,67 +486,15 @@ machine learning, linear regression
    $U_2\leq\frac{\lambda(t)}{\lambda}$, then the event is kept. Clearly, the closer
    $\lambda(t)$ is to $\lambda$, the more events will be kept, and so the number
    of events generated depends on the value of the rate function.
-\subsection{Implementation}
-\label{sec-5-3}
-
-   The function and stream generation functions form the \emph{generator}
-   subsystem. The two different function generation methods use fundamentally
-   different methods to generate functions. The random functions use Gaussians,
-   which are represented in a struct containing the mean, standard deviation and
-   weight of the Gaussian. We use another struct to store an array of Gaussians
-   which represent the whole function. When one of these arrays is generated,
-   its constituent Gaussians are output to a file so they can be used later if
-   necessary. Once one of these sets of Gaussians is generated, it is passed to
-   a function which implements the thinning procedure. The rate function
-   $\lambda(t)$ is generated by summing the values of Gaussians in the set at
-   time $t$. A two dimensional array is returned, containing the time of each
-   event, and the value of $\lambda(t)$ at each time. Once the stream has been
-   generated, depending on the requested output verbosity, the data is output to
-   file in two columns. This process is repeated for the requested number of
-   streams. Multiple different functions can be generated with one function
-   call. Alternatively, a single function can be used to generate multiple
-   stream pairs.
-
-   The generation of functions using expressions is done in a very similar way
-   to the Gaussian generation, but since an expression is being used there is no
-   need to store the representation of the function in a special way. Events are
-   generated and thinned using a very similar function to the above, but use a
-   \texttt{muparser} struct pointer which can be used to calculate values of the
-   function it has parsed. This pointer is created in the setup function which
-   reads data from the parameter file and parses the user-defined expression. If
-   there is a syntax error in the expression, the program prints the location of
-   the error using \texttt{muparser} functions and exits.
-
-   The generation in both cases is split into several stages. In the first
-   stage, the parameters required by the function are read from the parameter
-   list. If there are parameters that have been passed in as options to the
-   command line, they take precedence. Once these parameters are checked, the
-   top level function makes multiple calls to the second function, depending on
-   how many functions are to be generated. The job of the second level function
-   is to make calls to the function which actually performs stream generation,
-   and output the resulting data to file.
-
-   This three-level structure is used throughout the system to separate the
-   parameter retrieval and checking from the execution of the logic, and removes
-   the need to re-parse the parameters for each call to the generator.
-
-   The configurable parameters for the generation functions include the value
-   of $\Delta$ for each stream, the start time and length of the interval, the
-   value of the homogeneous $\lambda$ to use in the thinning procedure, and the
-   expression to use to generate the function. In the case of the Gaussian
-   generator, the distance between Gaussians, the sample resolution and the
-   weight multiplier can be specified. In addition, the standard deviation can
-   be set to be calculated using $\alpha\cdot\Delta t$, or simply taken from a
-   specified value.
 \section{Function Estimation}
-\label{sec-6}
+\label{sec-4}
 
   Once we have a photon stream, the next stage is to estimate its characteristic
   function. This section presents the two methods that we implemented to do
   this. The first method uses simple linear regression, and the second a kernel
   density estimator.
 \subsection{Baseline Estimation}
-\label{sec-6-1}
+\label{sec-4-1}
 
    In this section, we present the baseline method for function estimation. The
    core of the estimator is based on the iterative weighted least squares
@@ -1092,7 +504,7 @@ machine learning, linear regression
    final baseline estimator which forms the first of our function
    estimation methods.
 \subsubsection{Ordinary Least Squares}
-\label{sec-6-1-1}
+\label{sec-4-1-1}
 
     The ordinary least squares (OLS) estimator forms the core of the baseline
     estimator, estimating functions by minimising the sum of squared
@@ -1249,7 +661,7 @@ machine learning, linear regression
     we discuss the addition of weight update rules and finding estimates of
     $\lambda$.
 \subsubsection{Iterative Weighted Least Squares}
-\label{sec-6-1-2}
+\label{sec-4-1-2}
 
     \begin{figure}[h]
     \includegraphics{lineest}
@@ -1291,7 +703,7 @@ machine learning, linear regression
     objects are not linear functions, so we must extend this linear approach to
     give us some reasonable estimates of functions which are not straight lines.
 \subsubsection{Piecewise Iterative Weighted Least Squares}
-\label{sec-6-1-3}
+\label{sec-4-1-3}
 
     It is clear that the IWLS estimator alone is not sufficient to complete our
     task. In order to have a reasonable estimate of the characteristic function, we
@@ -1315,174 +727,94 @@ machine learning, linear regression
     \begin{equation}
     P(Y_k=x)=\frac{\lambda^xe^{-\lambda}}{x!}
     \end{equation}
+    
     For each bin, $P(Y_k=x)$ must exceed some threshold. A lower threshold means
     that lines are less likely to be successfully extended. While this technique
     is an improvement on using straight lines to estimate functions which are
     curves, it is still not sufficient, as the resulting function estimate is
     piecewise disjoint---the estimate for each interval does not connect
-    smoothly into the next. There are jumps between intervals.
+    smoothly into the next, but jumps at the boundary between each sub-interval.
+    \begin{figure}
+    \includegraphics{pcbase}
+    \caption{A comparison of the baseline and piecewise estimates on the same
+    function. Note how the baseline estimate passes through the midpoint of the
+    disjoint piecewise estimates at the breakpoints.}
+    \label{fig:basecomp}
+    \end{figure}
 \subsubsection{Baseline}
-\label{sec-6-1-4}
+\label{sec-4-1-4}
 
     As mentioned in the previous section, the piecewise IWLS estimator gives us
     a piecewise disjoint estimate of the function, but we would like one which
     is piecewise continuous. In order to do this, the end of each interval
     estimate must meet the start of the next. The estimate returned by the
     piecewise estimator has several breakpoints---points where the start of one
-    sub-interval and the end of another meet. If there are five lines which make
-    up the estimate, there will be four such points. At each of these
+    sub-interval and the end of another meet. If there are $L$ lines that make
+    up the estimate, there will be $R=L-1$ breakpoints. At each of these
     breakpoints $r$, we calculate the value of the previous and subsequent
     function estimates $f$, and find their midpoint $m$ with
     \begin{equation}
-    m_i = \frac{f_{i-1}(r_i) + f_i(r_i)}{2},\quad 1\leq i \leq R
+    m_i = \frac{f_{i}(r_i) + f_{i+1}(r_i)}{2},\quad 0\leq i < R
     \end{equation}
     The value of $m$ is calculated for each breakpoint. Midpoints are not
     calculated at time 0 and time $T$. Instead, the function values at those
-    points are used. Each sub-interval is now represented by a point $p$ at
-    the start and $q$ at the end, each with an $x$ and $y$ coordinate. With
-    these points, we can recalculate the each sub-interval estimate of the form
-    $f=\hat{a}+\hat{b}x$. We replace $f$ with $m$ and $x$ with $r$, and
-    recalculate the gradient $\hat{b}$ and intercept $\hat{a}$ with
+    points are used. Each sub-interval is now represented by a point $p$ at the
+    start and $q$ at the end, each with an $x$ and $y$ coordinate. With these
+    points, we can recalculate each sub-interval estimate $f$ of the form
+    $y=\hat{a}+\hat{b}x$ by replacing $y$ with $p_y$ and $x$ with $p_x$, and
+    recalculating the gradient $\hat{b}$ and intercept $\hat{a}$ with
     \begin{align}
     \hat{b} &= \frac{q_y-p_y}{q_x-p_x}\\
-    \hat{a} &= m - \hat{b}\cdot r
+    \hat{a} &= p_y - \hat{b}\cdot p_x
     \end{align}
-    This adjustment of the lines gives us our final estimate of the function,
-    which is piecewise continuous. Figure \ref{fig:basecomp} shows an example of
-    a piecewise and baseline estimate.
-    \begin{figure}
-    \includegraphics{pcbase}
-    \caption{A comparison of the baseline and piecewise estimates on the same
-    function. Note how the baseline estimate passes through the midpoint of the
-    piecewise estimates at the breakpoints.}
-    \label{fig:basecomp}
-    \end{figure}
+    In this way, each sub-interval estimate links points $p$ and $q$, giving us
+    a piecewise continuous function estimate, and this step completes the first
+    function estimation method. Figure \ref{fig:basecomp} shows an example of a
+    piecewise and baseline estimate.
 \subsection{Kernel Density Estimation}
-\label{sec-6-2}
+\label{sec-4-2}
 
-   For comparison to the baseline estimator, a kernel density estimator was also
-   implemented. A kernel density estimator works by estimating the function
-   using functions called kernels. We use a gaussian kernel
+   The second function estimation method implemented was a kernel density
+   estimator, which use \emph{kernels} to estimate the probability density of a
+   random variable. A kernel is simply a weighting function, which affects how
+   much a given sample is considered when constructing the function
+   estimate. Since the photon stream data is assumed to be generated by a source
+   whose variability is defined by some random variable, the event times are a
+   sample drawn from the PDF of that variable. We use a Gaussian kernel
    \begin{align}
-   K(\mu,\sigma)=e^{-(t-\mu_i)^2/2\sigma_i^2}
+   K(t,\mu)=e^{-(t-\mu)^2/2\sigma^2}
    \end{align}
-   to estimate the function. We centre a kernel at each photon arrival time $t_i$
-   by setting $\mu_i=t_i$, which has been shown to be the best approach for this
-   application \cite{cuevas2006accurate}. Once a kernel has been centred on each
-   arrival time, the values of the kernels are summed at given points (depending on
-   the sampling resolution) along the $x$-axis to form a function
-   estimate. However, this is not the final step in the process. Depending on the
-   standard deviation $\sigma$ of the kernels used, the estimated function
-   $\hat{\lambda}(t)$ will be some multiple of the actual function
-   $\lambda(t)$. Thus, we must normalise the value of the estimate. The
-   normalisation constant is estimated by using the Poisson PDF. A range of
-   possible normalisation constants is checked, and the one chosen is the value at
-   which
-   \begin{equation}
-   \sum_{n=1}^N\frac{\lambda(t)^ke^{-\lambda(t)}}{k!}
+   to estimate the PDF, centring a kernel at each photon arrival time $a$ by
+   setting $\mu=a$. The width of the kernel depends on some fixed value
+   $\sigma$. We perform a Gauss transform on the $N$ kernels, finding the
+   contribution of all the kernels at $M$ points in time, from which we get an
+   estimate $\hat{\lambda}(t)$ of the characteristic function.
+   \begin{align}
+   \hat{\lambda}(t_i) = \sum_{j=1}^N K(t_i,\mu_j), \quad i=1,\dots,M
+   \end{align}
+   Using a larger $M$ gives a higher resolution. Depending on the value of
+   $\sigma$ used, $\hat{\lambda}(t)$ will be some multiple of the actual
+   function $\lambda(t)$. Thus, the final step is to normalise
+   $\hat{\lambda}(t)$. We split the stream data into $B$ bins with midpoints $b$
+   and calculate the bin count $x$ for each. We start with the normalisation
+   constant $\eta$ at a low value, and gradually increase it to some threshold,
+   finding
+   \begin{equation}\label{eq:normcalc}
+   \sum_{i=1}^B
+   \log\left(\frac{\phi^xe^{-\phi}}{x!}\right), \quad \phi=\eta\cdot\hat{\lambda}(b_i)
    \end{equation}
-   is minimised. We then apply this normalisation constant to $\hat{\lambda}(t)$
-   when it is being used in calculations.
+   for each value of $\eta$. The value of $\eta$ which maximises this sum of log
+   Poisson PDFs is used to normalise $\hat{\lambda}(t)$ in subsequent
+   computations.
    \begin{figure}
    \includegraphics{gauss}
-   \caption{Estimate of a function using Gaussian kernels. Note the drop-off at the
-   start and end of the interval.}
+   \caption{Estimate of a function using Gaussian kernels. The drop-off at the
+   start and end of the interval is due to fewer Gaussians summed in those areas
+   as no kernels are placed outside the interval.}
    \label{fig:kde}
    \end{figure}
-\subsection{Implementation}
-\label{sec-6-3}
-
-   Other than the libraries, the function estimators make up the largest portion
-   of the system. As should be clear from what has been said above, the baseline
-   estimator is built upon the IWLS estimator, and this is true in the code as
-   well. The IWLS and OLS estimators form the base of the piecewise estimator,
-   which is in turn used by the baseline estimator. The OLS estimator is
-   implemented as a single iteration of the IWLS estimator; there is no separate
-   code for OLS, apart from function which call the IWLS estimator with the
-   correct parameters. The IWLS estimator first constructs arrays containing
-   weights, bin counts and midpoints to be used in the estimation. At this
-   stage, if there are no events in the interval that is being estimated, the
-   estimator returns an empty estimate. Once the required arrays have been
-   constructed, the estimator is simply a large loop which does all the required
-   weight and constraint updates when required. The function returns a struct
-   which contains the estimated values of $a$ and $b$, and the start and end of
-   the interval that was being estimated. With OLS, the number of sub-intervals
-   can be configured. For IWLS, in addition to the number of sub-intervals, the
-   number of iterations can be set.
-
-   The piecewise estimator uses a while loop to iterate through the given
-   interval, which is split into sub-intervals by defining a maximum number of
-   breakpoints. If the number of breakpoints is set to 4, then the maximum
-   number of times the IWLS estimator will be called is 5---each breakpoint
-   represents a point where the end of one interval meets the start of the
-   next. During each iteration a function to extend the line estimated by
-   IWLS. The process is hierarchical; if the initial extension fails, then a
-   shorter interval is attempted. If no extension is possible after a given
-   number of iterations, then extension fails. If the extension is successful,
-   then the next interval estimate starts directly after the end of the extended
-   estimate rather than its expected start point. In this way, it may be the
-   case that there are fewer sub-intervals than expected based on the number of
-   breakpoints. The line extension function requires the checking of event data
-   in the interval it is attempting to extend into. Rather than reading the
-   event file each time, a function was written which can, given a set of event
-   data, return an array containing events within a desired interval. Each
-   sub-interval estimate is stored in a struct which is simply an array of
-   structs returned by the IWLS estimator.
-
-   The baseline estimator takes the struct from the piecewise estimate and
-   modifies the estimates inside it to ensure that the function produced by
-   combining them is piecewise continuous. Four functions complete the
-   process. First, breakpoint are calculated. Then, the values of the two
-   functions for the intervals adjacent to that point are calculated at the
-   breakpoint. The midpoint of these two values is then calculated. Once all
-   midpoints have been calculated, the functions for the sub-intervals are
-   modified by constructing lines between the midpoints. The baseline and
-   piecewise estimators have the same configuration parameters. The iterations
-   and sub-intervals for the IWLS estimator to use, the maximum extension
-   length, the maximum number of breakpoints, and the threshold value for the
-   probability density function can be specified.
-
-   The kernel density estimator uses is much simpler than the baseline
-   estimator, using only two functions to perform all the operations
-   required. The first stage is to generate an array of Gaussians using the
-   event data---identical Gaussians centred on each event time, represented by
-   their mean, standard deviation, and weight (set to 1). This array is then
-   passed to a function which performs a discrete Gaussian transform on the
-   array, by summing the Gaussians at points sampled at a given resolution. The
-   function returns a two dimensional array containing the times of samples and
-   their corresponding $\lambda$ values. A function which returns just the array
-   of Gaussians is also used when all data on the Gaussians is required. The
-   Gaussian estimator has only two parameters; the standard deviation of the
-   Gaussian and the sampling resolution.
-\subsubsection{Issues}
-\label{sec-6-3-1}
-
-    Initially, we thought that it may be possible to decide whether to
-    extend the line or not based on the difference in slope between
-    the estimate from the previous time interval and the estimate of
-    the next. If the previous estimate was positive, and the next
-    negative, and vice versa, clearly the line should not be
-    continued. The intercept parameter was considered to be much less
-    important. However, this assumption was highly flawed. Due to the
-    nature of poisson processes, it is perfectly possible that
-    although the function has changed significantly after the end of
-    the previous interval, the estimate for the interval that we are
-    trying to extend the line into could return very similar values to
-    that of the previous interval. Because of this, we extend the line
-    when we should not be doing so. There are several potential
-    solutions to this problem. First, rather than forming a new
-    estimate, we extend the line and then check how much the error has
-    increased. If it goes over a certain threshold, then we reject the
-    extension attempt and try again, this time with a shorter
-    extension. Another potential way of improving the piecewise
-    estimation in general would be to require the estimate for the
-    next time period to start from the end point of the last time
-    period. This would prevent the intercept parameter from changing,
-    and would force the estimator to find the best estimate given a
-    specific starting point, rather than giving it free reign to find
-    the estimate which actually minimises the error.
 \section{Time Delay Estimation}
-\label{sec-7}
+\label{sec-5}
 
   Once we are able to estimate the characteristic function of photon streams, we
   can use these estimates to compute an estimate of the time delay between two
@@ -1491,45 +823,64 @@ machine learning, linear regression
   characteristic function will differ for both streams due to the fact that the
   number of photon arrivals in each bin will be different for each stream, but
   each should look relatively similar. In this section we present two methods for
-  estimating the time delay between a pair of streams based on their function estimates.
+  estimating the time delay between a pair of streams based on their function
+  estimates.
+
+  Both of the estimators work by starting $\Delta$ at $-\Delta_{\text{max}}$,
+  and increment it by some step until reach $+\Delta_{\text{max}}$ is reached,
+  using a metric to evaluate how good the estimate is. It is important to note
+  that the value of $\Delta_{\text{max}}$ defines the interval in which the
+  metric is computed. The need for calculation only in some specific interval
+  should be clear---if one function is shifted by $\Delta$, and both functions
+  have the same time interval, then there will be an interval of $\Delta$ on
+  either end of the range in which only one of the function estimates has
+  values. As such, the metric can only be computed in the overlapping
+  area. Varying $\Delta$ changes the overlapping interval. Setting $\Delta=0$
+  minimises the value, and $\Delta=\pm\Delta_{\text{max}}$ maximises it.
+  Performing calculations on different interval lengths would require the value
+  of the metric for longer intervals to be scaled to that of the shortest. To do
+  useful comparisons, we must perform calculations only on the interval in which
+  the two functions overlap for all values of $\Delta$. Imposing this constraint
+  means that the value of $\Delta_{\text{max}}$ can never exceed the interval
+  length $T$ in which we are performing the estimate. We are left with the
+  constraints $T_{\text{est}}=[t_0+\Delta_{\text{max}},
+  T-\Delta_{\text{max}}],\,\Delta_{\text{max}}<T$ on the interval and the
+  maximum value of $\Delta$.
 \subsection{Area Method}
-\label{sec-7-1}
+\label{sec-5-1}
 
    The first of the two methods uses a very simple metric to estimate the time
-   delay. By taking the two function estimates, we can attempt to match up the two
-   functions so that they ``fit together'' best. This goodness of fit can be
-   determined by the area between the two functions. The point at which the area
-   between the two is lowest is the natural point at which the two functions should
-   match. Using the first estimate as a base, with its time delay set to zero, we
-   guess at values of $\Delta$ between $-\Delta_{\text{max}}$ and
-   $+\Delta_{\text{max}}$, and shift the second estimate by that value. Then, we
-   calculate the area between the function estimates area using
+   delay. By taking the two function estimates, we can attempt to match up the
+   two functions so that they ``fit together'' best. The goodness of fit can be
+   determined by the area between the two functions $\hat{\lambda}_1$ and
+   $\hat{\lambda}_2$, calculated by
    \begin{align}
    \begin{split}
-   d(\hat{\lambda}_1,\hat{\lambda}_2)&=\int(\hat{\lambda}_1(t)-\hat{\lambda}_2(t))^2\,dt\\
-   &\approx\frac{1}{N}\sum_{i=1}^N(\hat{\lambda}_1(t)-\hat{\lambda}_2(t))^2
+   d(\hat{\lambda}_1,\hat{\lambda}_2)&=\int(\hat{\lambda}_1(t)-\hat{\lambda}_2(t+\Delta))^2\,dt\\
+   &\approx\frac{1}{N}\sum_{i=1}^N(\hat{\lambda}_1(t)-\hat{\lambda}_2(t+\Delta))^2
    \end{split}
    \end{align}
-   We use the value of $\Delta$ at which $d(\hat{\lambda}_1,\hat{\lambda}_2)$ is
-   minimised as the time delay estimate. Rather than using an integral to get the
-   exact area between the functions, we use a less computationally expensive
-   discrete approximation. Figure \ref{fig:areamethod} gives a basic idea of the
-   logic behind the method.
+   for each value of $\Delta$. Our estimate of $\Delta$ is set to the value at
+   which $d(\hat{\lambda}_1,\hat{\lambda}_2)$ is minimised. Rather than using an
+   integral to get the exact area between the functions, we use a less
+   computationally expensive discrete approximation. Figure \ref{fig:areamethod}
+   shows a visual representation of the logic behind the method.
    \begin{figure}
    \subfloat[High area ($\Delta=$ 0)]{
+   %\includegraphics[width=0.5\textwidth]{normarea}
    \includegraphics{normarea}
    }\\
    \subfloat[Low area ($\Delta=$ 13.3)]{
+   %\includegraphics[width=0.5\textwidth]{shiftarea}
    \includegraphics{shiftarea}
    }
    \caption{Comparison of area between functions for two different values of
-   $\Delta$. Note that calculation of area is only possible in overlapping
-   regions---the first 13.3 time units must be ignored in (b). A smaller area
-   clearly indicates a better match.}
+   $\Delta$. The first 13.3 time units must be ignored in (b). The value of
+   $\Delta$ in (b) clearly results in a better match.}
    \label{fig:areamethod}
    \end{figure}
 \subsection{Probability Density Function Method}
-\label{sec-7-2}
+\label{sec-5-2}
 
    The second method of estimation is using probability density functions. As
    before, we guess a value of $\Delta$ between $-\Delta_{\text{max}}$ and
@@ -1548,66 +899,538 @@ machine learning, linear regression
    \begin{align}
    \begin{split}
    \log P(S_A,S_B\mid\bar{\lambda}(t))=\sum_{t=\Delta_{\text{max}}}^{T-\Delta_{\text{max}}}&\log P(S_A(t)\mid \bar{\lambda}(t))\\
-   &+ \log P(S_B(t+\Delta)\mid \bar{\lambda}(t))
+   &+ \log P(S_B(t+\Delta)\mid \bar{\lambda}(t))\\
    \end{split}
    \end{align}
    Here, we calculate the probability that the function $\bar{\lambda}$ is the
    characteristic function of the two streams $S_A$ and $S_B$. The streams are
-   split into bins, and the probability of the number of events in each bin given
-   the value of $\lambda$ calculated for that bin is computed. 
+   split into bins, and the log probability of the number of events in each bin
+   given the value of $\lambda$ calculated for that bin is computed and summed
+   over all bins, as in Equation \eqref{eq:normcalc}.
 
-   \textcolor{red}{Perhaps this should go in the previous section} It is important
-   to note that the value of $\Delta_{\text{max}}$ defines the interval in which
-   the probabilities are summed. The need for calculation only in some specific
-   interval should be clear---if one function is shifted, and both functions have
-   the same time interval, then there will be an interval of $\Delta$ on either end
-   of the range in which only one of the functions has a value. As such, the
-   functions are combined only in the interval in which both functions have
-   values. In addition to this, since the value of $\Delta$ changes, the intervals
-   in which there is an overlap between the two functions changes. Setting
-   $\Delta=0$ minimises the value, and $\Delta=\pm\Delta_{\text{max}}$ maximises
-   it. To be able to compare the scores of different values of $\Delta$, we must
-   perform calculations on the interval in which the two functions have values for
-   all possible values of $\Delta$. If the calculations were to be performed on
-   different intervals or interval lengths each time, it would be necessary to
-   scale the scores for the longer intervals to the shorter intervals, and this
-   scaling would likely not result in an accurate representation of the actual
-   score. Imposing this constraint on the intervals we can work with has an
-   additional effect; the value of $\Delta_{\text{max}}$ can never exceed the
-   interval length $T$ in which we are performing the estimate. We are left with
-   the constraints $T_{\text{est}}=[t_0+\Delta_{\text{max}},
-   T-\Delta_{\text{max}}],\,\Delta_{\text{max}}<T$ on the interval and the maximum
-   value of $\Delta$.
+   The calculation of $\lambda$ is slightly more complicated than just taking
+   its value at the midpoint. Since we are considering a number of events
+   occurring in a given interval, we must consider the value of $\lambda$ for the
+   same interval. In order to do this, we use a discrete approximation of
+   integrating $\lambda(t)$ over the interval.
+   \begin{align}
+   \lambda_{a,b}&=\int_a^b\lambda(t)\,dt
+   \end{align}
+   In the approximation $t$ is incremented by some finite step for each
+   successive value. The smaller the value of the step the more accurate the
+   approximation of $\lambda_{a,b}$ becomes. As with the previous estimator, the
+   estimate is made in two stages, first with a coarse pass over the values of
+   delta to compute an initial estimate, and then a finer second pass around the
+   first estimated value in order to refine the estimate.
+\section{System}
+\label{sec-6}
 
-   The calculation of $\lambda$ is slightly more complicated than just taking the
-   value of lambda at the midpoint. Since we are considering a number of events
-   occurring in a given time span, we must consider the value of lambda in that
-   entire time interval. In order to do this, we integrate the value of lambda over
-   the interval
-   \begin{equation}
-   \lambda_{a,b}=\int_a^b\lambda(t)\,dt
-   \end{equation}
-   However, as with the calculation of the area between curves, we do not need an
-   exact value, only a good approximation, and so we use a discrete version of this
-   equation where the value of $t$ is incremented by some finite step for each successive
-   value. The smaller the value of the step the more accurate the approximation of
-   $\lambda_{a,b}$ becomes. As with the previous estimator, the estimate is made in
-   two stages, first with a coarse pass over the values of delta to compute an
-   initial estimate, and then a finer second pass around the first estimated value
-   in order to refine the estimate.
-\subsection{Implementation}
-\label{sec-7-3}
+  In this section we provide an overview of the system, and explain some of the
+  details behind parts of the system which do not warrant their own sections in
+  the report. We also give some idea about the design decisions used in the
+  implementation. Discussion of the programming methodologies and ideas used can
+  be found in the \ref{sec-7} section. The system is very large (over 7000 lines
+  of C code), and we therefore attempt to detail the key ideas behind each part
+  of the implementation rather than an in depth discussion of the
+  techniques. Each subsystem described in sections \ref{sec-3}--\ref{sec-5} also has its own section describing some of the
+  important parts of its implementation.
+\subsection{Design}
+\label{sec-6-1}
+
+   When designing the system, we made the decision to split the three main
+   pieces of required functionality into two groups. The generation of streams
+   and functions would make up one subsystem, and the function and time delay
+   estimation would make up another. This is a logical way in which to divide
+   the system, as they are linked only by the dependence of the estimators on
+   data from the generators. It is not strictly necessary for the data to come
+   from inside the system---as long as it has the structure required by the
+   estimators it can be used. We use a single executable to launch both of the
+   subsystems. Figure \ref{fig:sysstruct} gives an overview of the structure of
+   the system.
+
+   As with any large program, there will inevitably be some code which has to be
+   used in different places in the program. To make checking the correctness of
+   the system and its modification easier, functions that are called more than
+   once are put into libraries which are shared between all subsystems.
+
+   The input and output of the system is another important thing that must be
+   considered. The system should be able to read data which follows some sort of
+   structure. The structure should be simple, so that minimal effort is required
+   to convert data into a form which the system can process. Input to the system
+   is from simple text files, which are easy to construct, and easy to read
+   in. Output from the system, both in terms of output to the interface, and
+   also output files, also need to have some meaningful structure, and the
+   results of calculations should be clear. Output files should not contain any
+   unneeded information. The system can be made to output more detailed data, or
+   not output anything at all, with the use of output flags. Output filenames
+   are highly structured, which make reading in data much easier, and is of
+   particular importance when doing experiments.
+
+   The amount of user interaction with the system is relatively minimal. Once
+   parameters are set, the program does not need any other input from the
+   user. Results are mostly numbers and graphs. Textual output is simple to
+   display, and there are many utility programs that can parse data files to
+   draw graphs. As such, we decided not to use a command line interface over a
+   graphical one. The development of a graphical interface is time consuming,
+   and requires a lot of thought to be put into design. On the other hand,
+   interaction with the command line is simply a question of reading text
+   responses or parsing command line options. A graphical interface for the
+   system would provide little benefit to the user in terms of additional
+   information. The system is a tool to use for data processing, not something
+   that requires constant interaction with the user. Most scientists interact
+   regularly with computers, and astronomers in particular regularly use data
+   processing programs. As our intended user base is likely to have experience
+   with command line interfaces, we feel that the lack of a graphical interface
+   does not reflect negatively on the system.
+
+   In order to test the various methods developed, there has to be a way of
+   running controlled experiments on the system. For this purpose, an experiment
+   system which is a wrapper around the estimators forms the final
+   subsystem. With it, multiple calls to the estimators can be made with
+   different configuration parameters.
+
+   In addition to the core of the system, scripts are provided which can be used
+   to plot the output data, and run more complex sets of
+   experiments. Instructions for use can be found in Appendix \ref{sec-10-3} and \ref{sec-10-2-4}.
+   \begin{figure}
+   \centering
+   \pgfdeclarelayer{background}
+   \pgfdeclarelayer{foreground}
+   \pgfsetlayers{background,main,foreground}
+   % horizontal separation
+   \def \hnsep {0.5}
+   \tikzstyle{sub}=[draw, fill=blue!20, text width=5em, 
+   text centered, minimum height=2.5em, node distance=1.5cm]
+
+   \begin{tikzpicture}
+   \node (param) at (2,3) [sub] {Parameter file};
+   % libs group
+   \node (lib) at (6,3) [sub] {Libraries};
+   % generator group
+   \node (gen) at (2,0) [sub] {Generators};
+   \node (strout) [sub, below of=gen] {Stream Data};
+   % estimator group
+   \node (est) at (6,0) [sub] {Estimators};
+   \node (estout) [sub, below of=est] {Estimator Output};
+   % experimenter
+   \node (expparam) at (10,3) [sub] {Experiment Parameters};
+   \node (explbl) at (10,0) [sub] {Experiment};
+   \node (expout) [sub, below of=explbl] {Experiment Results};
+   % launcher
+   \node (launcher) at (0,1.5) [sub] {Launcher};
+   % Draw the rest on the background layer
+   \begin{pgfonlayer}{background}
+
+   % path from expparam to experiments
+   \coordinate [above=0.5 of explbl] (expln) {};
+   \coordinate [below=0.8 of expparam] (exppjoin) {};
+   \draw [line width=1pt] (expparam.south) -| (exppjoin);
+   % path from experiments to exp out
+   \draw [dashed,->,line width=1pt] (explbl.south) -- (expout.north);
+
+   % launcher arrows
+   \path (est.north)+(-0.3,-0.13) node (estla) {};
+   \draw [->,line width=1pt,red] (launcher.east) -| (estla);
+   \path (gen.north)+(-0.3,-0.13) node (genla) {};
+   \draw [->,line width=1pt,red] (launcher.east) -| (genla);
+   \path (explbl.north)+(-0.3,-0.13) node (expla) {};
+   \draw [->,line width=1pt,red] (launcher.east) -| (expla);
+
+   % library arrows
+   \path (est.north) node (esttop){};    
+   \coordinate [above of=gen] (gentop) {};
+   \coordinate [below=0.8 of lib] (lsplit) {};
+   \draw [-,line width=1pt] (lib.south) -- (lsplit);
+   \draw [->,line width=1pt] (lsplit) -- (est.north);
+   \draw [->,line width=1pt] (lsplit) -| (explbl.north);
+   \draw [->,line width=1pt] (lsplit) -| (gen.north);
+
+   % path from param to library link
+   \coordinate [above=0.5 of lsplit] (tt) {};
+   \coordinate [right=0.5 of param.east] (pright) {};
+   \draw [line width=1pt] (param.east) -- (pright);
+   \draw [line width=1pt] (pright) |- (tt);
+
+   % estimator arrows
+   \draw [dashed,->,line width=1pt] (est.south)--(estout.north);
+   \coordinate [right=0.9 of estout] (restout) {};
+   \coordinate [above=0.5 of explbl] (abvexp) {};
+   \draw [line width=1pt] (estout.east) -- (restout);
+   \draw [line width=1pt] (restout) |- (abvexp);
+
+   % generator arrows
+   \coordinate [above=0.5 of est] (abvln) {}; %above length est
+   \coordinate [right=0.9 of strout] (rstrout) {};
+   \draw [dashed,->,line width=1pt] (gen.south) -- (strout);
+   \draw [line width=1pt] (strout.east) -- (rstrout);
+   \draw [line width=1pt] (rstrout) |- (abvln);
+
+   \end{pgfonlayer}
+   \end{tikzpicture}
+   \caption{A simplified overview of the system structure. Solid lines indicate
+   the dependencies of a given subsystem, and Dashed lines indicate output from a
+   subsystem. The red lines indicate what the user can access through the launcher.}
+   \label{fig:sysstruct}
+   \end{figure}
+\subsection{Parameter Files}
+\label{sec-6-2}
+
+   The parameter files are used to configure the values of all parameters which
+   affect the behaviour of the system. Separate files are used to configure the
+   estimators and generators, and the experimenter. The files use a simple
+   syntax. The \texttt{\#} symbol defines a comment. A parameter is defined as
+   an string of ASCII characters followed by a single space, followed by more
+   ASCII characters. Each file is split into several sections, to aid the user
+   in finding the parameters they are looking for. All parameters have comments
+   describing their effect on the behaviour of the system, what values they can
+   take, and other information relevant to the user. Functionality for
+   generating parameter files with default settings are provided.
+\subsubsection{System File}
+\label{sec-6-2-1}
+
+    This parameter file is the one which controls the behaviour of the
+    estimators and generators, and is required for almost all operations. It
+    facilitates the definition of output filenames, generation parameters for
+    the stream generator, including the interval length, start time, and the
+    expression used to generate the streams. The random function generator can
+    be set up to change the multiplier applied to the Gaussians, change their
+    resolution, and define how the standard deviation is set. The configuration
+    of all the parameters used by estimators, both function and time delay, is
+    also done here. The sections describing the implementation of parts of the
+    system explain the exact parameters used and how they affect the behaviour.
+\subsubsection{Experiment File}
+\label{sec-6-2-2}
+
+    A separate parameter file is used by the experimenter to prevent parameter
+    duplication and allow greater flexibility with experiments. It contains
+    parameters which affects the naming of output files, and allows the
+    configuration of the intervals in which data is withheld in model
+    selection. The most important parameters are those which define the names
+    and parameters to test during the experiments.
+\subsection{Libraries}
+\label{sec-6-3}
+
+   Each part of the system makes extensive use of custom libraries. Each library
+   consists of a header file which contains the function prototypes and include
+   information, along with a separate file for the functions, which are compiled
+   by \texttt{libtool} into a convenience library. The advantage of using
+   \texttt{libtool} over other ways of constructing libraries is that it can
+   create both shared and static libraries. This means that if the library needs
+   to be re-used elsewhere it is simple to take the shared object file created
+   and compile the program including the library by passing the standard
+   \texttt{-l[libname]} syntax to \texttt{gcc}. Due to some interdependencies
+   between the lower level convenience libraries, they are merged into one main
+   library, again functionality provided by \texttt{libtool}. The main purpose
+   of the libraries is to provide a single place where oft-used functions can be
+   defined once and used by all parts of the system.
+\subsubsection{Parameter List}
+\label{sec-6-3-1}
+
+    The parameter list library defines a singly-linked list, used to store data
+    parsed from the parameter files. These lists are required by many functions
+    in the system to set their behaviour. The library provides functions for
+    adding elements to the list and finding its length. A function for removal
+    of elements is not provided, as there is no situation which should
+    necessitate the removal of elements from the list. There is also
+    functionality for checking whether a parameter with a given name exists,
+    retrieving the value of a parameter, and setting the value of a parameter.
+
+    There are multiple retrieval functions, each of which retrieves values of
+    different types. The parameter list is constructed in such a way that all
+    values in it are stored as character arrays. This means that if a parameter
+    value is required by some function, it must be converted into the type which
+    that function requires. Since it is known inside the function which type is
+    required, the relevant function can be called. Functions to read
+    \texttt{double} and \texttt{int} types are provided, along with a function
+    to retrieve the character array. In addition, some of the parameters in the
+    files are comma-separated lists of integers or doubles, which must be parsed
+    into arrays before they can be used. In order to reduce code duplication,
+    the conversion of variables to the correct type is done inside the retrieval
+    function.
+
+    Parameters are only parsed when they are required by a function. This
+    reduces the complexity of the logic, as it is not necessary to deduce the
+    type of the parameter---the function knows what type it requires. It also
+    reduces the complexity of the data structure, as only character arrays need
+    to be stored. In addition, some parameters are not required by some
+    subsystems, so parsing every parameter in the file is unnecessary.
+\subsubsection{Mathematics}
+\label{sec-6-3-2}
+
+    As the name implies, the mathematics library provides the mathematical
+    functions required by the system which are not provided by the standard C
+    library. Some of the library functions are based on functionality provided
+    by the GNU Scientific Library \cite{gsl}, particularly those which calculate
+    probability density functions or require random number generators. The most
+    important part of the library is the functionality it provides for
+    computations with Gaussians, in particular the discrete Gaussian
+    transform. It also provides some basic functions, such as finding the
+    minimum and maximum values in arrays, averaging, summing, adding to or
+    multiplying arrays, and some implementations of statistical functions such
+    as the root mean square error, standard deviation and the like.
+
+    The most challenging part of the implementation of the library was to get
+    around the issues caused by double precision values. Functions which deal
+    with calculations based on timings require a certain precision on the start
+    and end times of intervals to work correctly. Due to the nature of their
+    implementation, calculations with doubles often result in numbers which are
+    only very close to the actual value. Particular problems were encountered
+    when incrementing a value by a floating point number and comparing it to
+    another. The floating point increments caused the value to be slightly (on
+    the order of \num{1.0e-20}) below the actual value, and this caused
+    calculations to be incorrect and resulted in a cascade of erroneous
+    calculations. To deal with this problem, functions for comparing doubles to
+    a specific precision were implemented.
+\subsubsection{Input/Output Utilities}
+\label{sec-6-3-3}
+
+    This library implements functionality for reading from and outputting to
+    files, as well as for checking the state of files and directories on the
+    system. It is also used to parse the parameter file into the system, and as
+    such defines the syntax that the parameter file must follow. We were unable
+    to find a library which provided similar functionality to the Java
+    Properties class, which allows the structured reading and storage of
+    parameters, and so implemented a simplified version in the form of the
+    parameter files. This library also reads in event data files, which are
+    needed as input to the estimators, and can retrieve either all events, or
+    data in a specific interval.
+
+    As well as reading in data, the library also serves to output data from
+    various data structures used within the system. This ranges from simple
+    arrays to more complex data structures used to store representations of
+    Gaussians or function estimates.
+\subsubsection{General Utilities}
+\label{sec-6-3-4}
+
+    The final library is for functions which do not fit in anywhere else, such
+    as memory allocation and freeing, printing structs, and error checking
+    functions. There are also functions for generating default parameter
+    files. This library makes the rest of the system much cleaner, as memory
+    allocation and freeing for large structs can be done with a single function
+    call. 
+\subsection{External Libraries and Tools}
+\label{sec-6-4}
+
+   The system uses a number of external libraries to augment the C standard
+   libraries, and to reduce the need for us to write code which has already been
+   written elsewhere. The GNU Scientific Library \cite{gsl} provides the system
+   with a larger variety of random number generators than the standard library
+   provides, and also gives access to probability density function
+   computations. The Check framework \cite{check} is used to implement automated
+   tests for the system, and is part of the GNU build system, which provides
+   assistance for making source code packages portable to many Unix systems. Our
+   system makes use of the \texttt{automake} and \texttt{libtool} frameworks to
+   generate shared library files and makefiles, and directory structure follows
+   that of the standard GNU package. The MuParser library \cite{muparser} is
+   used to parse expressions used to generate stream data. The Valgrind
+   framework was used to debug memory errors \cite{valgrind}.
+\subsection{Interface}
+\label{sec-6-5}
+
+   Users interact with the system via a command line interface. Various flags
+   passed to the executable change the behaviour of the system, but the majority
+   of behaviour is controlled through the parameter file. The standard C
+   libraries provide a useful function, \texttt{getopt}, specifically for the
+   parsing of command line options. This function allows the parsing of short
+   options, such as \texttt{-g}, or with the \texttt{getopt\_long} function,
+   longer options such as \texttt{--generate} can be parsed. Users familiar with
+   *NIX systems will no doubt recognise such options, as they are used in almost
+   every program which can be run from the command line. The parsing of options
+   is done by the launcher, which is the only part of the system that the user
+   interacts with directly. Each subsystem can be run by passing a specific
+   option, and checks are made to ensure that only a single subsystem is being
+   called. When an error occurs in the parsing of options, which can arise due
+   to an option with a required parameter not having anything passed to it, or
+   as a result of multiple subsystem calls, an error message is printed
+   informing the user of the error.
+   
+   As with many command line programs, instructions on what options are
+   available, and some information on what they do can be displayed using the
+   \texttt{-h} or \texttt{--help} options. The help information is also printed
+   when there is some issue when parsing the parameters. To better facilitate
+   the addition and removal of options, the value of each option is stored as a
+   flag in a struct which is used to determine which subsystem to
+   run. Instructions on how to use the system can be found in Appendix \ref{sec-10-2}.
+\subsection{Experimenter}
+\label{sec-6-6}
+
+   The purpose of the experimenter is to run the estimation subsystem multiple
+   times, with different parameter settings. Its behaviour is modified by a
+   separate parameter file. The code is designed in such a way that new
+   experiments on different parameters can be added and removed with minimal
+   effort on the part of the user. 
+
+   A simple experiment can be set up by modifying just a few lines in a the
+   parameter file. The experiment must be given a name, so that the system can
+   reference it. Some parameters to experiment on must be set, and the type of
+   estimator to use to estimate the function must also be specified. An
+   additional parameter is used to specify whether an experiment with the given
+   name should be run or not. To allow for greater flexibility, the parameter
+   values to test can be defined as ranges. For example, entering
+   \texttt{2,4,...,10} as the value for a parameter will result in values of 2,
+   4, 6, 8 and 10 being experimented on. There are two types of experiments that
+   can be performed; the estimation of functions, or the estimation of the time
+   delay. Function estimate experiments are used to determine optimal parameter
+   settings for a given set of test data, using model selection. The
+   experimenter can create copies of test data with events in certain intervals
+   removed to use for this purpose.
+   
+   With the modified data, the function estimators are run on the test set with
+   different parameter combinations. Parameter settings are co-varied, which
+   means that all possible combinations of parameters are tested. All possible
+   values of parameters are stored in separate arrays for each parameter, and
+   each has a pointer which indicates which value of the parameter should be
+   used by the estimator. After each run of the estimator with a given set of
+   parameters on all test data has been completed, the index of the last
+   parameter is incremented by 1, and the process is repeated. Once the value of
+   the index exceeds the length of the array, it is reset to 0, and the index on
+   the second to last parameter is incremented by 1, and this process continues
+   until all indices return to 0, similar to how a milometer works. After the
+   experiment for a set of parameters is complete, the results of the estimates
+   are analysed, and each is given a score based on a sum of log
+   probabilities. The value of the function in each interval in which data was
+   withheld is compared to the actual value from the original data. The closer
+   the estimated and actual values are, the higher the score. Once all parameter
+   combinations have been run, the best combination of parameters for each
+   stream in the test data is written to file. Files are also produced in each
+   sub-directory which give information about the parameters used for
+   experiments in that directory.
+
+   Once the model selection is done, the optimum parameters can be extracted
+   from the results and the time delay can be estimated. The time delay results
+   are processed, with the estimate and error for each stream pair, and the
+   mean, standard deviation and mean error of a set of stream pairs are output
+   to a file. Functionality for running large numbers of experiments is provided
+   by a number of shell scripts. Instructions on running experiments can be
+   found in Appendix \ref{sec-10-3}.
+\subsection{Function and Stream Generators}
+\label{sec-6-7}
+
+   The function and stream generation functions form the \emph{generator}
+   subsystem. The two different function generation methods use fundamentally
+   different methods to generate functions. The random functions use Gaussians,
+   which are represented in a struct containing the mean, standard deviation and
+   weight of the Gaussian. We use another struct to store an array of Gaussians
+   which represent the whole function. When one of these arrays is generated,
+   its constituent Gaussians are output to a file so they can be used later if
+   necessary. Once one of these sets of Gaussians is generated, it is passed to
+   a function which implements the thinning procedure. The rate function
+   $\lambda(t)$ is generated by summing the values of Gaussians in the set at
+   time $t$. A two dimensional array is returned, containing the time of each
+   event, and the value of $\lambda(t)$ at each time. Once the stream has been
+   generated, depending on the requested output verbosity, the data is output to
+   file in two columns. This process is repeated for the requested number of
+   streams. Multiple different functions can be generated with one function
+   call. Alternatively, a single function can be used to generate multiple
+   stream pairs.
+
+   The generation of functions using expressions is done in a very similar way
+   to the Gaussian generation, but since an expression is being used there is no
+   need to store the representation of the function in a special way. Events are
+   generated and thinned using a very similar function to the above, but use a
+   \texttt{muparser} struct pointer which can be used to calculate values of the
+   function it has parsed. This pointer is created in the setup function which
+   reads data from the parameter file and parses the user-defined expression. If
+   there is a syntax error in the expression, the program prints the location of
+   the error using \texttt{muparser} functions and exits.
+
+   The generation in both cases is split into several stages. In the first
+   stage, the parameters required by the function are read from the parameter
+   list. If there are parameters that have been passed in as options to the
+   command line, they take precedence. Once these parameters are checked, the
+   top level function makes multiple calls to the second function, depending on
+   how many functions are to be generated. The job of the second level function
+   is to make calls to the function which actually performs stream generation,
+   and output the resulting data to file.
+
+   This three-level structure is used throughout the system to separate the
+   parameter retrieval and checking from the execution of the logic, and removes
+   the need to re-parse the parameters for each call to the generator.
+
+   The configurable parameters for the generation functions include the value
+   of $\Delta$ for each stream, the start time and length of the interval, the
+   value of the homogeneous $\lambda$ to use in the thinning procedure, and the
+   expression to use to generate the function. In the case of the Gaussian
+   generator, the distance between Gaussians, the sample resolution and the
+   weight multiplier can be specified. In addition, the standard deviation can
+   be set to be calculated using $\alpha\cdot\Delta t$, or simply taken from a
+   specified value.
+\subsection{Function Estimators}
+\label{sec-6-8}
+
+      Other than the libraries, the function estimators make up the largest portion
+   of the system. As should be clear from what has been said above, the baseline
+   estimator is built upon the IWLS estimator, and this is true in the code as
+   well. The IWLS and OLS estimators form the base of the piecewise estimator,
+   which is in turn used by the baseline estimator. The OLS estimator is
+   implemented as a single iteration of the IWLS estimator; there is no separate
+   code for OLS, apart from a function which calls the IWLS estimator with the
+   correct parameters. The IWLS estimator first constructs arrays containing
+   weights, bin counts and midpoints to be used in the estimation. At this
+   stage, if there are no events in the interval that is being estimated, the
+   estimator returns an empty estimate. Once the required arrays have been
+   constructed, the estimator is simply a large loop which does all the required
+   weight and constraint updates when required. The function returns a struct
+   which contains the estimated values of $a$ and $b$, and the start and end of
+   the interval that was being estimated. With OLS, the number of sub-intervals
+   can be configured. For IWLS, in addition to the number of sub-intervals, the
+   number of iterations can be set.
+
+   The piecewise estimator uses a while loop to iterate through the given
+   interval, which is split into sub-intervals by defining a maximum number of
+   breakpoints. If the number of breakpoints is set to 4, then the maximum
+   number of times the IWLS estimator will be called is 5---each breakpoint
+   represents a point where the end of one interval meets the start of the
+   next. During each iteration a function to extend the line estimated by IWLS
+   is called. The process is hierarchical; if the initial extension fails, the
+   function runs again, halving the interval length. If no extension is possible
+   after a 5 iterations, then extension fails. If the extension is successful,
+   then the next interval estimate starts directly after the end of the extended
+   estimate rather than its expected start point. In this way, it may be the
+   case that there are fewer sub-intervals than expected based on the number of
+   breakpoints. The line extension function requires the checking of event data
+   in the interval it is attempting to extend into. Rather than reading the
+   event file each time, a function was written which can, given a set of event
+   data, return an array containing events within a desired interval. The IWLS
+   estimator returns an array of structs containing the estimate for each
+   sub-interval.
+
+   The baseline estimator takes the struct from the piecewise estimate and
+   modifies the estimates inside it to ensure that the function produced by
+   combining them is piecewise continuous. Four functions perform the
+   modifications---the first calculates a vector of breakpoints, the second
+   computes function values at these breakpoints, the third computes the
+   midpoints at the breakpoints, and the last adjusts the intercept and gradient
+   of each sub-interval estimate. The baseline and piecewise estimators have the
+   same configuration parameters. The iterations and sub-intervals for the IWLS
+   estimator to use, the maximum extension length, the maximum number of
+   breakpoints, and the threshold value for the probability density function can
+   be specified.
+
+   The kernel density estimator is much simpler than the baseline estimator,
+   using only two functions to perform all the operations required. The first
+   stage is to generate an array of Gaussians using the event data---identical
+   Gaussians centred at each event time, represented by their mean, standard
+   deviation, and weight (set to 1). This array is then passed to a function
+   which performs a Gauss transform on the array, by summing the Gaussians at
+   points sampled at a given resolution. The function returns a two dimensional
+   array containing the times of samples and the value of $\hat{\lambda}(t)$. A
+   function which returns just the array of Gaussians is also used when all data
+   on the Gaussians is required. The Gaussian estimator has only two parameters;
+   the value of $\sigma$ and the sampling resolution.
+\subsection{Time Delay Estimators}
+\label{sec-6-9}
 
    Both the area and PDF methods perform the same hierarchical estimate of the
-   time delay. As always, the first stage of the process is to extract required
-   parameters. Once the initial estimate is received, the process is simply
-   repeated with a slight change in the parameters to the function to make the
-   second, finer pass over the data. Since both the methods may receive data
-   from either of the two function estimation methods, they use a void pointer
-   to receive the estimate data, and take a switch that is used to select the
-   correct function to process the data. The estimate data is cast to the
-   correct type before it is processed. Each of the functions returns a single
-   double precision value of the estimate it makes.
+   time delay. As always, the first stage of the process is to extract the
+   required parameters. Once the initial estimate is received, the process is
+   simply repeated with a slight change in the parameters to the function to
+   make the second, finer pass over the data. Since both the methods may receive
+   data from either of the two function estimation methods, they use a void
+   pointer to receive the estimate data, and take a switch that is used to
+   select the correct function to process the data. The estimate data is cast to
+   the correct type before it is processed. Each of the functions returns a
+   single double precision value of the estimate it makes.
 
    To produce its estimate, the PDF estimator must combine the two function
    estimates into a single function. The different function estimates are stored
@@ -1638,6 +1461,161 @@ machine learning, linear regression
    well as the range in which to check. The sample resolution must be specified
    for both the area and PDF estimators, and the PDF estimator also requires the
    number of bins into which it is to split the interval.
+\section{Development}
+\label{sec-7}
+
+  In this section, we discuss the programming methodologies and project management
+  ideas used during the development of the project.
+\subsection{Development Process}
+\label{sec-7-1}
+
+   The development process was made up of three key stages. First, before
+   writing any code, the ideas behind the part of the system that was to be
+   implemented were sketched out in a physical notebook. The details of this
+   stage were specific to the needs of every bit of functionality, but generally
+   consisted of the same decomposition of what was required. What parameters
+   does it need? How does the input need to be processed? What should be output?
+   For more complex parts of the system, we also planned out how it would
+   connect to the main parts of the system, either in terms of data structures,
+   or where it should be called from. When more complex algorithms had to be
+   implemented, we wrote a prototype on paper and tested it manually for a few
+   simple cases to check its correctness.
+
+   Once we had a good idea of the structure of the code, we implemented a
+   prototype which was loosely connected to the system. This prototype would
+   have its own internal variables and would not actually return anything to the
+   system, instead printing all its output to the terminal. The output was
+   checked manually to verify its correctness. At this stage, automated tests
+   were also written for many functions, particularly those which had an
+   important role in mathematical calculations or error checking. By the end of
+   this part of the process, we had a minimal working version of the function
+   that we wanted to implement.
+
+   The final stage was to integrate the function or subsystem fully with the
+   main system, abstracting out all the internal function variables to the
+   parameter files, or taking them in as parameters to the function. More
+   rigorous error checking was also implemented at this stage to ensure the
+   correctness of parameters. Once integrated, tests were run again to confirm
+   that no bugs had been introduced by the conversion.
+\subsection{Development Methodologies}
+\label{sec-7-2}
+
+   We used a few principles of software development that we believed could guide
+   us to create a better system. The Unix philosophy of operating system
+   development has many ideas that can be used to develop much smaller
+   systems. In \emph{The Art of UNIX Programming}, Raymond abstracts some ideas
+   behind the philosophy into a set of 17 short rules \cite{artunix}. We found
+   that a subset of these rules were applicable to our system:
+
+   \begin{description}
+   \item[Rule of Least Surprise] In interface design, always do the least
+   surprising thing.
+   \item[Rule of Modularity] Write simple parts connected by clean interfaces.
+   \item[Rule of Optimising] Prototype before polishing. Get it working before
+   you optimise it.
+   \end{description}
+   
+   Although the interface in our system involves minimal interaction, the rule
+   of least surprise is still a good one to follow. When designing the behaviour
+   of the launcher, we considered what the expected behaviour would be, and
+   implemented functionality which made this behaviour possible. One particular
+   example is the presence of a help command which gives information about what
+   the program does and what options it can parse. Entering \texttt{ls --help}
+   on a Linux system gives an example of the contents of such a printout. We
+   ensured that this was present in our implementation of the launcher.
+
+   Our system is not so large as to have properly defined interfaces, but there
+   is interaction between subsystems. During our implementation, we tried to
+   follow the rule of modularity by making each part of the system as simple as
+   possible. The functions which execute a particular task should be grouped
+   together, and any functions which are not a direct part of that process
+   should be grouped elsewhere. For example, the functions which call the
+   estimators are very short, and are grouped together in one file. The
+   estimators themselves are separate entities---they are not grouped together
+   in one large file which contains them all, but instead in their own dedicated
+   file. Functions which are used by the baseline estimator, for example, are of
+   no use to the iterative weighted least squares estimator, as their tasks are
+   very different. Interactions between subsystems are made simpler by
+   encapsulating data in structs.
+
+   As mentioned in the previous section, the rule of optimising was a key part
+   of the development process. Moving from prototype to implementation to
+   polishing means that time is not wasted optimising or trying to fix something
+   that is fundamentally broken.
+
+   In \emph{The Pragmatic Programmer}, Hunt and Thomas put forward their ``DRY''
+   (\emph{D}on't \emph{R}epeat \emph{Y}ourself) principle, which states that
+   ``Every piece of knowledge must have a single, unambiguous, authoritative
+   representation in a system.'' We believe this to be the most important
+   principle we have followed, as code duplication has many issues, mostly
+   stemming from contradictions. The libraries are our attempt to ensure that
+   there is one function for a single task, and the parameter files represent
+   the single definition of control parameters in the system.
+\subsection{Testing}
+\label{sec-7-3}
+
+   Any system requires testing to verify its correctness, and we have
+   implemented a large number of tests for those functions which are central to
+   the correct functioning of the system. Some functions, such as those which
+   perform the estimation, it is not feasible to check, as the actual results
+   that should be obtained for a normal input are not easily calculated without
+   relying on the system itself. Those functions which perform mathematical
+   computations and error checking are the ones which have undergone the most
+   rigorous checks.
+
+   A total of 62 tests have been implemented, each of which contain multiple
+   cases to check edge cases. Of these, 56 check library functions. Checks on
+   functions in the mathematics library make up over half of those.
+
+   Tests are implemented using the Check framework \cite{check}, which is a unit
+   testing framework designed for the C language. The main reason for its use is
+   its integration into the GNU Autotools framework, which is used for automatic
+   configuration and compilation of the code. The tests can be run by running
+   \texttt{make check} from the top directory.
+\subsection{Version Control}
+\label{sec-7-4}
+
+   The project was kept under version control using the \texttt{Git} and
+   \texttt{SVN} revision control systems. All commits were made to the Git
+   repository. The SVN repository was used as a backup, with tagged versions
+   being committed for backup purposes.
+
+   A branching strategy was chosen, in an attempt to bring the project closer to
+   one which might be performed in an industry environment. Several searches for
+   a branching strategy led us to use one proposed by Driessen
+   \cite{driessen}. In this strategy, there are two main branches,
+   \texttt{master} and \texttt{develop}. The state of \texttt{master} reflects
+   the current version, and \texttt{develop} reflects the current state of
+   development. There are two supporting branches, which deal with features,
+   releases. For each new feature, or large change that was made to the system,
+   we moved development to a new branch so as not to impact the main development
+   branch. Branches were merged back to the main development branch when the
+   feature was complete. When a large milestone in the project was completed,
+   such as the completion of a subsystem, we branched into a separate branch for
+   that release to make some modifications to information about the code, and
+   then merged the release branch with \texttt{master} and \texttt{develop}.
+
+   Commits were made to the development branch when a small feature was
+   completed, or some modifications were made. With this sort of regular commit
+   activity, it would be easy to revert to a working version should a bug be
+   found, and attempt to locate the root of the problem.
+\subsection{Project Management}
+\label{sec-7-5}
+
+   As mentioned above, we kept detailed notes of algorithm prototypes and ideas
+   about how to proceed with the implementation of the project in a physical
+   notebook. This notebook also served the purpose of detailing mathematics and
+   ideas that were relevant to the project, and how they might be used. 
+
+   In addition to the notebook, we kept a change log of all the modifications
+   made to the code in a text file which was updated with every commit to the
+   repository. In this log we detailed which parts of the code were changed,
+   what change was made, and if relevant, the reasoning behind the change. Not
+   only the change log, but also each individual commit to the repository went
+   into a reasonable amount of detail about the changes that were made. With
+   this log, it is easy to go back in the time line of the development of the
+   system and see exactly when and why a specific change was made, in a much
+   more accessible form than physical writing. 
 \section{Experimentation}
 \label{sec-8}
 
@@ -1663,18 +1641,16 @@ machine learning, linear regression
   the different $\alpha$ values used. The generating function is $y=a-b\sin(\alpha t)$.}
   \label{fig:avals}
   \end{figure}
-  The experiments done have two stages. First, the optimum parameter set for each
-  function that is being experimented on is found using model selection. Model
-  selection involves withholding some of the data from the estimator so that we
-  can see how well a parameter set generalises if not all the data is
-  available. Withholding data is done by removing the event data from intervals
-  uniformly distributed across the interval that is being estimated. Each function
-  is estimated, and the value of the function in the regions where data was
-  removed is compared to the value that would be expected had all the data been
-  present. This is done using log probabilities, taking the Poisson PDF at each
-  point. The sum of these log probabilities gives the parameter set its score for
-  that function. The optimum parameter set for that function is the set which
-  maximises the sum.
+  The experiments are done in two stages. First, the optimum parameter set for
+  each function that is being experimented on is found using model
+  selection. Model selection involves withholding some of the data from the
+  estimator so that we can see how well a parameter set generalises if not all
+  the data is available. Withholding data is done by removing the event data
+  from intervals uniformly distributed across the interval being estimated. Each
+  function is estimated, and the value of the function in the regions where data
+  was removed is compared to the value that would be expected had all the data
+  been present. The score is calculated using the Poisson PDF, as in Equation
+  \eqref{eq:normcalc}.
 
   The Gaussian estimator was set to sample the kernels at a resolution of 0.3 time
   steps, and the standard deviation of the kernels was varied. The baseline
@@ -1691,26 +1667,27 @@ machine learning, linear regression
   of the parameter settings was tested with all possible values of the other
   parameters, for a total of 6115 possible combinations.
 
-  Once the optimum parameter set has been found, the time delay
-  for the pair of streams is estimated, using all the data that is available. From
-  this we receive estimates of the time delay on which it is possible to perform
+  Once the optimum parameter set has been found, the time delay for the pair of
+  streams is estimated, using all the data that is available. From this we
+  receive estimates of the time delay on which it is possible to perform
   statistical analysis. The mean, standard deviation and error for each estimate
   on each function is calculated, and from this we can examine the effectiveness
-  of the estimates. The aim of the experimentation is to compare the effectiveness
-  of the time delay estimation with four combinations of estimators: gaussian
-  area, gaussian pdf, baseline area and baseline pdf. For the full set of
-  experimental data, see Appendix \ref{sec-11}.
+  of the estimates. The aim of the experiments is to compare the effectiveness
+  of the time delay estimation with four method combinations: Gaussian area,
+  Gaussian pdf, baseline area and baseline pdf. For the full set of experimental
+  data, see Appendix \ref{sec-11}.
 
   We assume that the distribution of the samples is Gaussian, but this may not be
   the case. However, full non-parametric testing is out of the scope of this project.
 \subsection{Sine Functions}
 \label{sec-8-1}
 
-   The first experiment performed was on sinusoidal functions of the form
-   $y=a-b\sin(\alpha t)$. An increase in the value of $\alpha$ increases the
-   oscillation frequency, and a decrease reduces it. The value of $a$ indicates how
-   much the wave is shifted along the $y$-axis, and $b$ determines the
-   amplitude of the wave. The values of $a$ and $b$ were set to 10 and 5 respectively.
+   The first experiment performed used stream data generated from functions of
+   the form $y=a-b\sin(\alpha t)$. An increase in the value of $\alpha$
+   increases the oscillation frequency of the sine wave, and a decrease reduces
+   it. The value of $a$ indicates how much the wave is shifted along the
+   $y$-axis, and $b$ determines the amplitude of the wave. The values of $a$ and
+   $b$ were set to 10 and 5 respectively.
 \subsubsection{Preliminary Experiments}
 \label{sec-8-1-1}
 
@@ -1720,21 +1697,7 @@ machine learning, linear regression
     each value of $\alpha$, 25 pairs of streams were independently generated, each
     with an interval of 100 time units and a time delay of 10 time steps between the
     two streams. 
-
-    Estimates appear to be reasonably accurate until $\alpha$ exceeds 0.1, after
-    which errors become much greater, and standard deviation increases. The area
-    time delay estimator is significantly better than the PDF for both of the
-    function estimators, with $p$-values of 0.00017 and 0.0000074 for the baseline
-    and Gaussian method respectively at $\alpha=$ 0.05. The difference between the
-    two function estimation methods was not significant, with $p$-values in excess
-    of 0.4 for comparisons between the baseline and Gaussian estimators for the same
-    time delay estimators at $\alpha=$ 0.05. Results from $\alpha>$ 0.005 show no
-    statistical significance in the difference between the various estimators, so
-    although the $p$-values at $\alpha$ =0.05 are significant, they are not
-    sufficient to say that the area estimator is always better. Figure
-    \ref{fig:prelimerror} shows the error of the various estimator combination at
-    each value of alpha.
-    \begin{figure}
+    \begin{figure}[h!]
     \subfloat[Baseline area]{
     \includegraphics[width=0.5\textwidth]{base_area_prelim}
     }
@@ -1747,10 +1710,24 @@ machine learning, linear regression
     \subfloat[Gaussian PDF]{
     \includegraphics[width=0.5\textwidth]{gauss_pmf_prelim}
     }
-    \caption{Error on the preliminary experiments. Error bars show standard
+    \caption{Error on the preliminary sine function experiments. Error bars show standard
     deviation of error. Performance appears to deteriorate when $\alpha>0.1$.}
     \label{fig:prelimerror}
     \end{figure}
+    
+    Figure \ref{fig:prelimerror} shows the error of the various estimator
+    combination at each value of alpha. Performance appears optimal at low
+    values of $\alpha$, with large standard deviation with $\alpha >$ 0.1. The area time
+    delay estimator is significantly better than the PDF for both of the
+    function estimators, with $p$-values of 0.00017 and 0.0000074 for the
+    baseline and Gaussian method respectively at $\alpha=$ 0.05. The difference
+    between the two function estimation methods was not significant, with
+    $p$-values in excess of 0.4 for comparisons between the baseline and
+    Gaussian estimators for the same time delay estimators at $\alpha=$
+    0.05. Results from $\alpha>$ 0.005 show no statistical significance in the
+    difference between the various estimators, so we cannot say whether the area
+    estimator is always better.
+
 \begin{table}[htb]
 
 \begin{center}
@@ -1761,32 +1738,42 @@ machine learning, linear regression
  PDF   &  22.20 $\pm$ 10.94  &  22.06 $\pm$ 11.20  \\
 \end{tabular}
 \end{center}
-\caption{Experimental results for $\alpha=$ 0.05. Actual time delay is 10. ($\mu\pm\sigma$)} \label{fig:pretab}\end{table}
+\caption{Experimental results for $\alpha=$ 0.05 for preliminary sine experiments. Actual time delay is 10. ($\mu\pm\sigma$)} \label{fig:pretab}\end{table}
 \subsubsection{Refined Experiments}
 \label{sec-8-1-2}
 
     Although the previous set of experiments provide some indication as to the
-    performance of the estimators, we investigated their effectiveness on a smaller
-    range of $\alpha$ values. In this set of experiments, we used the same
-    parameters, but generated a new set of functions for value of $\alpha$ from
-    0.01 to 0.15, with a step of 0.01 between each successive set of stream
-    pairs. For each value of $\alpha$, 10 pairs of streams were generated. The time
-    delay was set to 15 time steps, and the experiments were run with the same set
-    of experimental parameters as the previous experiments.
+    performance of the estimators, we investigated their effectiveness on a
+    smaller range of $\alpha$ values. In this set of experiments, we used the
+    same parameters, but generated a new set of functions for values of $\alpha$
+    from 0.01 to 0.15, with a step of 0.01 between each successive set of stream
+    pairs. 10 pairs of streams were generated for each $\alpha$ value. The time
+    delay was set to 15 time units.
+\begin{table}[htb]
 
-    The result of this second set of experiments uncovered an interesting pattern in
-    the performance of the estimators. Figure \ref{fig:fineerror} shows the error
-    for each combination of estimators for different values of $\alpha$. It is clear
-    to see from the graphs that there is a window of optimum performance where
-    $\alpha$ is between 0.04 and 0.1. As with the previous set of experiments, the
-    area estimator again outperforms the PDF estimator, which is visible in the
-    graphs. Within this window, the area method is significantly better than the PDF
-    estimator in some cases, but this significance varies greatly as $\alpha$
-    varies, and we therefore cannot conclude that there is a definite increase in
-    accuracy using the area method. As before, the Gaussian and baseline methods do
-    not differ significantly in performance, but on average the Gaussian method
-    performs slightly better, having smaller standard deviations than the area
-    method.
+\begin{center}
+\begin{tabular}{l|ll}
+       &  Gaussian           &  Baseline           \\
+\hline
+ Area  &  15.99 $\pm$ 3.10   &  15.95 $\pm$ 4.51   \\
+ PDF   &  16.53 $\pm$ 11.80  &  15.72 $\pm$ 14.06  \\
+\end{tabular}
+\end{center}
+\caption{Estimates for all method combinations at $\alpha=$ 0.07 for refined sine experiments. Actual time delay is 15. ($\mu\pm\sigma$)} \label{fig:reftab}\end{table}
+
+    The result of this second set of experiments uncovered an interesting
+    pattern in the performance of the estimators. Figure \ref{fig:fineerror}
+    shows the error for each combination of estimators for different values of
+    $\alpha$. It is clear to see from the graphs that there is a window of
+    optimum performance where $\alpha$ is between 0.04 and 0.1. We believe this
+    may be as a result of the shape of the functions that are being
+    estimated. As with the previous set of experiments, the area estimator again
+    outperforms the PDF estimator, which is visible in the graphs and Table
+    \ref{fig:reftab}. Within this window, the area method is significantly
+    better than the PDF estimator in some cases, but this significance varies
+    greatly with $\alpha$, and we therefore cannot conclude that there is a
+    definite increase in accuracy using the area method. As before, the Gaussian
+    and baseline methods were not significantly different.
     \begin{figure}
     \subfloat[Baseline area]{
     \includegraphics[width=0.5\textwidth]{baseline_area_fine}
@@ -1800,7 +1787,7 @@ machine learning, linear regression
     \subfloat[Gaussian PDF]{
     \includegraphics[width=0.5\textwidth]{gaussian_pmf_fine}
     }
-    \caption{Error on the second set of experiments. Error bars show
+    \caption{Error on the second set of sine function experiments. Error bars show
     standard deviation of error. Peak performance is in the window 0.04
     $\leq\alpha\leq$ 0.1}
     \label{fig:fineerror}
@@ -1808,17 +1795,6 @@ machine learning, linear regression
 \subsection{Random Functions}
 \label{sec-8-2}
 
-   The experiments on sine functions have not yielded any definitive result as to
-   which methods are more effective, and so we also performed a series of
-   experiments using random functions rather than sine curves. Evaluating the
-   performance of the estimator on these functions is important, since functions
-   from real lensed objects will be very unlikely to follow a perfect sine curve,
-   instead fluctuating somewhat randomly. In order to test a variety of different
-   functions, vary the $\alpha$ parameter in the equation $\sigma=\alpha\cdot\Delta
-   t$, where $\sigma$ is the standard deviation of the Gaussians used to generate
-   the random function. The weight of each Gaussian was set to 3, to give a larger
-   range of shapes that the function could take on.
-   \begin{center}
    \begin{figure}
    \subfloat[$\alpha=0.4$]{
    \includegraphics[width=0.5\textwidth]{randfunc_04}
@@ -1841,7 +1817,18 @@ machine learning, linear regression
    values of $\alpha$. Oscillation of the functions decreases as $\alpha$ increases.}
    \label{fig:randex}
    \end{figure}
-   \end{center}
+   The experiments on sine functions have not yielded any definitive result as
+   to which methods are more effective, and so we also performed a series of
+   experiments using random functions rather than sine curves. Evaluating the
+   performance of the estimator on these functions is important, since functions
+   from real lensed objects will be very unlikely to follow a perfect sine
+   curve, instead fluctuating somewhat randomly. This set of experiments should
+   also allow us to investigate the window of optimum performance from the
+   previous experiment. In order to test a variety of different functions, vary
+   the $\alpha$ parameter in the equation $\sigma=\alpha\cdot\Delta t$, where
+   $\sigma$ is the standard deviation of the Gaussians used to generate the
+   random function. The weight of each Gaussian was set to 3, to give a larger
+   range of shapes that the function could take on.
 \subsubsection{Preliminary Experiments}
 \label{sec-8-2-1}
 
@@ -1849,8 +1836,7 @@ machine learning, linear regression
     $\alpha$, 0.4, 0.8, 1, 2 and 3. While increasing the $\alpha$ parameter in the
     previous set of experiments would make the functions more difficult to estimate,
     in this case the opposite is true; larger values are easier to estimate, whereas
-    smaller values are more difficult. This is due to the relationship of $\alpha$
-    and the standard deviation of the Gaussians used to generate the functions.
+    smaller values are more difficult.
     
     For the preliminary experiments we set the value of $\Delta t$ to be 10,
     resulting in 11 Gaussians being spread uniformly across the 100 time unit
@@ -1860,29 +1846,28 @@ machine learning, linear regression
     the Gaussians are summed to construct the function it will have more
     variation than with large values. We generated 5 different functions for
     each value of $\alpha$, and from each of these generated 5 pairs of photon
-    streams. In these initial experiments, we wish to discover where the point
-    of deterioration is, so that we can look at the region close to this in more
-    detail in a subsequent set of experiments.
+    streams. In this preliminary experiment, we wish to see whether there is a
+    clear point of deterioration, and whether there is any evidence of a window
+    in which the methods are most effective.
 
     The results from the experiment were very enlightening. Figure
     \ref{fig:randerror} shows the error of the estimators over all $\alpha$
-    values. The estimators performed with much smaller error values on average,
-    leading us to believe that the large errors in the previous experiments were due
-    to the shape of the functions. The methods that we use seem to be ineffective on
-    functions which have a symmetrical shape, which sine functions are. The
-    estimators appear to be much more stable, with the mean error deviating
-    relatively little from zero, in comparison to the wild variation in the sine
-    function experiments.
+    values. The estimators performed much more consistently, that the window in
+    the sine experiments was due to the shape of the functions being
+    estimated. The methods that we use seem to be ineffective on functions which
+    have a symmetrical shape, which sine functions are. The estimators appear to
+    be much more stable, with the mean error deviating relatively little from
+    zero, in comparison to the large variation in the sine function experiments.
 
-    While the performance of the estimators was better, the difference between
-    method combinations is still not significant. The large error at $\alpha$ is
-    1 is due to very large errors occurring in estimates of two functions in
-    that data set. This indicates that while on average the estimators perform
-    well, on functions with certain characteristics there are large differences
-    in the performance. Both time delay estimation methods perform worse when
-    $\alpha$ is 0.4, but the estimate from the area method is clearly less
-    affected.
-    \begin{figure}
+    While the performance of the estimators in terms of the mean error was
+    better, the difference between method combinations is still not
+    significant. The large error at $\alpha$ is 1 is due to very large errors
+    occurring in estimates of two functions in that data set. This indicates
+    that while on average the estimators perform well, on functions with certain
+    characteristics there are large differences in the performance. Both time
+    delay estimation methods perform worse when $\alpha$ is 0.4, but the
+    estimate from the area method is clearly less affected.
+    \begin{figure}[h!]
     \subfloat[Baseline area]{
     \includegraphics[width=0.5\textwidth]{baseline_area_random}
     }
@@ -1903,11 +1888,11 @@ machine learning, linear regression
 \label{sec-8-2-2}
 
     In order to investigate the estimator performance further, we performed an
-    additional experiment on a finer set of data, varying $\alpha$ from 0.1 to 1.5,
-    with steps of 0.1. Going down to such a low value of $\alpha$ results in
-    functions which have very large variations, with impulse-like peaks and troughs,
-    an example of which can be seen in Figure \ref{fig:smallalpha}. The parameter
-    ranges used were the same as in the previous experiment on random functions.
+    additional experiment on a finer set of data, varying $\alpha$ from 0.1 to
+    1.5, with steps of 0.1. Going down to such a low value of $\alpha$ results
+    in functions which have very large variations, with impulse-like peaks and
+    troughs. The parameter ranges used were the same as in the previous
+    experiment on random functions.
 
     This experiment confirms our observation from the previous experiment that the
     Gaussian area method combination is the one which should be used to get the best
@@ -1922,15 +1907,7 @@ machine learning, linear regression
     indicating that the method is more error-prone when functions have large
     variations. The PDF method in general has larger standard deviations on the
     error than the area method.
-    \begin{figure}
-    \includegraphics{smallalpha}
-    \caption{Example of a function generated with $\alpha$ set to 0.1. The straight
-    line at $\lambda=$ 5 is a result of the function being shifted to make all values
-    $\geq 0$.}
-    \label{fig:smallalpha}
-    \end{figure}
-
-    \begin{figure}
+    \begin{figure}[h!]
     \subfloat[Baseline area]{
     \includegraphics[width=0.5\textwidth]{baseline_area_morerand}
     }
@@ -1951,60 +1928,51 @@ machine learning, linear regression
 \label{sec-9}
 
   In this report, we have presented our system for estimating the time delay in
-  gravitationally lensed photon stream pairs. We showed two methods for estimating
-  the characteristic function of the stream; the baseline method, which is build
-  upon the iterative weighted least squares method, and the Gaussian kernel
-  density estimation method. In addition, we presented two methods for time delay
-  estimation, one using inter-function area, and another using probability density
-  functions. 
+  gravitationally lensed photon stream pairs. We showed two methods for
+  estimating the characteristic function of the stream; the baseline method,
+  which is built upon the iterative weighted least squares method described by
+  Massey et. al \cite{massey1996estimating}, and the Gaussian kernel density
+  estimation method. In addition, we presented two methods for time delay
+  estimation, one using inter-function area, and another using probability
+  density functions. 
 
-  We performed two experiments on sine functions with different
-  oscillation frequencies. The first showed that there appeared to be a point of
+  We performed two experiments on sine functions with different oscillation
+  frequencies. The first showed that there appeared to be a point of
   deterioration at which the estimators' performance experienced a large
   decrease. In the second, we investigated the performance on a finer level, and
-  noted that there was a window in which estimators performed well, whereas in
-  other areas there were large errors. From the first to experiments, the area
-  method for time delay estimation appeared to be slightly better than the PDF
-  method, and the Gaussian method for function estimation slightly better than the
-  baseline method. However, the differences between the methods were shown to be
-  insignificant. 
-
-  In the second set of experiments, we used randomly generated
-  functions to gauge performance of the estimators a second time, in order to more
-  accurately represent their performance on data which resembles real data. These
-  experiments indicated that the bad performance in the sine function experiments
-  may have been caused by the characteristics of the functions. The error for all
-  methods was much smaller on average, and apart from a few cases the standard
-  deviation was also much better. We also noted that for some of the functions in
-  the random data set the errors were 5--10 times greater than the average. We
-  believe that this indicates that our methods are not suitable for use on some
-  functions. Looking at the results of the sine function experiments, the
-  likelihood is that the functions which cause trouble are those with a somewhat
-  symmetrical shape, or recurring pattern in them. We were unable to demonstrate a
-  significant difference between any combination of methods, but it appears that
-  the Gaussian kernel density function estimation method combined with the area
-  time delay estimation method produce the best results.
-
-  We have achieved all that we had set out to do. We have a method of estimating
-  functions and time delay, as well as a way to simulate photon streams. In the
-  next section we discuss ways in which the system could be improved, and possible
-  future work.
+  noted that there was a window in which estimators performed well From the
+  first two experiments, the area method for time delay estimation appeared to
+  be slightly better than the PDF method, and the Gaussian method for function
+  estimation slightly better than the baseline method. However, the differences
+  between the methods were not significant. See Appendix \ref{sec-11} for
+  all the data.
+  
+  In the second set of experiments, we used randomly generated functions in
+  order to evaluate estimator performance on functions closer to what can be
+  expected from real astronomical sources. These experiments indicated that the
+  large errors in the sine function experiments may have been caused by the
+  characteristics of the functions. We believe that this indicates that our
+  methods are not suitable for use on functions which are somewhat symmetrical,
+  or have a recurring pattern. We were unable to find a significant difference
+  between any combination of methods, but it appears that the Gaussian kernel
+  density function estimation method combined with the area time delay
+  estimation method produces the best and most consistent results.
 \subsection{Improvements and Future Work}
 \label{sec-9-1}
 
    The first improvement is in the simulation of photon streams. Currently, the
-   $\lambda$ parameter provided to the generator must be larger than the value of
-   the function $\lambda(t),\,0\leq t\leq T$. This means that the maximum value of
-   the function must be calculated before the program is run, or a value of
-   $\lambda$ must be chosen such that the function is unlikely to exceed it. In
-   most cases this does not pose a real issue, and large values of $\lambda$ can be
-   chosen to no negative effect---the generation of data is still very
-   fast. However, for the sake of completeness and convenience, implementing the
-   generation in such a way that the extra $\lambda$ value is not necessary may
-   have some benefits. Apart from the thinning method that we have used, there are
-   many other methods of generating nonhomogeneous Poisson
-   processes \cite{pasupathy2011,lewis1976simulation} which could be implemented to improve
-   this aspect of the system.
+   $\lambda$ parameter provided to the generator must be larger than the value
+   of the function $\lambda(t),\,0\leq t\leq T$. This means that the maximum
+   value of the function must be calculated before the program is run, or a
+   value of $\lambda$ must be chosen such that the function is unlikely to
+   exceed it. In most cases this does not pose a real issue, and large values of
+   $\lambda$ can be chosen to no negative effect---the generation of data is
+   still very fast. However, for the sake of completeness and convenience,
+   implementing the generation in such a way that the extra $\lambda$ value is
+   not necessary may have some benefits. Apart from the thinning method that we
+   have used, there are many other methods of generating NHPPs
+   \cite{pasupathy2011,lewis1976simulation} which could be implemented to
+   improve this.
 
    There is also the potential for improvements to the baseline
    estimator. Currently, at each breakpoint only the midpoint is considered. To
@@ -2012,68 +1980,71 @@ machine learning, linear regression
    beneficial. Instead of only a single point being used, a search could be done
    along the line between the points to find the point at which the probability
    density function was maximised. If this was done for each breakpoint, then it
-   should be possible to find a function which provides an improved estimate
-   compared to the current naive approach.
+   should be possible to find a function which provides a better estimate than
+   the current approach.
+
+   Using a fast Gauss transform function in the kernel density estimator could
+   improve its running time.
 
    From our experiments, we discovered that the time delay estimators developed
-   appear to be unsuitable for estimating functions with certain characteristics,
-   namely those which have some sort of periodicity---a good example of this is the
-   sine function. In general, the estimators will struggle to correctly estimate
-   the time delay for functions which have repeating patterns in them due to the
-   way that the methods are implemented. A simple addition to the system which
-   could provide additional information is to provide a confidence value for the
-   time delay estimate calculation. Also, currently only the very highest scoring
-   value of $\Delta$ is reported. In addition to this, reporting other peaks in the
-   score may provide more information about the estimate.
+   appear to be unsuitable for estimating functions with certain
+   characteristics, namely those which have some sort of periodicity---a good
+   example of this is the sine function. In general, the estimators will
+   struggle to correctly estimate the time delay for functions which have
+   repeating patterns in them. A simple addition to the system which could
+   provide additional information is to provide a confidence value for the time
+   delay estimate calculation. Also, currently only the very highest scoring
+   value of $\Delta$ is reported. In addition to this, reporting other peaks in
+   the score may provide more information about the estimate.
 
    Although we have performed several experiments, we were unable to obtain real
    photon stream data on which to test our estimators. To find out whether our
    system would be useful in real applications, testing it on actual data would be
    beneficial.
 
-   As mentioned in the introduction, this system is intended to form a base for a
-   system which can automatically identify potential gravitationally lensed
-   objects. We believe that the current system provides a good foundation for such
-   a system. However, given that its accuracy is limited, the idea case is for this
-   system to provide some sort of initial estimate, and then hand over to another
-   system which is able to make more accurate estimates. We have identified three
-   features that could be added as an extension to this system, or as separate
-   systems:
+   As mentioned in the introduction, this system is intended to form a base for
+   a system which can automatically identify potential gravitationally lensed
+   objects. We believe that the current system provides a good foundation for
+   such a system. However, given that its accuracy is limited, the ideal case is
+   for this system to provide some sort of initial estimate, and then hand over
+   to another system which is able to make more accurate estimates. We have
+   identified three features that could be added as an extension to this system,
+   or as separate systems:
 \begin{enumerate}
 \item Pull stream data from a database or some other form of storage
 \item Compute likelihood of a pair of images coming from the same object based on
    estimates from our system
 \item Keep track of which data has been processed and the confidence
    values of the estimates associated with that data
+\end{enumerate}
+
    The combination of our system with a system or systems with these features would
    potentially create a system that could reasonably be applied to real-world problems.
-\end{enumerate}
 \subsection{Individual Comments}
 \label{sec-9-2}
 
-   Although I have been required to work on several reasonably large projects
-   during my time at university, this is the largest by far. Other projects of
-   comparable size have been team projects, and as such I did not have to deal
-   with the whole of the code base or management of the project. I believe that
-   working alone on this project (other than weekly supervision meetings) has
-   improved my abilities in many areas. First and foremost, working on a project
-   in a field which I have relatively little experience is quite a daunting
-   task. Before starting I had some interest in astronomy and machine learning,
-   but my knowledge of problems and approaches to solving them in those areas
-   was minimal. Although a deep understanding of astronomy was not required to
-   complete the project, at least some understanding of the natural phenomena
-   was necessary in order to progress. Developing the function estimators was
-   particularly challenging, with literature on the subject being quite heavy on
-   mathematics with which I was unfamiliar. I had to study the papers on which
-   the function estimators are based for quite a long time before I felt
-   confident that I understood the important points. I have come to understand
-   the techniques much better than I did initially, but there is still much to
-   learn. Statistical testing was also a challenging part of the project,
-   requiring me to understand how various statistical techniques work, and which
-   approaches are valid for what data. Processing and analysing the results of
-   the experiments was also new to me, but ended up being a good learning
-   experience which will be useful for any scientific projects I may encounter
-   in the future.
+   Although I have worked on several reasonably large projects during my time at
+   university, this is the largest by far. Other projects of comparable size
+   have been team projects, and as such I did not have to deal with the whole of
+   the code base or management of the project. I believe that working alone on
+   this project (other than weekly supervision meetings) has improved my
+   abilities in many areas. First and foremost, working on a project in a field
+   which I have relatively little experience was quite a daunting task. Before
+   starting I had some interest in machine learning, but my knowledge of
+   problems and approaches to solving them was minimal. Although a deep
+   understanding of astronomy was not required to complete the project, at least
+   some understanding of the natural phenomena was necessary in order to
+   progress. Developing the function estimators was particularly challenging,
+   with literature on the subject being quite heavy on mathematics with which I
+   was unfamiliar. I had to study the papers on which the function estimators
+   are based for quite a long time before I felt confident that I understood the
+   important points. I have come to understand the techniques much better than I
+   did initially, but there is still much to learn. Statistical testing was
+   another challenging part of the project, requiring me to understand how
+   various statistical techniques work, and which approaches are valid for what
+   data. Processing and analysing the results of the experiments was also new to
+   me, but ended up being a good learning experience which will be useful for
+   any scientific projects I may encounter in the future.
 
    In addition to being in an unfamiliar field with new mathematical concepts, I
    also chose to write the project in C, a language which I had studied for only
@@ -2082,23 +2053,22 @@ machine learning, linear regression
    months before I was able to add new features and modify old code with the
    confidence and speed with which I can do so in other languages. C has a
    rather small set of standard libraries, and so I had to implement many
-   features that are commonly available in the standard libraries of Java and
-   Python. For more complex functionality, in order to save time I had to find
-   libraries to use, and work out how to use a system with relatively sparse
-   documentation and information available. I think that forcing myself into an
-   uncomfortable situation in terms of unknown environments has paid off, as I
-   am now confident in the use of C. 
+   features that are commonly available in the standard libraries of other
+   languages. For more complex functionality, in order to save time I had to
+   find libraries to use, and work out how to use a system with relatively
+   sparse documentation and information available. I think that forcing myself
+   into an uncomfortable situation in terms of unknown environments has paid
+   off, as I am now confident in my C skills.
 
    During the course of the project, I had to make several decisions about the
    structure of the code, and make sweeping changes to the code base. One
    example is the point at which I made the switch from the use of pointer
    arrays to store estimate data to using structs. This required the
-   modification of some of the fundamentals of the system and required a large
-   amount of care to implement without breaking the functionality. While in team
-   environments it is possible to discuss structural changes and how to go about
-   implementing a new feature, I had to rely on my own judgement to do both,
-   which required a lot of time considering the benefits of one particular
-   approach.
+   modification of some of the fundamentals of the system and required great
+   care to implement without introducing bugs. While in team environments it is
+   possible to discuss structural changes and how to go about implementing a new
+   feature, I had to rely on my own judgement to do both, which required a lot
+   of time considering the benefits of one approach over another.
 
    I have learned a lot from working on the project, and I hope to make good use
    of not only the technical knowledge, but also the experience of working on a

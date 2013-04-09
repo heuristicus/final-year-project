@@ -216,7 +216,7 @@ data is output. Depending on the number of experiments being run, the data can
 take up a lot of space (on the order of gigabytes), so choose a disk with plenty
 of free space. It is also a good idea to run a small subset of the experiments
 before running them all, just to make sure that you are outputting to the
-correct directory---**data in the output directories from previous
+correct directory--- **data in the output directories from previous
 experiments is overwritten**. Once you are sure that everything is good to go,
 run the script. Time taken depends on the number of parameter combinations and
 number of functions you are running the experiments on. A reasonably large set
