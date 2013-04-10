@@ -22,6 +22,7 @@
 #+LaTeX_HEADER: \usepackage{graphicx}
 #+LaTeX_HEADER: \usepackage{moreverb}
 #+LaTeX_HEADER: \usepackage{fancyvrb}
+#+LaTeX_HEADER: \usepackage{setspace}
 #+LaTeX_HEADER: \usepackage{subfig}
 #+LaTeX_HEADER: \usepackage[scientific-notation=true]{siunitx}
 #+LaTeX_HEADER: \usepackage{float}
@@ -35,28 +36,68 @@
 #+LATEX_HEADER: \defaultfontfeatures{Mapping=tex-text}
 #+LATEX_HEADER: \setromanfont[Ligatures={Common},Numbers={Lining}]{Linux Libertine}
 
-\thispagestyle{empty}
-\newpage
+#+LATEX_HEADER: %% Change \maketitle to follow the SGS guidelines.
+#+LATEX_HEADER: \renewcommand{\maketitle}
+#+LATEX_HEADER: {\begin{titlepage}
+#+LATEX_HEADER:    %% Set the line spacing to 1 for the title page.
+#+LATEX_HEADER:    \begin{spacing}{1} 
+#+LATEX_HEADER:    \begin{large}
+#+LATEX_HEADER:    \begin{center}
+#+LATEX_HEADER:       \mbox{}
+#+LATEX_HEADER:       \vfill
+#+LATEX_HEADER:       \begin{sc}
+#+LATEX_HEADER:       Time Delay Estimation in Gravitationally Lensed\\ Photon Stream Pairs\\
+#+LATEX_HEADER:       \end{sc}
+#+LATEX_HEADER:       \vspace*{15mm}
+#+LATEX_HEADER:       Micha{\l} Staniaszek\\
+#+LATEX_HEADER:       Supervisor: Peter Ti{\v{n}}o\\
+#+LATEX_HEADER:       \vspace*{4mm}
+#+LATEX_HEADER:       \includegraphics[width=50mm,height=50mm]{crest.png}\\
+#+LATEX_HEADER:       For the degree of BSc Computer Science with Study Abroad\\
+#+LATEX_HEADER:       School of Computer Science\\
+#+LATEX_HEADER:       University of Birmingham\\
+#+LATEX_HEADER:       \vspace*{10mm}
+#+LATEX_HEADER:       \today
+#+LATEX_HEADER:       \vfill
+#+LATEX_HEADER:       \vspace*{.2in}
+#+LATEX_HEADER:    \end{center}
+#+LATEX_HEADER:    \end{large}
+#+LATEX_HEADER:    \end{spacing}
+#+LATEX_HEADER:    \end{titlepage}
+#+LATEX_HEADER: }%\maketitle
+
 \pagenumbering{roman}
 #+BEGIN_abstract
-In this report, we present a system for estimating the time delay $\Delta$
-between multiple realisations of a Poisson process with the underlying function
-$\lambda(t)$, with particular application to gravitationally lensed photon
-streams. We develop a linear estimator based on weighted least squares, and a
-kernel density estimator which we use to estimate $\lambda(t)$. We then
-introduce two methods for estimating the value of $\Delta$ using the function
-estimates, one using inter-function area, and another using probability density
-functions. Finally, we compare the performance of the two function estimation
-methods and time delay estimation methods on simulated data, and show that there
-is not a significant difference between the approaches.
+\noindent In this report, we present a system for estimating the time delay
+$\Delta$ between pairs of photon streams from separate images of gravitationally
+lensed objects. Photon streams are simulated by generating arrival times of
+individual photons using nonhomogeneous Poisson processes with a rate function
+$\lambda(t)$, which is randomly generated. We develop a linear estimator based
+on ordinary least squares regression, and a kernel density estimator, which we
+use to estimate the rate function of photon streams. Two time delay estimation
+methods are developed, using inter-function area or probability density
+functions to estimate the value of $\Delta$ based on estimates of the rate
+function. We compare the efficacy of the four possible combinations of
+estimation methods, and show that there is no significant difference between the
+accuracy of the estimates they produce.
 
 \vspace{1.0cm}\noindent\textbf{Keywords:} Nonhomogeneous Poisson process, gravitational lensing,
-machine learning, linear regression
+machine learning, linear regression, kernel density estimation
+#+END_abstract
+
+\vspace{2.0cm}\renewcommand{\abstractname}{Acknowledgements}
+\begin{abstract}
+ \noindent I would like to thank Peter Ti{\v{n}}o for his clear and insightful
+supervision, without which this project would not have been possible. Thanks
+also to Jeremy Wyatt, Nick Hawes and Achim Jung for their inspirational teaching
+and enthusiastic support during my time at university, and for
+sparking my interest in artificial intelligence and mathematics.
+\end{abstract}
 
 \begin{center}
 \vspace*{\fill}\scriptsize{Typeset in Linux Libertine using \XeLaTeX}.
 \end{center}
-#+END_abstract
+
 \newpage
 #+BEGIN_LaTeX
 \tableofcontents
@@ -81,40 +122,42 @@ machine learning, linear regression
   study. While there are many areas in which such capabilities would be useful,
   we are interested in creating the foundations of a system to find potential
   gravitationally lensed objects---stars or galaxies whose light is bent because
-  of high mass stellar objects in its path. In order to do this, it is necessary to find
-  pairs of observations of photon flux which appear to have the same underlying
-  function. More precisely, given a set of data containing the time of arrival
-  of photons from a particular source, henceforth called a \emph{stream}, we
-  wish to find another stream which, when shifted in time by some value
-  $\Delta$, has similar numbers of photons arriving in a given interval as the
-  first stream. We call $\Delta$ the \emph{delay} between the two streams.
+  of high mass stellar objects in its path. To find such objects, we need to
+  study the rate of arrival of photons from light sources in the sky, and try to
+  find two or more of these photon \emph{streams} which to have the same
+  characteristic function, which dictates how the arrival rate varies over
+  time. Due to lensing effects, the streams from different \emph{images} of the
+  same object will have some time delay $\Delta$ between them.
 
   Much work has been done in the astrophysics community to find more accurate
-  estimates for the time delay of many lensed objects. An estimate of the possible
-  range of time delays for the first lensed system was given by Dyer and Roeder in
-  1980, a year after its discovery, with a value of between 0.03 and 1.7 years
-  \cite{dyer1980range}. Since then, there have been many estimates of the time
-  delay using various methods, but the generally accepted value, determined by
-  Kundi\'c et al. in 1997 is 417 $\pm$ 3 days \cite{kundic1997robust}. In this
-  paper, a measurement of the global value of Hubble's constant is also made,
-  indicating one useful application of the time delay. More accurate estimates of
-  the delay result in more accurate estimates of the Hubble constant. In addition,
-  the time delay can be used to observe the distribution of dark matter in regions
-  of space \cite{schneider2006gravitational}, and has also been proposed as a
-  distance estimator \cite{bozza2004time}.
+  estimates for the time delay of many lensed objects. An estimate of the
+  possible range of time delays for the first observed lensed system, 0967+561A,
+  was given by Dyer and Roeder in 1980, a year after its discovery, with a value
+  of between 0.03 and 1.7 years \cite{dyer1980range}. Since then, there have
+  been many estimates of the time delay using various methods such as \chi^2
+  fitting and dispersion spectra, but the generally accepted value, determined
+  by Kundi\'c et al. in 1997 is 417 $\pm$ 3 days \cite{kundic1997robust}. In
+  this paper, a measurement of the global value of Hubble's constant is also
+  made, indicating one useful application of the time delay. Increasing the
+  accuracy of the delay estimates also increase the accuracy of the Hubble
+  constant estimate. In addition, the time delay can be used to observe the
+  distribution of dark matter in regions of space
+  \cite{schneider2006gravitational}, and has also been proposed as a distance
+  estimator \cite{bozza2004time}.
 
-  This report details the development of a system to perform time delay estimates,
-  which implements two methods of function estimation and two methods of time
-  delay estimation in order to facilitate the estimation of the time delay between
-  two photon streams. The first function estimator is an extension of a method
-  introduced by Massey et al. \cite{massey1996estimating}, which performs
+  This report details the development of a system to perform time delay
+  estimates, which implements two methods of function estimation and two methods
+  of time delay estimation in order to facilitate the estimation of the time
+  delay between two photon streams. The first function estimator extends a
+  method introduced by Massey et al. \cite{massey1996estimating}, performing
   piecewise continuous function estimates. The second function estimator is a
-  simplified implementation of the kernel density estimator given by Cuevas-Tello
-  et al. \cite{cuevas2006accurate}. We use two independently developed time delay
+  simplified implementation of the kernel density estimator presented by
+  Cuevas-Tello et al. \cite{cuevas2006accurate}. We use two time delay
   estimation methods, one based on probability densities, and the other on the
-  area between functions. Part of the purpose behind the project is to compare the
-  efficacy of combinations of these four methods on the time delay estimation
-  problem.
+  area between functions. We intend to perform a comparison of the efficacy of
+  the various estimators implemented. One additional aim of the project is to
+  create a system which might be useful in a larger system for automatically
+  locating potential gravitationally lensed objects.;
 
   \begin{comment}
   In gravitationally lensed systems, there is a delay between photon streams
@@ -139,16 +182,18 @@ machine learning, linear regression
   \end{comment}
 
   In section [[Background]] we discuss the concepts underpinning the project in more
-  detail, with a more in-depth explanation of the issues surrounding the
-  calculation of the time delay and its uses. In section [[Simulation of Photon
-  Streams]] we introduce our method of generating photon streams from Poisson
+  detail. In section [[Simulation of Photon Streams]] we introduce our method of
+  generating random functions from Gaussians, and photon streams using Poisson
   processes. Section [[Function Estimation]] shows our approach to estimating the
-  underlying function of a given stream of photons. Our methods of calculating the
-  time delays between multiple photon streams are explained in section [[Time
-  Delay Estimation]]. Section [[System]] gives detailed information on the design and
-  development of the system, including the software and project management
-  aspects. Finally, in section [[Experimentation]] we present experimental data from both
-  simulated and real data and discuss the relative effectiveness of our methods.
+  underlying function of a given stream of photons. Our methods of calculating
+  the time delays between multiple photon streams are explained in section [[Time
+  Delay Estimation]]. Sections [[System]] and [[Development]] give detailed information on
+  the design and development of the system, including the software and project
+  management aspects. Finally, in section [[Experimentation]] we present
+  experimental data from both simulated and real data and discuss the relative
+  effectiveness of our methods. We conclude in section [[Conclusion]] with a summary
+  of the achievements of the project, further work and potential improvements,
+  and some individual comments.
 * Background
 ** Gravitational Lensing
    In an eight-year period starting in 1907 and ending in 1915 with the
@@ -161,7 +206,7 @@ machine learning, linear regression
    affected by the presence of matter. The idea has many important consequences,
    but one is of particular relevance in the context of this report.
 
-   According to the theory, objects with mass, or \emph{massive objects}, cause
+   According to the theory, objects with mass, or \emph{massive} objects, cause
    spacetime, a mathematical model which combines space and time into a single
    "object", to curve around them. A simple way to visualise this effect is to
    imagine dropping a ball onto a sheet of cloth which has been pulled taut. The
@@ -349,8 +394,7 @@ machine learning, linear regression
 ** Function Generation
    To evaluate the performance of the function and time delay estimators, it
    will be necessary to test the accuracy of the estimators on different types
-   of functions. To this end, the capability of generating random functions will
-   be very useful. To generate random functions, we make use of Gaussians. The
+   of functions. To generate random functions, we make use of Gaussians. The
    generation process involves four simple steps:
 1. Pick some value $\Delta t$ which represents the distance between the mean
    $\mu$ of successive Gaussians.
@@ -529,20 +573,14 @@ machine learning, linear regression
     for each interval, which compensates for the Poisson error
     \cite{massey1996estimating}. Introducing this weight into \eqref{eq:sqres}
     and summing over all bins, we compute a weighted version of the residual sum
-    of squares (RSS).
+    of squares (RSS). We want to find the values of $\alpha$ and $\beta$ for
+    which the RSS is minimised.
     #+BEGIN_LaTeX
     \begin{equation}
-    \sum_{k=1}^N w_k(Y_k-[\alpha +\beta x_k])^2
+    \arg\min_{\alpha,\beta}\sum_{k=1}^N w_k(Y_k-[\alpha +\beta x_k])^2
     \end{equation}
     #+END_LaTeX
-    We want to find the values of $\alpha$ and $\beta$ for which the RSS is
-    minimised, and so the final expression becomes
-    #+BEGIN_LaTeX
-    \begin{equation}
-    \min_{\alpha,\beta}\sum_{k=1}^N w_k(Y_k-[\alpha +\beta x_k])^2
-    \end{equation}
-    #+END_LaTeX
-    which is known as the \emph{objective function}. Once the objective function is
+    This is known as the \emph{objective function}. Once the objective function is
     known, we can define estimators $\hat{\alpha}$ and $\hat{\beta}$, which we
     will use to estimate values of $\alpha$ and $\beta$ to find the minimum \cite{massey1996estimating}.
     #+BEGIN_LaTeX
@@ -652,8 +690,8 @@ machine learning, linear regression
     #+BEGIN_LaTeX
     \begin{figure}[h]
     \includegraphics{lineest}
-    \caption{IWLS estimate of a realisation of the function $y=a+bx$ where $a=$ 7
-    and $b=$ 2.}
+    \caption{IWLS estimate of a photon stream with the characteristic function
+    $\lambda(t)=a+bt$ where $a=$ 7 and $b=$ 2.}
     \label{linefig}
     \end{figure}
     #+END_LaTeX
@@ -689,22 +727,21 @@ machine learning, linear regression
     five iterations \cite{massey1996estimating}. Figure \ref{linefig} shows an
     example of a function estimated using IWLS.
 
-    With this estimator, we have something which can improve upon the estimates
-    from OLS with only a small amount of additional calculation. However, for
-    our purposes this is not sufficient. The characteristic function of stellar
-    objects are not linear functions, so we must extend this linear approach to
-    give us some reasonable estimates of functions which are not straight lines.
+    While this is an improvement on the OLS estimator, it is not sufficient for
+    our purposes. The characteristic functions of stellar objects are not
+    straight line functions, so we must extend this approach to give us some
+    reasonable estimates of functions which are not straight lines.
 *** Piecewise Iterative Weighted Least Squares
     It is clear that the IWLS estimator alone is not sufficient to complete our
-    task. In order to have a reasonable estimate of the characteristic function, we
-    need to be able to estimate a function which is not a straight line. During the
-    development process, we considered the possibility of approximating a function
-    by multiple straight-line estimates. This type of function is known as a
-    piecewise linear function. Extending the approach presented in the previous two
-    sections, we take the interval $[0,T]$, and split it into several
-    sub-intervals. Then, the function underlying each of these sub-intervals is
-    estimated using IWLS. We also add some minor extensions in an attempt to improve
-    the quality of the estimates.
+    task. In order to obtain a reasonable estimate of the characteristic
+    function, we need to be able to estimate a function which is not a straight
+    line. During the development process, we considered the possibility of
+    approximating functions by multiple straight-line estimates. This type of
+    function is known as a piecewise linear function. Extending the approach
+    presented in the previous two sections, we take the interval $[0,T]$, and
+    split it into several sub-intervals. Then, the function underlying each of
+    these sub-intervals is estimated using IWLS. We also add some minor
+    extensions in an attempt to improve the quality of the estimates.
 
     Sub-intervals are estimated starting from the first, and moving to the next
     once the process is complete. When the estimate is completed, a short
@@ -727,7 +764,7 @@ machine learning, linear regression
     piecewise disjoint---the estimate for each interval does not connect
     smoothly into the next, but jumps at the boundary between each sub-interval.
     #+BEGIN_LaTeX
-    \begin{figure}
+    \begin{figure}[h]
     \includegraphics{pcbase}
     \caption{A comparison of the baseline and piecewise estimates on the same
     function. Note how the baseline estimate passes through the midpoint of the
@@ -806,9 +843,12 @@ machine learning, linear regression
    #+END_LaTeX
    for each value of \eta. The value of \eta which maximises this sum of log
    Poisson PDFs is used to normalise $\hat{\lambda}(t)$ in subsequent
-   computations.
+   computations. Figure \ref{fig:kde} shows an example of a kernel density
+   estimate, and displays a weakness in the estimator. As one moves towards the
+   start or end of the interval, fewer Gaussians make a noticeable contribution
+   to the function calculation, resulting in a drop-off of the estimate.
    #+BEGIN_LaTeX
-   \begin{figure}
+   \begin{figure}[h]
    \includegraphics{gauss}
    \caption{Estimate of a function using Gaussian kernels. The drop-off at the
    start and end of the interval is due to fewer Gaussians summed in those areas
@@ -1239,56 +1279,7 @@ machine learning, linear regression
    flag in a struct which is used to determine which subsystem to
    run. Instructions on how to use the system can be found in Appendix [[General
    Usage]].
-** Experimenter
-   The purpose of the experimenter is to run the estimation subsystem multiple
-   times, with different parameter settings. Its behaviour is modified by a
-   separate parameter file. The code is designed in such a way that new
-   experiments on different parameters can be added and removed with minimal
-   effort on the part of the user. 
 
-   A simple experiment can be set up by modifying just a few lines in a the
-   parameter file. The experiment must be given a name, so that the system can
-   reference it. Some parameters to experiment on must be set, and the type of
-   estimator to use to estimate the function must also be specified. An
-   additional parameter is used to specify whether an experiment with the given
-   name should be run or not. To allow for greater flexibility, the parameter
-   values to test can be defined as ranges. For example, entering
-   \texttt{2,4,...,10} as the value for a parameter will result in values of 2,
-   4, 6, 8 and 10 being experimented on. There are two types of experiments that
-   can be performed; the estimation of functions, or the estimation of the time
-   delay. Function estimate experiments are used to determine optimal parameter
-   settings for a given set of test data, using model selection. The
-   experimenter can create copies of test data with events in certain intervals
-   removed to use for this purpose.
-   
-   With the modified data, the function estimators are run on the test set with
-   different parameter combinations. Parameter settings are co-varied, which
-   means that all possible combinations of parameters are tested. All possible
-   values of parameters are stored in separate arrays for each parameter, and
-   each has a pointer which indicates which value of the parameter should be
-   used by the estimator. After each run of the estimator with a given set of
-   parameters on all test data has been completed, the index of the last
-   parameter is incremented by 1, and the process is repeated. Once the value of
-   the index exceeds the length of the array, it is reset to 0, and the index on
-   the second to last parameter is incremented by 1, and this process continues
-   until all indices return to 0, similar to how a milometer works. After the
-   experiment for a set of parameters is complete, the results of the estimates
-   are analysed, and each is given a score based on a sum of log
-   probabilities. The value of the function in each interval in which data was
-   withheld is compared to the actual value from the original data. The closer
-   the estimated and actual values are, the higher the score. Once all parameter
-   combinations have been run, the best combination of parameters for each
-   stream in the test data is written to file. Files are also produced in each
-   sub-directory which give information about the parameters used for
-   experiments in that directory.
-
-   Once the model selection is done, the optimum parameters can be extracted
-   from the results and the time delay can be estimated. The time delay results
-   are processed, with the estimate and error for each stream pair, and the
-   mean, standard deviation and mean error of a set of stream pairs are output
-   to a file. Functionality for running large numbers of experiments is provided
-   by a number of shell scripts. Instructions on running experiments can be
-   found in Appendix [[Running Experiments]].
 ** Function and Stream Generators
    The function and stream generation functions form the \emph{generator}
    subsystem. The two different function generation methods use fundamentally
@@ -1340,7 +1331,7 @@ machine learning, linear regression
    be set to be calculated using $\alpha\cdot\Delta t$, or simply taken from a
    specified value.
 ** Function Estimators
-      Other than the libraries, the function estimators make up the largest portion
+   Other than the libraries, the function estimators make up the largest portion
    of the system. As should be clear from what has been said above, the baseline
    estimator is built upon the IWLS estimator, and this is true in the code as
    well. The IWLS and OLS estimators form the base of the piecewise estimator,
@@ -1414,15 +1405,15 @@ machine learning, linear regression
 
    To produce its estimate, the PDF estimator must combine the two function
    estimates into a single function. The different function estimates are stored
-   in different data types, so a separate function is used for each
-   type. The function can in theory combine any number of streams, but has only
-   been tested to a maximum of 4. One of the parameters it takes is an array of
-   time delays, which is used to shift the function in time before combination
-   takes place. 
+   in different data types, so a separate function is used for each type. The
+   function can in theory combine any number of streams, but has only been
+   tested to a maximum of 4. One of the parameters it takes is an array of time
+   delays, which is used to shift the function in time before combination takes
+   place.
 
    The time delay estimation must somehow be combined with the function
-   estimation. This is done by the \texttt{multi\_estimate} function. Again, this
-   is a two stage function, the first stage of which extracts the relevant
+   estimation. This is done by the \texttt{multi\_estimate} function. Again,
+   this is a two stage function, the first stage of which extracts the relevant
    parameters. Depending on the type of estimator, different parameters are
    retrieved. The function can do estimates of several functions with only a
    single call by using the standardised output filenames. The second stage of
@@ -1441,6 +1432,56 @@ machine learning, linear regression
    well as the range in which to check. The sample resolution must be specified
    for both the area and PDF estimators, and the PDF estimator also requires the
    number of bins into which it is to split the interval.
+** Experimenter
+   The purpose of the experimenter is to run the estimation subsystem multiple
+   times, with different parameter settings. Its behaviour is modified by a
+   separate parameter file. The code is designed in such a way that new
+   experiments on different parameters can be added and removed with minimal
+   effort on the part of the user. 
+
+   A simple experiment can be set up by modifying just a few lines in a the
+   parameter file. The experiment must be given a name, so that the system can
+   reference it. Some parameters to experiment on must be set, and the type of
+   estimator to use to estimate the function must also be specified. An
+   additional parameter is used to specify whether an experiment with the given
+   name should be run or not. To allow for greater flexibility, the parameter
+   values to test can be defined as ranges. For example, entering
+   \texttt{2,4,...,10} as the value for a parameter will result in values of 2,
+   4, 6, 8 and 10 being experimented on. There are two types of experiments that
+   can be performed; the estimation of functions, or the estimation of the time
+   delay. Function estimate experiments are used to determine optimal parameter
+   settings for a given set of test data, using model selection. The
+   experimenter can create copies of test data with events in certain intervals
+   removed to use for this purpose.
+   
+   With the modified data, the function estimators are run on the test set with
+   different parameter combinations. Parameter settings are co-varied, which
+   means that all possible combinations of parameters are tested. All possible
+   values of parameters are stored in separate arrays for each parameter, and
+   each has a pointer which indicates which value of the parameter should be
+   used by the estimator. After each run of the estimator with a given set of
+   parameters on all test data has been completed, the index of the last
+   parameter is incremented by 1, and the process is repeated. Once the value of
+   the index exceeds the length of the array, it is reset to 0, and the index on
+   the second to last parameter is incremented by 1, and this process continues
+   until all indices return to 0, similar to how a milometer works. After the
+   experiment for a set of parameters is complete, the results of the estimates
+   are analysed, and each is given a score based on a sum of log
+   probabilities. The value of the function in each interval in which data was
+   withheld is compared to the actual value from the original data. The closer
+   the estimated and actual values are, the higher the score. Once all parameter
+   combinations have been run, the best combination of parameters for each
+   stream in the test data is written to file. Files are also produced in each
+   sub-directory which give information about the parameters used for
+   experiments in that directory.
+
+   Once the model selection is done, the optimum parameters can be extracted
+   from the results and the time delay can be estimated. The time delay results
+   are processed, with the estimate and error for each stream pair, and the
+   mean, standard deviation and mean error of a set of stream pairs are output
+   to a file. Functionality for running large numbers of experiments is provided
+   by a number of shell scripts. Instructions on running experiments can be
+   found in Appendix [[Running Experiments]].
 * Development
   In this section, we discuss the programming methodologies and project management
   ideas used during the development of the project.
@@ -1646,8 +1687,12 @@ machine learning, linear regression
   on each function is calculated, and from this we can examine the effectiveness
   of the estimates. The aim of the experiments is to compare the effectiveness
   of the time delay estimation with four method combinations: Gaussian area,
-  Gaussian pdf, baseline area and baseline pdf. For the full set of experimental
-  data, see Appendix [[Experimental Data]].
+  Gaussian pdf, baseline area and baseline pdf. Two statistical tests were done
+  on the experimental results. A paired $t$-test was used to check whether one
+  method was better than another. For the second test, we took the error values
+  for the two methods combinations being compared, subtracted one from the other
+  and performed a a one-sample $t$-test on the resulting set of values. The full
+  set of statistical test results can be seen in Appendix [[Experimental Data]].
 
   We assume that the distribution of the samples is Gaussian, but this may not be
   the case. However, full non-parametric testing is out of the scope of this project.
@@ -1679,7 +1724,7 @@ machine learning, linear regression
     \subfloat[Gaussian PDF]{
     \includegraphics[width=0.5\textwidth]{gauss_pmf_prelim}
     }
-    \caption{Error on the preliminary sine function experiments. Error bars show standard
+    \caption{Mean error on the preliminary sine function experiments. Error bars show standard
     deviation of error. Performance appears to deteriorate when $\alpha>0.1$.}
     \label{fig:prelimerror}
     \end{figure}
@@ -1778,18 +1823,19 @@ machine learning, linear regression
    \label{fig:randex}
    \end{figure}
    #+END_LaTeX
-   The experiments on sine functions have not yielded any definitive result as
-   to which methods are more effective, and so we also performed a series of
+   The experiments on sine functions did not yield any definitive result as to
+   which methods were more effective, and so we also performed a series of
    experiments using random functions rather than sine curves. Evaluating the
-   performance of the estimator on these functions is important, since functions
-   from real lensed objects will be very unlikely to follow a perfect sine
+   performance of the estimators on these functions is important, since
+   functions from real lensed objects will be very unlikely to follow a sine
    curve, instead fluctuating somewhat randomly. This set of experiments should
    also allow us to investigate the window of optimum performance from the
-   previous experiment. In order to test a variety of different functions, vary
-   the $\alpha$ parameter in the equation $\sigma=\alpha\cdot\Delta t$, where
-   $\sigma$ is the standard deviation of the Gaussians used to generate the
-   random function. The weight of each Gaussian was set to 3, to give a larger
-   range of shapes that the function could take on.
+   previous experiment. In order to test a variety of different functions, we
+   varied the $\alpha$ parameter in the equation $\sigma=\alpha\cdot\Delta t$,
+   where $\sigma$ is the standard deviation of the Gaussians used to generate
+   the random function. The weight of each Gaussian was set to 3, to produce a
+   larger variation in the shape of functions. Figure \ref{fig:randex} shows
+   some randomly selected examples.
 *** Preliminary Experiments
     For the preliminary experiment, we chose to use five different values of
     $\alpha$, 0.4, 0.8, 1, 2 and 3. While increasing the $\alpha$ parameter in the
@@ -1808,7 +1854,42 @@ machine learning, linear regression
     streams. In this preliminary experiment, we wish to see whether there is a
     clear point of deterioration, and whether there is any evidence of a window
     in which the methods are most effective.
-
+    #+BEGIN_LaTeX
+    \begin{table}[h!]
+    \centerline{
+    \subfloat[$\alpha=$ 0.4]{
+    \begin{tabular}{l|ll}
+    &  Baseline            &  Gaussian            \\
+    \hline
+    Area  &  2.884 $\pm$ 6.7225  &  1.62 $\pm$ 1.9959   \\
+    PDF   &  -1.904 $\pm$ 10.82  &  0.132 $\pm$ 11.392  \\
+    \end{tabular}
+    }\quad
+    \subfloat[$\alpha=$ 1]{
+    \begin{tabular}{l|ll}
+    &  Baseline            &  Gaussian             \\
+    \hline
+    Area  &  -7.784 $\pm$ 18.96  &  -1.4 $\pm$ 8.0519    \\
+    PDF   &  0.156 $\pm$ 8.9448  &  -1.944 $\pm$ 9.1611  \\
+    \end{tabular}
+    }
+    } %end centerline\\
+    \begin{center}
+    \subfloat[$\alpha=$ 2]{
+    \begin{tabular}{l|ll}
+    &  Baseline             &  Gaussian              \\
+    \hline
+    Area  &  0.068 $\pm$ 0.64971  &  -0.068 $\pm$ 0.90184  \\
+    PDF   &  0.052 $\pm$ 3.0461   &  -0.38 $\pm$ 4.2005    \\
+    \end{tabular}
+    }
+    \end{center}
+    \label{tbl:trest}
+    \caption{Error on method combinations for 3 different $\alpha$ values. (a)
+    and (b) are points at which there is a comparatively large error. (c) is
+    provided for comparison. ($\mu_{\text{err}}\pm\sigma$)}
+    \end{table}
+    #+END_LaTeX
     The results from the experiment were very enlightening. Figure
     \ref{fig:randerror} shows the error of the estimators over all $\alpha$
     values. The estimators performed much more consistently, that the window in
@@ -1824,8 +1905,10 @@ machine learning, linear regression
     occurring in estimates of two functions in that data set. This indicates
     that while on average the estimators perform well, on functions with certain
     characteristics there are large differences in the performance. Both time
-    delay estimation methods perform worse when $\alpha$ is 0.4, but the
-    estimate from the area method is clearly less affected.
+    delay estimation methods have worse performance when $\alpha$ is 0.4, but
+    the estimate from the area method is clearly less affected. Table
+    \ref{tbl:trest} gives a better idea of the differences in the errors.
+
     #+BEGIN_LaTeX
     \begin{figure}[h!]
     \subfloat[Baseline area]{
@@ -1840,7 +1923,7 @@ machine learning, linear regression
     \subfloat[Gaussian PDF]{
     \includegraphics[width=0.5\textwidth]{gaussian_pmf_random}
     }
-    \caption{Mean error for each value of $\alpha$ for the preliminary random
+    \caption{Grand mean of error over 5 functions for each value of $\alpha$ for the preliminary random
     function experiments for each method combination.}
     \label{fig:randerror}
     \end{figure}
@@ -1880,7 +1963,7 @@ machine learning, linear regression
     \subfloat[Gaussian PDF]{
     \includegraphics[width=0.5\textwidth]{gaussian_pmf_morerand}
     }
-    \caption{Mean error for each value of $\alpha$ for the second set of random
+    \caption{Grand mean of error over 5 functions for each value of $\alpha$ for the second set of random
     function experiments for each method combination.}
     \label{fig:moreranderror}
     \end{figure}
@@ -2570,7 +2653,7 @@ machine learning, linear regression
   }
   \end{center} \caption{One sample t-test results for preliminary random function
   experiments, calculated by aggregating results for each function for each method
-  and comparing. $n=$ 25} \end{table}
+  and computing the error difference on estimates. $n=$ 25} \end{table}
 
 
   \begin{table}[htb]
@@ -2659,7 +2742,9 @@ machine learning, linear regression
   \end{tabular}
   }
   \end{center}
-  \caption{Single sample t-test results for second set of random function experiments, calculated by aggregating results for each function for each method and comparing. $n=$ 25} \end{table}
+  \caption{Single sample t-test results for second set of random function
+  experiments, calculated by aggregating results for each function for each
+  method and computing the error difference on estimates. $n=$ 25} \end{table}
 
   #+END_LaTeX
    #+END_appendices
