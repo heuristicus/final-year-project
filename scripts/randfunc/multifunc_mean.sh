@@ -64,3 +64,5 @@ for A in {0..3}; do
     done
     echo -e "\n" >> $OUTFILE
 done
+
+echo "Data output to $OUTFILE"

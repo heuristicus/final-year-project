@@ -12,10 +12,12 @@ for EST_TYPE in ${TD_EST_TYPES[@]}; do # Two types of time delay estimators
     echo -e "" > tmp
     for TYPE in ${FUNC_EST_TYPES[@]}; do # Two types of function estimators
 	INFILE=$INDIR/$TYPE\_$EST_TYPE.txt
+	echo $INFILE
 	# Take alpha, mean and stdev out of the file
 	ALPHA=(`awk '{print $1}' $INFILE`)
 	MEAN=(`awk '{print $3}' $INFILE`)
 	STDEV=(`awk '{print $4}' $INFILE`)
+	echo $ALPHA
 	total=${#ALPHA[@]}
 	# On the first loop, print the alpha column
 	if [ $LOOP = 1 ]; then
@@ -33,6 +35,7 @@ for EST_TYPE in ${TD_EST_TYPES[@]}; do # Two types of time delay estimators
 	LOOP=$[LOOP+1]
     done
     A=`grep -v '^\s*$' tmp | pr -ts" " --columns 3`
+#    echo -e "$A"
     echo -e "$A\n\n" >> $OUTFILE
     LOOP=1
 done
