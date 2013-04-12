@@ -1,1 +1,0 @@
-The estimate for interval 4 is done incorrectly, even though the function is increasing at that point. There is little variation in the slope of both esimates

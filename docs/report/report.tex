@@ -1,5 +1,5 @@
-% Created 2013-04-11 Thu 23:05
-\documentclass[a4paper,11pt]{article}
+% Created 2013-04-12 Fri 11:39
+\documentclass[a4paper,11pt,twoside]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{fixltx2e}
@@ -38,6 +38,7 @@
 %% Change \maketitle to follow the SGS guidelines.
 \renewcommand{\maketitle}
 {\begin{titlepage}
+\pagenumbering{roman}
 %% Set the line spacing to 1 for the title page.
 \begin{spacing}{1} 
 \begin{large}
@@ -51,7 +52,7 @@ Time Delay Estimation in Gravitationally Lensed\\ Photon Stream Pairs\\
 Micha{\l} Staniaszek\\
 Supervisor: Peter Ti{\v{n}}o\\
 \vspace*{4mm}
-\includegraphics[width=50mm,height=50mm]{crest.png}\\
+\includegraphics[width=50mm,height=50mm]{images/crest.png}\\
 For the degree of BSc Computer Science with Study Abroad\\
 School of Computer Science\\
 University of Birmingham\\
@@ -80,7 +81,7 @@ University of Birmingham\\
 
 
 
-\pagenumbering{roman}
+
 \begin{abstract}
 \noindent In this report, we present a system for estimating the time delay
 $\Delta$ between pairs of photon streams from separate images of gravitationally
@@ -102,12 +103,12 @@ machine learning, linear regression, kernel density estimation
 \end{abstract}
 
 \vspace{2.0cm}\renewcommand{\abstractname}{Acknowledgements}
-\begin{abstract}
- \noindent I would like to thank Peter Ti{\v{n}}o for his clear and insightful
-supervision, without which this project would not have been possible. Thanks
-also to Jeremy Wyatt, Nick Hawes and Achim Jung for their inspirational teaching
-and enthusiastic support during my time at university, and for
-sparking my interest in artificial intelligence and mathematics.
+\begin{abstract} 
+\noindent I would like to thank Peter Ti{\v{n}}o for his clear
+ and insightful supervision, without which this project would not have been
+ possible. Thanks also to Jeremy Wyatt, Nick Hawes and Achim Jung for their
+ inspirational teaching and enthusiastic support during my time at university,
+ and for sparking my interest in artificial intelligence and mathematics.
 \end{abstract}
 
 \begin{center}
@@ -234,12 +235,12 @@ sparking my interest in artificial intelligence and mathematics.
    \begin{figure}[h]
    \centering
    \subfloat[An Einstein ring]{
-   \includegraphics[width=0.4\textwidth]{einstein_ring}
+   \includegraphics[width=0.4\textwidth]{images/einstein_ring}
    \label{fig:einring}
    }
    \qquad
    \subfloat[Einstein's cross]{
-   \includegraphics[width=0.4\textwidth]{einstein_cross}
+   \includegraphics[width=0.4\textwidth]{images/einstein_cross}
    \label{fig:einsteincross}
    }
    \caption{Two examples of strong lensing effects. a) shows light from
@@ -335,10 +336,10 @@ sparking my interest in artificial intelligence and mathematics.
    some examples of how the Poisson process evolves over time.
    \begin{figure}
    \subfloat[Homogeneous]{
-   \includegraphics[width=0.5\textwidth]{homplot}
+   \includegraphics[width=0.5\textwidth]{images/homplot}
    }
    \subfloat[Non-homogeneous]{
-   \includegraphics[width=0.5\textwidth]{nonhomplot}
+   \includegraphics[width=0.5\textwidth]{images/nonhomplot}
    }
    \caption{Two examples of Poisson process paths. The homogeneous process has a
    rate parameter $\lambda=$ 10, and the non-homogeneous rate parameter varies
@@ -440,10 +441,10 @@ sparking my interest in artificial intelligence and mathematics.
    as well, which is described in section \ref{sec-6-6}.
    \begin{figure}
    \subfloat{
-   \includegraphics[width=0.5\textwidth]{contrib1}
+   \includegraphics[width=0.5\textwidth]{images/contrib1}
    }
    \subfloat{
-   \includegraphics[width=0.5\textwidth]{contrib2}
+   \includegraphics[width=0.5\textwidth]{images/contrib2}
    }
    \caption{Two examples of functions randomly generated from Gaussians. The red
    function is constructed by summing the green gaussians. Generated with
@@ -661,7 +662,7 @@ sparking my interest in artificial intelligence and mathematics.
 \label{sec-4-1-2}
 
     \begin{figure}[h]
-    \includegraphics{lineest}
+    \includegraphics{images/lineest}
     \caption{IWLS estimate of a photon stream with the characteristic function
     $\lambda(t)=a+bt$ where $a=$ 7 and $b=$ 2.}
     \label{linefig}
@@ -733,7 +734,7 @@ sparking my interest in artificial intelligence and mathematics.
     piecewise disjoint---the estimate for each interval does not connect
     smoothly into the next, but jumps at the boundary between each sub-interval.
     \begin{figure}[h]
-    \includegraphics{pcbase}
+    \includegraphics{images/pcbase}
     \caption{A comparison of the baseline and piecewise estimates on the same
     function. Note how the baseline estimate passes through the midpoint of the
     disjoint piecewise estimates at the breakpoints.}
@@ -808,7 +809,7 @@ sparking my interest in artificial intelligence and mathematics.
    start or end of the interval, fewer Gaussians make a noticeable contribution
    to the function calculation, resulting in a drop-off of the estimate.
    \begin{figure}[h]
-   \includegraphics{gauss}
+   \includegraphics{images/gauss}
    \caption{Estimate of a function using Gaussian kernels. The drop-off at the
    start and end of the interval is due to fewer Gaussians summed in those areas
    as no kernels are placed outside the interval.}
@@ -869,11 +870,11 @@ sparking my interest in artificial intelligence and mathematics.
    shows a visual representation of the logic behind the method.
    \begin{figure}[h]
    \subfloat[High area ($\Delta=$ 0)]{
-   \includegraphics[width=0.5\textwidth]{normarea}
+   \includegraphics[width=0.5\textwidth]{images/normarea}
    %\includegraphics{normarea}
    }
    \subfloat[Low area ($\Delta=$ 13.3)]{
-   \includegraphics[width=0.5\textwidth]{shiftarea}
+   \includegraphics[width=0.5\textwidth]{images/shiftarea}
    %\includegraphics{shiftarea}
    }
    \caption{Comparison of area between functions for two different values of
@@ -928,16 +929,16 @@ sparking my interest in artificial intelligence and mathematics.
    \ref{fig:finest} illustrates the whole estimation process.
    \begin{figure}[h!]
    \subfloat[Estimate functions based on bin data]{
-   \includegraphics[width=0.5\textwidth]{baseest}
-   \includegraphics[width=0.5\textwidth]{gaussest}
+   \includegraphics[width=0.5\textwidth]{images/baseest}
+   \includegraphics[width=0.5\textwidth]{images/gaussest}
    }\\
    \subfloat[Shift second (blue) function based on $\Delta$ estimate]{
-   \includegraphics[width=0.5\textwidth]{baseshift}
-   \includegraphics[width=0.5\textwidth]{gaussshift}
+   \includegraphics[width=0.5\textwidth]{images/baseshift}
+   \includegraphics[width=0.5\textwidth]{images/gaussshift}
    }\\
    \subfloat[Combine functions to create final estimate]{
-   \includegraphics[width=0.5\textwidth]{basecomb}
-   \includegraphics[width=0.5\textwidth]{gausscomb}
+   \includegraphics[width=0.5\textwidth]{images/basecomb}
+   \includegraphics[width=0.5\textwidth]{images/gausscomb}
    }
    \caption{Illustration of the estimation process. Left column shows baseline
    method, right column Gaussian. The estimated value of $\Delta$ was 14.1 and
@@ -1653,20 +1654,20 @@ sparking my interest in artificial intelligence and mathematics.
 
   \begin{figure}
   \subfloat[$\alpha=0.005$]{
-  \includegraphics[width=0.5\textwidth]{prelim_sine_005}
+  \includegraphics[width=0.5\textwidth]{images/prelim_sine_005}
   }
   \subfloat[$\alpha=0.01$]{
-  \includegraphics[width=0.5\textwidth]{prelim_sine_01}
+  \includegraphics[width=0.5\textwidth]{images/prelim_sine_01}
   }\\
   \subfloat[$\alpha=0.015$]{
-  \includegraphics[width=0.5\textwidth]{prelim_sine_015}
+  \includegraphics[width=0.5\textwidth]{images/prelim_sine_015}
   }
   \subfloat[$\alpha=0.03$]{
-  \includegraphics[width=0.5\textwidth]{prelim_sine_03}
+  \includegraphics[width=0.5\textwidth]{images/prelim_sine_03}
   }\\
   \begin{center}
   \subfloat[$\alpha=0.06$]{
-  \includegraphics[width=0.5\textwidth]{prelim_sine_06}
+  \includegraphics[width=0.5\textwidth]{images/prelim_sine_06}
   }
   \end{center}
   \caption{Functions used for preliminary experiments on sine functions, showing
@@ -1733,16 +1734,16 @@ sparking my interest in artificial intelligence and mathematics.
     two streams. 
     \begin{figure}[h!]
     \subfloat[Baseline area]{
-    \includegraphics[width=0.5\textwidth]{base_area_prelim}
+    \includegraphics[width=0.5\textwidth]{images/base_area_prelim}
     }
     \subfloat[Baseline PDF]{
-    \includegraphics[width=0.5\textwidth]{base_pmf_prelim}
+    \includegraphics[width=0.5\textwidth]{images/base_pmf_prelim}
     }\\
     \subfloat[Gaussian area]{
-    \includegraphics[width=0.5\textwidth]{gauss_area_prelim}
+    \includegraphics[width=0.5\textwidth]{images/gauss_area_prelim}
     }
     \subfloat[Gaussian PDF]{
-    \includegraphics[width=0.5\textwidth]{gauss_pmf_prelim}
+    \includegraphics[width=0.5\textwidth]{images/gauss_pmf_prelim}
     }
     \caption{Mean error on the preliminary sine function experiments. Error bars show standard
     deviation of error. Performance appears to deteriorate when $\alpha>0.1$.}
@@ -1810,16 +1811,16 @@ sparking my interest in artificial intelligence and mathematics.
     and baseline methods were not significantly different.
     \begin{figure}[h!]
     \subfloat[Baseline area]{
-    \includegraphics[width=0.5\textwidth]{baseline_area_fine}
+    \includegraphics[width=0.5\textwidth]{images/baseline_area_fine}
     }
     \subfloat[Baseline PDF]{
-    \includegraphics[width=0.5\textwidth]{baseline_pmf_fine}
+    \includegraphics[width=0.5\textwidth]{images/baseline_pmf_fine}
     }\\
     \subfloat[Gaussian area]{
-    \includegraphics[width=0.5\textwidth]{gaussian_area_fine}
+    \includegraphics[width=0.5\textwidth]{images/gaussian_area_fine}
     }
     \subfloat[Gaussian PDF]{
-    \includegraphics[width=0.5\textwidth]{gaussian_pmf_fine}
+    \includegraphics[width=0.5\textwidth]{images/gaussian_pmf_fine}
     }
     \caption{Error on the second set of sine function experiments. Error bars show
     standard deviation of error. Peak performance is in the window 0.04
@@ -1831,20 +1832,20 @@ sparking my interest in artificial intelligence and mathematics.
 
    \begin{figure}
    \subfloat[$\alpha=0.4$]{
-   \includegraphics[width=0.5\textwidth]{randfunc_04}
+   \includegraphics[width=0.5\textwidth]{images/randfunc_04}
    }
    \subfloat[$\alpha=0.8$]{
-   \includegraphics[width=0.5\textwidth]{randfunc_08}
+   \includegraphics[width=0.5\textwidth]{images/randfunc_08}
    }\\
    \subfloat[$\alpha=1$]{
-   \includegraphics[width=0.5\textwidth]{randfunc_1}
+   \includegraphics[width=0.5\textwidth]{images/randfunc_1}
    }
    \subfloat[$\alpha=2$]{
-   \includegraphics[width=0.5\textwidth]{randfunc_2}
+   \includegraphics[width=0.5\textwidth]{images/randfunc_2}
    }\\
    \begin{center}
    \subfloat[$\alpha=3$]{
-   \includegraphics[width=0.5\textwidth]{randfunc_3}
+   \includegraphics[width=0.5\textwidth]{images/randfunc_3}
    }
    \end{center}
    \caption{Examples of random functions generated by different
@@ -1923,16 +1924,16 @@ sparking my interest in artificial intelligence and mathematics.
 
     \begin{figure}[h!]
     \subfloat[Baseline area]{
-    \includegraphics[width=0.5\textwidth]{baseline_area_random}
+    \includegraphics[width=0.5\textwidth]{images/baseline_area_random}
     }
     \subfloat[Baseline PDF]{
-    \includegraphics[width=0.5\textwidth]{baseline_pmf_random}
+    \includegraphics[width=0.5\textwidth]{images/baseline_pmf_random}
     }\\
     \subfloat[Gaussian area]{
-    \includegraphics[width=0.5\textwidth]{gaussian_area_random}
+    \includegraphics[width=0.5\textwidth]{images/gaussian_area_random}
     }
     \subfloat[Gaussian PDF]{
-    \includegraphics[width=0.5\textwidth]{gaussian_pmf_random}
+    \includegraphics[width=0.5\textwidth]{images/gaussian_pmf_random}
     }
     \caption{Grand mean of error over 5 functions for each value of $\alpha$ for the preliminary random
     function experiments for each method combination.}
@@ -1963,16 +1964,16 @@ sparking my interest in artificial intelligence and mathematics.
     error than the area method.
     \begin{figure}[h!]
     \subfloat[Baseline area]{
-    \includegraphics[width=0.5\textwidth]{baseline_area_morerand}
+    \includegraphics[width=0.5\textwidth]{images/baseline_area_morerand}
     }
     \subfloat[Baseline PDF]{
-    \includegraphics[width=0.5\textwidth]{baseline_pmf_morerand}
+    \includegraphics[width=0.5\textwidth]{images/baseline_pmf_morerand}
     }\\
     \subfloat[Gaussian area]{
-    \includegraphics[width=0.5\textwidth]{gaussian_area_morerand}
+    \includegraphics[width=0.5\textwidth]{images/gaussian_area_morerand}
     }
     \subfloat[Gaussian PDF]{
-    \includegraphics[width=0.5\textwidth]{gaussian_pmf_morerand}
+    \includegraphics[width=0.5\textwidth]{images/gaussian_pmf_morerand}
     }
     \caption{Grand mean of error over 5 functions for each value of $\alpha$ for the second set of random
     function experiments for each method combination.}
@@ -2146,7 +2147,7 @@ sparking my interest in artificial intelligence and mathematics.
    your favourite program. Alternatively, clone the current version of the
    repository with 
    \begin{verbatimtab} 
-   git clone [[https://github.com/heuristicus/final-year-project.git]]
+   git clone https://github.com/heuristicus/final-year-project.git
    \end{verbatimtab}
    Before the program can be configured, we must install some libraries without
    which the program will not run. Download the latest muParser package from
