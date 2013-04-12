@@ -1,6 +1,6 @@
 # Makes a table of mean values from the data in the top level file in the results directory.
 # One table is produced for each value of alpha and the four possible method combinations.
-INDIR=/media/michal/Edison/fyp/new/random/rand_results
+INDIR=/media/michal/Edison/fyp/new/sine/preliminary/prelim_results
 OUTFILE=$INDIR/errvals.dat
 # Number of columns to use when calculating averages for alpha values.
 # Should be equal to the number of alpha values used in the experiments
@@ -13,8 +13,7 @@ for COL in $(seq 1 $NCOLS); do
     HOLD=""
     for FILE in $INDIR/*.txt; do
         # Get the column of the mean values of the estimates and put it into one column for each alpha value
-	COLS=`awk '{print $5}' $FILE | grep -v '^\s*$' | pr -ts --columns $NCOLS | sed '1d'`
-
+	COLS=`awk '{print $3}' $FILE | grep -v '^\s*$' | pr -ts --columns $NCOLS | sed '1d'`
         # Extract the column in question
 	C=`echo "$COLS" | awk '{print $'$COL'}'`
         # Create an octave script to calculate mean and stdev
