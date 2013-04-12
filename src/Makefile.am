@@ -1,0 +1,27 @@
+lib_LTLIBRARIES = libdeltastream.la
+noinst_LTLIBRARIES = libfile_util.la libmath_util.la libgeneral_util.la libparamlist.la
+libfile_util_la_SOURCES = file_util.c file_util.h
+libmath_util_la_SOURCES = math_util.c math_util.h
+libgeneral_util_la_SOURCES = general_util.c general_util.h
+libparamlist_la_SOURCES = paramlist.c paramlist.h
+libdeltastream_la_SOURCES = 
+libdeltastream_la_LIBADD = libfile_util.la libmath_util.la libgeneral_util.la libparamlist.la
+
+bin_PROGRAMS = deltastream
+generator_SOURCES = generator.c generator.h
+estimator_SOURCES = estimator.c estimator.h
+estimator_iwls_SOURCES = estimator_IWLS.c estimator.h
+estimator_piecewise_SOURCES = estimator_IWLS.c estimator_piecewise.c estimator.h
+estimator_baseline_SOURCES = estimator_IWLS.c estimator_piecewise.c estimator_baseline.c estimator.h
+estimator_gaussian_SOURCES = estimator_gaussian.c estimator.h
+estimator_delta_SOURCES = estimator_delta.c estimator.h
+experimenter_SOURCES = experimenter.c generator.c estimator.c estimator.h generator.h estimator_IWLS.c estimator_piecewise.c estimator_baseline.c
+deltastream_SOURCES = launcher.c generator.c estimator.c estimator.h generator.h estimator_IWLS.c estimator_piecewise.c estimator_baseline.c estimator_gaussian.c estimator_delta.c combinefunction.c combinefunction.h experimenter.c experimenter.h
+combinefunction_SOURCES = combinefunction.c combinefunction.h estimator.h
+generator_LDADD = libdeltastream.la #libfile_util.la libmath_util.la libgeneral_util.la libparamlist.la
+deltastream_LDADD = libdeltastream.la #libfile_util.la libmath_util.la libgeneral_util.la libparamlist.la
+estimator_iwls_LDADD = libdeltastream.la #libfile_util.la libmath_util.la libgeneral_util.la libparamlist.la
+estimator_piecewise_LDADD = libdeltastream.la #libfile_util.la libmath_util.la libgeneral_util.la libparamlist.la
+estimator_baseline_LDADD = libdeltastream.la #libfile_util.la libmath_util.la libgeneral_util.la libparamlist.la
+estimator_gaussian_LDADD = libdeltastream.la #libfile_util.la libmath_util.la libgeneral_util.la libparamlist.la
+experimenter_LDADD = libdeltastream.la #libfile_util.la libmath_util.la libgeneral_util.la libparamlist.la

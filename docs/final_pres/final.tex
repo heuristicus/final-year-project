@@ -1,0 +1,595 @@
+% $Header: /home/vedranm/bitbucket/beamer/solutions/conference-talks/conference-ornate-20min.en.tex,v 90e850259b8b 2007/01/28 20:48:30 tantau $
+\documentclass{beamer}
+\usepackage{amsmath,algorithm,algorithmic,tikz,adjustbox,pgfplots,pgfplotstable,subfig,graphicx}
+\usetikzlibrary{shapes,arrows,positioning,patterns}
+\usepackage[english]{babel}
+% % or whatever
+
+\usepackage[latin1]{inputenc}
+% % or whatever
+
+%\usepackage[T1]{fontenc}
+% Or whatever. Note that the encoding and the font should match. If T1
+% does not look nice, try deleting the line with the fontenc.
+\usepackage{graphicx}
+\usepackage{cmbright}
+% This file is a solution template for:
+
+% - Talk at a conference/colloquium.
+% - Talk length is about 20min.
+% - Style is ornate.
+
+
+
+% Copyright 2004 by Till Tantau <tantau@users.sourceforge.net>.
+%
+% In principle, this file can be redistributed and/or modified under
+% the terms of the GNU Public License, version 2.
+%
+% However, this file is supposed to be a template to be modified
+% for your own needs. For this reason, if you use this file as a
+% template and not specifically distribute it as part of a another
+% package/program, I grant the extra permission to freely copy and
+% modify this file as you see fit and even to delete this copyright
+% notice. 
+\mode<presentation>
+{
+  \usetheme{Amsterdam}
+  %\usefonttheme{serif}
+  % or ...
+
+  \setbeamercovered{transparent}
+  \beamertemplatenavigationsymbolsempty
+  % or whatever (possibly just delete it)
+}
+
+\setbeamertemplate{footline}
+{
+  \leavevmode%
+  \hbox{%
+  \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,center]{author in head/foot}%
+    \usebeamerfont{author in head/foot}\insertshortauthor % Get rid of short institute next to name
+  \end{beamercolorbox}%
+  \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,center]{title in head/foot}%
+    \usebeamerfont{title in head/foot}\insertshorttitle
+  \end{beamercolorbox}%
+  \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,right]{date in head/foot}%
+    \usebeamerfont{date in head/foot}\insertshortdate{}\hspace*{2em}
+    \insertframenumber{} / \inserttotalframenumber\hspace*{2ex} 
+  \end{beamercolorbox}}%
+  \vskip0pt%
+}
+\makeatother
+\setbeamercovered{dynamic}
+\title[Time Delay Estimation] % (optional, use only with long paper titles)
+{Time Delay Estimation in Gravitationally Lensed Photon Stream Pairs}
+
+\author[Micha{\l} Staniaszek]{\large{Micha{\l} Staniaszek} \\ \scriptsize{Supervisor: Peter Ti\v{n}o}}
+\institute[bham]{The University of Birmingham}
+
+\setcounter{tocdepth}{1}
+
+\date{\today}
+
+% If you wish to uncover everything in a step-wise fashion, uncomment
+% the following command: 
+
+%\beamerdefaultoverlayspecification{<+->}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{Outline}
+  \tableofcontents
+  % You might wish to add the option [pausesections]
+\end{frame}
+
+\section{The Problem}
+
+\begin{frame}{What is Gravitational Lensing?}
+  \begin{itemize}[<+->]
+  \item The bending of light due to gravitational effects
+  \item Objects such as galaxy clusters affect the path of light
+  \item Multiple images of the lensed object can be observed
+  \item Source has a characteristic signal
+  \item Images have the same signal, but with some time delay $\Delta$
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Strong vs. Weak Lensing}
+  \begin{block}{Strong Lensing}
+    Time delays can be on the order of hundreds of days
+      \begin{itemize}
+    \item<2-> Daily measurements of photon flux used to observe variation
+    \end{itemize}
+  \end{block}
+  \begin{block}{Weak Lensing}<3->
+    \uncover<3->{
+    Time delays are on a much shorter timescale
+  }
+    \begin{itemize}
+    \item<4-> Variation in the signal observed on the order of hours rather than days
+    \item<5-> Track individual photon arrival times (streams of photons)
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\section{The Project}
+
+\begin{frame}{Aim of the Project}
+  Create a system to estimate the time delay $\Delta$ between pairs of
+  photon streams from weakly lensed objects
+\end{frame}
+
+\begin{frame}{Motivation}
+  \begin{enumerate}
+  \item<1-> Form the base for a system to automatically flag potential lensed
+    objects
+    \uncover<2->{
+    \begin{itemize}
+    \item<2-> Lots of data, but analysing it all is difficult
+    \item<3-> Flag interesting-looking objects for further investigation
+    \end{itemize}
+  }
+  \item<4-> Better estimates of time delay are useful
+    \begin{itemize}
+    \item<5-> Improved estimates of $H_0$
+    \item<6-> Dark matter measurements
+    \item<7-> Mass distribution for regions of space
+    \end{itemize}
+  \end{enumerate}
+\end{frame}
+
+\section{System Components}
+
+\begin{frame}
+  Three main parts of the system
+  \begin{enumerate}
+  \item<1-> \alert<4->{Photon stream simulation}
+  \item<2-> Function estimation
+  \item<3-> Time delay estimation
+  \end{enumerate}
+\end{frame}
+
+\subsection{Simulating Photons}
+
+\begin{frame}{Photon Simulation}
+  We use a nonhomogeneous poisson process to simulate arrival times.
+  \begin{itemize}[<+->]
+  \item Rate parameter $\lambda$ is the expected number of arrivals per unit time
+  \item Waiting time until the next event has an exponential distribution
+  \item Time to next event in homogeneous process $t=-\frac{1}{\lambda}\ln(U)$,
+    where $U\sim U(0,1)$
+  \item Use thinning on events generated using the above to generate times based
+    on a nonhomogeneous process
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Function Generation}
+  To generate events, need some function $\lambda(t)$
+  \begin{itemize}[<+->]
+  \item Randomly generate function by using Gaussians
+  \item Centre Gaussians at uniform intervals $\Delta t$, with standard
+    deviation $\alpha \cdot \Delta t$
+  \item Sum the Gaussians to give a continuous function
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[label=gauss]
+  \begin{figure}
+    \centering
+    \begin{tikzpicture}
+      \begin{axis}[xmin=0, xmax=100, ymin=-10,
+        ymax=25]
+        \addplot[mark=none, color=red] table[x index=0,y index=1,col sep=space]
+        {random_function_0_sum.dat};
+        \addplot[mark=none, color=blue] table[x index=0,y index=1,col sep=space] {random_function_0_contrib.dat};
+      \end{axis}
+    \end{tikzpicture}
+    \caption{The red function is generated by summing the blue Gaussians. Gaussian values are multiplied by 3. Function is shifted so
+      all $y\geq 0$}
+  \end{figure}
+\end{frame}
+
+\subsection{Function Estimation}
+
+\begin{frame}
+  Three main parts of the system
+  \begin{enumerate}
+  \item Photon stream simulation
+  \item \alert{Function estimation}
+  \item Time delay estimation
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{General Idea}
+  \begin{enumerate}
+  \item Split the interval into bins
+  \item Count the number of events that occur in each bin
+  \item Estimate functions based on these counts
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{Iterative Weighted Least Squares}
+  Estimate linear functions of the form $y=a+bx$ using Iterative Weighted Least Squares (IWLS)
+  \begin{itemize}[<+->]
+  \item Find \[\min_{\alpha,\beta}\sum_{k=1}^{n}w_k\cdot(Y_k-[\alpha+\beta x])^2\]
+  \item $\alpha$ and $\beta$ are estimators for $a$ and $b$, $w_k$ is the weight assigned to each value $Y_k$, which is the event count for the $k$th bin. $x$ is the midpoint of the sub-interval.
+  \item Update weights at each iteration by using estimated values of $\lambda$ in each sub-interval.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Piecewise}
+  Some parts of functions can be reasonably approximated by straight lines
+  \begin{itemize}[<+->]
+  \item Split the interval into several subintervals and estimate each in turn
+  \item Once an estimate is done, extend the line to probe the next interval
+  \item If the extension matches the data, keep it
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Baseline}
+  Characteristic functions of photon streams are continuous - must make the
+  piecewise estimate continuous as well.
+  \begin{itemize}[<+->]
+  \item Modify each interval estimate to make a continuous function
+  \item At each breakpoint, find the midpoint between the estimates
+  \item Modify function values to make the end point of one interval
+    estimate meet the start of the next
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Piecewise Estimate Example}
+  \begin{center}
+    \begin{tikzpicture}
+      \pgfplotsset{every axis legend/.append style={
+          at={(0.5,1.03)},anchor=south,draw=none, font=\small}}
+      \begin{axis}[xmin=0, xmax=100, ymin=0, ymax=25, legend columns=4]
+        \addplot[only marks, mark=x, color=green, opacity=0.35] table[x index=0,y index=1,col
+        sep=space] {bins.dat};
+        \addlegendentry{Bin counts}
+        \addplot[mark=none, color=black] table[x index=0,y index=1,col sep=space]
+        {real_func.dat};
+        \addlegendentry{Real}
+        \addplot[mark=none, color=blue] table[x index=0,y index=1,col sep=space]
+        {piecewise.dat};
+        \addlegendentry{Piecewise}
+      \end{axis}
+    \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Baseline Estimate vs Piecewise Estimate}
+  \begin{center}
+    \begin{tikzpicture}
+      \pgfplotsset{every axis legend/.append style={
+          at={(0.5,1.03)},anchor=south,draw=none, font=\small}}
+      \begin{axis}[xmin=0, xmax=100, ymin=0, ymax=25, legend columns=4]
+        \addplot[only marks, mark=x, color=green, opacity=0.35] table[x index=0,y index=1,col
+        sep=space] {bins.dat};
+        \addlegendentry{Bin counts}
+        \addplot[mark=none, color=black] table[x index=0,y index=1,col sep=space]
+        {real_func.dat};
+        \addlegendentry{Real}
+        \addplot[mark=none, color=blue, opacity=0.5] table[x index=0,y index=1,col sep=space]
+        {piecewise.dat};
+        \addlegendentry{Piecewise}
+        \addplot[mark=none, color=red] table[x index=0,y index=1,col sep=space]
+        {baseline.dat};
+        \addlegendentry{Baseline}
+      \end{axis}
+    \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Kernel Density}
+  \begin{itemize}[<+->]
+  \item Centre a Gaussian kernel at each event time
+  \item Sum Gaussians to approximate the function
+  \item Must be normalised depending on standard deviation used
+  \item Use probability density function to automatically calculate normalisation constant
+  \end{itemize}
+\end{frame}
+
+%\againframe{gauss}
+
+\subsection{Time Delay Estimation}
+
+\begin{frame}
+  Three main parts of the system
+  \begin{enumerate}
+  \item Photon stream simulation
+  \item Function estimation
+  \item \alert{Time delay estimation}
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{General Idea}
+  The actual $\Delta$ is not known, so we make guesses and check to see how good
+  they are.
+  \begin{itemize}[<+->]
+  \item Estimate each stream of photons
+  \item Pick a value of $\Delta$ and shift the function estimate
+  \item Compare it to the other estimate and see how good the match is
+  \item Hierarchical - coarse first pass, improve estimate with finer second pass
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Area Between Curves}
+  \begin{enumerate}[<+->]
+  \item Approximate the area between the two function estimates $\hat{\lambda}_1$
+    and $\hat{\lambda}_2$
+    \begin{align*}
+      d(\hat{\lambda}_1,\hat{\lambda}_2)&=\int(\hat{\lambda}_1(t)-\hat{\lambda}_2(t))^2\,dt\\
+      &\approx\frac{1}{N}\sum_{i=1}^N(\hat{\lambda}_1(t)-\hat{\lambda}_2(t))^2
+    \end{align*}
+  \item Find the value of $\Delta$ for which
+    $d(\hat{\lambda}_1,\hat{\lambda}_2)$ is minimised
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{Probability Density}
+  \begin{enumerate}[<+->]
+  \item Pick a value of $\Delta$
+  \item Combine function estimates $\hat{\lambda}_1$ and $\hat{\lambda}_2$ into
+    an ``average'' function $\overline{\lambda}$, where
+    \[\overline{\lambda}(t)=\frac{\hat{\lambda}_1(t)+\hat{\lambda}_2(t+\Delta)}{2}\]
+  \item See how well $\overline{\lambda}$ matches the data from the two streams
+    by maximising
+  \end{enumerate}
+  \uncover<3->{\begin{align*}
+      \log P(S_A,S_B\mid\overline{\lambda}(t))=\sum_{t=\Delta}^{T-\Delta}&\log P(S_A(t)\mid \overline{\lambda}(t))\\
+      &+ \log P(S_B(t+\Delta)\mid \overline{\lambda}(t))
+  \end{align*}}
+\end{frame}
+
+
+\section{Experimentation}
+
+\begin{frame}{Experimental Setup}
+  Three sets of experiments
+  \begin{enumerate}[<+->]
+  \item Preliminary sine function experiments
+    \begin{itemize}
+    \item Vary $\alpha$ in $y=a-b\sin(\alpha t)$
+    \item Higher $\alpha$ leads to faster oscillation
+    \end{itemize}
+  \item Experiments on a smaller range to see degradation
+  \item Random functions
+    \begin{itemize}
+    \item Vary $\alpha$ where standard deviation of Gaussian $\sigma=\alpha\cdot\Delta t$
+    \end{itemize}
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{Experimental Method}
+  \begin{enumerate}[<+->]
+  \item Perform model selection on each stream
+    \begin{itemize}
+    \item withhold some event data
+    \item Determine optimal parameters for each set of streams
+    \end{itemize}
+  \item Estimate time delay for each pair of streams using optimal parameters (with all data)
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{Results}
+  \begin{itemize}
+  \item Area estimator better than PDF, but significance not high
+  \item Both types of estimators not significantly different
+  \end{itemize}
+  \begin{center}
+    \begin{figure}
+      \centering
+      \begin{tabular}{ r|c|c| }
+        \multicolumn{1}{r}{}
+        &  \multicolumn{1}{c}{Gaussian}
+        & \multicolumn{1}{c}{Baseline} \\
+        \cline{2-3}
+        Area&$15.95\pm 4.51$&$15.99\pm 3.09$\\\cline{2-3}
+        PDF&$16.53\pm 11.80$&$15.72\pm 14.06$\\\cline{2-3}
+      \end{tabular}
+      \caption{Experimental results for $\alpha=0.07$ in the second set of sine
+        function experiments ($\mu\pm\sigma$, $n=10$). Actual delay is 15.}
+    \end{figure}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Baseline Estimator Degradation}
+  \begin{adjustbox}{max size={.95\textwidth}{.95\textheight}}
+    \begin{figure}
+      \begin{tabular}{cc}
+        \subfloat[Baseline area]{
+          \begin{tikzpicture}
+            \begin{axis}[xlabel={$\alpha$},ylabel={Error}, scaled x ticks=base 10:2]
+              \addplot[only marks,error bars/.cd,y dir=both, y explicit] table[x
+              index=0,y index=4,col sep=tab,y error index=3] {baseline_area.txt};
+            \end{axis}
+          \end{tikzpicture}
+        }&\subfloat[Baseline PDF]{
+          \begin{tikzpicture}
+            \begin{axis}[xlabel={$\alpha$},ylabel={Error}, scaled x ticks=base 10:2]
+              \addplot[only marks,error bars/.cd,y dir=both, y explicit] table[x
+              index=0,y index=4,col sep=tab,y error index=3] {baseline_pmf.txt};
+            \end{axis}
+          \end{tikzpicture}
+        }\\
+      \end{tabular}
+    \end{figure}
+  \end{adjustbox}
+\end{frame}
+
+\begin{frame}{Gaussian Estimator Degradation}
+  \begin{adjustbox}{max size={.95\textwidth}{.95\textheight}}
+    \begin{figure}
+      \begin{tabular}{cc}
+        \subfloat[Gaussian area]{
+          \begin{tikzpicture}
+            \begin{axis}[xlabel={$\alpha$},ylabel={Error}, scaled x ticks=base 10:2]
+              \addplot[only marks,error bars/.cd,y dir=both, y explicit] table[x
+              index=0,y index=4,col sep=tab,y error index=3] {gaussian_area.txt};
+            \end{axis}
+          \end{tikzpicture}
+        }&\subfloat[Gaussian PDF]{
+          \begin{tikzpicture}
+            \begin{axis}[xlabel={$\alpha$},ylabel={Error}, scaled x ticks=base 10:2]
+              \addplot[only marks,error bars/.cd,y dir=both, y explicit] table[x
+              index=0,y index=4,col sep=tab,y error index=3] {gaussian_pmf.txt};
+            \end{axis}
+          \end{tikzpicture}
+        }\\
+      \end{tabular}
+    \end{figure}
+  \end{adjustbox}
+\end{frame}
+
+\section{Code Base}
+
+\begin{frame}{System Structure}
+  \begin{columns}[t]
+    \begin{column}{0.5\textwidth}
+      \pgfdeclarelayer{background}
+      \pgfdeclarelayer{foreground}
+      \pgfsetlayers{background,main,foreground}
+      % horizontal separation
+      \def \hnsep {0.5}
+      \tikzstyle{sub}=[draw, fill=blue!20, text width=5em, 
+      text centered, minimum height=2.5em, node distance=1.5cm]
+      \begin{adjustbox}{max size={.95\textwidth}{.8\textheight}}
+        \begin{tikzpicture}
+          \node (param) at (0,3.5) [sub] {Parameter file};
+          % libs group
+          \node (math) at (2,6) [sub] {Math};
+          \node (gut) [sub, right=\hnsep of math] {General};
+          \node (file) [sub, right=\hnsep of gut] {File};
+          \node (plist) [sub, right=\hnsep of file] {Parameter List};
+          \node (lib) [below right=0.25cm and -0.65 of gut] {\textbf{Libraries}};
+          % generator group
+          \node (hom) at (2,1) [sub] {HPP};
+          \node (nhm) [sub, below of=hom] {NHPP};
+          \node (rfunc) [sub, below of=nhm] {Random Function};
+          \node (gauss) [sub, below of=rfunc] {Gaussian};
+          \node (gen) [below of=gauss, font=\small] {\textbf{Generators}};
+          \node (strout) [sub, below of=gen] {Stream Data};
+          % estimator group
+          \node (ln) at (6.17,0) [sub] {Linear};
+          \node (pc) [sub, below of=ln] {Piecewise};
+          \node (bl) [sub, below of=pc] {Baseline};
+          \node (kd) [sub, below of=bl] {Kernel Density};
+          \node (td) [sub, below of=kd] {Time Delta};
+          \node (est) [below of=td, font=\small] {\textbf{Estimators}};
+          \node (estout) [sub, below of=est] {Estimator Output};
+          % experimenter
+          \node (expparam) at (11.5,2) [sub] {Experiment Parameters};
+          \node (exp) at (10,0) [sub] {Harness};
+          \node (explbl) [below of=exp, font=\small] {\textbf{Experimenter}};
+          \node (expout) [sub, below of=explbl] {Experiment Results};
+          % Draw the rest on the background layer
+          \begin{pgfonlayer}{background}
+            % Estimator background
+            \path (ln.north west)+(-0.2,0.2) node (a) {};
+            \path (est.south -| ln.east)+(+0.2,-0.2) node (b) {};
+            \path[fill=blue!10,rounded corners, draw=black!50, dashed]
+            (a) rectangle (b);
+            % generator background
+            \path (hom.north west)+(-0.2,0.2) node (c) {};
+            \path (gen.south -| hom.east)+(+0.2,-0.2) node (d) {};
+            \path[fill=blue!10,rounded corners, draw=black!50, dashed]
+            (c) rectangle (d);
+            % libs background
+            \path (math.north west)+(-0.2,0.2) node (e) {};
+            \path (lib.south -| plist.east)+(+0.2,-0.2) node (f) {};
+            \path[fill=blue!10,rounded corners, draw=black!50, dashed]
+            (e) rectangle (f);
+            % experimenter background
+            \path (exp.north west)+(-0.2,0.2) node (g) {};
+            \path (explbl.south -| exp.east)+(+0.2,-0.2) node (h) {};
+            \path[fill=blue!10,rounded corners, draw=black!50, dashed]
+            (g) rectangle (h);
+            
+            % path from expparam to experiments
+            \coordinate [above=1.49 of exp] (expln) {};
+            \coordinate [above=1 of exp] (tpexp) {};
+            \draw [dashed,line width=1pt] (expparam.west) -- (expln);
+            % path from experiments to exp out
+            \draw [->,line width=1pt] (explbl.south)+(0,-0.2) -- (expout.north);
+
+            % library arrows
+            \path (ln.north)+(0,0.05) node (esttop){};    
+            \coordinate [above=0.2cm of hom] (gentop) {};
+            \coordinate [below=2cm of lib] (lsplit) {};
+            \coordinate [below=0.2cm of lib] (blwlib) {};
+            \coordinate [above=0.2cm of exp] (abvexp) {};
+            \draw [-,line width=1pt] (blwlib) -- (lsplit);
+            \draw [->,line width=1pt] (lsplit) -- (esttop);
+            \draw [->,line width=1pt] (lsplit) -| (abvexp);
+            \draw [->,line width=1pt] (lsplit) -| (gentop);
+
+            % path from param to library link
+            \coordinate [above=0.8cm of lsplit] (tt) {};
+            \draw [dashed,line width=1pt] (param.east) -- (tt);
+            
+            % estimator arrows
+            \draw [->] (ln.south) -- (pc.north);
+            \draw [->] (pc.south) -- (bl.north);
+            \coordinate [below=0.2 of est] (blest) {};
+            \draw [->,line width=1pt] (blest)--(estout);
+            \coordinate [right=0.9 of estout] (restout) {};
+            \draw [dashed,line width=1pt] (estout.east) -- (restout);
+            \draw [dashed,line width=1pt] (restout) |- (tpexp);
+            
+            % generator arrows
+            \coordinate [above= 1 of ln] (abvln) {}; %above length est
+            \coordinate [below=0.2 of gen] (bgen) {};
+            \coordinate [right=0.9 of strout] (rstrout) {};
+            \draw [->,line width=1pt] (bgen) -- (strout);
+            \draw [->] (hom.south) -- (nhm.north);
+            \draw [dashed,line width=1pt] (strout.east) -- (rstrout);
+            \draw [dashed,line width=1pt] (rstrout) |- (abvln);
+            
+          \end{pgfonlayer}
+          % \node (lib) at (0,0) [sub] {Libraries};
+          % \node (est) at (1.5,-1) [sub] {Estimators};
+          % \node (gen) at (-1.5,-1) [sub] {Generators};
+          % \draw [->] (lib.east) -| (est.north);
+          % \draw [->] (lib.west) -| (gen.north);
+        \end{tikzpicture}
+      \end{adjustbox}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}
+      \item Modular structure
+      \item Shared libraries for common functions
+      \item Parameter files control behaviour
+      \item Command line interface
+      \item 7000 lines of C code
+      \item Testing using Check utility
+      \item Uses Automake
+      \item In the style of a GNU package
+      \end{itemize}
+    \end{column}
+  \end{columns}
+ \end{frame}
+
+\section*{Summary}
+
+\begin{frame}{Summary}
+
+  % Keep the summary *very short*.
+  \begin{itemize}[<+->]
+  \item We want to find the value of $\Delta$, the time delay between
+    characteristic functions of photon streams
+  \item Photon stream simulation using Poisson processes
+  \item Estimation of characteristic function of stream using baseline or kernel density estimators
+  \item Estimation of time delay with PDF or area estimators
+  \item Experimental results indicate area estimator is better than PDF, but
+    significance is not high
+  \end{itemize}
+\end{frame}
+
+\end{document}
+
+

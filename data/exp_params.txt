@@ -1,0 +1,98 @@
+################################################################################
+#                                     Input                                    #
+################################################################################
+# The directory from which to read event data. This should contain files which
+# have a structured naming scheme, following the parameters specified in the
+# default parameter file.
+input_dir event_streams
+
+################################################################################
+#                                     Output                                   #
+################################################################################
+# Name of the file containing results of experiments.
+exp_outfile exp
+
+# Directory into which files generated will be placed.
+output_dir experiment_output
+
+################################################################################
+#                                     Setup                                    #
+################################################################################
+# Use uniform stuttering, or remove data in the intervals specified by the
+# stutter_intervals parameter.
+uniform_stuttering yes
+
+# Specifies the step at which data will be removed from stream data to create
+# stuttered stream data.
+stutter_step 15.000000
+
+# Specifies the interval length for which data will be removed. Setting this to
+# 2 when the stutter_step is 10 will remove data in the intervals [10,12), [20,22)
+# and so on. Data in [0,2) will not be removed.
+stutter_interval 4.000000
+
+# Specify intervals in which to remove data. The numbers here should be in pairs
+# representing the intervals to delete data from. As such, the array length should
+# be an even number, an numbers with higher indexes should have strictly larger
+# values than those below.
+stutter_intervals 10,13,30,35,65,70
+
+################################################################################
+#                                    Settings                                  #
+################################################################################
+# If you want to run the experiments with parameters co-varying, set this
+# to no. If you are working on the parameters a 1,2,3 and b 1,2,3, then
+# running them with parameters co-varying will get you results for
+# permutations of the parameters. If the experiment priority is a,b then
+# you will get results with parameter settings like a1b1, a1b2, a1b3, a2b1,
+# a2b2, and so on, for all parameter combinations. This might take a very long
+# time if you have a lot of parameters and values.
+run_separately no
+
+# Whether to run experiments on stuttered streams. Stuttered data should be generated
+# first by using the -s switch.
+run_stuttered yes
+
+# Specify the number of streams to use to estimate the time delay.
+num_streams 2
+
+# Specify the number of functions in the data set being used for the experiments.
+num_functions 1
+
+# Here, you can specify the names for experiments that you want to run. Parameters
+# to test can be added to these experiments by adding a [name]_params parameter
+# to this file. The experiments can be run by defining a test_[name] parameter
+# here and setting its value to yes.
+experiment_names baseline,gaussian
+
+# Specify the parameters that you wish to run experiments with. The range of parameters
+# and the parameter name should be defined in this file.
+baseline_params base_max_breakpoints,base_max_extension,base_pmf_threshold,base_iwls_subintervals
+gaussian_params gauss_est_stdev
+
+# Indicate whether or not to run experiments on the parameters specified by
+# the [name]_params parameter. (yes or no)
+test_baseline yes
+test_gaussian yes
+
+# Specify the estimator to use on the given set of experiments.
+baseline_estimator base
+gaussian_estimator gauss
+
+# Estimate the time delay between two streams (delay) or just estimate the function (function)
+baseline_type function
+gaussian_type function
+
+################################################################################
+#                             Experiment Parameters                            #
+################################################################################
+base_iwls_subintervals 2,4,...,10
+base_pmf_threshold 0.01,0.02,...,0.15
+base_max_extension 5,7,...,20
+base_max_breakpoints 5,7,...,20
+gauss_est_stdev 0.5,1.0,...,20
+
+timedelta 0,15
+
+
+
