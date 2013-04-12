@@ -2091,12 +2091,12 @@ machine learning, linear regression, kernel density estimation
 * Usage
 ** Installation
    This installation guide is intended for users of Linux distributions,
-   particularly those which are Ubuntu based. The program has been tested on
-   Linux Mint 13 and 14, but should work on most Linux distributions. First,
-   download the latest version of the program from
+   particularly those which are Ubuntu based. The program was tested on Linux
+   Mint 13 and 14 on a 64 bit architecture, but should work on most Linux
+   distributions. First, download the latest version of the program from
    https://github.com/heuristicus/final-year-project/tags and extract it with
    your favourite program. Alternatively, clone the current version of the
-   repository with 
+   repository with
    #+BEGIN_LaTeX
    \begin{verbatimtab} 
    git clone [[https://github.com/heuristicus/final-year-project.git]]
