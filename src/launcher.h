@@ -85,7 +85,7 @@
     "\t\t Delta Estimation:"						\
     "\n\t\t\t 1 - value computed by the function for each guess at delta" \
     "\n\t\t\t 2 - lambda sums at best estimate, bin data.\n\n"
-#define VERSION "deltastream alpha v0.6"
+#define VERSION "deltastream alpha v0.7"
 #define BUGREPORT "Report bugs to mxs968@cs.bham.ac.uk"
 
 void run_requested_operations(launcher_args* args, char* paramfile, char* extra_paramfile,

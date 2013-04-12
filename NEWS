@@ -1,3 +1,25 @@
+--------------------------------------------------------------------------------
+
+Alpha 0.7: (12/04/03)
+
++ Experiments can be run by using the ./deltastream -x command. The experimenter
+  uses a separate parameter file which can be generated with 
+  ./deltastream -d expparam.txt -x 1
+  Instructions on using the experimenter can be found in the usage
+  instructions.
+
++ Gaussian estimator now automatically normalises function estimates (if
+  requested)
+
++ Generation of multiple stream pairs from a single function is possible, as
+  well as generating multiple streams from multiple functions on the same call.
+
++ Launcher is now run using ./deltastream rather than ./launcher
+
++ Usage guide available in README.md
+
+--------------------------------------------------------------------------------
+
 Alpha 0.6: (19/02/13)
 
 + Estimating the delay between two streams is now possible. Two methods are
