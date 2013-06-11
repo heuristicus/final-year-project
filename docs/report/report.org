@@ -2140,7 +2140,7 @@ machine learning, linear regression, kernel density estimation
    \texttt{-h} or \texttt{--help} options. We will detail some of the options
    below. All parameters which govern the behaviour of the system are defined in
    the parameter files, which have information about what the effect of each is.
-*** Parameter files
+*** Parameter Files
     Some parameter files are provided with the program, but if for some reason
     they are deleted, then additional ones can be created using
     #+BEGIN_LaTeX
