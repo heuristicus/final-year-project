@@ -1,0 +1,64 @@
+#+TITLE: Time Delay Estimation in Gravitationally Lensed Photon Stream Pairs
+#+AUTHOR: \Large{Micha{\l} Staniaszek} \\\small{Supervisor: Peter Ti{\v{n}}o}
+#+EMAIL:     mxs968@cs.bham.ac.uk
+#+DATE:      \today
+#+DESCRIPTION:
+#+KEYWORDS:
+#+LANGUAGE:  en
+#+OPTIONS:   H:3 num:t toc:nil \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+#+OPTIONS:   TeX:t LaTeX:t skip:nil d:nil todo:t pri:nil tags:not-in-toc
+#+INFOJS_OPT: view:nil toc:nil ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
+#+EXPORT_SELECT_TAGS: export
+#+EXPORT_EXCLUDE_TAGS: noexport
+#+LINK_UP:   
+#+LINK_HOME: 
+#+XSLT:
+#+LATEX_CLASS: article
+#+LATEX_CLASS_OPTIONS: [a4paper,11pt]
+#+LATEX_HEADER: \usepackage{fontspec}
+#+LATEX_HEADER: \usepackage[titletoc,page,title]{appendix}
+#+LaTeX_HEADER: \usepackage{biblatex}
+#+LaTeX_HEADER: \usepackage{metalogo}
+#+LaTeX_HEADER: \usepackage{graphicx}
+#+LaTeX_HEADER: \usepackage{moreverb}
+#+LaTeX_HEADER: \usepackage{fancyvrb}
+#+LaTeX_HEADER: \usepackage{setspace}
+#+LaTeX_HEADER: \usepackage{subfig}
+#+LaTeX_HEADER: \usepackage[scientific-notation=true]{siunitx}
+#+LaTeX_HEADER: \usepackage{float}
+#+LaTeX_HEADER: \let\iint\relax % otherwise errors are thrown by amsmath. Defined in latexsym
+#+LaTeX_HEADER: \let\iiint\relax
+#+LaTeX_HEADER: \usepackage{amsmath}
+#+LaTeX_HEADER: \usepackage{hyperref}
+#+LaTeX_HEADER: \usepackage{tikz}
+#+LaTeX_HEADER: \usetikzlibrary{positioning}
+#+LaTeX_HEADER: \bibliography{fyp}
+#+LATEX_HEADER: \defaultfontfeatures{Mapping=tex-text}
+#+LATEX_HEADER: \setromanfont[Ligatures={Common},Numbers={Lining}]{Linux Libertine}
+
+#+BEGIN_abstract
+this is the abstract
+#+END_abstract
+
+* Introduction
+ - explain the project in layman's terms
+* Background
+  - Ideas behind the project
+  - what it's useful for
+  - what gravitational lensing and time delay are
+* Photon Stream Simulation
+  - Poisson processes, simple equations
+* Function Estimation
+  - Basic explanation of the IWLS estimator
+  - slightly more in-depth stuff for the development of our estimators
+* Time Delay Estimation
+** PDF Method
+** Area Method
+* Experimental Results
+ - general explanation of the experiments performed
+ - how was model selection done
+ - what sort of data were experiments performed on
+* System
+ - very brief explanation of the system features
+* Conclusion
+ - some suggestions for extensions
