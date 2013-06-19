@@ -22,8 +22,11 @@
 #+LaTeX_HEADER: \usepackage{graphicx}
 #+LaTeX_HEADER: \usepackage{moreverb}
 #+LaTeX_HEADER: \usepackage{fancyvrb}
+#+LaTeX_HEADER: \usepackage{fullpage}
 #+LaTeX_HEADER: \usepackage{setspace}
 #+LaTeX_HEADER: \usepackage{subfig}
+#+LaTeX_HEADER: \usepackage{algorithm}
+#+LaTeX_HEADER: \usepackage{algorithmic}
 #+LaTeX_HEADER: \usepackage[scientific-notation=true]{siunitx}
 #+LaTeX_HEADER: \usepackage{float}
 #+LaTeX_HEADER: \let\iint\relax % otherwise errors are thrown by amsmath. Defined in latexsym
@@ -47,7 +50,46 @@ this is the abstract
   - what it's useful for
   - what gravitational lensing and time delay are
 * Photon Stream Simulation
-  - Poisson processes, simple equations
+In the early stages of the project, we developed a subsystem which could be used
+to generate simulated photon stream data to use for the development and testing
+of the rest of the project. The only property of the photons which we are
+interested in is their arrival time at our capture device, so the simulator
+should produce some vector $\Phi=\left[\phi_0,\dots,\phi_N\right], \phi_n \in
+\mathbb{R}$, where $\phi_n$ is the arrival time of the $n\text{th}$ photon. In
+order to generate arrival times, we represent the source as some random variable
+$X$, which defines the average number of photons per unit time that arrive at
+the capture device. The behaviour of $X$ is modelled as a non-homogeneous
+Poisson process (NHPP) with continuous rate function $\lambda(t)$. The rate
+function can be specified either by providing an expression which is a function
+of $t$, or by sampling from a randomly generated function. Random functions are
+constructed by uniformly distributing $M$ Gaussians across the interval
+$\left[t_0,T\right]$ in which arrival times are to be generated. Thus, the
+simulator creates a very simple model of a source object form which to generate
+photon arrival times.
+
+\begin{comment}
+  \begin{algorithm}[H]
+    \begin{algorithmic}[1]
+      \REQUIRE $\lambda\geq \lambda(t), 0 \leq t \leq T$
+      \STATE $\Phi=\emptyset$, $t=0$, $T=\text{interval length}$
+      \WHILE{$t<T$}
+      \STATE Generate $U_1\sim U(0,1)$
+      \STATE $\phi_n=t-\frac{1}{\lambda}\ln(U_1)$
+      \STATE Generate $U_2\sim U(0,1)$, independent of $U_1$
+      \IF{$U_2\leq\frac{\lambda(t)}{\lambda}$}
+      \STATE $\Phi \leftarrow \phi_n$
+      \ENDIF
+      \ENDWHILE
+      \RETURN $\Phi$
+    \end{algorithmic}
+    \caption{Simulating T Time Units of a NHPP by Thinning}
+    \label{alg:seq}
+  \end{algorithm}
+\end{comment}
+The function $\lambda(t)$ is the characteristic function of the object
+from which the photon stream propagates, and defines the arrival rate of photons
+at some time $t$. Given that the
+
 * Function Estimation
   - Basic explanation of the IWLS estimator
   - slightly more in-depth stuff for the development of our estimators
