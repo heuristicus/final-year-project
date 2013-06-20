@@ -58,14 +58,31 @@ should produce some vector $\Phi=\left[\phi_0,\dots,\phi_N\right], \phi_n \in
 \mathbb{R}$, where $\phi_n$ is the arrival time of the $n\text{th}$ photon. In
 order to generate arrival times, we represent the source as some random variable
 $X$, which defines the average number of photons per unit time that arrive at
-the capture device. The behaviour of $X$ is modelled as a non-homogeneous
-Poisson process (NHPP) with continuous rate function $\lambda(t)$. The rate
-function can be specified either by providing an expression which is a function
-of $t$, or by sampling from a randomly generated function. Random functions are
-constructed by uniformly distributing $M$ Gaussians across the interval
-$\left[t_0,T\right]$ in which arrival times are to be generated. Thus, the
-simulator creates a very simple model of a source object form which to generate
-photon arrival times.
+the capture device.
+
+The behaviour of $X$ is modelled as a non-homogeneous Poisson process (NHPP)
+with continuous rate function $\lambda(t)$, where $t$ is some point in time. The
+rate function can be specified either by providing an expression which is a
+function of $t$, or by sampling from a randomly generated function. Random
+functions are constructed by uniformly distributing $M$ Gaussians across the
+interval $\left[t_0,T\right]$ in which arrival times are to be generated. Each
+Gaussian $g_i$ is defined by its mean \mu_i, its width \sigma_i, and its
+weight $w_i$, which determines its height. The means of successive Gaussians are
+separated by some distance $\Delta t$, such that $\mu_{m+1}=\mu_m + \Delta
+t,\text{ where } \mu_0=0$. Greater variation in the functions is introduced by
+sampling the weights $w_i$ from a uniform distribution $U(-1,1)$ and scaling
+them by some multiplier. A weighted sum of Gaussians
+\begin{align}
+   f(t) = \sum_{i=0}^M w_i\cdot e^{-(t-\mu_i)^2/2\sigma_i^2}
+\end{align}
+is used to compute the value of the randomly generated function $f$ at some
+point $t$ by summing the values of all Gaussians at that point.
+
+Thus, the simulator creates a very simple model of a source object from which to
+generate photon arrival times.
+
+Having defined or constructed $\lambda(t)$, we generate photon arrival times by
+thinning arrival times generated with inverse transform sampling.
 
 \begin{comment}
   \begin{algorithm}[H]
@@ -86,9 +103,6 @@ photon arrival times.
     \label{alg:seq}
   \end{algorithm}
 \end{comment}
-The function $\lambda(t)$ is the characteristic function of the object
-from which the photon stream propagates, and defines the arrival rate of photons
-at some time $t$. Given that the
 
 * Function Estimation
   - Basic explanation of the IWLS estimator
