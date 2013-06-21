@@ -1,4 +1,4 @@
-% Created 2013-06-20 Thu 16:55
+% Created 2013-06-21 Fri 16:58
 \documentclass[a4paper,11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -80,51 +80,71 @@ should produce some vector $\Phi=\left[\phi_0,\dots,\phi_N\right], \phi_n \in
 \mathbb{R}$, where $\phi_n$ is the arrival time of the $n\text{th}$ photon. In
 order to generate arrival times, we represent the source as some random variable
 $X$, which defines the average number of photons per unit time that arrive at
-the capture device.
+the capture device, and whose varies according to the characteristic function of
+the source object.
 
-The behaviour of $X$ is modelled as a non-homogeneous Poisson process (NHPP)
-with continuous rate function $\lambda(t)$, where $t$ is some point in time. The
-rate function can be specified either by providing an expression which is a
-function of $t$, or by sampling from a randomly generated function. Random
-functions are constructed by uniformly distributing $M$ Gaussians across the
-interval $\left[t_0,T\right]$ in which arrival times are to be generated. Each
-Gaussian $g_i$ is defined by its mean $\mu$$_i$, its width $\sigma$$_i$, and its
-weight $w_i$, which determines its height. The means of successive Gaussians are
-separated by some distance $\Delta t$, such that $\mu_{m+1}=\mu_m + \Delta
-t,\text{ where } \mu_0=0$. Greater variation in the functions is introduced by
-sampling the weights $w_i$ from a uniform distribution $U(-1,1)$ and scaling
-them by some multiplier. A weighted sum of Gaussians
+The characteristic function of $X$ is modelled as a non-homogeneous Poisson
+process (NHPP) with continuous function of time, $\lambda(t)$, known as the rate
+function. The rate function can be specified either by providing an expression
+which is a function of $t$, or by sampling from a randomly generated
+function. Random functions are constructed by uniformly distributing $M$
+Gaussians across the interval $\left[t_0,T\right]$ in which arrival times are to
+be generated. Each Gaussian $g_i$ is defined by its mean $\mu$$_i$, its width
+$\sigma$$_i$, and its weight $w_i$, which determines its height. The means of
+successive Gaussians are separated by some distance $\Delta t$, such that
+$\mu_{m+1}=\mu_m + \Delta t,\text{ where } \mu_0=0$. Greater variation in the
+functions is introduced by sampling the weights $w_i$ from a uniform
+distribution $U(-1,1)$ and scaling them by some multiplier. The value of the
+randomly generated function at some time $t$ is computed by
 \begin{align}
-   f(t) = \sum_{i=0}^M w_i\cdot e^{-(t-\mu_i)^2/2\sigma_i^2}
+   \lambda(t) = \sum_{i=0}^M w_i\cdot e^{-(t-\mu_i)^2/2\sigma_i^2}
 \end{align}
-is used to compute the value of the randomly generated function $f$ at some
-point $t$ by summing the values of all Gaussians at that point.
+which is a weighted sum of Gaussians. 
 
-Thus, the simulator creates a very simple model of a source object from which to
-generate photon arrival times.
+Having defined or constructed $\lambda(t)$, photon arrival times are generated
+from a homogeneous Poisson process (HPP) with constant rate $\lambda$, using
+inverse transform sampling. The waiting time to the next event in a Poisson
+process is \cite{1998art}
+\begin{align}\label{eq:homlambda}
+t=-\frac{1}{\lambda}\log(U)
+\end{align}
+where $U\sim (-1,1)$
+Using this calculation, it is possible to generate a realisation of a HPP for
+an interval of any finite length. This provides a base which can be extended
+to generate events from NHPPs.
 
-Having defined or constructed $\lambda(t)$, we generate photon arrival times by
-thinning arrival times generated with inverse transform sampling.
+To generate events from an NHPP with a rate function $\lambda(t)$, we use a
+technique called thinning, where we generate a large number of values, and
+then throw some of them away based on some criterion. In the case of the
+NHPP, we generate events from a HPP with a rate parameter $\lambda$, where
+$\lambda>\lambda(t)$ for $0<=t<=T$. In other words, the homogeneous lambda
+value must be larger than the value of the rate function for the whole time
+the process runs. First, two random values are independently sampled from a
+uniform distribution, $U_1,U_2\sim U(0,1)$. The first number, $U_1$, is used
+in \eqref{eq:homlambda} to find the next event time from the homogeneous
+process governed by $\lambda$. Using the time $t$ generated from that, the
+value of $\lambda(t)$ is calculated. If $U_2\leq\frac{\lambda(t)}{\lambda}$,
+then the event is kept. The closer $\lambda(t)$ is to $\lambda$, the more
+events will be kept, and so the number of events generated depends on the
+shape of the rate function.
 
-\begin{comment}
-  \begin{algorithm}[H]
-    \begin{algorithmic}[1]
-      \REQUIRE $\lambda\geq \lambda(t), 0 \leq t \leq T$
-      \STATE $\Phi=\emptyset$, $t=0$, $T=\text{interval length}$
-      \WHILE{$t<T$}
-      \STATE Generate $U_1\sim U(0,1)$
-      \STATE $\phi_n=t-\frac{1}{\lambda}\ln(U_1)$
-      \STATE Generate $U_2\sim U(0,1)$, independent of $U_1$
-      \IF{$U_2\leq\frac{\lambda(t)}{\lambda}$}
-      \STATE $\Phi \leftarrow \phi_n$
-      \ENDIF
-      \ENDWHILE
-      \RETURN $\Phi$
-    \end{algorithmic}
-    \caption{Simulating T Time Units of a NHPP by Thinning}
-    \label{alg:seq}
-  \end{algorithm}
-\end{comment}
+\begin{algorithm}[H]
+\begin{algorithmic}[1]
+\REQUIRE $\lambda\geq \lambda(t), t_0 \leq t \leq T$
+\STATE $\Phi=\emptyset$, $t=t_0$, $T=\text{interval length}$
+\WHILE{$t<T$}
+\STATE Generate $U_1\sim U(0,1)$
+\STATE $t=t-\frac{1}{\lambda}\ln(U_1)$
+\STATE Generate $U_2\sim U(0,1)$, independent of $U_1$
+\IF{$U_2\leq\frac{\lambda(t)}{\lambda}$}
+\STATE $\Phi \leftarrow t$
+\ENDIF
+\ENDWHILE
+\RETURN $\Phi$
+\end{algorithmic}
+\caption{Simulating T Time Units of a NHPP by Thinning}
+\label{alg:seq}
+\end{algorithm}
 \section{Function Estimation}
 \label{sec-4}
 
@@ -132,12 +152,137 @@ thinning arrival times generated with inverse transform sampling.
 \item Basic explanation of the IWLS estimator
 \item slightly more in-depth stuff for the development of our estimators
 \end{itemize}
+\subsection{KDE}
+\label{sec-4-1}
+
+   The second function estimation method implemented was a kernel density
+   estimator, which use \emph{kernels} to estimate the probability density of a
+   random variable. A kernel is simply a weighting function, which affects how
+   much a given sample is considered when constructing the function
+   estimate. Since the photon stream data is assumed to be generated by a source
+   whose variability is defined by some random variable, the event times are a
+   sample drawn from the PDF of that variable. We use a Gaussian kernel
+   \begin{align}
+   K(t,\mu)=e^{-(t-\mu)^2/2\sigma^2}
+   \end{align}
+   to estimate the PDF, centring a kernel at each photon arrival time $a$ by
+   setting $\mu=a$. The width of the kernel depends on some fixed value
+   $\sigma$. We perform a Gauss transform on the $N$ kernels, finding the
+   contribution of all the kernels at $M$ points in time, from which we get an
+   estimate $\hat{\lambda}(t)$ of the characteristic function.
+   \begin{align}
+   \hat{\lambda}(t_i) = \sum_{j=1}^N K(t_i,\mu_j), \quad i=1,\dots,M
+   \end{align}
+   Using a larger $M$ gives a higher resolution. Depending on the value of
+   $\sigma$ used, $\hat{\lambda}(t)$ will be some multiple of the actual
+   function $\lambda(t)$. Thus, the final step is to normalise
+   $\hat{\lambda}(t)$. We split the stream data into $B$ bins with midpoints $b$
+   and calculate the bin count $x$ for each. We start with the normalisation
+   constant $\eta$ at a low value, and gradually increase it to some threshold,
+   finding
+   \begin{equation}\label{eq:normcalc}
+   \sum_{i=1}^B
+   \log\left(\frac{\phi^xe^{-\phi}}{x!}\right), \quad \phi=\eta\cdot\hat{\lambda}(b_i)
+   \end{equation}
+   for each value of $\eta$. The value of $\eta$ which maximises this sum of log
+   Poisson PDFs is used to normalise $\hat{\lambda}(t)$ in subsequent
+   computations. Figure \ref{fig:kde} shows an example of a kernel density
+   estimate, and displays a weakness in the estimator. As one moves towards the
+   start or end of the interval, fewer Gaussians make a noticeable contribution
+   to the function calculation, resulting in a drop-off of the estimate.
+\subsection{Baseline}
+\label{sec-4-2}
+
+    As mentioned in the previous section, the piecewise IWLS estimator gives us
+    a piecewise disjoint estimate of the function, but we would like one which
+    is piecewise continuous. In order to do this, the end of each interval
+    estimate must meet the start of the next. The estimate returned by the
+    piecewise estimator has several breakpoints---points where the start of one
+    sub-interval and the end of another meet. If there are $L$ lines that make
+    up the estimate, there will be $R=L-1$ breakpoints. At each of these
+    breakpoints $r$, we calculate the value of the previous and subsequent
+    function estimates $f$, and find their midpoint $m$ with
+    \begin{equation}
+    m_i = \frac{f_{i}(r_i) + f_{i+1}(r_i)}{2},\quad 0\leq i < R
+    \end{equation}
+    The value of $m$ is calculated for each breakpoint. Midpoints are not
+    calculated at time 0 and time $T$. Instead, the function values at those
+    points are used. Each sub-interval is now represented by a point $p$ at the
+    start and $q$ at the end, each with an $x$ and $y$ coordinate. With these
+    points, we can recalculate each sub-interval estimate $f$ of the form
+    $y=\hat{a}+\hat{b}x$ by replacing $y$ with $p_y$ and $x$ with $p_x$, and
+    recalculating the gradient $\hat{b}$ and intercept $\hat{a}$ with
+    \begin{align}
+    \hat{b} &= \frac{q_y-p_y}{q_x-p_x}\\
+    \hat{a} &= p_y - \hat{b}\cdot p_x
+    \end{align}
+    In this way, each sub-interval estimate links points $p$ and $q$, giving us
+    a piecewise continuous function estimate, and this step completes the first
+    function estimation method. Figure \ref{fig:basecomp} shows an example of a
+    piecewise and baseline estimate.
 \section{Time Delay Estimation}
 \label{sec-5}
 \subsection{PDF Method}
 \label{sec-5-1}
+
+   The second method of estimation is using probability density functions. As
+   before, we guess a value of $\Delta$ between $-\Delta_{\text{max}}$ and
+   $+\Delta_{\text{max}}$ and shift $\hat{\lambda}_2$ by that amount. However,
+   we know that there must be a single characteristic function, and we want to
+   see how well our estimate of that matches the bin counts in each stream. We
+   make an ``average'' function $\bar{\lambda}$ by combining the two function
+   estimates we have, $\hat{\lambda}_1$ and $\hat{\lambda}_2$ (which is shifted
+   by $\Delta$).
+   \begin{equation}
+   \bar{\lambda}(t)=\frac{\hat{\lambda}_1(t)+\hat{\lambda}_2(t+\Delta)}{2}
+   \end{equation}
+   The point on $\bar{\lambda}$ at time $t$ is the midpoint between the values of
+   the two estimates at that time. Once we have $\bar{\lambda}$, we can assign some
+   score to the current estimate of the value of $\Delta$.
+   \begin{align}
+   \begin{split}
+   \log P(S_A,S_B\mid\bar{\lambda}(t))=\sum_{t=\Delta_{\text{max}}}^{T-\Delta_{\text{max}}}&\log P(S_A(t)\mid \bar{\lambda}(t))\\
+   &+ \log P(S_B(t+\Delta)\mid \bar{\lambda}(t))\\
+   \end{split}
+   \end{align}
+   Here, we calculate the probability that the function $\bar{\lambda}$ is the
+   characteristic function of the two streams $S_A$ and $S_B$. The streams are
+   split into bins, and the log probability of the number of events in each bin
+   given the value of $\lambda$ calculated for that bin is computed and summed
+   over all bins, as in Equation \eqref{eq:normcalc}.
+
+   The calculation of $\lambda$ is slightly more complicated than just taking
+   its value at the midpoint of each bin. Since we are considering a number of
+   events occurring in a given interval, we must consider the value of $\lambda$
+   for the same interval. In order to do this, we use a discrete approximation
+   of integrating $\lambda(t)$ over the interval.
+   \begin{align}
+   \lambda_{a,b}&=\int_a^b\lambda(t)\,dt
+   \end{align}
+   In the approximation $t$ is incremented by some finite step for each
+   successive value. The smaller the value of the step the more accurate the
+   approximation of $\lambda_{a,b}$ becomes. As with the previous estimator, the
+   estimate is made in two stages, first with a coarse pass over the values of
+   delta to compute an initial estimate, and then a finer second pass around the
+   first estimated value in order to refine the estimate. 
 \subsection{Area Method}
 \label{sec-5-2}
+
+   The first of the two methods uses a very simple metric to estimate the time
+   delay. By taking the two function estimates, we can attempt to match up the
+   two functions so that they ``fit together'' best. The goodness of fit can be
+   determined by the area between the two functions $\hat{\lambda}_1$ and
+   $\hat{\lambda}_2$, calculated by
+   \begin{align}
+   \begin{split}
+   d(\hat{\lambda}_1,\hat{\lambda}_2)&=\int(\hat{\lambda}_1(t)-\hat{\lambda}_2(t+\Delta))^2\,dt\\
+   &\approx\frac{1}{N}\sum_{i=1}^N(\hat{\lambda}_1(t)-\hat{\lambda}_2(t+\Delta))^2
+   \end{split}
+   \end{align}
+   for each value of $\Delta$. Our estimate of $\Delta$ is set to the value at
+   which $d(\hat{\lambda}_1,\hat{\lambda}_2)$ is minimised. Rather than using an
+   integral to get the exact area between the functions, we use a less
+   computationally expensive discrete approximation.
 \section{Experimental Results}
 \label{sec-6}
 
