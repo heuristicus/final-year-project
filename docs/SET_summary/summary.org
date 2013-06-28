@@ -54,12 +54,12 @@ In the early stages of the project, we developed a subsystem which could be used
 to generate simulated photon stream data to use for the development and testing
 of the rest of the project. The only property of the photons which we are
 interested in is their arrival time at our capture device, so the simulator
-should produce some vector $\Phi=\left[\phi_0,\dots,\phi_N\right], \phi_n \in
-\mathbb{R}$, where $\phi_n$ is the arrival time of the $n\text{th}$ photon. In
-order to generate arrival times, we represent the source as some random variable
-$X$, which defines the average number of photons per unit time that arrive at
-the capture device, and whose varies according to the characteristic function of
-the source object.
+should produce some event vector $\Phi=\left[\phi_0,\dots,\phi_N\right], \phi_n
+\in \mathbb{R}$, where $\phi_n$ is the arrival time of the $n\text{th}$
+photon. In order to generate arrival times, we represent the source as some
+random variable $X$, which defines the average number of photons per unit time
+that arrive at the capture device, and whose varies according to the
+characteristic function of the source object.
 
 The characteristic function of $X$ is modelled as a non-homogeneous Poisson
 process (NHPP) with continuous function of time, $\lambda(t)$, known as the rate
@@ -73,11 +73,13 @@ successive Gaussians are separated by some distance $\Delta t$, such that
 $\mu_{m+1}=\mu_m + \Delta t,\text{ where } \mu_0=0$. Greater variation in the
 functions is introduced by sampling the weights $w_i$ from a uniform
 distribution $U(-1,1)$ and scaling them by some multiplier. The value of the
-randomly generated function at some time $t$ is computed by
+randomly generated function at some time $t$ is computed by a weighted sum of
+Gaussians.
+
 \begin{align}
    \lambda(t) = \sum_{i=0}^M w_i\cdot e^{-(t-\mu_i)^2/2\sigma_i^2}
 \end{align}
-which is a weighted sum of Gaussians. 
+
 
 Having defined or constructed $\lambda(t)$, photon arrival times are generated
 from a homogeneous Poisson process (HPP) with constant rate \lambda, using
@@ -85,26 +87,13 @@ inverse transform sampling. The waiting time to the next event in a Poisson
 process is \cite{1998art}
 \begin{align}\label{eq:homlambda}
 t=-\frac{1}{\lambda}\log(U)
-\end{align}
-where $U\sim (-1,1)$
-Using this calculation, it is possible to generate a realisation of a HPP for
-an interval of any finite length. This provides a base which can be extended
-to generate events from NHPPs.
-
-To generate events from an NHPP with a rate function $\lambda(t)$, we use a
-technique called thinning, where we generate a large number of values, and
-then throw some of them away based on some criterion. In the case of the
-NHPP, we generate events from a HPP with a rate parameter $\lambda$, where
-$\lambda>\lambda(t)$ for $0<=t<=T$. In other words, the homogeneous lambda
-value must be larger than the value of the rate function for the whole time
-the process runs. First, two random values are independently sampled from a
-uniform distribution, $U_1,U_2\sim U(0,1)$. The first number, $U_1$, is used
-in \eqref{eq:homlambda} to find the next event time from the homogeneous
-process governed by $\lambda$. Using the time $t$ generated from that, the
-value of $\lambda(t)$ is calculated. If $U_2\leq\frac{\lambda(t)}{\lambda}$,
-then the event is kept. The closer $\lambda(t)$ is to $\lambda$, the more
-events will be kept, and so the number of events generated depends on the
-shape of the rate function.
+\end{align} where $U\sim U(0,1)$. Knowing this, it is possible to generate
+successive events of a HPP for any finite interval, from which events for the
+NHPP can then be extracted by thinning, as seen in Algorithm \ref{alg:seq}. The
+number of events added to the event vector \Phi in any given interval is
+proportional to the value of $\lambda(t)$ in that interval; the probability of
+adding an event is low when $\lambda(t)$ is small, and increases with the
+value of the rate function.
 
 \begin{algorithm}[H]
 \begin{algorithmic}[1]
@@ -120,10 +109,9 @@ shape of the rate function.
 \ENDWHILE
 \RETURN $\Phi$
 \end{algorithmic}
-\caption{Simulating T Time Units of a NHPP by Thinning}
+\caption{Generating event times for a NHPP by thinning}
 \label{alg:seq}
 \end{algorithm}
-
 
 * Function Estimation
   - Basic explanation of the IWLS estimator
