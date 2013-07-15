@@ -1,4 +1,4 @@
-% Created 2013-06-30 Sun 13:52
+% Created 2013-07-15 Mon 21:03
 \documentclass[11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -61,104 +61,159 @@ this is the abstract
 \section{Photon Stream Simulation}
 \label{sec-3}
 
-In the early stages of the project, we developed a subsystem which could be used
-to generate simulated photon stream data to use for the development and testing
-of the rest of the project. The only property of the photons which we are
-interested in is their arrival time at our capture device, so the simulator
-should produce some event vector $\Phi=\left[\phi_0,\dots,\phi_N\right], \phi_n
-\in \mathbb{R}$, where $\phi_n$ is the arrival time of the $n\text{th}$
-photon. In order to generate arrival times, we represent the source as some
-random variable $X$, which defines the average number of photons per unit time
-that arrive at the capture device, and whose varies according to the
-characteristic function of the source object.
+  In the early stages of the project, we developed a subsystem which could be used
+  to generate simulated photon stream data to use for the development and testing
+  of the rest of the project. The only property of the photons which we are
+  interested in is their arrival time at our capture device, so the simulator
+  should produce some event vector $\Phi=\left[\phi_0,\dots,\phi_N\right], \phi_n
+  \in \mathbb{R}$, where $\phi_n$ is the arrival time of the $n\text{th}$
+  photon. In order to generate arrival times, we represent the source as some
+  random variable $X$, which defines the average number of photons per unit time
+  that arrive at the capture device, and whose varies according to the
+  characteristic function of the source object.
 
-The characteristic function of $X$ is modelled as a non-homogeneous Poisson
-process (NHPP) with continuous function of time, $\lambda(t)$, known as the rate
-function. The rate function can be specified either by providing an expression
-which is a function of $t$, or by sampling from a randomly generated
-function. Random functions are constructed by uniformly distributing $M$
-Gaussians across the interval $\left[t_0,T\right]$ in which arrival times are to
-be generated. Each Gaussian $g_i$ is defined by its mean $\mu$$_i$, its width
-$\sigma$$_i$, and its weight $w_i$, which determines its height. The means of
-successive Gaussians are separated by some distance $\Delta t$, such that
-$\mu_{m+1}=\mu_m + \Delta t,\text{ where } \mu_0=0$. Greater variation in the
-functions is introduced by sampling the weights $w_i$ from a uniform
-distribution $U(-1,1)$ and scaling them by some multiplier. The value of the
-randomly generated function at some time $t$ is computed by a weighted sum of
-Gaussians.
+  The characteristic function of $X$ is modelled as a non-homogeneous Poisson
+  process (NHPP) with continuous function of time, $\lambda(t)$, known as the rate
+  function. The rate function can be specified either by providing an expression
+  which is a function of $t$, or by sampling from a randomly generated
+  function. Random functions are constructed by uniformly distributing $M$
+  Gaussians across the interval $\left[t_0,T\right]$ in which arrival times are to
+  be generated. Each Gaussian $g_i$ is defined by its mean $\mu$$_i$, its width
+  $\sigma$$_i$, and its weight $w_i$, which determines its height. The means of
+  successive Gaussians are separated by some distance $\Delta t$, such that
+  $\mu_{m+1}=\mu_m + \Delta t,\text{ where } \mu_0=0$. Greater variation in the
+  functions is introduced by sampling the weights $w_i$ from a uniform
+  distribution $U(-1,1)$ and scaling them by some multiplier. The value of the
+  randomly generated function at some time $t$ is computed by a weighted sum of
+  Gaussians.
 
-\begin{align}
-   \lambda(t) = \sum_{i=0}^M w_i\cdot e^{-(t-\mu_i)^2/2\sigma_i^2}
-\end{align}
+  \begin{align}
+  \lambda(t) = \sum_{i=0}^M w_i\cdot e^{-(t-\mu_i)^2/2\sigma_i^2}
+  \end{align}
 
-Having defined or constructed $\lambda(t)$, photon arrival times are generated
-from a homogeneous Poisson process (HPP) with constant rate $\lambda$, using
-inverse transform sampling. The waiting time to the next event in a Poisson
-process is \cite{1998art}
-\begin{align}\label{eq:homlambda}
-t=-\frac{1}{\lambda}\log(U)
-\end{align} where $U\sim U(0,1)$. Knowing this, it is possible to generate
-successive events of a HPP for any finite interval, from which events for the
-NHPP can then be extracted by thinning, using Algorithm \ref{alg:seq}. The
-number of events added to the event vector $\Phi$ in any given interval is
-proportional to the value of $\lambda(t)$ in that interval; the probability of
-adding an event is low when $\lambda(t)$ is small, and increases with the
-value of the rate function.
+  Having defined or constructed $\lambda(t)$, photon arrival times are generated
+  from a homogeneous Poisson process (HPP) with constant rate $\lambda$, using
+  inverse transform sampling. The waiting time to the next event in a Poisson
+  process is \cite{1998art}
+  \begin{align}\label{eq:homlambda}
+  t=-\frac{1}{\lambda}\log(U)
+  \end{align} where $U\sim U(0,1)$. Knowing this, it is possible to generate
+  successive events of a HPP for any finite interval, from which events for the
+  NHPP can then be extracted by thinning, using Algorithm \ref{alg:seq}. The
+  number of events added to the event vector $\Phi$ in any given interval is
+  proportional to the value of $\lambda(t)$ in that interval; the probability of
+  adding an event is low when $\lambda(t)$ is small, and increases with the
+  value of the rate function.
 
-\begin{algorithm}[H]
-\begin{algorithmic}[1]
-\REQUIRE $\lambda\geq \lambda(t), t_0 \leq t \leq T$
-\STATE $\Phi=\emptyset$, $t=t_0$, $T=\text{interval length}$
-\WHILE{$t<T$}
-\STATE Generate $U_1\sim U(0,1)$
-\STATE $t=t-\frac{1}{\lambda}\ln(U_1)$
-\STATE Generate $U_2\sim U(0,1)$, independent of $U_1$
-\IF{$U_2\leq\frac{\lambda(t)}{\lambda}$}
-\STATE $\Phi \leftarrow t$
-\ENDIF
-\ENDWHILE
-\RETURN $\Phi$
-\end{algorithmic}
-\caption{Generating event times for a NHPP by thinning}
-\label{alg:seq}
-\end{algorithm}
+  \begin{algorithm}[H]
+  \begin{algorithmic}[1]
+  \REQUIRE $\lambda\geq \lambda(t), t_0 \leq t \leq T$
+  \STATE $\Phi=\emptyset$, $t=t_0$, $T=\text{interval length}$
+  \WHILE{$t<T$}
+  \STATE Generate $U_1\sim U(0,1)$
+  \STATE $t=t-\frac{1}{\lambda}\ln(U_1)$
+  \STATE Generate $U_2\sim U(0,1)$, independent of $U_1$
+  \IF{$U_2\leq\frac{\lambda(t)}{\lambda}$}
+  \STATE $\Phi \leftarrow t$
+  \ENDIF
+  \ENDWHILE
+  \RETURN $\Phi$
+  \end{algorithmic}
+  \caption{Generating event times for a NHPP by thinning}
+  \label{alg:seq}
+  \end{algorithm}
 
 \section{Function Estimation}
 \label{sec-4}
 
-The function estimator subsystem receives input of the event vector $\Phi$, and
-attempts to reconstruct the rate function. Due to the nature of the data, it is
-not possible to find the true rate function---only an estimate is possible.
+  The function estimator subsystem receives input of the event vector $\Phi$, and
+  attempts to reconstruct the rate function. As the photons are emitted by a
+  truly random process, it is only possible to obtain an estimate of the true
+  rate function. In the project, we used two different methods to obtain an
+  estimate.
 \subsection{Baseline Estimation}
 \label{sec-4.1}
 
-    As mentioned in the previous section, the piecewise IWLS estimator gives us
-    a piecewise disjoint estimate of the function, but we would like one which
-    is piecewise continuous. In order to do this, the end of each interval
-    estimate must meet the start of the next. The estimate returned by the
-    piecewise estimator has several breakpoints---points where the start of one
-    sub-interval and the end of another meet. If there are $L$ lines that make
-    up the estimate, there will be $R=L-1$ breakpoints. At each of these
-    breakpoints $r$, we calculate the value of the previous and subsequent
-    function estimates $f$, and find their midpoint $m$ with
+   Development of the baseline estimator went through several stages. Based on
+   the work of Massey et al.\cite{massey}, we implemented a system to perform
+   iterative weighted least squares (IWLS) estimates of a set of events. The
+   interval $[t_0,T]$ is split into several sub-intervals, and each is
+   represented by the number of events which occur within it. IWLS produces a
+   linear estimate of the rate function by an iterative process which minimises
+   the sum of squared residuals from an initial estimate of the function. 
+\subsubsection{Piecewise}
+\label{sec-4.1.1}
+
+    It is clear that the IWLS estimator alone is not sufficient to complete our
+    task. In order to obtain a reasonable estimate of the characteristic
+    function, we need to be able to estimate a function which is not a straight
+    line. During the development process, we considered the possibility of
+    approximating functions by multiple straight-line estimates, and this
+    estimator is the result. This type of function is known as a piecewise
+    linear function. Extending the approach presented in the previous two
+    sections, we take the interval $[0,T]$, and split it into several
+    sub-intervals. Then, the function underlying each of these sub-intervals is
+    estimated using IWLS. We also add some minor extensions in an attempt to
+    improve the quality of the estimates.
+
+    Sub-intervals are estimated starting from the first, and moving to the next
+    once the process is complete. When the estimate is completed, a short
+    interval after the sub-interval being estimated is checked to see how well
+    the estimate for the previous sub-interval matches it. The extension
+    interval is split into several bins. Using a probability density function
+    (PDF), we evaluate the likelihood of obtaining the count $Y_k$ for each bin
+    given the estimate $\lambda$ at that point. The PDF for a Poisson
+    distribution is calculated by
     \begin{equation}
-    m_i = \frac{f_{i}(r_i) + f_{i+1}(r_i)}{2},\quad 0\leq i < R
+    P(Y_k=x)=\frac{\lambda^xe^{-\lambda}}{x!}
     \end{equation}
-    The value of $m$ is calculated for each breakpoint. Midpoints are not
-    calculated at time 0 and time $T$. Instead, the function values at those
-    points are used. Each sub-interval is now represented by a point $p$ at the
-    start and $q$ at the end, each with an $x$ and $y$ coordinate. With these
-    points, we can recalculate each sub-interval estimate $f$ of the form
-    $y=\hat{a}+\hat{b}x$ by replacing $y$ with $p_y$ and $x$ with $p_x$, and
-    recalculating the gradient $\hat{b}$ and intercept $\hat{a}$ with
-    \begin{align}
-    \hat{b} &= \frac{q_y-p_y}{q_x-p_x}\\
-    \hat{a} &= p_y - \hat{b}\cdot p_x
-    \end{align}
-    In this way, each sub-interval estimate links points $p$ and $q$, giving us
-    a piecewise continuous function estimate, and this step completes the first
-    function estimation method. Figure \ref{fig:basecomp} shows an example of a
-    piecewise and baseline estimate.
+    
+    For each bin, $P(Y_k=x)$ must exceed some threshold. A lower threshold means
+    that lines are less likely to be successfully extended. While this technique
+    is an improvement on using straight lines to estimate functions which are
+    curves, it is still not sufficient, as the resulting function estimate is
+    piecewise disjoint---the estimate for each interval does not connect
+    smoothly into the next, but jumps at the boundary between each sub-interval.
+\begin{comment}
+    \begin{figure}[h]
+    \includegraphics{images/pcbase}
+    \caption{A comparison of the baseline and piecewise estimates on the same
+    function. Note how the baseline estimate passes through the midpoint of the
+    disjoint piecewise estimates at the breakpoints.}
+    \label{fig:basecomp}
+    \end{figure}
+\end{comment}
+\subsubsection{Baseline}
+\label{sec-4.1.2}
+
+ 
+   As mentioned in the previous section, the piecewise IWLS estimator gives us
+   a piecewise disjoint estimate of the function, but we would like one which
+   is piecewise continuous. In order to do this, the end of each interval
+   estimate must meet the start of the next. The estimate returned by the
+   piecewise estimator has several breakpoints---points where the start of one
+   sub-interval and the end of another meet. If there are $L$ lines that make
+   up the estimate, there will be $R=L-1$ breakpoints. At each of these
+   breakpoints $r$, we calculate the value of the previous and subsequent
+   function estimates $f$, and find their midpoint $m$ with
+   \begin{equation}
+   m_i = \frac{f_{i}(r_i) + f_{i+1}(r_i)}{2},\quad 0\leq i < R
+   \end{equation}
+   The value of $m$ is calculated for each breakpoint. Midpoints are not
+   calculated at time 0 and time $T$. Instead, the function values at those
+   points are used. Each sub-interval is now represented by a point $p$ at the
+   start and $q$ at the end, each with an $x$ and $y$ coordinate. With these
+   points, we can recalculate each sub-interval estimate $f$ of the form
+   $y=\hat{a}+\hat{b}x$ by replacing $y$ with $p_y$ and $x$ with $p_x$, and
+   recalculating the gradient $\hat{b}$ and intercept $\hat{a}$ with
+   \begin{align}
+   \hat{b} &= \frac{q_y-p_y}{q_x-p_x}\\
+   \hat{a} &= p_y - \hat{b}\cdot p_x
+   \end{align}
+   In this way, each sub-interval estimate links points $p$ and $q$, giving us
+   a piecewise continuous function estimate, and this step completes the first
+   function estimation method. Figure \ref{fig:basecomp} shows an example of a
+   piecewise and baseline estimate.
 \subsection{Kernel Density Estimation}
 \label{sec-4.2}
 
@@ -311,9 +366,8 @@ not possible to find the true rate function---only an estimate is possible.
 
 \begin{itemize}
 \item some suggestions for extensions
+    \printbibliography
 \end{itemize}
-\printbibliography
-
 $^{1}$ FOOTNOTE DEFINITION NOT FOUND: 1
 
 
