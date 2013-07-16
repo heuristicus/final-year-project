@@ -120,45 +120,29 @@ this is the abstract
   estimate.
 ** Baseline Estimation
    Development of the baseline estimator went through several stages. Based on
-   the work of Massey et al.\cite{massey}, we implemented a system to perform
-   iterative weighted least squares (IWLS) estimates of a set of events. The
-   interval $[t_0,T]$ is split into several sub-intervals, and each is
-   represented by the number of events which occur within it. IWLS produces a
-   linear estimate of the rate function by an iterative process which minimises
-   the sum of squared residuals from an initial estimate of the function. 
-*** Piecewise
-    It is clear that the IWLS estimator alone is not sufficient to complete our
-    task. In order to obtain a reasonable estimate of the characteristic
-    function, we need to be able to estimate a function which is not a straight
-    line. During the development process, we considered the possibility of
-    approximating functions by multiple straight-line estimates, and this
-    estimator is the result. This type of function is known as a piecewise
-    linear function. Extending the approach presented in the previous two
-    sections, we take the interval $[0,T]$, and split it into several
-    sub-intervals. Then, the function underlying each of these sub-intervals is
-    estimated using IWLS. We also add some minor extensions in an attempt to
-    improve the quality of the estimates.
+   the work of Massey et al.\cite{massey}, we implemented a system to estimate
+   the rate function of a set of events using iteratively weighted least squares
+   (IWLS). The interval $[t_0,T]$ is split into several bins, each represented
+   by the number of events which occur within it. IWLS produces a linear
+   estimate of the rate function by an iterative process which minimises the sum
+   of squared residuals from an initial estimate of the function.
 
-    Sub-intervals are estimated starting from the first, and moving to the next
-    once the process is complete. When the estimate is completed, a short
-    interval after the sub-interval being estimated is checked to see how well
-    the estimate for the previous sub-interval matches it. The extension
-    interval is split into several bins. Using a probability density function
-    (PDF), we evaluate the likelihood of obtaining the count $Y_k$ for each bin
-    given the estimate $\lambda$ at that point. The PDF for a Poisson
-    distribution is calculated by
+   Linear estimates are not sufficient for representing rate functions, so we
+   extended the technique by estimating the rate function in several
+   sub-intervals and combining these estimates into a single estimate, rather
+   than using a single estimate from the whole interval. Once an estimate for
+   the sub-interval has been computed, attempts are made to extend the estimate
+   into a short interval after the initial sub-interval. The Poisson probability
+   density function (PDF) in Equation \ref{eq:pdf} is used to determine the
+   likelihood of obtaining the count $Y_k$ for each bin in the extension
+   interval. The likelihood of each bin is required to be above a certain
+   threshold. If it is not, the estimate is not extended.
     #+BEGIN_LaTeX
     \begin{equation}
+    \label{eq:pdf}
     P(Y_k=x)=\frac{\lambda^xe^{-\lambda}}{x!}
     \end{equation}
     #+END_LaTeX
-    
-    For each bin, $P(Y_k=x)$ must exceed some threshold. A lower threshold means
-    that lines are less likely to be successfully extended. While this technique
-    is an improvement on using straight lines to estimate functions which are
-    curves, it is still not sufficient, as the resulting function estimate is
-    piecewise disjoint---the estimate for each interval does not connect
-    smoothly into the next, but jumps at the boundary between each sub-interval.
 \begin{comment}
     #+BEGIN_LaTeX
     \begin{figure}[h]
@@ -170,7 +154,8 @@ this is the abstract
     \end{figure}
     #+END_LaTeX
 \end{comment}
-*** Baseline
+This method gives a better estimate than a simple linear estimate, but results in a piecewise disjoint function rather than a continuous one.
+** Baseline
  
    As mentioned in the previous section, the piecewise IWLS estimator gives us
    a piecewise disjoint estimate of the function, but we would like one which
