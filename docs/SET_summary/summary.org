@@ -143,7 +143,7 @@ this is the abstract
     P(Y_k=x)=\frac{\lambda^xe^{-\lambda}}{x!}
     \end{equation}
     #+END_LaTeX
-\begin{comment}
+    \begin{comment}
     #+BEGIN_LaTeX
     \begin{figure}[h]
     \includegraphics{images/pcbase}
@@ -153,37 +153,36 @@ this is the abstract
     \label{fig:basecomp}
     \end{figure}
     #+END_LaTeX
-\end{comment}
-This method gives a better estimate than a simple linear estimate, but results in a piecewise disjoint function rather than a continuous one.
-** Baseline
- 
-   As mentioned in the previous section, the piecewise IWLS estimator gives us
-   a piecewise disjoint estimate of the function, but we would like one which
-   is piecewise continuous. In order to do this, the end of each interval
-   estimate must meet the start of the next. The estimate returned by the
-   piecewise estimator has several breakpoints---points where the start of one
-   sub-interval and the end of another meet. If there are $L$ lines that make
-   up the estimate, there will be $R=L-1$ breakpoints. At each of these
-   breakpoints $r$, we calculate the value of the previous and subsequent
-   function estimates $f$, and find their midpoint $m$ with
-   \begin{equation}
-   m_i = \frac{f_{i}(r_i) + f_{i+1}(r_i)}{2},\quad 0\leq i < R
-   \end{equation}
-   The value of $m$ is calculated for each breakpoint. Midpoints are not
-   calculated at time 0 and time $T$. Instead, the function values at those
-   points are used. Each sub-interval is now represented by a point $p$ at the
-   start and $q$ at the end, each with an $x$ and $y$ coordinate. With these
-   points, we can recalculate each sub-interval estimate $f$ of the form
-   $y=\hat{a}+\hat{b}x$ by replacing $y$ with $p_y$ and $x$ with $p_x$, and
-   recalculating the gradient $\hat{b}$ and intercept $\hat{a}$ with
-   \begin{align}
-   \hat{b} &= \frac{q_y-p_y}{q_x-p_x}\\
-   \hat{a} &= p_y - \hat{b}\cdot p_x
-   \end{align}
-   In this way, each sub-interval estimate links points $p$ and $q$, giving us
-   a piecewise continuous function estimate, and this step completes the first
-   function estimation method. Figure \ref{fig:basecomp} shows an example of a
-   piecewise and baseline estimate.
+    \end{comment}
+    
+    This extension of IWLS produces piecewise disjoint estimates of the rate
+    function. In order to produce the piecewise continuous functions that we
+    require, we adjust the estimate in each sub-interval. We define breakpoints
+    as the point in time where one sub-interval ends and another begins. There
+    are $R=L-1$ breakpoints $r$, where L is the number of sub-intervals. At each
+    breakpoint, the values of the two function estimates $f$ before adjustment
+    are computed, and the midpoint $m$ is calculated.
+
+    \begin{equation} 
+    m_i = \frac{f_{i}(r_i) + f_{i+1}(r_i)}{2},\quad 0\leq i < R
+    \end{equation}
+
+    At the start of the first and end of the last sub-intervals the original
+    function value is used as the midpoint. Each sub-interval is now represented
+    by a point $p$ at the start and $q$ at the end, each with an $x$ and $y$
+    coordinate. With these points, we can recalculate each sub-interval estimate
+    $f$ of the form $y=\hat{a}+\hat{b}x$ by replacing $y$ with $p_y$ and $x$
+    with $p_x$, and recalculating the gradient $\hat{b}$ and intercept $\hat{a}$
+    with
+
+    \begin{align} 
+    \hat{b} &= \frac{q_y-p_y}{q_x-p_x}\\
+    \hat{a} &= p_y - \hat{b}\cdot p_x 
+    \end{align}
+
+    This adjustment produces the desired piecewise continuous function by having
+    the values of the estimates from the previous and next sub-interval have the
+    same value at the breakpoint.
 ** Kernel Density Estimation
    The second function estimation method implemented was a kernel density
    estimator, which uses \emph{kernels} to estimate the probability density of a
