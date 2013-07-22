@@ -39,42 +39,47 @@
 #+LATEX_HEADER: \defaultfontfeatures{Mapping=tex-text}
 #+LATEX_HEADER: \setromanfont[Ligatures={Common},Numbers={Lining}]{Linux Libertine}
 
-#+BEGIN_abstract
-this is the abstract
-#+END_abstract
+#+BEGIN_LATEX
+\begin{abstract}
+  Due to a phenomenon called gravitational lensing, under certain conditions we
+  can see multiple images of the same objects in space. The light from each
+  image takes a different amount of time to get to us. Our system estimates this
+  time difference by looking at individual photons coming from each image, and
+  reconstructing a function which represents the image. We then find the time
+  shift where these functions match up best, either by looking at the area
+  between the functions, or by creating an ``average'' function and calculating
+  the likelihood of the functions for individual images being created from it.
+\end{abstract}
+#+END_LATEX
 
 * Introduction
-  - explain the project in layman's terms
-* Background
-  - Ideas behind the project
-  - what it's useful for
-  - what gravitational lensing and time delay are
- Photon Stream Simulation
-  In the early stages of the project, we developed a subsystem which could be used
-  to generate simulated photon stream data to use for the development and testing
-  of the rest of the project. The only property of the photons which we are
-  interested in is their arrival time at our capture device, so the simulator
-  should produce some event vector $\Phi=\left[\phi_0,\dots,\phi_N\right], \phi_n
-  \in \mathbb{R}$, where $\phi_n$ is the arrival time of the $n\text{th}$
-  photon. In order to generate arrival times, we represent the source as some
-  random variable $X$, which defines the average number of photons per unit time
-  that arrive at the capture device, and whose varies according to the
-  characteristic function of the source object.
+
+* Photon Stream Simulation
+  First, we developed a subsystem which could be used to generate simulated
+  photon stream data to use for the development and testing of the rest of the
+  system. The only property of the photons which we are interested in is their
+  arrival time at our capture device, so the simulator should produce some event
+  vector $\Phi=\left[\phi_0,\dots,\phi_N\right], \phi_n \in \mathbb{R}$, where
+  $\phi_n$ is the arrival time of the $n\text{th}$ photon. In order to generate
+  arrival times, we represent the source as some random variable $X$, which
+  defines the average number of photons per unit time that arrive at the capture
+  device. This varies according to the characteristic function of the source
+  object.
 
   The characteristic function of $X$ is modelled as a non-homogeneous Poisson
-  process (NHPP) with continuous function of time, $\lambda(t)$, known as the rate
-  function. The rate function can be specified either by providing an expression
-  which is a function of $t$, or by sampling from a randomly generated
-  function. Random functions are constructed by uniformly distributing $M$
-  Gaussians across the interval $\left[t_0,T\right]$ in which arrival times are to
-  be generated. Each Gaussian $g_i$ is defined by its mean \mu_i, its width
-  \sigma_i, and its weight $w_i$, which determines its height. The means of
-  successive Gaussians are separated by some distance $\Delta t$, such that
-  $\mu_{m+1}=\mu_m + \Delta t,\text{ where } \mu_0=0$. Greater variation in the
-  functions is introduced by sampling the weights $w_i$ from a uniform
-  distribution $U(-1,1)$ and scaling them by some multiplier. The value of the
-  randomly generated function at some time $t$ is computed by a weighted sum of
-  Gaussians.
+  process (NHPP) as a continuous function of time, $\lambda(t)$, known as the
+  rate function. The system allows the rate function to be specified either by
+  providing an expression which is a function of $t$, or by sampling from a
+  randomly generated function. Random functions are constructed by uniformly
+  distributing $M$ Gaussians across the interval $\left[t_0,T\right]$ in which
+  arrival times are to be generated. Each Gaussian $g_i$ is defined by its mean
+  \mu_i, its width \sigma_i, and its weight $w_i$, which determines its
+  height. The means of successive Gaussians are separated by some distance
+  $\Delta t$, such that $\mu_{m+1}=\mu_m + \Delta t,\text{ where }
+  \mu_0=0$. Greater variation in the functions is introduced by sampling the
+  weights $w_i$ from a uniform distribution $U(-1,1)$ and scaling them by some
+  multiplier. The value of the randomly generated function at some time $t$ is
+  computed by a weighted sum of Gaussians.
 
   \begin{align}
   \lambda(t) = \sum_{i=0}^M w_i\cdot e^{-(t-\mu_i)^2/2\sigma_i^2}
