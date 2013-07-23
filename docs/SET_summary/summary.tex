@@ -1,4 +1,4 @@
-% Created 2013-07-22 Mon 22:20
+% Created 2013-07-23 Tue 22:52
 \documentclass[11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -70,7 +70,22 @@
   defines the average number of photons per unit time that arrive at the capture
   device. This varies according to the characteristic function of the source
   object.
+   \begin{figure}
+   \subfloat[]{
+   \includegraphics[width=0.5\textwidth]{images/damp}
+   }
+   \subfloat[]{
+   \includegraphics[width=0.5\textwidth]{images/randfunc1}
+   }
 
+   \caption{Two examples of function generation capabilities. (a) is generated
+   from a damped sine function of the form $e^{-t}\cdot \cos(2\pi t)$. (b) shows
+   a randomly generated function where the red function is constructed from the
+   green Gaussians with $\Delta t=$ 10, $\mu=$ 10 and shifted so that all points
+   are $\geq$ 0.}
+
+   \label{fig:contrib}
+   \end{figure}
   The characteristic function of $X$ is modelled as a non-homogeneous Poisson
   process (NHPP) as a continuous function of time, $\lambda(t)$, known as the
   rate function. The system allows the rate function to be specified either by
@@ -259,15 +274,17 @@
 
    The first of the two methods uses a very simple metric to estimate the time
    delay. By taking the two function estimates, we can attempt to match up the
-   two functions so that they ``fit together'' best. The goodness of fit can be
-   determined by the area between the two functions $\hat{\lambda}_1$ and
-   $\hat{\lambda}_2$, calculated by
+   two functions so that they ``fit together'' best. The goodness of fit between
+   two functions $\hat{\lambda}_1$ and $\hat{\lambda}_2$ is defined by the area
+   between them, calculated by
+
    \begin{align}
    \begin{split}
    d(\hat{\lambda}_1,\hat{\lambda}_2)&=\int(\hat{\lambda}_1(t)-\hat{\lambda}_2(t+\Delta))^2\,dt\\
    &\approx\frac{1}{N}\sum_{i=1}^N(\hat{\lambda}_1(t)-\hat{\lambda}_2(t+\Delta))^2
    \end{split}
    \end{align}
+
    for each value of $\Delta$. Our estimate of $\Delta$ is set to the value at
    which $d(\hat{\lambda}_1,\hat{\lambda}_2)$ is minimised. Rather than using an
    integral to get the exact area between the functions, we use a less
@@ -309,20 +326,32 @@
    \begin{align}
    \lambda_{a,b}&=\int_a^b\lambda(t)\,dt
    \end{align}
-   In the approximation $t$ is incremented by some finite step for each
-   successive value. The smaller the value of the step the more accurate the
-   approximation of $\lambda_{a,b}$ becomes. As with the previous estimator, the
-   estimate is made in two stages, first with a coarse pass over the values of
-   delta to compute an initial estimate, and then a finer second pass around the
-   first estimated value in order to refine the estimate. 
+   In the approximation, $t$ is incremented by some finite step for each
+   successive value. As with the previous estimator, the estimate is made in two
+   stages, first with a coarse pass over the values of delta to compute an
+   initial estimate, and then a finer second pass around the first estimated
+   value in order to refine the estimate.
 \section{Experimental Results}
 \label{sec-5}
 
-\begin{itemize}
-\item general explanation of the experiments performed
-\item how was model selection done
-\item what sort of data were experiments performed on
-\end{itemize}
+  The four possible method combinations were compared in four sets
+  experiments. 100 time units of Photon stream data was generated from
+  sinusoidal functions of the form $y=a-b\sin(\alpha t)$ in the first set of two
+  experiments, and from randomly generated functions in the second set.
+
+  The first stage of each experiment found optimum parameter settings for each
+  function in the experimental data set using model selection. The kernel
+  density and baseline estimators were used to find $\hat{\lambda}(t)$ from
+  stream data where 4 time units of stream data were withheld every 15 time
+  units. The number of events in each bin in withheld sub-intervals was
+  retrieved from the stream and compared to the value of $\hat{\lambda}(t)$ at
+  the midpoint of that bin using the log Poisson PDF. The sum of log PDF values
+  over all the sub-intervals was used to represent the parameter set's
+  generalisation ability. The set with the highest value was used in the second
+  stage of the experiment, where the time delay for a pair of streams was
+  estimated using both the area and the PDF methods. This resulted in 4
+  estimates of the time delay, one from each combination of function estimator
+  and time delay estimator.
 \section{System}
 \label{sec-6}
 
