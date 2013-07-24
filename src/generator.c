@@ -198,8 +198,6 @@ void generate_from_gaussian(char* paramfile, char* outfile, char* infile,
 	infname = infile;
     }
     
-    printf("hello\n");
-
     for (i = 0; i < nfuncs; ++i) {
 	if (infile == NULL)
 	    sprintf(infname, "%s_%d.dat", funcfile, i);
@@ -343,7 +341,7 @@ void generate_gaussian_data(char* paramfile, char* infile, char* outfile,
     double step = get_double_param(params, "gauss_generation_step");
     double resolution = get_double_param(params, "gauss_resolution");
     double multiplier = get_double_param(params, "gauss_func_multiplier");
-
+    
     init_rand(0.0);
 
     if (strcmp(get_string_param(params, "simple_stdev"), "no") == 0){
