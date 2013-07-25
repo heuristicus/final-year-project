@@ -341,6 +341,33 @@
    stages, first with a coarse pass over the values of delta to compute an
    initial estimate, and then a finer second pass around the first estimated
    value in order to refine the estimate.
+#+BEGIN_LATEX
+   \ref{fig:finest} illustrates the whole estimation process.
+   \begin{figure}[h!]
+   \subfloat[Estimate $\lambda(t)$ for each stream based on bin data.]{
+   \includegraphics[width=0.5\textwidth]{images/twofunc_base}
+   \includegraphics[width=0.5\textwidth]{images/twofunc_gauss}
+   }\\
+   \subfloat[Run the time delay estimator and shift the second (blue) function according to the estimate of $\Delta$.]{
+   \includegraphics[width=0.5\textwidth]{images/shift_base}
+   \includegraphics[width=0.5\textwidth]{images/shift_gauss}
+   }\\
+   \subfloat[Combine the two function estimates to create a final estimate (black).]{
+   \includegraphics[width=0.5\textwidth]{images/comb_base}
+   \includegraphics[width=0.5\textwidth]{images/comb_gauss}
+   }
+
+   \caption{An example of the estimation process using two different
+   techniques. Left column shows baseline method, right column Gaussian. The
+   estimated value of $\Delta$ was 15.1 for both estimators, found using the PDF
+   method. The actual value of $\Delta$ was 15. Points in (a) represent bin
+   counts for the function of the same colour. The red line in (b) and (c)
+   indicates the actual function, black is the final estimate. Estimated
+   functions are only combined in the interval in which they both have values.}
+
+   \label{fig:finest}
+   \end{figure}
+#+END_LATEX
 * Experimental Results
   The four possible method combinations were compared in four sets
   experiments. 100 time units of Photon stream data was generated from
