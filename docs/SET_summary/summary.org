@@ -343,7 +343,7 @@
    value in order to refine the estimate.
 #+BEGIN_LATEX
    \ref{fig:finest} illustrates the whole estimation process.
-   \begin{figure}[h!]
+   \begin{figure}[]
    \subfloat[Estimate $\lambda(t)$ for each stream based on bin data.]{
    \includegraphics[width=0.5\textwidth]{images/twofunc_base}
    \includegraphics[width=0.5\textwidth]{images/twofunc_gauss}
@@ -370,9 +370,16 @@
 #+END_LATEX
 * Experimental Results
   The four possible method combinations were compared in four sets
-  experiments. 100 time units of Photon stream data was generated from
-  sinusoidal functions of the form $y=a-b\sin(\alpha t)$ in the first set of two
-  experiments, and from randomly generated functions in the second set.
+  experiments. 100 time units of Photon stream data was generated from sine
+  functions of the form $y=a-b\sin(\alpha t)$ in the first set of two
+  experiments, and from randomly generated functions in the second set. In both
+  cases the \alpha parameter defined the variability of the function. The
+  experiments tested performance on functions generated with several different
+  \alpha values. Multiple photon streams were generated from each function to
+  obtain a larger statistical sample. The sine function experiments used 25
+  independently generated stream pairs for the first, and 10 for the
+  second. Random function experiments used 5 pairs for each of the 5 functions
+  tested.
 
   The first stage of each experiment found optimum parameter settings for each
   function in the experimental data set using model selection. The kernel
@@ -387,8 +394,28 @@
   estimated using both the area and the PDF methods. This resulted in 4
   estimates of the time delay, one from each combination of function estimator
   and time delay estimator.
+
+  Paired and single-sample t-tests were applied to the resulting estimates to
+  check for any significant difference in the performance of the method
+  combinations, but there was no indication of any significance.
 * System
-  - very brief explanation of the system features
+  The system was implemented in C, and uses the GMP \cite{gmp} and muParser
+  \cite{mup} libraries. The system is modelled after standard linux packages,
+  using a similar directory structure compiling with GNU Automake. User
+  interaction is through a command line interface, with modifiable parameter
+  files. Bash scripts and Gnuplot provide graphing functionality. Over
+  60 unit tests implemented with the Check \cite{check} framework provide
+  verification for critical functions. All source code is freely available on
+  GitHub \cite{repo} under the GNU General Public License.
 * Conclusion
-  - some suggestions for extensions
-    \printbibliography
+  In this paper, we have provided a short overview of the concepts behind our
+  methods of time delay estimation in paired photon streams. While the
+  performance of the estimators is not optimal, we believe that it may indicate
+  some directions for further work. A fast Gauss transform implementation would
+  improve computation time for the kernel density estimator. Hierarchical search
+  to find the maximum of the PDF at the baseline estimator breakpoints would
+  improve the quality of estimates. Further improvements could come from an
+  investigation into techniques to deal with highly symmetric or repeating
+  functions such as sine waves.
+
+\printbibliography
