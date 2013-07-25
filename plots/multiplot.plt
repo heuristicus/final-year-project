@@ -14,9 +14,12 @@ set style line 4 linecolor rgb '#00FF00' linetype 1 linewidth 1 # green
 set xlabel '$$t$$'
 set ylabel '$$\lambda$$'
 
-set key top left
+set yrange [-5:50]
+
+set key bmargin
+set key horizontal
 
 plot "$1" index 0 using 1:2 with lines linestyle 1 title 'Generating function',\
-     "$2" using 1:2 with lines linestyle 2 title 'Baseline',\
-     "$3" using 1:2 with lines linestyle 3 title 'Piecewise',\
+     "$2" using 1:2 with lines linestyle 2 title 'Baseline estimate',\
+     "$3" using 1:2 with lines linestyle 3 title 'Piecewise estimate',\
      "$4" using 1:2 with points linestyle 4 title 'Bin counts'

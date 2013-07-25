@@ -11,8 +11,11 @@ set xlabel '$$t$$'
 set ylabel '$$\lambda$$'
 
 set xrange [0:100]
-set key bottom right
+set yrange [0:45]
+set key bmargin horizontal
 
-plot "$1" using 1:2:3 with filledcurves lc rgb "gray" title "Inter-function area",\
-     "$1" using 1:2 with lines ls 1 title "Stream 1 Estimate",\
-     "$1" using 1:3 with lines ls 2 title "Stream 2 Estimate"
+set ytics 10
+
+plot "$1" using 1:2 with lines ls 1 title "Stream 1 Estimate",\
+     "$1" using 1:3 with lines ls 2 title "Stream 2 Estimate",\
+     "$1" using 1:2:3 with filledcurves lc rgb "gray" title "Inter-function area"
