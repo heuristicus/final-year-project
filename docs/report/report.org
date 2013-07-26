@@ -1,4 +1,4 @@
-#+TITLE: Time Delay Estimation in Gravitationally Lensed Photon Stream Pairs
+##+TITLE: Time Delay Estimation in Gravitationally Lensed Photon Stream Pairs
 #+AUTHOR: \Large{Micha{\l} Staniaszek} \\\small{Supervisor: Peter Ti{\v{n}}o}
 #+EMAIL:     mxs968@cs.bham.ac.uk
 #+DATE:      \today
@@ -14,7 +14,7 @@
 #+LINK_HOME: 
 #+XSLT:
 #+LATEX_CLASS: article
-#+LATEX_CLASS_OPTIONS: [a4paper,11pt,twoside]
+#+LATEX_CLASS_OPTIONS: [a4paper,11pt]
 #+LATEX_HEADER: \usepackage{fontspec}
 #+LATEX_HEADER: \usepackage[titletoc,page,title]{appendix}
 #+LaTeX_HEADER: \usepackage{biblatex}
@@ -88,7 +88,9 @@ inter-function area method appears to be the most consistent.
 machine learning, linear regression, kernel density estimation
 #+END_abstract
 
+#BEGIN_LATEX
 \vspace{2.0cm}\renewcommand{\abstractname}{Acknowledgements}
+#END_LATEX
 \begin{abstract} 
 \noindent I would like to thank Peter Ti{\v{n}}o for his clear
  and insightful supervision, without which this project would not have been
@@ -830,7 +832,7 @@ machine learning, linear regression, kernel density estimation
   based on their function estimates.
 
   Both of the estimators work by starting $\Delta$ at $-\Delta_{\text{max}}$,
-  and increment it by some step until reach $+\Delta_{\text{max}}$ is reached,
+  and increment it by some step until $+\Delta_{\text{max}}$ is reached,
   using a metric to evaluate how good the estimate is with that value. It is
   important to note that the value of $\Delta_{\text{max}}$ defines the interval
   in which the metric is computed. The need for calculation only in some
@@ -845,7 +847,7 @@ machine learning, linear regression, kernel density estimation
   shortest. To make useful comparisons, we must perform calculations only on the
   interval in which the two functions overlap for all values of
   $\Delta$. Imposing this constraint means that the value of
-  $\Delta_{\text{max}}$ can never exceed the interval length $T$ in which we are
+  $\Delta_{\text{max}}$ can never exceed the interval length $T_{\text{est}}$ in which we are
   performing the estimate. We are left with the constraints
   $T_{\text{est}}=[t_0+\Delta_{\text{max}},
   T-\Delta_{\text{max}}],\,\Delta_{\text{max}}<T$ on the interval and the
@@ -1679,8 +1681,8 @@ machine learning, linear regression, kernel density estimation
   Gaussian pdf, baseline area and baseline pdf. Two statistical tests were done
   on the experimental results. A paired $t$-test was used to check whether one
   method was better than another. For the second test, we took the error values
-  for the two methods combinations being compared, subtracted one from the other
-  and performed a a one-sample $t$-test on the resulting set of values. The full
+  for the two method combinations being compared, subtracted one from the other
+  and performed a one-sample $t$-test on the resulting set of values. The full
   set of statistical test results can be seen in Appendix [[Experimental Data]].
 
   We assume that the distribution of the samples is Gaussian, but this may not be
@@ -2087,7 +2089,8 @@ machine learning, linear regression, kernel density estimation
    \newpage
    \printbibliography
    \newpage
-   #+BEGIN_appendices
+
+#+BEGIN_appendices
 * Usage
 ** Installation
    This installation guide is intended for users of Linux distributions,
@@ -2730,4 +2733,4 @@ machine learning, linear regression, kernel density estimation
   method and computing the error difference on estimates. $n=$ 25} \end{table}
 
   #+END_LaTeX
-   #+END_appendices
+#+END_appendices
