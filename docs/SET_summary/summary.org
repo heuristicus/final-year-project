@@ -278,7 +278,33 @@
   $\Delta_{\text{max}}<T$. This constraint on $T_{\text{est}}$ means that there
   is no need to normalise the likelihood of matches due to differing interval
   lengths.
+
+  In the approximation, $t$ is incremented by some finite step for each
+  successive value. As with the previous estimator, the estimate is made in two
+  stages, first with a coarse pass over the values of delta to compute an
+  initial estimate, and then a finer second pass around the first estimated
+  value in order to refine the estimate.
 ** Area Method
+#+BEGIN_LATEX
+   \begin{figure}[]
+   \subfloat[High area ($\Delta=$ 5)]{
+   \includegraphics[width=0.5\textwidth]{images/area_gauss_large}
+   %\includegraphics{normarea}
+   }
+   \subfloat[Low area ($\Delta=$ 15.1)]{
+   \includegraphics[width=0.5\textwidth]{images/area_gauss_small}
+   %\includegraphics{shiftarea}
+   }
+
+   \caption{An illustration of the idea behind the area method. In (a), the
+   applied shift results in a large area between the functions. In (b), the
+   shift is very close to the actual time delay ($\Delta=15$), and the resulting
+   area is much smaller than (a), indicating that the shift in (b) is a better
+   estimate.}
+
+   \label{fig:areamethod}
+   \end{figure}
+#+END_LATEX
    The first of the two methods uses a very simple metric to estimate the time
    delay. By taking the two function estimates, we can attempt to match up the
    two functions so that they ``fit together'' best. The goodness of fit between
@@ -336,11 +362,6 @@
    \begin{align}
    \lambda_{a,b}&=\int_a^b\lambda(t)\,dt
    \end{align}
-   In the approximation, $t$ is incremented by some finite step for each
-   successive value. As with the previous estimator, the estimate is made in two
-   stages, first with a coarse pass over the values of delta to compute an
-   initial estimate, and then a finer second pass around the first estimated
-   value in order to refine the estimate.
 #+BEGIN_LATEX
    \ref{fig:finest} illustrates the whole estimation process.
    \begin{figure}[]
@@ -399,14 +420,13 @@
   check for any significant difference in the performance of the method
   combinations, but there was no indication of any significance.
 * System
-  The system was implemented in C, and uses the GMP \cite{gmp} and muParser
-  \cite{mup} libraries. The system is modelled after standard linux packages,
-  using a similar directory structure compiling with GNU Automake. User
-  interaction is through a command line interface, with modifiable parameter
-  files. Bash scripts and Gnuplot provide graphing functionality. Over
-  60 unit tests implemented with the Check \cite{check} framework provide
-  verification for critical functions. All source code is freely available on
-  GitHub \cite{repo} under the GNU General Public License.
+  The system was implemented in C, and uses the GMP and muParser libraries. The
+  system is modelled after standard linux packages, using a similar directory
+  structure compiling with GNU Automake. User interaction is through a command
+  line interface, with modifiable parameter files. Bash scripts and Gnuplot
+  provide graphing functionality. Over 60 unit tests implemented with the Check
+  framework provide verification for critical functions. All source code is
+  freely available on GitHub \cite{repo} under the GNU General Public License.
 * Conclusion
   In this paper, we have provided a short overview of the concepts behind our
   methods of time delay estimation in paired photon streams. While the

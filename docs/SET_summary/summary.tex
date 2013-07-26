@@ -1,14 +1,20 @@
-% Created 2013-07-25 Thu 20:59
-\documentclass[11pt]{article}
+% Created 2013-07-26 Fri 21:07
+\documentclass[a4paper,11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+\usepackage{fixltx2e}
 \usepackage{graphicx}
 \usepackage{longtable}
 \usepackage{float}
 \usepackage{wrapfig}
 \usepackage{soul}
+\usepackage{textcomp}
+\usepackage{marvosym}
+\usepackage{wasysym}
+\usepackage{latexsym}
 \usepackage{amssymb}
 \usepackage{hyperref}
+\tolerance=1000
 \usepackage{fontspec}
 \usepackage[titletoc,page,title]{appendix}
 \usepackage{biblatex}
@@ -32,10 +38,15 @@
 \bibliography{summary}
 \defaultfontfeatures{Mapping=tex-text}
 \setromanfont[Ligatures={Common},Numbers={Lining}]{Linux Libertine}
+\providecommand{\alert}[1]{\textbf{#1}}
 
 \title{Time Delay Estimation in Gravitationally Lensed Photon Stream Pairs}
 \author{\Large{Micha{\l} Staniaszek} \\\small{Supervisor: Peter Ti{\v{n}}o}}
 \date{\today}
+\hypersetup{
+  pdfkeywords={},
+  pdfsubject={},
+  pdfcreator={Emacs Org-mode version 7.8.11}}
 
 \begin{document}
 
@@ -56,8 +67,6 @@
 
 \section{Introduction}
 \label{sec-1}
-
-
 \section{Photon Stream Simulation}
 \label{sec-2}
 
@@ -137,7 +146,6 @@
   \caption{Generating event times for a NHPP by thinning}
   \label{alg:seq}
   \end{algorithm}
-
 \section{Function Estimation}
 \label{sec-3}
 
@@ -147,7 +155,7 @@
   rate function. In the project, we used two different methods to obtain an
   estimate.
 \subsection{Baseline Estimation}
-\label{sec-3.1}
+\label{sec-3-1}
 
    Development of the baseline estimator went through several stages. Based on
    the work of Massey et al.\cite{massey}, we implemented a system to estimate
@@ -213,7 +221,7 @@
     the values of the estimates from the previous and next sub-interval have the
     same value at the breakpoint.
 \subsection{Kernel Density Estimation}
-\label{sec-3.2}
+\label{sec-3-2}
 
     \begin{figure}[h]
     \centering
@@ -282,9 +290,33 @@
   $\Delta_{\text{max}}<T$. This constraint on $T_{\text{est}}$ means that there
   is no need to normalise the likelihood of matches due to differing interval
   lengths.
-\subsection{Area Method}
-\label{sec-4.1}
 
+  In the approximation, $t$ is incremented by some finite step for each
+  successive value. As with the previous estimator, the estimate is made in two
+  stages, first with a coarse pass over the values of delta to compute an
+  initial estimate, and then a finer second pass around the first estimated
+  value in order to refine the estimate.
+\subsection{Area Method}
+\label{sec-4-1}
+
+   \begin{figure}[]
+   \subfloat[High area ($\Delta=$ 5)]{
+   \includegraphics[width=0.5\textwidth]{images/area_gauss_large}
+   %\includegraphics{normarea}
+   }
+   \subfloat[Low area ($\Delta=$ 15.1)]{
+   \includegraphics[width=0.5\textwidth]{images/area_gauss_small}
+   %\includegraphics{shiftarea}
+   }
+
+   \caption{An illustration of the idea behind the area method. In (a), the
+   applied shift results in a large area between the functions. In (b), the
+   shift is very close to the actual time delay ($\Delta=15$), and the resulting
+   area is much smaller than (a), indicating that the shift in (b) is a better
+   estimate.}
+
+   \label{fig:areamethod}
+   \end{figure}
    The first of the two methods uses a very simple metric to estimate the time
    delay. By taking the two function estimates, we can attempt to match up the
    two functions so that they ``fit together'' best. The goodness of fit between
@@ -303,7 +335,7 @@
    integral to get the exact area between the functions, we use a less
    computationally expensive discrete approximation.
 \subsection{PDF Method}
-\label{sec-4.2}
+\label{sec-4-2}
 
    The second method of estimation is using probability density functions. As
    before, we guess a value of $\Delta$ between $-\Delta_{\text{max}}$ and
@@ -342,11 +374,6 @@
    \begin{align}
    \lambda_{a,b}&=\int_a^b\lambda(t)\,dt
    \end{align}
-   In the approximation, $t$ is incremented by some finite step for each
-   successive value. As with the previous estimator, the estimate is made in two
-   stages, first with a coarse pass over the values of delta to compute an
-   initial estimate, and then a finer second pass around the first estimated
-   value in order to refine the estimate.
    \ref{fig:finest} illustrates the whole estimation process.
    \begin{figure}[]
    \subfloat[Estimate $\lambda(t)$ for each stream based on bin data.]{
@@ -378,11 +405,14 @@
   The four possible method combinations were compared in four sets
   experiments. 100 time units of Photon stream data was generated from sine
   functions of the form $y=a-b\sin(\alpha t)$ in the first set of two
-  experiments, and from randomly generated functions in the second set. Multiple
-  photon streams were generated from each function to obtain a larger
-  statistical sample. The sine function experiments used 25 independently
-  generated stream pairs for the first, and 10 for the second. Random function
-  experiments used 5 pairs for each of the 5 functions tested.
+  experiments, and from randomly generated functions in the second set. In both
+  cases the $\alpha$ parameter defined the variability of the function. The
+  experiments tested performance on functions generated with several different
+  $\alpha$ values. Multiple photon streams were generated from each function to
+  obtain a larger statistical sample. The sine function experiments used 25
+  independently generated stream pairs for the first, and 10 for the
+  second. Random function experiments used 5 pairs for each of the 5 functions
+  tested.
 
   The first stage of each experiment found optimum parameter settings for each
   function in the experimental data set using model selection. The kernel
@@ -398,18 +428,19 @@
   estimates of the time delay, one from each combination of function estimator
   and time delay estimator.
 
-  A paired t-test was applied to each of 
+  Paired and single-sample t-tests were applied to the resulting estimates to
+  check for any significant difference in the performance of the method
+  combinations, but there was no indication of any significance.
 \section{System}
 \label{sec-6}
 
-  The system was implemented in C, and uses the GMP \cite{gmp} and muParser
-  \cite{mup} libraries. The system is modelled after standard linux packages,
-  using a similar directory structure compiling with GNU Automake. User
-  interaction is through a command line interface, with modifiable parameter
-  files. Bash scripts and Gnuplot provide graphing functionality. Over
-  60 unit tests implemented with the Check \cite{check} framework provide
-  verification for critical functions. All source code is freely available on
-  GitHub \cite{repo} under the GNU General Public License.
+  The system was implemented in C, and uses the GMP and muParser libraries. The
+  system is modelled after standard linux packages, using a similar directory
+  structure compiling with GNU Automake. User interaction is through a command
+  line interface, with modifiable parameter files. Bash scripts and Gnuplot
+  provide graphing functionality. Over 60 unit tests implemented with the Check
+  framework provide verification for critical functions. All source code is
+  freely available on GitHub \cite{repo} under the GNU General Public License.
 \section{Conclusion}
 \label{sec-7}
 
@@ -424,8 +455,5 @@
   functions such as sine waves.
 
 \printbibliography
-
-$^{1}$ FOOTNOTE DEFINITION NOT FOUND: 1
-
 
 \end{document}
