@@ -1,4 +1,4 @@
-% Created 2013-07-26 Fri 18:59
+% Created 2013-07-27 Sat 18:36
 \documentclass[a4paper,11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -1763,7 +1763,7 @@ machine learning, linear regression, kernel density estimation
     estimator is always better.
 
 \begin{table}[htb]
-\caption{Experimental results for $\alpha=$ 0.05 for preliminary sine experiments. Actual time delay is 10. ($\mu\pm\sigma$)} \label{fig:pretab}
+
 \begin{center}
 \begin{tabular}{l|ll}
        &  Gaussian           &  Baseline           \\
@@ -1772,7 +1772,7 @@ machine learning, linear regression, kernel density estimation
  PDF   &  22.20 $\pm$ 10.94  &  22.06 $\pm$ 11.20  \\
 \end{tabular}
 \end{center}
-\end{table}
+\caption{Experimental results for $\alpha=$ 0.05 for preliminary sine experiments. Actual time delay is 10. ($\mu\pm\sigma$)} \label{fig:pretab}\end{table}
 \subsubsection{Refined Experiments}
 \label{sec-8-1-2}
 
@@ -1784,7 +1784,7 @@ machine learning, linear regression, kernel density estimation
     pairs. 10 pairs of streams were generated for each $\alpha$ value. The time
     delay was set to 15 time units.
 \begin{table}[htb]
-\caption{Estimates for all method combinations at $\alpha=$ 0.07 for refined sine experiments. Actual time delay is 15. ($\mu\pm\sigma$)} \label{fig:reftab}
+
 \begin{center}
 \begin{tabular}{l|ll}
        &  Gaussian           &  Baseline           \\
@@ -1793,7 +1793,7 @@ machine learning, linear regression, kernel density estimation
  PDF   &  16.53 $\pm$ 11.80  &  15.72 $\pm$ 14.06  \\
 \end{tabular}
 \end{center}
-\end{table}
+\caption{Estimates for all method combinations at $\alpha=$ 0.07 for refined sine experiments. Actual time delay is 15. ($\mu\pm\sigma$)} \label{fig:reftab}\end{table}
 
     The result of this second set of experiments uncovered an interesting
     pattern in the performance of the estimators. Figure \ref{fig:fineerror}
