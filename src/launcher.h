@@ -64,10 +64,13 @@
     "\t\t Specify the parameter file in which to find default parameters when experimenting.\n\n"\
     "\t -r\n"\
     "\t\t Switches the system to use randomly generated functions. The generator will produce\n"\
-    "\t\t functions randomly generated using gaussians, or if the -i switch is received, will read\n"\
-    "\t\t a file containing 1-d data and centre gaussians on those points. Passing this switch\n"\
-    "\t\t when using the estimators will set them to read data from files generated using the\n"\
-    "\t\t random function generator as opposed to the default one.\n\n"	\
+    "\t\t functions randomly generated using gaussians, or if the -i switch is received, will\n"\
+    "\t\t read a file containing 1-d data and centre gaussians on those points. Passing this\n"\
+    "\t\t switch when using the estimators will set them to read data from files generated\n"\
+    "\t\t using the random function generator as opposed to the default one.\n\n"	\
+    "\t -S or --seed\n"\
+    "\t\t Set the seed to use for random number generation. Relevant for all generation\n"\
+    "\t\t functions.\n\n"\
     "\t -t, --outtype\n"						\
     "\t\t Used to specify how much data to ouput to file when estimating or generating.\n"\
     "\t\t A value of zero will output no files at all. 1 will output the most\n"\

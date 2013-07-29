@@ -28,6 +28,11 @@ Scientific Library and the Check test framework. All the required packages
 can be installed with
    
     apt-get install libgsl0-dev check g++ autoconf
+
+Once this is done, go to the top level directory of the project, and run
+`make`. This should create all the files required for the system to run. If you
+require special configuration options, you can use `./configure` with the
+required switches.
    
 ## General Usage
 The executable for the program can be found in the `src` directory,
@@ -264,8 +269,6 @@ $alpha$. The `results` directory contains directories with files which
 are used to produce different data. The `data` directory contains copies
 of all results files, with the filenames showing what experiment the file was
 taken from.
-
-    paragraph{T-tests}
 
 To create data for t-tests, we use the files in the `alpha_errors`
 directory. With this data we will be able to compare the errors of one

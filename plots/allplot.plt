@@ -14,15 +14,15 @@ set xlabel '$$t$$'
 set ylabel '$$\lambda$$'
 
 # Axis ranges
-#set yrange [0:25]
+set yrange [-5:50]
 
 # Tics in latex format
 #set format '$$%g$$'
 
 # Tics
-#set xtics 0,10
-#set ytics 0,5
-#set tics scale 0.75
+set xtics 20
+
+set key bmargin horizontal
 
 plot "$1" index 0 using 1:2 with lines linestyle 1 title 'Generating function',\
      "$2" using 1:2 with lines linestyle 2 title 'Estimated function',\

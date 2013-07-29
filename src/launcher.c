@@ -5,6 +5,7 @@ static char *generators[] = {"mup", "rand"};
 static struct option opts[] =
     {
 	{"stutter",    required_argument, 0, 's'},
+	{"seed", required_argument, 0, 's'},
 	{"experiment", required_argument, 0, 'x'},
 	{"generate", required_argument, 0, 'g'},
 	{"estimate", required_argument, 0, 'e'},
@@ -25,7 +26,7 @@ int main(int argc, char *argv[])
 {
     int c;
     int opt_ind;
-    
+
     launcher_args* args = make_arg_struct();
     char* paramfile = NULL;
     char* extra_paramfile = NULL;
@@ -40,7 +41,7 @@ int main(int argc, char *argv[])
 	exit(1);
     }
         
-    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:f:hrt:rp:c:su", opts, &opt_ind)) != -1){
+    while((c = getopt_long(argc, argv, "x:g:e:a:i:o:d:n:f:hrt:rp:c:suS:", opts, &opt_ind)) != -1){
     	switch(c){
     	case 'e': // estimate
     	    args->est = 1;
@@ -100,6 +101,9 @@ int main(int argc, char *argv[])
 	case 's':
 	    args->stutter = 1;
 	    break;
+	case 'S': // specify a seed for generation
+	    args->seed = atoi(optarg);
+	    break;
     	case 'x':
     	    args->exp = 1;
 	    if (createparam)
@@ -118,6 +122,10 @@ int main(int argc, char *argv[])
     		exit(1);
 	}
     }
+    
+    // Initialise the random seed from the argument provided. If the arg is
+    // not provided, then the value is 0 so the seed is taken from the time.
+    init_rand(args->seed);
 
     if (createparam){
 	if (args->exp == 1)

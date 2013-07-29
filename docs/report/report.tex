@@ -1,4 +1,4 @@
-% Created 2013-04-12 Fri 14:23
+% Created 2013-07-27 Sat 18:36
 \documentclass[a4paper,11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -67,7 +67,7 @@ University of Birmingham\\
 }%\maketitle
 \providecommand{\alert}[1]{\textbf{#1}}
 
-\title{Time Delay Estimation in Gravitationally Lensed Photon Stream Pairs}
+\title{\noindent In this report, we present a system for estimating the time delay}
 \author{\Large{Micha{\l} Staniaszek} \\\small{Supervisor: Peter Ti{\v{n}}o}}
 \date{\today}
 \hypersetup{
@@ -83,7 +83,6 @@ University of Birmingham\\
 
 
 \begin{abstract}
-\noindent In this report, we present a system for estimating the time delay
 $\Delta$ between pairs of photon streams from separate images of gravitationally
 lensed objects. Photon streams are simulated by generating arrival times of
 individual photons using non-homogeneous Poisson processes with a rate function
@@ -829,7 +828,7 @@ machine learning, linear regression, kernel density estimation
   based on their function estimates.
 
   Both of the estimators work by starting $\Delta$ at $-\Delta_{\text{max}}$,
-  and increment it by some step until reach $+\Delta_{\text{max}}$ is reached,
+  and increment it by some step until $+\Delta_{\text{max}}$ is reached,
   using a metric to evaluate how good the estimate is with that value. It is
   important to note that the value of $\Delta_{\text{max}}$ defines the interval
   in which the metric is computed. The need for calculation only in some
@@ -844,7 +843,7 @@ machine learning, linear regression, kernel density estimation
   shortest. To make useful comparisons, we must perform calculations only on the
   interval in which the two functions overlap for all values of
   $\Delta$. Imposing this constraint means that the value of
-  $\Delta_{\text{max}}$ can never exceed the interval length $T$ in which we are
+  $\Delta_{\text{max}}$ can never exceed the interval length $T_{\text{est}}$ in which we are
   performing the estimate. We are left with the constraints
   $T_{\text{est}}=[t_0+\Delta_{\text{max}},
   T-\Delta_{\text{max}}],\,\Delta_{\text{max}}<T$ on the interval and the
@@ -1708,8 +1707,8 @@ machine learning, linear regression, kernel density estimation
   Gaussian pdf, baseline area and baseline pdf. Two statistical tests were done
   on the experimental results. A paired $t$-test was used to check whether one
   method was better than another. For the second test, we took the error values
-  for the two methods combinations being compared, subtracted one from the other
-  and performed a a one-sample $t$-test on the resulting set of values. The full
+  for the two method combinations being compared, subtracted one from the other
+  and performed a one-sample $t$-test on the resulting set of values. The full
   set of statistical test results can be seen in Appendix \ref{sec-11}.
 
   We assume that the distribution of the samples is Gaussian, but this may not be
@@ -2133,6 +2132,7 @@ machine learning, linear regression, kernel density estimation
    \newpage
    \printbibliography
    \newpage
+
 \begin{appendices}
 \section{Usage}
 \label{sec-10}
@@ -2147,7 +2147,7 @@ machine learning, linear regression, kernel density estimation
    your favourite program. Alternatively, clone the current version of the
    repository with
    \begin{verbatimtab} 
-     git clone https://github.com/heuristicus/final-year-project.git
+   git clone [[https://github.com/heuristicus/final-year-project.git]]
    \end{verbatimtab}
    Before the program can be configured, we must install some libraries without
    which the program will not run. Download the latest muParser package from
@@ -2183,7 +2183,7 @@ machine learning, linear regression, kernel density estimation
    \texttt{-h} or \texttt{--help} options. We will detail some of the options
    below. All parameters which govern the behaviour of the system are defined in
    the parameter files, which have information about what the effect of each is.
-\subsubsection{Parameter files}
+\subsubsection{Parameter Files}
 \label{sec-10-2-1}
 
     Some parameter files are provided with the program, but if for some reason

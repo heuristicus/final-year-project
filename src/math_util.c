@@ -394,7 +394,8 @@ double* random_vector(int len, double multiplier)
     if (len <= 0)
 	return NULL;
 
-    init_rand(0.0);
+    if (!rand_initialised)
+	init_rand(0.0);
     
     double* V = malloc(len * sizeof(double));
     

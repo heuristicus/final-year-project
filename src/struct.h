@@ -75,6 +75,7 @@ typedef struct
     int writing;
     int stutter;
     int dup;
+    int seed;
 } launcher_args;
 
 typedef struct
