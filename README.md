@@ -1,3 +1,6 @@
+# Final Year Project
+This is my bachelor's thesis project titled _Time Delay Estimation in Gravitationally Lensed Photon Streams_. Please see the [report](https://github.com/heuristicus/final-year-project/blob/master/docs/report/report.pdf) for more details.
+
 # Usage
 ## Installation
 This installation guide is intended for users of Linux distributions,
